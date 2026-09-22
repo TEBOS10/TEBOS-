@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+:root {
+  --bame-bg: #0b0b08;
+  --bame-panel: #14140f;
+  --bame-line: #2a2a22;
+  --bame-ink: #f4f1ea;
+  --bame-muted: #a9a493;
+  --bame-accent: #d9c67a;
+}
+
+@theme inline {
+  --color-background: var(--bame-bg);
+  --color-foreground: var(--bame-ink);
+  --font-sans: var(--font-dm-sans);
+  --font-serif: var(--font-dm-serif);
+  --font-mono: var(--font-dm-mono);
+}
+
+body {
+  background: var(--bame-bg);
+  color: var(--bame-ink);
+  font-family: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+h1, h2, h3, .font-serif-display {
+  font-family: var(--font-dm-serif), Georgia, serif;
+}
+
+.bame-eyebrow {
+  font-family: var(--font-dm-mono), ui-monospace, monospace;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  color: var(--bame-accent);
+}
