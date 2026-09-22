@@ -15,28 +15,29 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Generate the id ourselves and insert without asking Postgres to return
+  // the row: the anon RLS policy only grants INSERT, not SELECT, and an
+  // insert that requests the row back (`.select()`) needs SELECT too.
+  const id = crypto.randomUUID();
   const supabase = getSupabaseServerClient();
-  const { data, error } = await supabase
-    .from("leads")
-    .insert({
-      contact_type,
-      full_name,
-      email,
-      phone: body.phone || null,
-      sport: body.sport || null,
-      career_stage: body.career_stage || null,
-      primary_focus: body.primary_focus || null,
-      location: body.location || null,
-      goal: body.goal || null,
-      consent: !!body.consent,
-      source: "website",
-    })
-    .select("id")
-    .single();
+  const { error } = await supabase.from("leads").insert({
+    id,
+    contact_type,
+    full_name,
+    email,
+    phone: body.phone || null,
+    sport: body.sport || null,
+    career_stage: body.career_stage || null,
+    primary_focus: body.primary_focus || null,
+    location: body.location || null,
+    goal: body.goal || null,
+    consent: !!body.consent,
+    source: "website",
+  });
 
   if (error) {
     return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ ok: true, id: data.id });
+  return NextResponse.json({ ok: true, id });
 }

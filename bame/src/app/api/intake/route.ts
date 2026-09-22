@@ -26,21 +26,22 @@ export async function POST(req: NextRequest) {
   }
   payload.submitted_at = new Date().toISOString();
 
+  // Generate the id ourselves and insert without asking Postgres to return
+  // the row: the anon RLS policy only grants INSERT, not SELECT, and an
+  // insert that requests the row back (`.select()`) needs SELECT too.
+  const id = crypto.randomUUID();
   const supabase = getSupabaseServerClient();
-  const { data, error } = await supabase
-    .from("diagnostics")
-    .insert({
-      lead_id: body.lead_id || null,
-      case_reference: body.case_reference || null,
-      contact_type: body.contact_type === "event" ? "event" : "athlete",
-      package_interest: body.package_interest || body.event_package_interest || null,
-      payload,
-      athlete_full_name: body.athlete_full_name || body.full_name || null,
-      athlete_email: body.email || null,
-      primary_sport: body.primary_sport || null,
-    })
-    .select("id")
-    .single();
+  const { error } = await supabase.from("diagnostics").insert({
+    id,
+    lead_id: body.lead_id || null,
+    case_reference: body.case_reference || null,
+    contact_type: body.contact_type === "event" ? "event" : "athlete",
+    package_interest: body.package_interest || body.event_package_interest || null,
+    payload,
+    athlete_full_name: body.athlete_full_name || body.full_name || null,
+    athlete_email: body.email || null,
+    primary_sport: body.primary_sport || null,
+  });
 
   if (error) {
     return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
@@ -64,5 +65,5 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  return NextResponse.json({ ok: true, id: data.id });
+  return NextResponse.json({ ok: true, id });
 }
