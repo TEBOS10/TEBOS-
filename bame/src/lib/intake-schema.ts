@@ -10,7 +10,15 @@ export type FieldType =
   | "textarea"
   | "select"
   | "checkbox"
-  | "radio";
+  | "radio"
+  | "chips" // multi-select pill buttons, stored as a "; "-joined string
+  | "cards"; // multi-select descriptive cards, stored as a "; "-joined string
+
+export interface CardOption {
+  value: string;
+  label: string;
+  description: string;
+}
 
 export interface IntakeField {
   name: string;
@@ -18,6 +26,8 @@ export interface IntakeField {
   type: FieldType;
   required?: boolean;
   options?: string[];
+  cardOptions?: CardOption[]; // used by type "cards"
+  max?: number; // cap on selections for "chips" / "cards"
   placeholder?: string;
   help?: string;
   full?: boolean; // spans both grid columns
@@ -34,6 +44,17 @@ export interface IntakeSection {
 
 const isAthlete = (v: Record<string, unknown>) => v.contact_type !== "event";
 const isEvent = (v: Record<string, unknown>) => v.contact_type === "event";
+
+export const BRAND_ARCHETYPES: CardOption[] = [
+  { value: "Global Icon", label: "The Global Icon", description: "Worldwide recognition, universal appeal, blockbuster-scale partnerships." },
+  { value: "Homegrown Hero", label: "The Homegrown Hero", description: "Deep community roots — an authentic local-to-global story." },
+  { value: "Maverick", label: "The Maverick", description: "Bold, outspoken, unapologetically different." },
+  { value: "Quiet Competitor", label: "The Quiet Competitor", description: "Letting performance do the talking — understated, elite." },
+  { value: "Style Icon", label: "The Style Icon", description: "Fashion-forward, culture and lifestyle crossover." },
+  { value: "Family First", label: "The Family First", description: "Grounded, relatable, values-led — trust before hype." },
+  { value: "Next Generation", label: "The Next Generation", description: "Youthful, social-native, breakout energy." },
+  { value: "Specialist", label: "The Specialist", description: "Deep expertise in a niche — respected by insiders." },
+];
 
 export const INTAKE_SECTIONS: IntakeSection[] = [
   {
@@ -55,7 +76,7 @@ export const INTAKE_SECTIONS: IntakeSection[] = [
       {
         name: "package_interest",
         label: "Which package are you leaning towards?",
-        type: "select",
+        type: "chips",
         required: true,
         options: ["Foundation", "Growth", "Custom", "Not sure yet — recommend one"],
         help: "Foundation R6,500/mo · Growth R10,000/mo · Custom is a tailored retainer.",
@@ -63,7 +84,7 @@ export const INTAKE_SECTIONS: IntakeSection[] = [
       {
         name: "lead_source",
         label: "How did you hear about BAME?",
-        type: "select",
+        type: "chips",
         options: [
           "Referral",
           "Social media",
@@ -79,8 +100,6 @@ export const INTAKE_SECTIONS: IntakeSection[] = [
         label: "If referred, who referred you? (they earn 10%)",
         type: "text",
       },
-      { name: "case_reference", label: "Case reference (BAME internal)", type: "text" },
-      { name: "assigned_admin", label: "Assigned administrator (BAME internal)", type: "text" },
     ],
   },
   {
@@ -107,7 +126,7 @@ export const INTAKE_SECTIONS: IntakeSection[] = [
       {
         name: "primary_sport",
         label: "Primary sport",
-        type: "select",
+        type: "chips",
         required: true,
         options: [
           "Football / Soccer",
@@ -127,11 +146,16 @@ export const INTAKE_SECTIONS: IntakeSection[] = [
       { name: "position_role", label: "Position / role / playing position", type: "text" },
       { name: "current_team_club", label: "Current team / club / academy", type: "text" },
       { name: "league_circuit", label: "League / circuit / competition", type: "text" },
-      { name: "competition_level", label: "Competition level", type: "text" },
+      {
+        name: "competition_level",
+        label: "Competition level",
+        type: "chips",
+        options: ["Grassroots / academy", "Semi-professional", "National", "Continental", "International / world level"],
+      },
       {
         name: "current_status",
         label: "Current status",
-        type: "select",
+        type: "chips",
         options: ["Active", "Injured", "Unsigned", "Trialling", "Retired", "Other"],
       },
       {
@@ -148,27 +172,77 @@ export const INTAKE_SECTIONS: IntakeSection[] = [
       },
       {
         name: "sport_specific_details",
-        label: "Sport-specific performance information",
+        label: "Anything sport-specific worth adding? (optional)",
         type: "textarea",
         full: true,
         placeholder:
-          "Football: preferred foot, minutes, contract/trial status, national team pathway. Tennis: ranking, tour, coach, surface. Athletics: events, PBs, coach. Other sports: equivalent detail.",
+          "Football: preferred foot, minutes, contract/trial status, national team pathway. Tennis: ranking, tour, coach, surface. Athletics: events, PBs, coach.",
       },
     ],
   },
   {
     id: "brand_audience",
     title: "Athlete brand & audience",
+    description: "Pick what fits — no essays needed. This shapes how BAME positions and presents you.",
     showIf: isAthlete,
     fields: [
-      { name: "athlete_identity_brand", label: "How do you want to be known publicly?", type: "textarea", full: true },
-      { name: "unique_value", label: "What makes you commercially distinctive?", type: "textarea", full: true },
-      { name: "brand_tone_words", label: "Three words the BAME brand story should sound like", type: "text" },
-      { name: "industry_interests", label: "Industries, causes or communities you genuinely connect with", type: "textarea", full: true },
-      { name: "public_image", label: "Desired public image / reputation", type: "textarea", full: true },
-      { name: "brand_boundaries", label: "Things you do NOT want to be associated with", type: "textarea", full: true },
-      { name: "audience_profile", label: "Audience size, geography, demographics, if known", type: "textarea", full: true },
-      { name: "portfolio_links", label: "Relevant portfolio, press or media links", type: "textarea", full: true },
+      {
+        name: "brand_archetypes",
+        label: "Which of these feels most like the brand you want to be?",
+        type: "cards",
+        cardOptions: BRAND_ARCHETYPES,
+        max: 2,
+        help: "Pick up to 2 — this is style direction, not a box you're locked into.",
+        full: true,
+      },
+      {
+        name: "brand_tone_words",
+        label: "Three words the BAME brand story should sound like",
+        type: "chips",
+        max: 3,
+        options: [
+          "Bold", "Elegant", "Fierce", "Warm", "Disciplined", "Playful", "Authentic",
+          "Powerful", "Humble", "Ambitious", "Rebellious", "Classic", "Fun", "Dominant",
+        ],
+      },
+      {
+        name: "industry_interests",
+        label: "Industries or causes you genuinely connect with",
+        type: "chips",
+        options: [
+          "Fashion", "Technology", "Gaming", "Automotive", "Finance", "Health & wellness",
+          "Music", "Food & beverage", "Education", "Sustainability", "Beauty", "Travel",
+          "Real estate", "Philanthropy / social causes", "Other",
+        ],
+        full: true,
+      },
+      {
+        name: "brand_boundaries",
+        label: "Categories you do NOT want to be associated with",
+        type: "chips",
+        options: ["Alcohol", "Gambling", "Tobacco / vaping", "Fast food", "Political affiliation", "Competitor brands", "None — open to anything"],
+        full: true,
+      },
+      {
+        name: "brand_boundaries_notes",
+        label: "Anything else off-limits? (optional)",
+        type: "text",
+        full: true,
+      },
+      {
+        name: "content_capability",
+        label: "What content do you already have?",
+        type: "chips",
+        options: ["Professional photos", "Professional video", "A content creator / team", "Just my phone", "Nothing yet"],
+        full: true,
+      },
+      {
+        name: "audience_profile",
+        label: "Audience size (rough, largest platform)",
+        type: "chips",
+        options: ["Under 5K", "5K–25K", "25K–100K", "100K–500K", "500K+", "Not sure"],
+      },
+      { name: "portfolio_links", label: "Relevant portfolio, press or media links (optional)", type: "textarea", full: true },
     ],
   },
   {
@@ -176,13 +250,13 @@ export const INTAKE_SECTIONS: IntakeSection[] = [
     title: "Representation & commercial rights",
     showIf: isAthlete,
     fields: [
-      { name: "has_agent", label: "Has agent / representative?", type: "select", options: ["Yes", "No", "Not sure"] },
+      { name: "has_agent", label: "Has agent / representative?", type: "chips", options: ["Yes", "No", "Not sure"] },
       { name: "agent_name", label: "Agent / representative name", type: "text" },
       { name: "agent_company", label: "Agent / representative company", type: "text" },
       { name: "agent_contact", label: "Agent / representative contact", type: "text" },
-      { name: "management_arrangement", label: "Current management / representation arrangement", type: "textarea", full: true },
-      { name: "contract_commitments", label: "Important existing contractual or commercial commitments", type: "textarea", full: true },
-      { name: "rights_restrictions", label: "Image, likeness, name, media or sponsorship rights restrictions", type: "textarea", full: true },
+      { name: "management_arrangement", label: "Current management / representation arrangement (optional)", type: "textarea", full: true },
+      { name: "contract_commitments", label: "Important existing contractual or commercial commitments (optional)", type: "textarea", full: true },
+      { name: "rights_restrictions", label: "Image, likeness, name, media or sponsorship rights restrictions (optional)", type: "textarea", full: true },
     ],
   },
   {
@@ -190,11 +264,25 @@ export const INTAKE_SECTIONS: IntakeSection[] = [
     title: "Sponsorships & partnerships",
     showIf: isAthlete,
     fields: [
-      { name: "has_sponsors", label: "Current sponsors / partners?", type: "select", options: ["Yes", "No"] },
-      { name: "sponsor_readiness", label: "Target sponsorship readiness / timing", type: "text" },
-      { name: "sponsor_list", label: "Current sponsor / partner list and category", type: "textarea", full: true },
-      { name: "sponsor_category_conflicts", label: "Categories restricted or conflicting with current sponsors", type: "textarea", full: true },
-      { name: "target_sponsors", label: "Brands / categories you want to work with", type: "textarea", full: true },
+      { name: "has_sponsors", label: "Current sponsors / partners?", type: "chips", options: ["Yes", "No"] },
+      {
+        name: "sponsor_readiness",
+        label: "Target sponsorship readiness / timing",
+        type: "chips",
+        options: ["Ready now", "Within 3 months", "Within 6–12 months", "Longer term / building toward it"],
+      },
+      { name: "sponsor_list", label: "Current sponsor / partner list and category (optional)", type: "textarea", full: true },
+      { name: "sponsor_category_conflicts", label: "Categories restricted or conflicting with current sponsors (optional)", type: "textarea", full: true },
+      {
+        name: "target_sponsors",
+        label: "Categories you want to work with",
+        type: "chips",
+        options: [
+          "Fashion", "Technology", "Gaming", "Automotive", "Finance", "Health & wellness",
+          "Music", "Food & beverage", "Education", "Sustainability", "Beauty", "Travel", "Other",
+        ],
+        full: true,
+      },
     ],
   },
   {
@@ -205,10 +293,10 @@ export const INTAKE_SECTIONS: IntakeSection[] = [
     fields: [
       {
         name: "content_formats_needed",
-        label: "Which content formats do you need? (list all that apply)",
-        type: "textarea",
+        label: "Which content formats do you need?",
+        type: "chips",
+        options: ["Lifestyle shoot", "Matchday / event coverage", "Campaign film", "Behind-the-scenes", "Interviews", "Product / sponsor content", "Documentary-style"],
         full: true,
-        placeholder: "e.g. lifestyle shoot, matchday coverage, campaign film, behind-the-scenes, interviews",
       },
       {
         name: "social_platforms_active",
@@ -219,36 +307,31 @@ export const INTAKE_SECTIONS: IntakeSection[] = [
       {
         name: "social_management_scope",
         label: "What level of social support do you need?",
-        type: "select",
+        type: "chips",
         options: [
           "Planning only (Foundation)",
           "Managed distribution & review (Growth)",
           "Full expanded support (Custom)",
           "Not sure — recommend one",
         ],
+        full: true,
       },
       {
         name: "content_cadence",
-        label: "Expected content cadence / key dates to plan around",
-        type: "textarea",
-        full: true,
-      },
-      {
-        name: "content_capability",
-        label: "Existing photo/video asset library — what already exists?",
-        type: "textarea",
-        full: true,
+        label: "How often do you want to be putting out content?",
+        type: "chips",
+        options: ["Daily", "A few times a week", "Weekly", "Around key moments only", "Not sure — recommend one"],
       },
       {
         name: "digital_presence_needs",
-        label: "Digital presence needs (select all that apply, describe)",
-        type: "textarea",
+        label: "Digital presence needs",
+        type: "chips",
+        options: ["Profile hub / personal website", "Photo gallery", "Video reel", "Enquiry pathway", "Not sure yet"],
         full: true,
-        placeholder: "Profile hub / personal website, photo gallery, video reel, enquiry pathway, other",
       },
       {
         name: "tech_access_notes",
-        label: "Any existing website, domain, hosting, or account access BAME will need?",
+        label: "Any existing website, domain, hosting, or account access BAME will need? (optional)",
         type: "textarea",
         full: true,
       },
@@ -259,15 +342,16 @@ export const INTAKE_SECTIONS: IntakeSection[] = [
     title: "PR & commercial positioning",
     description: "This covers BAME's PR & commercial service — coverage and sponsorship are never guaranteed, but direction and readiness are scoped here.",
     fields: [
-      { name: "media_angles", label: "Media angles or story ideas worth pursuing", type: "textarea", full: true },
-      { name: "press_features", label: "Notable existing press / media / appearances", type: "textarea", full: true },
-      { name: "press_contacts", label: "Existing press or media contacts/relationships", type: "textarea", full: true },
-      { name: "upcoming_announcements", label: "Upcoming announcements, transfers, launches or embargoes BAME should plan around", type: "textarea", full: true },
+      { name: "media_angles", label: "Media angles or story ideas worth pursuing (optional)", type: "textarea", full: true },
+      { name: "press_features", label: "Notable existing press / media / appearances (optional)", type: "textarea", full: true },
+      { name: "press_contacts", label: "Existing press or media contacts/relationships (optional)", type: "textarea", full: true },
+      { name: "upcoming_announcements", label: "Upcoming announcements, transfers, launches or embargoes BAME should plan around (optional)", type: "textarea", full: true },
       {
         name: "target_coverage_type",
         label: "Target coverage type",
-        type: "select",
+        type: "chips",
         options: ["Broadcast", "Print", "Digital / online", "Podcast", "Mixed / not sure"],
+        full: true,
       },
     ],
   },
@@ -275,20 +359,45 @@ export const INTAKE_SECTIONS: IntakeSection[] = [
     id: "goals",
     title: "Goals & desired value",
     fields: [
-      { name: "primary_goal", label: "Primary reason for engaging BAME", type: "textarea", required: true, full: true },
-      { name: "desired_value", label: "What value must BAME deliver for this relationship to be worthwhile?", type: "textarea", full: true },
-      { name: "12_month_outcome", label: "What should be materially different in 12 months?", type: "textarea", full: true },
-      { name: "success_metrics", label: "How will you judge success?", type: "textarea", full: true },
-      { name: "urgency", label: "Urgency / timing", type: "textarea", full: true },
+      {
+        name: "goal_tags",
+        label: "What are you hoping BAME delivers? (pick all that apply)",
+        type: "chips",
+        options: [
+          "Grow my personal brand", "Secure more sponsorships", "Increase media visibility",
+          "Build my post-career business", "Expand into new markets/audiences", "Protect and manage my reputation",
+          "Get a proper digital presence", "Get organised — one team, one plan",
+        ],
+        full: true,
+      },
+      { name: "primary_goal", label: "In your own words — why BAME, why now?", type: "textarea", required: true, full: true },
+      {
+        name: "urgency",
+        label: "Urgency / timing",
+        type: "chips",
+        options: ["Immediately", "Within 1 month", "Within 3 months", "No fixed timeline"],
+      },
+      { name: "success_metrics", label: "How will you judge success? (optional)", type: "textarea", full: true },
     ],
   },
   {
     id: "diagnosis",
     title: "Problem diagnosis",
     fields: [
-      { name: "key_problem", label: "Single biggest problem blocking progress today", type: "textarea", required: true, full: true },
-      { name: "previous_attempts", label: "What has already been tried? What worked, what failed, and why?", type: "textarea", full: true },
-      { name: "requested_support", label: "Which areas do you believe you need help with?", type: "textarea", full: true },
+      {
+        name: "common_blockers",
+        label: "What's getting in the way right now? (pick all that apply)",
+        type: "chips",
+        options: [
+          "No professional photo/video content", "No clear brand story or positioning",
+          "Limited sponsorship interest", "Media visibility is low",
+          "Don't know who to trust or work with", "Administrative/logistics overload",
+          "Previous representation didn't work out", "Just starting out — no infrastructure yet",
+        ],
+        full: true,
+      },
+      { name: "key_problem", label: "The single biggest thing blocking progress, in your words", type: "textarea", required: true, full: true },
+      { name: "previous_attempts", label: "What's already been tried? What worked, what didn't? (optional)", type: "textarea", full: true },
     ],
   },
   {
@@ -296,14 +405,29 @@ export const INTAKE_SECTIONS: IntakeSection[] = [
     title: "Business & support infrastructure",
     showIf: isAthlete,
     fields: [
-      { name: "athlete_business", label: "Do you operate a business/company/foundation?", type: "select", options: ["Yes", "No"] },
+      { name: "athlete_business", label: "Do you operate a business/company/foundation?", type: "chips", options: ["Yes", "No"] },
       { name: "business_name", label: "Business / company name", type: "text" },
-      { name: "commercial_revenue", label: "Current commercial income sources (high-level)", type: "textarea", full: true },
-      { name: "budget_capacity", label: "Budget available for agreed programmes/services, if any", type: "text" },
-      { name: "support_team", label: "Existing support team: coach, physio, media, legal, finance, PR, designer, etc.", type: "textarea", full: true },
-      { name: "missing_capabilities", label: "Capabilities / specialists currently missing", type: "textarea", full: true },
-      { name: "availability", label: "Availability for meetings, content, appearances and activations", type: "textarea", full: true },
-      { name: "travel_constraints", label: "Travel / location / visa / scheduling constraints", type: "textarea", full: true },
+      {
+        name: "budget_capacity",
+        label: "Budget available for agreed programmes/services",
+        type: "chips",
+        options: ["Under R6.5k/mo", "R6.5k–R10k/mo", "R10k+/mo", "Depends on scope", "Not sure yet"],
+      },
+      {
+        name: "support_team",
+        label: "Who's already on your team?",
+        type: "chips",
+        options: ["Coach", "Physiotherapist", "Media / PR manager", "Agent", "Legal advisor", "Financial advisor", "Social media manager", "Designer", "None of these yet"],
+        full: true,
+      },
+      {
+        name: "availability",
+        label: "Availability for meetings, content, appearances and activations",
+        type: "chips",
+        options: ["Very flexible", "Weekends mostly", "Off-season mostly", "Limited — tight schedule", "Depends on the week"],
+        full: true,
+      },
+      { name: "travel_constraints", label: "Travel / location / visa / scheduling constraints (optional)", type: "textarea", full: true },
     ],
   },
   {
@@ -316,37 +440,59 @@ export const INTAKE_SECTIONS: IntakeSection[] = [
       {
         name: "event_package_interest",
         label: "Which event package fits best?",
-        type: "select",
+        type: "chips",
         options: ["Event foundation", "Commercial growth", "Custom event", "Not sure — recommend one"],
+        full: true,
       },
-      { name: "event_category", label: "Event category (tournament, league, one-off, series)", type: "text" },
+      {
+        name: "event_category",
+        label: "Event category",
+        type: "chips",
+        options: ["Tournament", "League", "One-off event", "Series"],
+      },
       { name: "event_dates", label: "Event date(s) / season", type: "text" },
       { name: "event_location", label: "Location(s)", type: "text" },
-      { name: "event_audience", label: "Expected audience size / participant numbers", type: "text" },
-      { name: "stakeholder_map", label: "Key stakeholders (organisers, federations, host venues, broadcasters)", type: "textarea", full: true },
-      { name: "sponsorship_inventory", label: "Existing or planned sponsorship inventory / assets", type: "textarea", full: true },
-      { name: "participant_experience_notes", label: "Participant experience — what needs to improve or be built?", type: "textarea", full: true },
-      { name: "event_budget_capacity", label: "Budget available for agreed programmes/services", type: "text" },
+      {
+        name: "event_audience",
+        label: "Expected audience / participant numbers",
+        type: "chips",
+        options: ["Under 500", "500–2,000", "2,000–10,000", "10,000+", "Not sure yet"],
+      },
+      { name: "stakeholder_map", label: "Key stakeholders (organisers, federations, host venues, broadcasters) (optional)", type: "textarea", full: true },
+      { name: "sponsorship_inventory", label: "Existing or planned sponsorship inventory / assets (optional)", type: "textarea", full: true },
+      { name: "participant_experience_notes", label: "Participant experience — what needs to improve or be built? (optional)", type: "textarea", full: true },
+      {
+        name: "event_budget_capacity",
+        label: "Budget available for agreed programmes/services",
+        type: "chips",
+        options: ["Under R6.5k/mo", "R6.5k–R10k/mo", "R10k+/mo", "Depends on scope", "Not sure yet"],
+      },
     ],
   },
   {
     id: "boundaries",
     title: "Operating boundaries & approval",
     fields: [
-      { name: "communication_preferences", label: "Preferred communication method and response expectations", type: "textarea", full: true },
-      { name: "do_rules", label: "DOs: things BAME should always understand, protect or prioritise", type: "textarea", full: true },
-      { name: "dont_rules", label: "DON'Ts: hard boundaries / actions BAME must never take without approval", type: "textarea", full: true },
-      { name: "approval_contacts", label: "People who must approve important decisions", type: "textarea", full: true },
-      { name: "confidentiality_boundaries", label: "Anything BAME should never disclose, publish or share externally", type: "textarea", full: true },
+      {
+        name: "communication_preferences",
+        label: "Preferred communication method",
+        type: "chips",
+        options: ["WhatsApp", "Email", "Phone call", "Scheduled video call", "Through my agent/manager"],
+        full: true,
+      },
+      { name: "do_rules", label: "DOs: things BAME should always understand, protect or prioritise (optional)", type: "textarea", full: true },
+      { name: "dont_rules", label: "DON'Ts: hard boundaries / actions BAME must never take without approval (optional)", type: "textarea", full: true },
+      { name: "approval_contacts", label: "People who must approve important decisions (optional)", type: "textarea", full: true },
+      { name: "confidentiality_boundaries", label: "Anything BAME should never disclose, publish or share externally (optional)", type: "textarea", full: true },
     ],
   },
   {
     id: "evidence",
     title: "Evidence & final context",
     fields: [
-      { name: "documents_available", label: "Documents available: ID, profile, media kit, stats, contracts, sponsor deck, etc.", type: "textarea", full: true },
-      { name: "additional_links", label: "Relevant links or URLs", type: "textarea", full: true },
-      { name: "anything_else", label: "Anything else BAME must know before assessing the opportunity", type: "textarea", full: true },
+      { name: "documents_available", label: "Documents available: ID, profile, media kit, stats, contracts, sponsor deck, etc. (optional)", type: "textarea", full: true },
+      { name: "additional_links", label: "Relevant links or URLs (optional)", type: "textarea", full: true },
+      { name: "anything_else", label: "Anything else BAME must know before assessing the opportunity (optional)", type: "textarea", full: true },
     ],
   },
   {

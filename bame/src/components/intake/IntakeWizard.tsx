@@ -12,6 +12,22 @@ const CONTACT_TYPE_OPTIONS = [
 
 type Values = Record<string, string | boolean>;
 
+function parseMulti(v: string | boolean | undefined): string[] {
+  return typeof v === "string" && v ? v.split("; ").filter(Boolean) : [];
+}
+
+function toggleMulti(current: string | boolean | undefined, option: string, max?: number): string {
+  const list = parseMulti(current);
+  const idx = list.indexOf(option);
+  if (idx >= 0) {
+    list.splice(idx, 1);
+  } else {
+    if (max && list.length >= max) return list.join("; ");
+    list.push(option);
+  }
+  return list.join("; ");
+}
+
 function Field({
   field,
   value,
@@ -46,6 +62,75 @@ function Field({
             </button>
           ))}
         </div>
+      </div>
+    );
+  }
+
+  if (field.type === "chips") {
+    const selected = parseMulti(value);
+    const atMax = !!field.max && selected.length >= field.max;
+    return (
+      <div className={field.full ? "md:col-span-2" : ""}>
+        <span className="mb-2 block text-sm font-medium">
+          {field.label} {field.required && <span className="text-[var(--bame-accent)]">*</span>}
+        </span>
+        <div className="flex flex-wrap gap-2">
+          {field.options?.map((o) => {
+            const isSelected = selected.includes(o);
+            return (
+              <button
+                key={o}
+                type="button"
+                disabled={!isSelected && atMax}
+                onClick={() => onChange(field.name, toggleMulti(value, o, field.max))}
+                className={`rounded-full px-3.5 py-2 text-sm font-medium transition disabled:opacity-30 ${
+                  isSelected
+                    ? "bg-[var(--bame-accent)] text-[#1a1608]"
+                    : "text-[var(--bame-muted)] ring-1 ring-[var(--bame-line)] hover:text-[var(--bame-ink)]"
+                }`}
+              >
+                {o}
+              </button>
+            );
+          })}
+        </div>
+        {field.help && <span className="mt-2 block text-xs text-[var(--bame-muted)]">{field.help}</span>}
+      </div>
+    );
+  }
+
+  if (field.type === "cards") {
+    const selected = parseMulti(value);
+    const atMax = !!field.max && selected.length >= field.max;
+    return (
+      <div className={field.full ? "md:col-span-2" : ""}>
+        <span className="mb-2 block text-sm font-medium">
+          {field.label} {field.required && <span className="text-[var(--bame-accent)]">*</span>}
+        </span>
+        <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
+          {field.cardOptions?.map((c) => {
+            const isSelected = selected.includes(c.value);
+            return (
+              <button
+                key={c.value}
+                type="button"
+                disabled={!isSelected && atMax}
+                onClick={() => onChange(field.name, toggleMulti(value, c.value, field.max))}
+                className={`rounded-xl p-3.5 text-left transition disabled:opacity-30 ${
+                  isSelected
+                    ? "bg-[var(--bame-accent)] text-[#1a1608]"
+                    : "bg-transparent text-[var(--bame-ink)] ring-1 ring-[var(--bame-line)] hover:ring-[var(--bame-accent)]"
+                }`}
+              >
+                <div className="text-sm font-semibold">{c.label}</div>
+                <div className={`mt-1 text-xs ${isSelected ? "text-[#1a1608]/75" : "text-[var(--bame-muted)]"}`}>
+                  {c.description}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+        {field.help && <span className="mt-2 block text-xs text-[var(--bame-muted)]">{field.help}</span>}
       </div>
     );
   }

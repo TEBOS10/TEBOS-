@@ -1,7 +1,9 @@
+import Image from "next/image";
 import Link from "next/link";
 import Header from "@/components/site/Header";
 import Footer from "@/components/site/Footer";
 import QuickLeadForm from "@/components/site/QuickLeadForm";
+import HeroBackground from "@/components/site/HeroBackground";
 
 const PILLARS = [
   { n: "01", title: "Brand management", desc: "Positioning, identity, and a clear story people can recognise." },
@@ -11,11 +13,11 @@ const PILLARS = [
 ];
 
 const SPORTS = [
-  { n: "01", title: "Football", desc: "A commercial presence that travels with the player." },
-  { n: "02", title: "Tennis", desc: "A personal story with the confidence to travel globally." },
-  { n: "03", title: "Athletics", desc: "Momentum from the track to the market." },
-  { n: "04", title: "Combat", desc: "Identity, audience, and opportunity around the athlete." },
-  { n: "05", title: "Your sport", desc: "Brand management shaped around your reality." },
+  { n: "01", title: "Football", desc: "A commercial presence that travels with the player.", image: "/hero/football.jpg" },
+  { n: "02", title: "Tennis", desc: "A personal story with the confidence to travel globally.", image: "/hero/tennis.jpg" },
+  { n: "03", title: "Athletics", desc: "Momentum from the track to the market.", image: "/hero/athletics.jpg" },
+  { n: "04", title: "Combat", desc: "Identity, audience, and opportunity around the athlete.", image: null },
+  { n: "05", title: "Your sport", desc: "Brand management shaped around your reality.", image: null },
 ];
 
 const HOW = [
@@ -73,24 +75,27 @@ export default function Home() {
       <Header />
       <main className="flex-1">
         {/* Hero */}
-        <section className="mx-auto max-w-6xl px-5 pt-16 pb-20 md:pt-24">
-          <p className="bame-eyebrow">Brand management for sport</p>
-          <h1 className="mt-4 max-w-3xl text-4xl leading-tight md:text-6xl">
-            Build the name. <em className="not-italic text-[var(--bame-accent)]">Own the moment.</em>
-          </h1>
-          <p className="mt-6 max-w-xl text-[var(--bame-muted)]">
-            BAME helps athletes and sports events become commercially established through brand, PR, social media,
-            marketing, production, and sponsorship.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/intake?contact_type=athlete" className="rounded-full bg-[var(--bame-accent)] px-6 py-3 text-sm font-semibold text-[#1a1608]">
-              Build my brand
-            </Link>
-            <Link href="/intake?contact_type=event" className="rounded-full px-6 py-3 text-sm font-semibold ring-1 ring-[var(--bame-line)]">
-              I run a sports event
-            </Link>
+        <section className="relative overflow-hidden">
+          <HeroBackground />
+          <div className="mx-auto max-w-6xl px-5 pt-24 pb-32 md:pt-36 md:pb-44">
+            <p className="bame-eyebrow">Brand management for sport</p>
+            <h1 className="mt-4 max-w-3xl text-4xl leading-tight drop-shadow-[0_2px_20px_rgba(0,0,0,0.6)] md:text-7xl">
+              Build the name. <em className="not-italic text-[var(--bame-accent)]">Own the moment.</em>
+            </h1>
+            <p className="mt-6 max-w-xl text-[var(--bame-ink)]/90 drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)]">
+              BAME helps athletes and sports events become commercially established through brand, PR, social media,
+              marketing, production, and sponsorship.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link href="/intake?contact_type=athlete" className="rounded-full bg-[var(--bame-accent)] px-6 py-3 text-sm font-semibold text-[#1a1608]">
+                Build my brand
+              </Link>
+              <Link href="/intake?contact_type=event" className="rounded-full px-6 py-3 text-sm font-semibold text-[var(--bame-ink)] ring-1 ring-white/30 backdrop-blur-sm">
+                I run a sports event
+              </Link>
+            </div>
+            <p className="mt-10 text-xs text-[var(--bame-ink)]/70">Multi-sport by design — built from South Africa, ready for the world.</p>
           </div>
-          <p className="mt-10 text-xs text-[var(--bame-muted)]">Multi-sport by design — built from South Africa, ready for the world.</p>
         </section>
 
         {/* Services */}
@@ -120,10 +125,27 @@ export default function Home() {
             <h2 className="mt-3 max-w-2xl text-3xl md:text-4xl">Our method adapts to your sport.</h2>
             <div className="mt-10 grid gap-5 md:grid-cols-3 lg:grid-cols-5">
               {SPORTS.map((s) => (
-                <div key={s.n} className="rounded-2xl border border-[var(--bame-line)] p-5">
-                  <div className="bame-eyebrow">{s.n}</div>
-                  <h3 className="mt-2 text-lg">{s.title}</h3>
-                  <p className="mt-2 text-xs text-[var(--bame-muted)]">{s.desc}</p>
+                <div
+                  key={s.n}
+                  className="group relative h-56 overflow-hidden rounded-2xl border border-[var(--bame-line)] p-5"
+                >
+                  {s.image && (
+                    <>
+                      <Image
+                        src={s.image}
+                        alt={`${s.title} — BAME brand management`}
+                        fill
+                        sizes="(max-width: 768px) 50vw, 20vw"
+                        className="object-cover transition duration-500 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/10" />
+                    </>
+                  )}
+                  <div className="relative">
+                    <div className="bame-eyebrow">{s.n}</div>
+                    <h3 className="mt-2 text-lg">{s.title}</h3>
+                    <p className="mt-2 text-xs text-[var(--bame-muted)]">{s.desc}</p>
+                  </div>
                 </div>
               ))}
             </div>

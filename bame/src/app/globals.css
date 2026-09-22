@@ -34,3 +34,32 @@ h1, h2, h3, .font-serif-display {
   font-size: 0.7rem;
   color: var(--bame-accent);
 }
+
+@keyframes hero-crossfade {
+  0%, 27% { opacity: 1; }
+  33%, 100% { opacity: 0; }
+}
+
+@keyframes hero-kenburns {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.08); }
+}
+
+.hero-slide {
+  opacity: 0;
+  animation: hero-crossfade 15s infinite;
+}
+
+.hero-slide-img {
+  animation: hero-kenburns 15s infinite ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-slide,
+  .hero-slide-img {
+    animation: none;
+  }
+  .hero-slide:first-child {
+    opacity: 1;
+  }
+}
