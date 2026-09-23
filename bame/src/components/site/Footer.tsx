@@ -15,7 +15,12 @@ export default function Footer() {
           <Link href="/intake">Get started</Link>
           <Link href="/privacy">Privacy</Link>
         </nav>
-        <div>© {new Date().getFullYear()} BAME</div>
+        <div className="flex items-center gap-4">
+          <span>© {new Date().getFullYear()} BAME</span>
+          <Link href="/staff/login" className="text-xs opacity-60 hover:opacity-100">
+            Staff
+          </Link>
+        </div>
       </div>
     </footer>
   );
