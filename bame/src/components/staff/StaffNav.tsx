@@ -21,6 +21,7 @@ export default function StaffNav({ profile }: { profile: StaffProfile }) {
     { href: "/staff", label: "Dashboard" },
     { href: "/staff/players", label: "Players" },
   ];
+  if (profile.is_admin || profile.department === "finance") links.push({ href: "/staff/finance", label: "Finance" });
   if (profile.is_admin) links.push({ href: "/staff/team", label: "Team" });
 
   return (

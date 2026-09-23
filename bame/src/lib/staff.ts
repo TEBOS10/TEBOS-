@@ -29,3 +29,14 @@ export const DEPARTMENT_HIGHLIGHT_SECTIONS: Record<Department, string[]> = {
   tech: ["production_content"],
   admin: [],
 };
+
+// Client-facing monthly package fees (ZAR) — Custom is scoped and priced
+// separately per client, so it has no fixed fee.
+export const PACKAGE_CLIENT_FEES: Record<"foundation" | "growth", number> = {
+  foundation: 6500,
+  growth: 10000,
+};
+
+export function formatZAR(amount: number): string {
+  return `R${amount.toLocaleString("en-ZA")}`;
+}
