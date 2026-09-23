@@ -17,7 +17,10 @@ export default function StaffNav({ profile }: { profile: StaffProfile }) {
     router.refresh();
   }
 
-  const links = [{ href: "/staff", label: "Dashboard" }];
+  const links = [
+    { href: "/staff", label: "Dashboard" },
+    { href: "/staff/players", label: "Players" },
+  ];
   if (profile.is_admin) links.push({ href: "/staff/team", label: "Team" });
 
   return (

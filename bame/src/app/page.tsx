@@ -96,10 +96,15 @@ export default function Home() {
             </div>
             <p className="mt-10 text-xs text-[var(--bame-ink)]/70">Multi-sport by design — built from South Africa, ready for the world.</p>
           </div>
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-40 translate-y-1/2 bg-[var(--bame-accent)] opacity-25 blur-3xl"
+            style={{ borderRadius: "100%" }}
+          />
         </section>
 
         {/* Services */}
-        <section id="services" className="border-t border-[var(--bame-line)] py-20">
+        <section id="services" className="relative border-t border-[var(--bame-line)] py-20">
           <div className="mx-auto max-w-6xl px-5">
             <p className="bame-eyebrow">What BAME manages</p>
             <h2 className="mt-3 max-w-2xl text-3xl md:text-4xl">Make the work connect.</h2>
@@ -108,7 +113,7 @@ export default function Home() {
             </p>
             <div className="mt-10 grid gap-6 md:grid-cols-2">
               {PILLARS.map((p) => (
-                <div key={p.n} className="rounded-2xl border border-[var(--bame-line)] bg-[var(--bame-panel)] p-6">
+                <div key={p.n} className="floaty rounded-2xl border border-[var(--bame-line)] bg-[var(--bame-panel)] p-6">
                   <div className="bame-eyebrow">{p.n}</div>
                   <h3 className="mt-2 text-xl">{p.title}</h3>
                   <p className="mt-2 text-sm text-[var(--bame-muted)]">{p.desc}</p>
@@ -127,7 +132,7 @@ export default function Home() {
               {SPORTS.map((s) => (
                 <div
                   key={s.n}
-                  className="group relative h-56 overflow-hidden rounded-2xl border border-[var(--bame-line)] p-5"
+                  className="floaty group relative h-56 overflow-hidden rounded-2xl border border-[var(--bame-line)] p-5"
                 >
                   {s.image && (
                     <>
@@ -170,7 +175,17 @@ export default function Home() {
         </section>
 
         {/* Packages */}
-        <section id="athletes" className="border-t border-[var(--bame-line)] py-20">
+        <section id="athletes" className="relative overflow-hidden border-t border-[var(--bame-line)] py-20">
+          <div className="absolute inset-0 -z-10">
+            <Image
+              src="/hero/tennis.jpg"
+              alt=""
+              fill
+              sizes="100vw"
+              className="object-cover opacity-60"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-[var(--bame-bg)] via-[var(--bame-bg)]/45 to-[var(--bame-bg)]" />
+          </div>
           <div className="mx-auto max-w-6xl px-5">
             <p className="bame-eyebrow">For athletes</p>
             <h2 className="mt-3 max-w-2xl text-3xl md:text-4xl">Choose your starting line.</h2>
@@ -179,7 +194,7 @@ export default function Home() {
             </p>
             <div className="mt-10 grid gap-6 md:grid-cols-3">
               {PACKAGES.map((p) => (
-                <div key={p.n} className="flex flex-col rounded-2xl border border-[var(--bame-line)] bg-[var(--bame-panel)] p-6">
+                <div key={p.n} className="floaty flex flex-col rounded-2xl border border-[var(--bame-line)] bg-[var(--bame-panel)]/90 p-6 backdrop-blur-sm">
                   <div className="flex items-center justify-between">
                     <div className="bame-eyebrow">{p.n}</div>
                     {p.tag && <span className="rounded-full bg-[var(--bame-accent)] px-3 py-1 text-xs font-semibold text-[#1a1608]">{p.tag}</span>}
@@ -216,7 +231,7 @@ export default function Home() {
             </p>
             <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
               {ARCHITECTURE.map((a) => (
-                <div key={a.n} className="rounded-2xl border border-[var(--bame-line)] p-5">
+                <div key={a.n} className="floaty rounded-2xl border border-[var(--bame-line)] p-5">
                   <div className="bame-eyebrow">{a.n}</div>
                   <h3 className="mt-2 text-lg">{a.title}</h3>
                   <p className="mt-2 text-xs text-[var(--bame-muted)]">{a.desc}</p>
@@ -239,7 +254,7 @@ export default function Home() {
             </p>
             <div className="mt-10 grid gap-6 md:grid-cols-3">
               {EVENT_PACKAGES.map((p) => (
-                <div key={p.n} className="rounded-2xl border border-[var(--bame-line)] bg-[var(--bame-panel)] p-6">
+                <div key={p.n} className="floaty rounded-2xl border border-[var(--bame-line)] bg-[var(--bame-panel)] p-6">
                   <div className="bame-eyebrow">{p.n}</div>
                   <h3 className="mt-2 text-xl">{p.title}</h3>
                   <p className="mt-2 text-sm text-[var(--bame-muted)]">{p.desc}</p>

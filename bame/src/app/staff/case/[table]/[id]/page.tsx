@@ -2,6 +2,8 @@ import { notFound, redirect } from "next/navigation";
 import { getSupabaseSessionClient } from "@/lib/supabase-server";
 import { INTAKE_SECTIONS, type IntakeField } from "@/lib/intake-schema";
 import { DEPARTMENT_HIGHLIGHT_SECTIONS, DEPARTMENT_LABELS, type StaffProfile } from "@/lib/staff";
+import DeliverableChecklist, { type DeliverableItem } from "@/components/staff/DeliverableChecklist";
+import OnboardPlayerButton from "@/components/staff/OnboardPlayerButton";
 
 function fieldValue(payload: Record<string, unknown>, field: IntakeField): string | null {
   const raw = payload[field.name];
@@ -11,6 +13,15 @@ function fieldValue(payload: Record<string, unknown>, field: IntakeField): strin
     return typeof raw === "string" ? raw.split("; ").filter(Boolean).join(", ") : String(raw);
   }
   return String(raw);
+}
+
+function packageTierFromInterest(interest: unknown): "foundation" | "growth" | "custom" | null {
+  if (typeof interest !== "string") return null;
+  const v = interest.toLowerCase();
+  if (v.includes("foundation")) return "foundation";
+  if (v.includes("growth")) return "growth";
+  if (v.includes("custom")) return "custom";
+  return null;
 }
 
 export default async function StaffCasePage({
@@ -94,11 +105,45 @@ export default async function StaffCasePage({
   const d = row as Record<string, unknown>;
   const payload = (d.payload as Record<string, unknown>) || {};
 
+  const tier = packageTierFromInterest(d.package_interest);
+  const assignedDept = d.assigned_department as string | null;
+  let deliverableItems: DeliverableItem[] = [];
+  if (tier && assignedDept) {
+    const [{ data: deliverables }, { data: statuses }] = await Promise.all([
+      supabase
+        .from("deliverables")
+        .select("id, title, phase")
+        .eq("department", assignedDept)
+        .eq("package_tier", tier)
+        .order("phase")
+        .order("sort_order"),
+      supabase.from("case_deliverable_status").select("deliverable_id, done").eq("case_table", "diagnostics").eq("case_id", id),
+    ]);
+    const doneMap = new Map((statuses || []).map((s) => [s.deliverable_id, s.done]));
+    deliverableItems = (deliverables || []).map((dl) => ({
+      id: dl.id,
+      title: dl.title,
+      phase: dl.phase as DeliverableItem["phase"],
+      done: !!doneMap.get(dl.id),
+    }));
+  }
+
   const sortedSections = [...INTAKE_SECTIONS].sort((a, b) => {
     const ah = highlightSections.has(a.id) ? 0 : 1;
     const bh = highlightSections.has(b.id) ? 0 : 1;
     return ah - bh;
   });
+
+  let existingPlayerId: string | null = null;
+  if (profile.is_admin) {
+    const { data: existingPlayer } = await supabase
+      .from("players")
+      .select("id")
+      .eq("source_case_table", "diagnostics")
+      .eq("source_case_id", id)
+      .maybeSingle();
+    existingPlayerId = existingPlayer?.id || null;
+  }
 
   return (
     <main className="px-5 py-10">
@@ -117,10 +162,43 @@ export default async function StaffCasePage({
           {d.created_at ? <span>Submitted {new Date(String(d.created_at)).toLocaleString()}</span> : null}
         </div>
 
+        {profile.is_admin && (
+          <div className="mt-4">
+            {existingPlayerId ? (
+              <a href={`/staff/players/${existingPlayerId}`} className="text-xs text-[var(--bame-accent)] hover:underline">
+                View player profile →
+              </a>
+            ) : (
+              <OnboardPlayerButton
+                caseTable="diagnostics"
+                caseId={id}
+                fullName={String(d.athlete_full_name || "Unnamed")}
+                email={d.athlete_email ? String(d.athlete_email) : null}
+                sport={d.primary_sport ? String(d.primary_sport) : null}
+                packageTier={tier || "foundation"}
+              />
+            )}
+          </div>
+        )}
+
         {!profile.is_admin && (
           <p className="mt-4 rounded-lg bg-[var(--bame-panel)] px-4 py-2 text-xs text-[var(--bame-accent)]">
             Highlighted below for {DEPARTMENT_LABELS[profile.department]} — the rest is shown for context.
           </p>
+        )}
+
+        {deliverableItems.length > 0 && (
+          <section className="mt-8 rounded-2xl border border-[var(--bame-accent)]/50 bg-[var(--bame-panel)] p-6">
+            <h2 className="text-sm font-semibold text-[var(--bame-accent)]">
+              {DEPARTMENT_LABELS[assignedDept as keyof typeof DEPARTMENT_LABELS]} deliverables — {tier} package
+            </h2>
+            <p className="mt-1 text-xs text-[var(--bame-muted)]">
+              Matched automatically from this client&apos;s package, so the team works from a checklist instead of starting from scratch.
+            </p>
+            <div className="mt-4">
+              <DeliverableChecklist caseTable="diagnostics" caseId={id} items={deliverableItems} />
+            </div>
+          </section>
         )}
 
         <div className="mt-8 space-y-6">
