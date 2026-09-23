@@ -6,7 +6,11 @@ import LedgerForm from "@/components/staff/LedgerForm";
 
 export const metadata = { title: "Finance — BAME staff" };
 
-const ALLOCATABLE_DEPARTMENTS = DEPARTMENTS.filter((d) => d !== "admin");
+// Only departments paid as a fixed monthly amount per active client belong here.
+// Sales (10% one-time referral commission), Finance/Admin (% of total company
+// revenue) and CEO/BAME (company-wide profit share) are funded a different way —
+// see the capital ledger and the compensation notes below instead.
+const ALLOCATABLE_DEPARTMENTS = DEPARTMENTS.filter((d) => d === "production" || d === "pr" || d === "tech");
 
 export default async function StaffFinancePage() {
   const supabase = await getSupabaseSessionClient();

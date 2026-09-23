@@ -11,7 +11,9 @@ interface Allocation {
 }
 
 const TIERS: Array<"foundation" | "growth"> = ["foundation", "growth"];
-const ALLOCATABLE_DEPARTMENTS = DEPARTMENTS.filter((d) => d !== "admin");
+// Sales, Finance and Admin aren't paid a fixed per-client amount (commission /
+// % of total revenue instead), so they don't belong in this table.
+const ALLOCATABLE_DEPARTMENTS = DEPARTMENTS.filter((d) => d === "production" || d === "pr" || d === "tech");
 
 export default function AllocationEditor({ allocations }: { allocations: Allocation[] }) {
   const router = useRouter();
