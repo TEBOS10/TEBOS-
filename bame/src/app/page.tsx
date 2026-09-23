@@ -16,7 +16,7 @@ const SPORTS = [
   { n: "01", title: "Football", desc: "A commercial presence that travels with the player.", image: "/hero/football.jpg" },
   { n: "02", title: "Tennis", desc: "A personal story with the confidence to travel globally.", image: "/hero/tennis.jpg" },
   { n: "03", title: "Athletics", desc: "Momentum from the track to the market.", image: "/hero/athletics.jpg" },
-  { n: "04", title: "Combat", desc: "Identity, audience, and opportunity around the athlete.", image: null },
+  { n: "04", title: "Combat", desc: "Identity, audience, and opportunity around the athlete.", image: "/hero/combat.jpg" },
   { n: "05", title: "Your sport", desc: "Brand management shaped around your reality.", image: null },
 ];
 

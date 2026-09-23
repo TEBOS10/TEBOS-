@@ -4,6 +4,7 @@ const SLIDES = [
   { src: "/hero/football.jpg", alt: "Footballer at full sprint under stadium floodlights" },
   { src: "/hero/tennis.jpg", alt: "Tennis player mid-serve at golden hour" },
   { src: "/hero/athletics.jpg", alt: "Sprinter exploding out of the blocks" },
+  { src: "/hero/combat.jpg", alt: "Combat sports athlete training in dramatic gym lighting" },
 ];
 
 export default function HeroBackground() {

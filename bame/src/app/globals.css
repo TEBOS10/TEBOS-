@@ -36,8 +36,8 @@ h1, h2, h3, .font-serif-display {
 }
 
 @keyframes hero-crossfade {
-  0%, 27% { opacity: 1; }
-  33%, 100% { opacity: 0; }
+  0%, 20% { opacity: 1; }
+  25%, 100% { opacity: 0; }
 }
 
 @keyframes hero-kenburns {
@@ -47,11 +47,11 @@ h1, h2, h3, .font-serif-display {
 
 .hero-slide {
   opacity: 0;
-  animation: hero-crossfade 15s infinite;
+  animation: hero-crossfade 20s infinite;
 }
 
 .hero-slide-img {
-  animation: hero-kenburns 15s infinite ease-out;
+  animation: hero-kenburns 20s infinite ease-out;
 }
 
 @media (prefers-reduced-motion: reduce) {
