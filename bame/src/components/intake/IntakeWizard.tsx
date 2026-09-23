@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { INTAKE_SECTIONS, type IntakeField } from "@/lib/intake-schema";
 
 const STORAGE_KEY = "bame_intake_draft_v1";
@@ -338,7 +339,13 @@ export default function IntakeWizard({ initialValues }: { initialValues: Values 
           </button>
         )}
       </div>
-      <p className="mt-3 text-xs text-[var(--bame-muted)]">Your progress saves automatically on this device.</p>
+      <p className="mt-3 text-xs text-[var(--bame-muted)]">
+        Your progress saves automatically on this device. See our{" "}
+        <Link href="/privacy" className="underline">
+          Privacy Policy
+        </Link>{" "}
+        for how we handle what you share.
+      </p>
     </div>
   );
 }

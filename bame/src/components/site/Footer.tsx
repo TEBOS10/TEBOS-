@@ -13,6 +13,7 @@ export default function Footer() {
           <Link href="/#athletes">Athletes</Link>
           <Link href="/#refer">Refer &amp; earn 10%</Link>
           <Link href="/intake">Get started</Link>
+          <Link href="/privacy">Privacy</Link>
         </nav>
         <div>© {new Date().getFullYear()} BAME</div>
       </div>
