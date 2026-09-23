@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { getSupabaseSessionClient } from "@/lib/supabase-server";
 import NotificationItem from "@/components/staff/NotificationItem";
 import CaseAssign from "@/components/staff/CaseAssign";
@@ -139,14 +140,14 @@ export default async function StaffDashboardPage() {
             <div className="mt-3 divide-y divide-[var(--bame-line)] rounded-2xl border border-[var(--bame-line)]">
               {unassignedCases.map((c) => (
                 <div key={`${c.table}-${c.id}`} className="flex flex-wrap items-center justify-between gap-3 p-4 text-sm">
-                  <div>
+                  <Link href={`/staff/case/${c.table}/${c.id}`} className="hover:underline">
                     <p>
                       {c.name} <span className="text-xs text-[var(--bame-muted)]">({c.table === "leads" ? "enquiry" : "diagnostic"})</span>
                     </p>
                     <p className="text-xs text-[var(--bame-muted)]">
                       {c.email} {c.sport ? `· ${c.sport}` : ""}
                     </p>
-                  </div>
+                  </Link>
                   <CaseAssign table={c.table} id={c.id} />
                 </div>
               ))}
@@ -171,7 +172,11 @@ export default async function StaffDashboardPage() {
           <div className="mt-3 divide-y divide-[var(--bame-line)] rounded-2xl border border-[var(--bame-line)]">
             {cases.length === 0 && <p className="p-4 text-sm text-[var(--bame-muted)]">No cases assigned yet.</p>}
             {cases.map((c) => (
-              <div key={`${c.table}-${c.id}`} className="flex flex-wrap items-center justify-between gap-3 p-4 text-sm">
+              <Link
+                key={`${c.table}-${c.id}`}
+                href={`/staff/case/${c.table}/${c.id}`}
+                className="flex flex-wrap items-center justify-between gap-3 p-4 text-sm hover:bg-[var(--bame-bg)]"
+              >
                 <div>
                   <p>
                     {c.name} <span className="text-xs text-[var(--bame-muted)]">({c.table === "leads" ? "enquiry" : "diagnostic"})</span>
@@ -184,7 +189,7 @@ export default async function StaffDashboardPage() {
                   <p className="capitalize">{c.status}</p>
                   {c.assigned_department && <p>{DEPARTMENT_LABELS[c.assigned_department]}</p>}
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </section>

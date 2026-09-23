@@ -17,3 +17,15 @@ export interface StaffProfile {
   department: Department;
   is_admin: boolean;
 }
+
+// Which diagnostic intake sections matter most to each department, so a
+// routed case highlights what that team actually needs to act on instead of
+// making them read all 14 sections looking for their part.
+export const DEPARTMENT_HIGHLIGHT_SECTIONS: Record<Department, string[]> = {
+  sales: ["control", "representation", "sponsorship", "business", "goals", "event"],
+  production: ["athlete_identity", "performance", "production_content"],
+  pr: ["brand_audience", "pr_commercial"],
+  finance: ["control", "sponsorship", "business"],
+  tech: ["production_content"],
+  admin: [],
+};
