@@ -15,11 +15,22 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const supabase = getSupabaseServerClient();
+  const { data: allowed } = await supabase.rpc("check_submission_throttle", {
+    p_table: "leads",
+    p_email: email,
+  });
+  if (allowed === false) {
+    return NextResponse.json(
+      { ok: false, error: "Too many submissions from this email recently. Please try again later." },
+      { status: 429 },
+    );
+  }
+
   // Generate the id ourselves and insert without asking Postgres to return
   // the row: the anon RLS policy only grants INSERT, not SELECT, and an
   // insert that requests the row back (`.select()`) needs SELECT too.
   const id = crypto.randomUUID();
-  const supabase = getSupabaseServerClient();
   const { error } = await supabase.from("leads").insert({
     id,
     contact_type,
