@@ -213,9 +213,8 @@ update public.actions set owner_user_id = :'op_b', capability_key = 'web.update_
   where id = :'act1';
 select t.expect_error(format('update public.actions set status = %L where id = %L', 'queued', :'act1'),
   'TEBOS_APPROVAL_REQUIRED');
-update public.actions set status = 'awaiting_approval' where id = :'act1';
 select t.expect_error(format('update public.actions set status = %L where id = %L', 'approved', :'act1'),
-  'TEBOS_APPROVAL_REQUIRED');
+  'TEBOS_ILLEGAL_TRANSITION');
 
 -- approval must cover the action's risk tier
 select t.expect_error(format('insert into public.approvals (org_id, action_id, requested_operation, risk_tier)
@@ -224,6 +223,9 @@ insert into public.approvals (org_id, action_id, requested_operation, risk_tier,
   values (:'org1', :'act1', 'Publish enquiry form on website', 2, 'public website', '{"page": "/contact"}')
   returning id as appr1 \gset
 select t.ok((select requested_by = :'op_b' from public.approvals where id = :'appr1'), 'requester recorded as the session user');
+select t.ok((select status = 'awaiting_approval' from public.actions where id = :'act1'), 'requesting approval moved the action to awaiting_approval');
+select t.expect_error(format('update public.actions set status = %L where id = %L', 'approved', :'act1'),
+  'TEBOS_APPROVAL_REQUIRED');
 
 -- an operator cannot decide approvals (RLS filters the row out)
 update public.approvals set status = 'approved', decided_by = :'op_b' where id = :'appr1';
@@ -237,8 +239,9 @@ select t.ok((select decided_by = :'appr_c' and decided_at is not null from publi
 select t.expect_error(format('update public.approvals set proposed_action = %L where id = %L', '{"page": "/other"}', :'appr1'),
   'TEBOS_APPROVAL_IMMUTABLE');
 
+select t.ok((select status = 'approved' from public.actions where id = :'act1'), 'approval moved the action to approved');
+
 select set_config('request.jwt.claim.sub', :'op_b', false);
-update public.actions set status = 'approved' where id = :'act1';
 update public.actions set status = 'queued' where id = :'act1';
 update public.actions set status = 'running' where id = :'act1';
 select t.ok((select status = 'consumed' from public.approvals where id = :'appr1'), 'single-use approval consumed on execution');
@@ -300,6 +303,17 @@ select t.expect_error(format('update public.actions set status = %L where id = %
 select t.expect_error(format('update public.actions set status = %L where id = %L', 'blocked', :'act_b'), '23514');
 update public.actions set status = 'blocked', blocked_reason = 'Waiting for copy draft' where id = :'act_b';
 
+-- a rejected approval sends the action back to ready for revision
+select set_config('request.jwt.claim.sub', :'op_b', false);
+insert into public.actions (org_id, business_id, finding_id, title, objective, risk_tier, approval_required, owner_user_id)
+  values (:'org1', :'biz1', :'f1', 'Email past enquirers', 'Win back leads', 2, true, :'op_b') returning id as act_r \gset
+update public.actions set status = 'ready' where id = :'act_r';
+insert into public.approvals (org_id, action_id, requested_operation, risk_tier) values (:'org1', :'act_r', 'Send email', 2)
+  returning id as appr_r \gset
+select set_config('request.jwt.claim.sub', :'appr_c', false);
+update public.approvals set status = 'rejected', decision_note = 'Rewrite the copy first' where id = :'appr_r';
+select t.ok((select status = 'ready' from public.actions where id = :'act_r'), 'rejection returns the action to ready');
+
 -- ===========================================================================
 -- Connections: "connected" only when verified
 -- ===========================================================================
@@ -337,7 +351,11 @@ select t.ok((select count(*) from public.credential_references) = 0, 'viewer doe
 select t.ok((select count(*) from public.audit_events where entity_id = :'act1' and action = 'actions.transition') = 7,
   'every action transition audited');
 select t.ok((select bool_and(actor_type = 'user' and actor_id = :'op_b') from public.audit_events
-             where entity_id = :'act1' and action = 'actions.transition'), 'transitions attributed to the session user');
+             where entity_id = :'act1' and action = 'actions.transition' and after ->> 'status' <> 'approved'),
+  'transitions attributed to the session user');
+select t.ok((select actor_id from public.audit_events
+             where entity_id = :'act1' and action = 'actions.transition' and after ->> 'status' = 'approved') = :'appr_c',
+  'the approval decision moved the action, attributed to the approver');
 select t.ok((select count(*) from public.audit_events where entity_id = :'appr1' and action = 'approvals.transition'
              and actor_id = :'appr_c') = 1, 'approval decision attributed to the approver');
 

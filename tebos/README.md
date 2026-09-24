@@ -19,6 +19,7 @@ source → evidence → finding → action → approval → run → verification
 | `src/acquisition/` | The acquisition worker: safe fetcher, robots.txt, target planning, evidence extraction, Postgres store |
 | `src/intelligence/` | The intelligence worker: provider-neutral reasoning port, Claude provider, findings validation, Postgres store |
 | `src/main.ts` | The worker process (both stages); `Dockerfile` + `railway.json` deploy it |
+| `web/` | The operator interface (stage 3): React app on the signed-in user's Supabase session — see `web/README.md` |
 | `eval/` | Finding-quality check against the real model (`npm run eval:findings`, billed) |
 | `docs/ROADMAP.md` | Stages to autonomy and the gate for each |
 | `test/` | Unit tests, including parity tests that fail if the TS state machines or rule codes drift from the SQL; `test/integration` runs the worker against the real schema |

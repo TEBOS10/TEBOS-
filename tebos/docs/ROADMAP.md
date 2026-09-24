@@ -21,7 +21,7 @@ the control plane itself.
 | 0. Foundations | Schema with enforced rules, tenancy, audit, domain core | Rule tests pass on Postgres and on `tebos-core` | Done |
 | 1. Live evidence | Worker deployed on Railway; real scans of real businesses | 5+ real businesses scanned; every page ends in an honest state | Built; awaiting deployment |
 | 2. Intelligence | Claude-proposed findings, validated and linked to evidence | `npm run eval:findings` healthy; findings on real scans reviewed by a person | Built; awaiting API key |
-| 3. Interface + actions | Sign-in; Home, Businesses, Scans, Findings, Actions, Approvals; action proposals from findings | A real business review run end to end in TEBOS | Not started |
+| 3. Interface + actions | Sign-in; Home, Businesses, Scans, Findings, Actions, Approvals; action proposals from findings | A real business review run end to end in TEBOS | First slice built (`web/`); awaiting deployment |
 | 4. Capabilities | Verified connectors (email, CRM, calendar, WhatsApp); approved execution with verification | Actions verified as done by the provider, not just by TEBOS | Not started |
 | 5. Operating systems | Playbooks, workflow engine, operating-system specifications for new and existing businesses, scheduled rescans, change detection | One client (e.g. BAME) running on a TEBOS-generated operating system | Not started |
 | 6. Autonomy | Agents run the loop within permission boundaries | Autonomy granted per action type after measured success; tier-3 actions always need a person | Not started |
@@ -38,3 +38,26 @@ the control plane itself.
   approver. The database already enforces this (`guard_approval`).
 - Every autonomous step stays auditable and reversible where possible. A drop in the success rate
   withdraws the autonomy automatically.
+
+## Stage 3 — what the first slice covers and what remains
+
+Built:
+- sign-in and organisation creation;
+- the command centre;
+- the business workspace;
+- scan and finding views with evidence traceability;
+- action proposal from findings;
+- the full manual action lifecycle (approve, queue, run, record, verify, block, cancel);
+- approvals, system state and audit history.
+
+Approval decisions move their action automatically (migration `approval_drives_action`).
+
+Remaining for the stage-3 gate:
+1. Deploy the interface and run a real business review end to end.
+2. Invite teammates. This needs a server-side invite flow, because admins can't create other users'
+   accounts from the browser.
+3. Show people's names instead of ids in history. This needs a `profiles` table readable within the
+   organisation.
+4. Record outcomes (metric, baseline, observed value, verification) from the action page.
+5. Export reports (dossier §26).
+

@@ -14,3 +14,4 @@ The path to autonomy, and the gate each stage must pass, is in `tebos/docs/ROADM
 - The database is the system of record. Rules that protect trust are enforced in `tebos/supabase/migrations`, mirrored in `tebos/src/domain`; `test/schema-parity.test.ts` keeps them in sync.
 - Never fabricate scans, evidence, connection status, execution success or outcomes — the schema rejects most of these; do not work around it.
 - Run `npm run typecheck`, `npm test` and `PGHOST=… PGUSER=… npm run test:db` in `tebos/` before pushing.
+- For interface changes, also run `npm run typecheck`, `npm test` and `npm run test:e2e` in `tebos/web/`. The interface uses the user's own Supabase session and must never hold a privileged key.
