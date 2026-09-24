@@ -69,6 +69,12 @@ Create `tebos/` as a standalone, UI-free control-plane core:
 - Tenant deletion is intentionally blocked by the audit trail (`on delete restrict`). Retention and erasure
   need an explicit policy (dossier §24) before they are allowed.
 
+## Update — acquisition worker (2026-09-24)
+
+`src/acquisition/` implements pipeline stages 2–5 (acquisition → evidence) on top of `url-safety`. The
+design is deliberately deterministic: no model is involved in fetching, planning or extracting (§48).
+Interpretation into findings is the next layer's job.
+
 ## Deferred (tracked, not forgotten)
 
 The following are not built yet, in roadmap order:
@@ -78,6 +84,5 @@ The following are not built yet, in roadmap order:
 - **P2:** workflow definitions and runs, schedules and rescans, change events and snapshots, agent
   orchestration, and outcome-to-economic-impact rollups.
 - **Runtime pieces:**
-  - an acquisition worker that uses `url-safety`
   - a server/API layer using the user's Supabase session
   - a secret vault integration behind `credential_references.vault_ref`

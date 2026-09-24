@@ -16,7 +16,8 @@ source → evidence → finding → action → approval → run → verification
 | `supabase/tests/` | SQL tests that try to break each rule (cross-tenant access, fake completion, unsupported findings, self-approval, unverified "connected", audit tampering, …) |
 | `src/domain/` | Pure TypeScript mirror of the rules, plus confidence model, scan outcome, evidence-graph explainer, action engine, capability routing |
 | `src/security/url-safety.ts` | SSRF-safe URL and redirect policy for public acquisition |
-| `test/` | Unit tests, including parity tests that fail if the TS state machines or rule codes drift from the SQL |
+| `src/acquisition/` | The acquisition worker: safe fetcher, robots.txt, target planning, evidence extraction, Postgres store, process entry point |
+| `test/` | Unit tests, including parity tests that fail if the TS state machines or rule codes drift from the SQL; `test/integration` runs the worker against the real schema |
 
 ## Core rules the database enforces
 
@@ -41,12 +42,72 @@ the interface can show an actionable state rather than a raw error string.
 npm install
 npm run typecheck
 npm test                                   # unit + schema-parity tests
-TEBOS_TEST_PG="-h localhost -U postgres" npm run test:db   # needs a Postgres 15+ server
+PGHOST=localhost PGUSER=postgres npm run test:db   # needs a Postgres 15+ server
 ```
 
 `test:db` creates a throwaway database and loads a minimal stand-in for Supabase's `auth` schema
-(`supabase/tests/00_supabase_stub.sql`). It then applies every migration, runs the rule tests and drops the
-database.
+(`supabase/tests/00_supabase_stub.sql`). It then applies every migration and runs the rule tests. Next it runs
+the integration tests (the acquisition worker against the real schema), and finally drops the database.
+
+## Acquisition worker
+
+The worker reads a business's public website into evidence. It is stage 2–5 of the intelligence pipeline;
+it never interprets what it reads.
+
+```bash
+TEBOS_DATABASE_URL=postgres://… npm run worker
+```
+
+It polls for `queued` scans and claims one at a time with `for update skip locked`, so several workers can
+run safely. For each scan:
+
+1. It reads robots.txt, then the start page. The start page is `scans.scope.url`, or else the business
+   website.
+2. It picks up to `target_limit − 1` further same-site pages, preferring contact, about, services and
+   pricing pages.
+3. It fetches each page with `safeFetch`:
+   - every URL and every redirect hop is vetted by `url-safety`;
+   - the connection is pinned to the vetted IP, so the host name is never re-resolved (no DNS rebinding);
+   - responses are capped at 2 MB after decompression;
+   - requests time out after 15 s;
+   - only text content is accepted.
+4. Every target ends in an honest state, and each state is recorded as evidence:
+
+   | Outcome | Target status | Failure class |
+   |---|---|---|
+   | Page read | `acquired` | — |
+   | Page read but truncated | `partially_acquired` | — |
+   | HTTP error | `unavailable` | `acquisition` |
+   | 401 / 403 response | `unavailable` | `permission` |
+   | Nothing readable in the page | `unavailable` | `extraction` |
+   | Unsafe URL | `blocked` | `validation` |
+   | Disallowed by robots.txt | `blocked` | `permission` |
+
+   Pages that were not read become `unavailable` evidence that says what is missing.
+5. Evidence is limited to observed facts, each with an excerpt and its location on the page:
+   - title and meta description;
+   - H1/H2 headings;
+   - published email addresses and phone numbers;
+   - WhatsApp and social links;
+   - forms and their fields;
+   - the page text.
+
+   Absence is never recorded as a fact.
+6. The scan finishes as `completed`, `partial` or `failed`, derived from its targets. Its confidence
+   components are visible, with `method: acquisition.v1`.
+
+Every run is recorded as an `agent_runs` row (role `acquisition`) plus one `tool_calls` row per fetch. Every
+row written is audited as `actor_type = agent`, with `actor_id` set to the run id. If the worker crashes
+mid-scan, pending targets are resolved as `unavailable` / `internal`, and the evidence already acquired is
+kept.
+
+`TEBOS_DATABASE_URL` is a server-side Postgres connection string: the Supabase direct or session-pooler
+string. It must never reach a browser. Optional settings: `TEBOS_POLL_MS` (default 5000),
+`TEBOS_POLITENESS_MS` (the delay between page requests, default 500) and `TEBOS_WORKER_ID`.
+
+**Network requirement.** The worker needs direct outbound HTTP(S). If it is routed through a forward proxy,
+the proxy resolves the host names instead of the worker, which defeats address pinning. Run it where it can
+connect directly, and keep egress to private ranges blocked at the network layer as defence in depth.
 
 ## Live project
 
