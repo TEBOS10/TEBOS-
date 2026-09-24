@@ -62,8 +62,10 @@ Create `tebos/` as a standalone, UI-free control-plane core:
 - The UI will be rebuilt or ported onto this core later. The visual system from the Manus build (dark
   green-black surfaces, Manrope + DM Mono) should be preserved when that happens, but not before the P0/P1
   foundations are in place.
-- Migrations are written for a **dedicated TEBOS Supabase project**, not for the existing `bame-os` project.
-  They have not been applied to any remote project.
+- Migrations target a **dedicated TEBOS Supabase project**, not the existing `bame-os` project. They
+  were applied to `tebos-core` (`jjibuvqpidimckmrhlqa`) on 2026-09-24. A hardening migration then
+  cleared the advisor findings: pinned search paths, no anonymous `create_organisation`, and per-command
+  policies.
 - Tenant deletion is intentionally blocked by the audit trail (`on delete restrict`). Retention and erasure
   need an explicit policy (dossier §24) before they are allowed.
 

@@ -1,5 +1,5 @@
 // Roles and permissions (dossier §34). Row-level security in
-// supabase/migrations/20260924000600_rls.sql is the enforcement point; this
+// supabase/migrations/20260924184652_rls.sql (+ _hardening) is the enforcement point; this
 // matrix lets the application explain and pre-check what a role may do.
 
 export const ORG_ROLES = ["org_admin", "operator", "approver", "viewer"] as const;

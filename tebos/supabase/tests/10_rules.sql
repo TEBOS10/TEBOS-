@@ -371,4 +371,14 @@ commit;
 select t.ok((select actor_type = 'agent' and actor_id = 'agent-run-42' from public.audit_events
              where entity_id = :'run_ag'), 'agent actor recorded');
 
+-- only signed-in users can create organisations; anon cannot even call the function
+select t.ok(not has_function_privilege('anon', 'public.create_organisation(text, text)', 'execute'),
+  'anon cannot execute create_organisation');
+select t.ok(has_function_privilege('authenticated', 'public.create_organisation(text, text)', 'execute'),
+  'authenticated can execute create_organisation');
+-- every tebos_private function pins its search_path
+select t.ok(not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+  where n.nspname = 'tebos_private' and not exists (select 1 from unnest(p.proconfig) c where c like 'search_path=%')),
+  'tebos_private functions pin search_path');
+
 select 'ok' as rules;

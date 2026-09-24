@@ -22,7 +22,7 @@ source → evidence → finding → action → approval → run → verification
 
 | Rule | Where |
 |---|---|
-| Tenant isolation (RLS + composite FKs + frozen tenant keys) | `…000600_rls.sql`, all tables |
+| Tenant isolation (RLS + composite FKs + frozen tenant keys) | `…_rls.sql`, `…_hardening.sql`, all tables |
 | Legal state transitions only | `state_transitions` + `enforce_state_machine` triggers |
 | Scan status must match what was acquired | `guard_scan_outcome` |
 | Evidence is immutable; "unavailable" never asserts a fact | `evidence` checks + `guard_evidence_immutable` |
@@ -48,11 +48,24 @@ TEBOS_TEST_PG="-h localhost -U postgres" npm run test:db   # needs a Postgres 15
 (`supabase/tests/00_supabase_stub.sql`). It then applies every migration, runs the rule tests and drops the
 database.
 
-## Applying to Supabase
+## Live project
 
-Create a dedicated TEBOS project; do not reuse `bame-os`. Then apply `supabase/migrations` in order,
-using the Supabase CLI (`supabase db push`) or the dashboard. Workers and agents use the service role and
-identify themselves per transaction:
+The schema is applied to the dedicated Supabase project **`tebos-core`** (ref `jjibuvqpidimckmrhlqa`,
+region `eu-west-1`, in TEBOS10's org). It is separate from `bame-os`. Migration file names match the
+versions recorded in the project, so `supabase db push` sees them as already applied.
+
+To add a schema change:
+
+1. Add a migration to `supabase/migrations/`.
+2. Run `npm test` and `npm run test:db` locally.
+3. Apply the migration to the project.
+4. Rename the file to the version the project records.
+5. Re-run the Supabase security advisor.
+
+The only open advisor warning is intentional: signed-in users can execute `create_organisation`, which is
+how an organisation gets its first admin.
+
+Workers and agents use the service role and identify themselves per transaction:
 
 ```sql
 set local tebos.actor_type = 'agent';

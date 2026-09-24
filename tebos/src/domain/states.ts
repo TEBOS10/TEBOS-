@@ -1,5 +1,5 @@
 // Explicit state machines (dossier §36). This is the application mirror of
-// public.state_transitions in supabase/migrations/20260924000100_foundation.sql;
+// public.state_transitions in supabase/migrations/20260924054852_foundation.sql;
 // test/states.test.ts asserts the two never drift apart. The database is the
 // final authority — these exist so callers can explain and pre-check a
 // transition instead of discovering the rule from a database error.
