@@ -16,7 +16,11 @@ source → evidence → finding → action → approval → run → verification
 | `supabase/tests/` | SQL tests that try to break each rule (cross-tenant access, fake completion, unsupported findings, self-approval, unverified "connected", audit tampering, …) |
 | `src/domain/` | Pure TypeScript mirror of the rules, plus confidence model, scan outcome, evidence-graph explainer, action engine, capability routing |
 | `src/security/url-safety.ts` | SSRF-safe URL and redirect policy for public acquisition |
-| `src/acquisition/` | The acquisition worker: safe fetcher, robots.txt, target planning, evidence extraction, Postgres store, process entry point |
+| `src/acquisition/` | The acquisition worker: safe fetcher, robots.txt, target planning, evidence extraction, Postgres store |
+| `src/intelligence/` | The intelligence worker: provider-neutral reasoning port, Claude provider, findings validation, Postgres store |
+| `src/main.ts` | The worker process (both stages); `Dockerfile` + `railway.json` deploy it |
+| `eval/` | Finding-quality check against the real model (`npm run eval:findings`, billed) |
+| `docs/ROADMAP.md` | Stages to autonomy and the gate for each |
 | `test/` | Unit tests, including parity tests that fail if the TS state machines or rule codes drift from the SQL; `test/integration` runs the worker against the real schema |
 
 ## Core rules the database enforces
@@ -47,18 +51,15 @@ PGHOST=localhost PGUSER=postgres npm run test:db   # needs a Postgres 15+ server
 
 `test:db` creates a throwaway database and loads a minimal stand-in for Supabase's `auth` schema
 (`supabase/tests/00_supabase_stub.sql`). It then applies every migration and runs the rule tests. Next it runs
-the integration tests (the acquisition worker against the real schema), and finally drops the database.
+the integration tests (acquisition, then intelligence, against the real schema) in a second fresh database, and
+finally drops both databases.
 
 ## Acquisition worker
 
 The worker reads a business's public website into evidence. It is stage 2–5 of the intelligence pipeline;
 it never interprets what it reads.
 
-```bash
-TEBOS_DATABASE_URL=postgres://… npm run worker
-```
-
-It polls for `queued` scans and claims one at a time with `for update skip locked`, so several workers can
+It runs inside the worker process (`npm run worker`, see [Deploying on Railway](#deploying-on-railway)). It polls for `queued` scans and claims one at a time with `for update skip locked`, so several workers can
 run safely. For each scan:
 
 1. It reads robots.txt, then the start page. The start page is `scans.scope.url`, or else the business
@@ -108,6 +109,60 @@ string. It must never reach a browser. Optional settings: `TEBOS_POLL_MS` (defau
 **Network requirement.** The worker needs direct outbound HTTP(S). If it is routed through a forward proxy,
 the proxy resolves the host names instead of the worker, which defeats address pinning. Run it where it can
 connect directly, and keep egress to private ranges blocked at the network layer as defence in depth.
+
+## Intelligence worker
+
+The intelligence worker turns a finished scan's evidence into findings (pipeline stages 6–7). It runs in the
+same process as acquisition, and only when `ANTHROPIC_API_KEY` is set.
+
+1. It claims a `completed` or `partial` scan that has no findings run yet. The claim is atomic, and a scan is
+   retried at most 3 times after failures.
+2. It gives the model only what the task needs: the business, the objective, user-supplied context (labelled
+   unverified), and the scan's evidence under short references (`E1`, `E2`, …). No database ids reach the
+   model. Website text is passed as quoted data and treated as untrusted.
+3. **The model proposes; TEBOS decides.** Claude (`claude-opus-5` by default, via `TEBOS_REASONING_MODEL`)
+   answers in a fixed JSON schema. TEBOS then validates every proposal deterministically:
+   - a finding needs at least one reference to evidence that was actually obtained;
+   - invented references, and references to pages that weren't read, are dropped;
+   - findings left without support are rejected, with the reason recorded;
+   - claims that something is absent are reclassified as hypotheses, and what would confirm them is
+     recorded;
+   - confidence is computed from the evidence (corroboration, extraction quality, coverage, contradiction).
+     It is never self-reported, and hypotheses are capped at 50%.
+4. Accepted findings are stored as `active` with `finding_evidence` links, in one transaction. The database
+   independently refuses any active finding without obtained supporting evidence.
+5. The run records the provider, the model that actually answered, tokens, the rejections with reasons,
+   and any adjustments.
+
+If a scan obtained no evidence, no model is called. If the model declines, times out or is unavailable, the
+run is recorded as failed and no findings are invented.
+
+Requests use adaptive thinking, a cached system prompt, and Anthropic's server-side refusal fallback
+(`fallbacks: "default"`): if a safety classifier declines, Anthropic's recommended fallback model answers,
+and `agent_runs.model` shows which model did.
+
+Before relying on it, run `ANTHROPIC_API_KEY=… npm run eval:findings`. It checks finding quality on fictional
+fixtures. It makes real, billed calls; expect a few cents per run at current prices.
+
+## Deploying on Railway
+
+The worker (acquisition + intelligence) deploys as one Railway service from this repository.
+
+1. Railway → **New Project** → **Deploy from GitHub repo** → `TEBOS10/TEBOS-`. Pick the branch that holds
+   this code.
+2. In the service's **Settings**, set **Root Directory** to `tebos`. Railway then uses `tebos/railway.json`
+   and `tebos/Dockerfile`.
+3. In **Variables**, set:
+
+   | Variable | Value |
+   |---|---|
+   | `TEBOS_DATABASE_URL` | The Supabase **session pooler** connection string (Supabase → the project → **Connect**), with the database password filled in. The pooler is reachable over IPv4. |
+   | `TEBOS_DATABASE_CA` | Supabase's CA certificate (Supabase → Database settings → SSL → download), pasted as text. With it, the worker verifies the database's certificate. |
+   | `ANTHROPIC_API_KEY` | A key from console.anthropic.com. Leave it unset to run acquisition only. |
+
+4. Deploy. The logs should show `worker.started` with `"stages":{"acquisition":true,"intelligence":true}`.
+
+All three values are secrets. They live only in Railway's variables, never in the repository or a browser.
 
 ## Live project
 

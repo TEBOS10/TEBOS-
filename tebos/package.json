@@ -9,16 +9,19 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:db": "./scripts/test-db.sh",
-    "worker": "tsx src/acquisition/main.ts"
+    "worker": "tsx src/main.ts",
+    "eval:findings": "tsx eval/run-findings-eval.ts"
   },
   "devDependencies": {
     "@types/node": "^20",
     "@types/pg": "^8.23.1",
-    "tsx": "^4.23.15",
     "typescript": "^5",
     "vitest": "^3"
   },
   "dependencies": {
-    "pg": "^8.23.0"
+    "@anthropic-ai/sdk": "^0.128.0",
+    "pg": "^8.23.0",
+    "tsx": "^4.23.15",
+    "zod": "^4.6.5"
   }
 }

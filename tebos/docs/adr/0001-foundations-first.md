@@ -75,6 +75,13 @@ Create `tebos/` as a standalone, UI-free control-plane core:
 design is deliberately deterministic: no model is involved in fetching, planning or extracting (§48).
 Interpretation into findings is the next layer's job.
 
+## Update — intelligence worker (2026-09-24)
+
+`src/intelligence/` implements stages 6–7 (evidence → findings), with Anthropic Claude as the reasoning
+provider behind a provider-neutral port. The model proposes and TEBOS decides: citations, absence claims
+and confidence are all validated deterministically before anything is stored. The stages to autonomy and
+their gates are in [`docs/ROADMAP.md`](../ROADMAP.md).
+
 ## Deferred (tracked, not forgotten)
 
 The following are not built yet, in roadmap order:

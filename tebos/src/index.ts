@@ -15,3 +15,7 @@ export * from "./acquisition/plan";
 export * from "./acquisition/robots";
 export * from "./acquisition/worker";
 // PgAcquisitionStore lives in ./acquisition/pg-store (server-only; pulls in the pg driver).
+export * from "./intelligence/provider";
+export * from "./intelligence/findings";
+export * from "./intelligence/worker";
+// AnthropicProvider (./intelligence/anthropic-provider) and the Pg stores are server-only.
