@@ -1,0 +1,7 @@
+node_modules
+test
+eval
+supabase
+docs
+coverage
+*.md

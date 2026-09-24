@@ -1,0 +1,27 @@
+{
+  "name": "@tebos/core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TEBOS control-plane core: domain rules, schema, security primitives and the acquisition worker. No UI.",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:db": "./scripts/test-db.sh",
+    "worker": "tsx src/main.ts",
+    "eval:findings": "tsx eval/run-findings-eval.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/pg": "^8.23.1",
+    "typescript": "^5",
+    "vitest": "^3"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.128.0",
+    "pg": "^8.23.0",
+    "tsx": "^4.23.15",
+    "zod": "^4.6.5"
+  }
+}
