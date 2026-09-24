@@ -27,6 +27,10 @@ export const RULE_CODES = [
   "TEBOS_UNSAFE_URL",
   "TEBOS_VALIDATION",
   "TEBOS_CAPABILITY_TIER",
+  "TEBOS_INVITATION_INVALID",
+  "TEBOS_INVITATION_EMAIL",
+  "TEBOS_ALREADY_MEMBER",
+  "TEBOS_LAST_ADMIN",
 ] as const;
 export type RuleCode = (typeof RULE_CODES)[number];
 

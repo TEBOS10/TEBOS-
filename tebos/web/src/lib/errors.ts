@@ -27,6 +27,10 @@ const MESSAGES: Record<RuleCode, string> = {
   TEBOS_UNSAFE_URL: "That address isn't a public website TEBOS can read.",
   TEBOS_VALIDATION: "Some required information is missing.",
   TEBOS_CAPABILITY_TIER: "The risk tier can't be lower than the capability it uses.",
+  TEBOS_INVITATION_INVALID: "This invitation link isn't valid any more. Ask for a new one.",
+  TEBOS_INVITATION_EMAIL: "This invitation was sent to a different email address, or yours isn't confirmed yet. Sign in with the invited address.",
+  TEBOS_ALREADY_MEMBER: "That person is already a member of this organisation.",
+  TEBOS_LAST_ADMIN: "An organisation must keep at least one admin. Make someone else an admin first.",
 };
 
 export interface Explained {

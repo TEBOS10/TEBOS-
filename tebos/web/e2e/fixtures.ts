@@ -3,7 +3,7 @@
 export const USER_ID = "00000000-0000-4000-8000-000000000001";
 export const APPROVER_ID = "00000000-0000-4000-8000-000000000002";
 export const ORG = "10000000-0000-4000-8000-000000000001";
-const BIZ = "20000000-0000-4000-8000-000000000001";
+export const BIZ = "20000000-0000-4000-8000-000000000001";
 const SCAN = "30000000-0000-4000-8000-000000000001";
 const SCAN_QUEUED = "30000000-0000-4000-8000-000000000002";
 const T1 = "40000000-0000-4000-8000-000000000001";
@@ -24,7 +24,15 @@ const minutesAgo = (m: number) => new Date(Date.now() - m * 60_000).toISOString(
 export function fixtureTables(): Record<string, Array<Record<string, unknown>>> {
   return {
     organisations: [{ id: ORG, name: "Demo organisation (fixture)", slug: "demo-fixture", created_at: minutesAgo(900) }],
-    memberships: [{ org_id: ORG, user_id: USER_ID, role: "org_admin", created_at: minutesAgo(900) }],
+    memberships: [
+      { org_id: ORG, user_id: USER_ID, role: "org_admin", created_at: minutesAgo(900) },
+      { org_id: ORG, user_id: APPROVER_ID, role: "approver", created_at: minutesAgo(800) },
+    ],
+    profiles: [
+      { user_id: USER_ID, display_name: "Thandi Mokoena", email: "operator@fixture.test", created_at: minutesAgo(900), updated_at: minutesAgo(900) },
+      { user_id: APPROVER_ID, display_name: "Nia Dlamini", email: "approver@fixture.test", created_at: minutesAgo(800), updated_at: minutesAgo(800) },
+    ],
+    invitations: [],
     businesses: [
       {
         id: BIZ, org_id: ORG, name: "Clayworks Studio (fictional)", website: "https://clayworks.example/", primary_domain: "clayworks.example",

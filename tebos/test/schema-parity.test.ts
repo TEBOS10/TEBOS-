@@ -13,7 +13,11 @@ const sql = readdirSync(migrationsDir)
 
 describe("domain mirrors the database", () => {
   it("state machines match public.state_transitions exactly", () => {
-    const block = sql.split("insert into public.state_transitions")[1]!.split(";")[0]!;
+    const block = sql
+      .split("insert into public.state_transitions")
+      .slice(1)
+      .map((part) => part.split(";")[0]!)
+      .join("\n");
     const fromSql = [...block.matchAll(/\('([a-z_]+)', '([a-z_()]+)', '([a-z_]+)'\)/g)]
       .map((m) => `${m[1]}:${m[2]}->${m[3]}`)
       .sort();

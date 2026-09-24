@@ -3,7 +3,7 @@ import { useState, type FormEvent } from "react";
 import { ErrorNote, Field } from "../components/ui";
 import { useSessionState } from "../lib/session";
 
-export function SignIn() {
+export function SignIn({ notice: intro }: { notice?: string } = {}) {
   const { db } = useSessionState();
   const [mode, setMode] = useState<"sign_in" | "sign_up">("sign_in");
   const [email, setEmail] = useState("");
@@ -20,7 +20,7 @@ export function SignIn() {
     const res =
       mode === "sign_in"
         ? await db.auth.signInWithPassword({ email, password })
-        : await db.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin } });
+        : await db.auth.signUp({ email, password, options: { emailRedirectTo: window.location.href } });
     setBusy(false);
     if (res.error) return setError(res.error);
     if (mode === "sign_up" && !res.data.session) {
@@ -42,6 +42,7 @@ export function SignIn() {
             <p className="muted">Understand the business. Know what matters. Execute what is next.</p>
           </div>
         </div>
+        {intro && <div className="note note-info">{intro}</div>}
         <div className="tabs" role="tablist">
           <button type="button" role="tab" aria-selected={mode === "sign_in"} className={`tab ${mode === "sign_in" ? "active" : ""}`} onClick={() => setMode("sign_in")}>
             Sign in

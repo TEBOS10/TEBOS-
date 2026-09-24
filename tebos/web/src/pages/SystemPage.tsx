@@ -1,6 +1,7 @@
 import { Card, Empty, ErrorNote, Loading, PageHeader, StatusBadge } from "../components/ui";
 import { auditTrail, systemOverview } from "../lib/data";
 import { ago, RISK_LABEL, statusLabel, when } from "../lib/format";
+import { usePeople } from "../lib/people";
 import { useOrg } from "../lib/session";
 import { useQuery } from "../lib/useQuery";
 
@@ -91,6 +92,7 @@ function Overview({ data }: { data: Awaited<ReturnType<typeof systemOverview>> }
 
 function AuditCard() {
   const org = useOrg();
+  const { actorLabel } = usePeople();
   const audit = useQuery(() => auditTrail(org.db, org.organisation.id), [org.organisation.id]);
   return (
       <Card title="Audit trail" subtitle="Append-only and tamper-evident. The latest 50 events in this organisation.">
@@ -114,8 +116,7 @@ function AuditCard() {
                     <td className="mono">{when(e.occurred_at)}</td>
                     <td className="mono">{e.action}</td>
                     <td className="mono wrap">
-                      {e.actor_type}
-                      {e.actor_id ? ` · ${e.actor_id === org.userId ? "you" : e.actor_id.slice(0, 12)}` : ""}
+                      {actorLabel(e.actor_type, e.actor_id)}
                     </td>
                   </tr>
                 ))}

@@ -1,8 +1,9 @@
-import { Pencil } from "lucide-react";
+import { FileText, Pencil } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { Card, Empty, ErrorNote, Field, Loading, PageHeader, StatusBadge } from "../components/ui";
 import { addContext, CONTEXT_KINDS, getBusiness, requestScan, updateBusiness, type Business } from "../lib/data";
 import { ago, pct, RISK_LABEL, statusLabel } from "../lib/format";
+import { usePeople } from "../lib/people";
 import { Link, navigate } from "../lib/router";
 import { useOrg } from "../lib/session";
 import { useQuery } from "../lib/useQuery";
@@ -34,11 +35,16 @@ export function BusinessPage({ id }: { id: string }) {
         eyebrow="Business"
         title={business.name}
         actions={
-          org.can("scan.run") && business.website ? (
-            <button className="btn btn-primary" onClick={rescan}>
-              Rescan website
-            </button>
-          ) : undefined
+          <div className="row">
+            <Link to={`/businesses/${business.id}/report`} className="btn">
+              <FileText size={15} aria-hidden /> Report
+            </Link>
+            {org.can("scan.run") && business.website && (
+              <button className="btn btn-primary" onClick={rescan}>
+                Rescan website
+              </button>
+            )}
+          </div>
         }
       >
         {business.website && (
@@ -203,8 +209,9 @@ function Profile({ business, onSaved }: { business: Business; onSaved: () => voi
   );
 }
 
-function ContextCard({ businessId, contexts, onAdded }: { businessId: string; contexts: Array<{ id: string; kind: string; statement: string; created_at: string }>; onAdded: () => void }) {
+function ContextCard({ businessId, contexts, onAdded }: { businessId: string; contexts: Array<{ id: string; kind: string; statement: string; created_at: string; supplied_by: string | null }>; onAdded: () => void }) {
   const org = useOrg();
+  const { nameOf } = usePeople();
   const [kind, setKind] = useState<(typeof CONTEXT_KINDS)[number]>("problem");
   const [statement, setStatement] = useState("");
   const [error, setError] = useState<unknown>(null);
@@ -232,7 +239,8 @@ function ContextCard({ businessId, contexts, onAdded }: { businessId: string; co
               <div className="list-main">
                 <span>{c.statement}</span>
                 <span className="list-meta">
-                  {statusLabel(c.kind)} · {ago(c.created_at)}
+                  {statusLabel(c.kind)} · {c.supplied_by ? `${nameOf(c.supplied_by)} · ` : ""}
+                  {ago(c.created_at)}
                 </span>
               </div>
             </li>

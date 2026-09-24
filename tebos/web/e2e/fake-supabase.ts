@@ -101,7 +101,11 @@ export async function installFakeSupabase(page: Page, opts: { signedIn?: boolean
     const m = /^\/rest\/v1\/(rpc\/)?([a-z_]+)$/.exec(url.pathname);
     if (!m) return route.fulfill({ status: 404, headers, body: "{}" });
     const [, rpc, name] = m;
-    if (rpc) return route.fulfill({ status: 200, headers, body: JSON.stringify(crypto.randomUUID()) });
+    if (rpc) {
+      const args = req.postDataJSON() ?? {};
+      writes.push({ method: "RPC", table: name!, body: args });
+      return route.fulfill({ status: 200, headers, body: JSON.stringify(answerRpc(tables, name!, args)) });
+    }
 
     const table = (tables[name!] ??= []);
     const wantsObject = (req.headers()["accept"] ?? "").includes("vnd.pgrst.object");
@@ -140,6 +144,24 @@ export async function installFakeSupabase(page: Page, opts: { signedIn?: boolean
   });
 
   return { tables, writes, refuse: (r) => (refusal = r) };
+}
+
+// The two invitation functions, answered from the fixture tables; any other RPC returns a fresh id.
+function answerRpc(tables: FakeSupabase["tables"], name: string, args: Record<string, string>): unknown {
+  const now = new Date().toISOString();
+  if (name === "create_invitation") {
+    (tables.invitations ??= []).unshift({ id: crypto.randomUUID(), org_id: args.p_org, email: args.p_email.toLowerCase(), role: args.p_role, status: "pending", invited_by: USER_ID, accepted_by: null, created_at: now, expires_at: new Date(Date.now() + 7 * 864e5).toISOString(), accepted_at: null });
+    return "fixture-invitation-token";
+  }
+  if (name === "accept_invitation") {
+    if (args.p_token === "expired-token") return null;
+    const invite = tables.invitations?.find((i) => i.status === "pending");
+    if (!invite) return null;
+    Object.assign(invite, { status: "accepted", accepted_by: USER_ID, accepted_at: now });
+    tables.memberships!.push({ org_id: invite.org_id, user_id: USER_ID, role: invite.role, created_at: now });
+    return invite.org_id;
+  }
+  return crypto.randomUUID();
 }
 
 function defaultStatus(table: string): string | undefined {

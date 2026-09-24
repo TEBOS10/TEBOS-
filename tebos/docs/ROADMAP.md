@@ -52,12 +52,17 @@ Built:
 
 Approval decisions move their action automatically (migration `approval_drives_action`).
 
+Added in the second slice (migration `team`):
+- teammates: `profiles` (names visible only to colleagues) and invitations. An invitation stores a
+  token fingerprint, never the token. It is accepted only by the invited, confirmed email, expires,
+  is single-use and revocable. An organisation can't lose its last admin;
+- names instead of ids in action history, approvals, business context and the audit trail;
+- outcomes recorded from the action page. A verified outcome can verify a completed action;
+- a business report (dossier §26) with labelled statement types, gaps, print or PDF, and CSV export
+  that is safe against formula injection.
+
 Remaining for the stage-3 gate:
-1. Deploy the interface and run a real business review end to end.
-2. Invite teammates. This needs a server-side invite flow, because admins can't create other users'
-   accounts from the browser.
-3. Show people's names instead of ids in history. This needs a `profiles` table readable within the
-   organisation.
-4. Record outcomes (metric, baseline, observed value, verification) from the action page.
-5. Export reports (dossier §26).
+1. Deploy the interface (Vercel) and the workers (Railway), and run a real business review end to end.
+   This needs the owner: the Supabase Auth Site URL, the Railway service and its secrets.
+2. Email delivery of invitations. For now the admin copies the link and sends it themselves.
 
