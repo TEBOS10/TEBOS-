@@ -23,6 +23,7 @@ export default function StaffNav({ profile }: { profile: StaffProfile }) {
   ];
   if (profile.is_admin || profile.department === "finance") links.push({ href: "/staff/finance", label: "Finance" });
   if (profile.is_admin) links.push({ href: "/staff/team", label: "Team" });
+  links.push({ href: "/staff/account", label: "Account" });
 
   return (
     <header className="border-b border-[var(--bame-line)] px-5 py-4">
