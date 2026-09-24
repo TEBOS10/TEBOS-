@@ -6,10 +6,10 @@ import QuickLeadForm from "@/components/site/QuickLeadForm";
 import HeroBackground from "@/components/site/HeroBackground";
 
 const PILLARS = [
-  { n: "01", title: "Brand management", desc: "Positioning, identity, and a clear story people can recognise." },
-  { n: "02", title: "PR & marketing", desc: "The right visibility, press direction, and campaign thinking." },
-  { n: "03", title: "Social & production", desc: "Content direction, creative production, and a presence that stays active." },
-  { n: "04", title: "Sponsorship", desc: "Commercial readiness, partner alignment, and opportunities worth pursuing." },
+  { n: "01", title: "Brand management", desc: "Positioning, identity, and a clear story people can recognise.", image: "/hero/brand-management.jpg" },
+  { n: "02", title: "PR & marketing", desc: "The right visibility, press direction, and campaign thinking.", image: "/hero/pr-marketing.jpg" },
+  { n: "03", title: "Social & production", desc: "Content direction, creative production, and a presence that stays active.", image: "/hero/social-production.jpg" },
+  { n: "04", title: "Sponsorship", desc: "Commercial readiness, partner alignment, and opportunities worth pursuing.", image: null },
 ];
 
 const SPORTS = [
@@ -113,10 +113,27 @@ export default function Home() {
             </p>
             <div className="mt-10 grid gap-6 md:grid-cols-2">
               {PILLARS.map((p) => (
-                <div key={p.n} className="floaty rounded-2xl border border-[var(--bame-line)] bg-[var(--bame-panel)] p-6">
-                  <div className="bame-eyebrow">{p.n}</div>
-                  <h3 className="mt-2 text-xl">{p.title}</h3>
-                  <p className="mt-2 text-sm text-[var(--bame-muted)]">{p.desc}</p>
+                <div
+                  key={p.n}
+                  className="floaty group relative min-h-[220px] overflow-hidden rounded-2xl border border-[var(--bame-line)] bg-[var(--bame-panel)] p-6"
+                >
+                  {p.image && (
+                    <>
+                      <Image
+                        src={p.image}
+                        alt=""
+                        fill
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                        className="object-cover transition duration-500 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/45 to-black/15" />
+                    </>
+                  )}
+                  <div className="relative">
+                    <div className="bame-eyebrow">{p.n}</div>
+                    <h3 className="mt-2 text-xl">{p.title}</h3>
+                    <p className="mt-2 text-sm text-[var(--bame-muted)]">{p.desc}</p>
+                  </div>
                 </div>
               ))}
             </div>
