@@ -115,6 +115,17 @@ export const agentRunMachine = machine({
   },
 });
 
+// Team invitations: single use, revocable, expiring.
+export const invitationMachine = machine({
+  initial: ["pending"],
+  transitions: {
+    pending: ["accepted", "revoked", "expired"],
+    accepted: [],
+    revoked: [],
+    expired: [],
+  },
+});
+
 export const MACHINES = {
   scan: scanMachine,
   scan_target: scanTargetMachine,
@@ -124,6 +135,7 @@ export const MACHINES = {
   approval: approvalMachine,
   connection: connectionMachine,
   agent_run: agentRunMachine,
+  invitation: invitationMachine,
 } as const;
 
 export type MachineName = keyof typeof MACHINES;
@@ -136,6 +148,7 @@ export type ActionRunStatus = StatesOf<typeof actionRunMachine>;
 export type ApprovalStatus = StatesOf<typeof approvalMachine>;
 export type ConnectionStatus = StatesOf<typeof connectionMachine>;
 export type AgentRunStatus = StatesOf<typeof agentRunMachine>;
+export type InvitationStatus = StatesOf<typeof invitationMachine>;
 
 export function canTransition<M extends MachineName>(
   name: M,

@@ -412,3 +412,140 @@ export async function auditTrail(db: Db, orgId: string, entityId?: string) {
   if (entityId) q = q.eq("entity_id", entityId);
   return must(await q);
 }
+
+// ---------------------------------------------------------------------------
+// People: profiles, members, invitations
+// ---------------------------------------------------------------------------
+
+export type Profile = Row<"profiles">;
+export type Invitation = Omit<Row<"invitations">, "token_hash">;
+export const ORG_ROLE_LABEL: Record<string, string> = {
+  org_admin: "Admin",
+  operator: "Operator",
+  approver: "Approver",
+  viewer: "Viewer",
+};
+
+export async function myProfile(db: Db, userId: string) {
+  return maybe(await db.from("profiles").select("*").eq("user_id", userId).maybeSingle());
+}
+
+/** The database records the email from the signed-in identity; only the name is ours to set. */
+export async function saveMyProfile(db: Db, userId: string, displayName: string) {
+  return must(await db.from("profiles").upsert({ user_id: userId, display_name: displayName.trim() }, { onConflict: "user_id" }).select().single());
+}
+
+export async function listMembers(db: Db, orgId: string) {
+  const memberships = must(await db.from("memberships").select("*").eq("org_id", orgId).order("created_at"));
+  const profiles = memberships.length ? must(await db.from("profiles").select("*").in("user_id", memberships.map((m) => m.user_id))) : [];
+  return memberships.map((m) => ({ membership: m, profile: profiles.find((p) => p.user_id === m.user_id) ?? null }));
+}
+
+export async function setMemberRole(db: Db, orgId: string, userId: string, role: string) {
+  return must(await db.from("memberships").update({ role }).eq("org_id", orgId).eq("user_id", userId).select().single());
+}
+
+export async function removeMember(db: Db, orgId: string, userId: string) {
+  const res = await db.from("memberships").delete().eq("org_id", orgId).eq("user_id", userId).select();
+  const rows = must(res);
+  if (rows.length === 0) throw new Error("The member wasn't removed. You may not have permission.");
+}
+
+const INVITATION_COLUMNS = "id, org_id, email, role, status, invited_by, accepted_by, created_at, expires_at, accepted_at";
+
+export async function listInvitations(db: Db, orgId: string): Promise<Invitation[]> {
+  return must(await db.from("invitations").select(INVITATION_COLUMNS).eq("org_id", orgId).order("created_at", { ascending: false }).limit(50));
+}
+
+/** Returns the one-time token. It is never stored in readable form, so it can only be shown now. */
+export async function createInvitation(db: Db, orgId: string, email: string, role: string): Promise<string> {
+  return must(await db.rpc("create_invitation", { p_org: orgId, p_email: email, p_role: role }));
+}
+
+export async function revokeInvitation(db: Db, id: string) {
+  return must(await db.from("invitations").update({ status: "revoked" }).eq("id", id).select(INVITATION_COLUMNS).single());
+}
+
+/** Resolves to the organisation joined, or null when the invitation had expired. */
+export async function acceptInvitation(db: Db, token: string): Promise<string | null> {
+  const res = await db.rpc("accept_invitation", { p_token: token });
+  if (res.error) throw res.error;
+  return (res.data as string | null) ?? null;
+}
+
+export const inviteLink = (token: string, origin = window.location.origin) => `${origin}/invite/${encodeURIComponent(token)}`;
+
+// ---------------------------------------------------------------------------
+// Outcomes
+// ---------------------------------------------------------------------------
+
+export interface OutcomeDraft {
+  metric: string;
+  unit: string;
+  baseline: number | null;
+  expected: number | null;
+  observed: number | null;
+  observedAt: string | null;
+  note: string;
+  /** How the observed value was checked; only when it was actually checked. */
+  verificationMethod: string;
+}
+
+export async function recordOutcome(db: Db, action: Action, d: OutcomeDraft) {
+  const verified = d.verificationMethod.trim().length > 0 && d.observed !== null;
+  return must(
+    await db
+      .from("outcomes")
+      .insert({
+        org_id: action.org_id,
+        action_id: action.id,
+        metric: d.metric.trim(),
+        unit: d.unit.trim() || null,
+        baseline_value: d.baseline,
+        expected_value: d.expected,
+        observed_value: d.observed,
+        observed_at: d.observedAt,
+        note: d.note.trim() || null,
+        verified_at: verified ? new Date().toISOString() : null,
+        verification_method: verified ? d.verificationMethod.trim() : null,
+      })
+      .select()
+      .single(),
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Reports
+// ---------------------------------------------------------------------------
+
+/** Everything a business report needs, as recorded — nothing is summarised away. */
+export async function businessReport(db: Db, businessId: string) {
+  const base = await getBusiness(db, businessId);
+  if (!base) return null;
+  const latestScan = base.scans.find((s) => s.status === "completed" || s.status === "partial") ?? null;
+  const activeFindings = base.findings.filter((f) => f.status === "active");
+  const findingIds = activeFindings.map((f) => f.id);
+  const actionIds = base.actions.map((a) => a.id);
+  const [links, evidence, sources, outcomes, targets] = await Promise.all([
+    findingIds.length ? db.from("finding_evidence").select("*").in("finding_id", findingIds) : Promise.resolve({ data: [], error: null }),
+    latestScan ? db.from("evidence").select("*").eq("scan_id", latestScan.id).order("created_at") : Promise.resolve({ data: [], error: null }),
+    db.from("sources").select("*").eq("business_id", businessId),
+    actionIds.length ? db.from("outcomes").select("*").in("action_id", actionIds) : Promise.resolve({ data: [], error: null }),
+    latestScan ? db.from("scan_targets").select("*").eq("scan_id", latestScan.id).order("created_at") : Promise.resolve({ data: [], error: null }),
+  ]);
+  const linkRows = must(links) as FindingEvidence[];
+  let evidenceRows = must(evidence) as Evidence[];
+  // include evidence cited by findings from earlier scans, so every citation resolves
+  const missingIds = [...new Set(linkRows.map((l) => l.evidence_id))].filter((id) => !evidenceRows.some((e) => e.id === id));
+  if (missingIds.length) evidenceRows = evidenceRows.concat(must(await db.from("evidence").select("*").in("id", missingIds)));
+  return {
+    ...base,
+    activeFindings,
+    latestScan,
+    targets: must(targets) as ScanTarget[],
+    links: linkRows,
+    evidence: evidenceRows,
+    sources: must(sources),
+    outcomes: must(outcomes) as Outcome[],
+  };
+}

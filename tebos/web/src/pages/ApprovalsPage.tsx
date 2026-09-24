@@ -1,6 +1,7 @@
 import { Card, Empty, ErrorNote, Loading, PageHeader, StatusBadge } from "../components/ui";
 import { listApprovals } from "../lib/data";
-import { ago, RISK_LABEL } from "../lib/format";
+import { ago, RISK_LABEL, statusLabel } from "../lib/format";
+import { usePeople } from "../lib/people";
 import { Link } from "../lib/router";
 import { useOrg } from "../lib/session";
 import { useQuery } from "../lib/useQuery";
@@ -32,6 +33,7 @@ export function ApprovalsPage() {
 }
 
 function Rows({ rows }: { rows: Awaited<ReturnType<typeof listApprovals>> }) {
+  const { nameOf } = usePeople();
   return (
     <ul className="list">
       {rows.map(({ approval: a, action }) => (
@@ -45,7 +47,8 @@ function Rows({ rows }: { rows: Awaited<ReturnType<typeof listApprovals>> }) {
               <span className="list-title">{a.requested_operation}</span>
             )}
             <span className="list-meta">
-              {RISK_LABEL[a.risk_tier]} · requested {ago(a.requested_at)}
+              {RISK_LABEL[a.risk_tier]} · requested by {nameOf(a.requested_by)} {ago(a.requested_at)}
+              {a.decided_by ? ` · ${statusLabel(a.status).toLowerCase()} by ${nameOf(a.decided_by)}` : ""}
               {a.decision_note ? ` · "${a.decision_note}"` : ""}
             </span>
           </div>

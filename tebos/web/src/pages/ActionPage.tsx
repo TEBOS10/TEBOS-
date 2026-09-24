@@ -1,10 +1,11 @@
 import { checkActionTransition, type ActionState, type ApprovalState, type TransitionContext } from "@core/actions";
 import { approvalPolicy, type RiskTier } from "@core/risk";
 import type { ActionStatus, ApprovalStatus, ActionRunStatus } from "@core/states";
-import { useState, type ReactNode } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import { Card, Empty, ErrorNote, Field, Loading, PageHeader, StatusBadge } from "../components/ui";
-import { auditTrail, decideApproval, getAction, recordManualRun, requestApproval, setActionStatus, verifyAction, type Action } from "../lib/data";
+import { auditTrail, decideApproval, getAction, recordManualRun, recordOutcome, requestApproval, setActionStatus, verifyAction, type Action, type OutcomeDraft } from "../lib/data";
 import { ago, RISK_LABEL, statusLabel, when } from "../lib/format";
+import { usePeople } from "../lib/people";
 import { Link } from "../lib/router";
 import { useOrg } from "../lib/session";
 import { useQuery } from "../lib/useQuery";
@@ -13,6 +14,7 @@ const PATH: ActionStatus[] = ["proposed", "ready", "awaiting_approval", "approve
 
 export function ActionPage({ id }: { id: string }) {
   const org = useOrg();
+  const { nameOf, actorLabel } = usePeople();
   const q = useQuery(() => getAction(org.db, id), [id]);
   const audit = useQuery(() => auditTrail(org.db, org.organisation.id, id), [id, q.data?.action.updated_at]);
   if (q.loading && !q.data) return <Loading />;
@@ -82,7 +84,7 @@ export function ActionPage({ id }: { id: string }) {
                     <div className="list-main">
                       <span className="list-title">{describeEvent(e.action, e.after)}</span>
                       <span className="list-meta">
-                        {e.actor_type === "user" ? (e.actor_id === org.userId ? "You" : `User ${e.actor_id?.slice(0, 8)}`) : `${e.actor_type} ${e.actor_id?.slice(0, 8) ?? ""}`} ·{" "}
+                        {actorLabel(e.actor_type, e.actor_id)} ·{" "}
                         {when(e.occurred_at)}
                       </span>
                     </div>
@@ -103,8 +105,8 @@ export function ActionPage({ id }: { id: string }) {
                     <div className="list-main">
                       <span className="list-title">{a.requested_operation}</span>
                       <span className="list-meta">
-                        requested {ago(a.requested_at)}
-                        {a.decided_at ? ` · decided ${ago(a.decided_at)}` : ""}
+                        requested by {nameOf(a.requested_by)} {ago(a.requested_at)}
+                        {a.decided_at ? ` · decided by ${nameOf(a.decided_by)} ${ago(a.decided_at)}` : ""}
                         {a.decision_note ? ` · "${a.decision_note}"` : ""}
                       </span>
                     </div>
@@ -147,23 +149,7 @@ export function ActionPage({ id }: { id: string }) {
               </ul>
             </Card>
           )}
-          {outcomes.length > 0 && (
-            <Card title="Outcomes">
-              <ul className="list">
-                {outcomes.map((o) => (
-                  <li key={o.id}>
-                    <div className="list-main">
-                      <span className="list-title">{o.metric}</span>
-                      <span className="list-meta">
-                        {o.baseline_value ?? "?"} → {o.observed_value ?? "?"} {o.unit ?? ""}
-                        {o.verified_at ? ` · verified ${ago(o.verified_at)}` : " · not verified"}
-                      </span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          )}
+          <OutcomesCard action={action} outcomes={outcomes} onChange={q.reload} />
         </div>
       </div>
     </div>
@@ -298,6 +284,7 @@ function NextSteps({ data, onChange }: { data: Loaded; onChange: () => void }) {
             </button>
           </div>,
         );
+        if (ctx.hasVerifiedOutcome) step("verify-outcome", "Mark verified by outcome", "verified", () => move("verified"), <span className="list-meta">A verified outcome has been recorded for this action.</span>);
         break;
       case "blocked":
       case "failed":
@@ -360,5 +347,124 @@ function NoteInput({ value, onChange, placeholder }: { value: string; onChange: 
     <Field label="">
       <input className="input" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} aria-label={placeholder} />
     </Field>
+  );
+}
+
+type Outcomes = Loaded["outcomes"];
+
+const EMPTY_OUTCOME = { metric: "", unit: "", baseline: "", expected: "", observed: "", observedAt: "", note: "", verificationMethod: "" };
+const num = (v: string) => (v.trim() === "" ? null : Number(v));
+
+/**
+ * What changed because of this action. An outcome is only marked verified
+ * when an observed value was recorded AND the person says how it was checked;
+ * an expectation alone is never shown as a result.
+ */
+function OutcomesCard({ action, outcomes, onChange }: { action: Action; outcomes: Outcomes; onChange: () => void }) {
+  const org = useOrg();
+  const [draft, setDraft] = useState(EMPTY_OUTCOME);
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<unknown>(null);
+  const canRecord = org.can("action.transition") && ["running", "completed", "verified"].includes(action.status);
+  const set = (k: keyof typeof EMPTY_OUTCOME) => (e: { target: { value: string } }) => setDraft((d) => ({ ...d, [k]: e.target.value }));
+  const numbersOk = [draft.baseline, draft.expected, draft.observed].every((v) => v.trim() === "" || Number.isFinite(Number(v)));
+  const willVerify = draft.observed.trim() !== "" && draft.verificationMethod.trim() !== "";
+
+  async function save(e: FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+    try {
+      const d: OutcomeDraft = {
+        metric: draft.metric,
+        unit: draft.unit,
+        baseline: num(draft.baseline),
+        expected: num(draft.expected),
+        observed: num(draft.observed),
+        observedAt: draft.observedAt ? new Date(draft.observedAt).toISOString() : null,
+        note: draft.note,
+        verificationMethod: draft.verificationMethod,
+      };
+      await recordOutcome(org.db, action, d);
+      setDraft(EMPTY_OUTCOME);
+      setOpen(false);
+      onChange();
+    } catch (err) {
+      setError(err);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card title="Outcomes" subtitle="What changed, measured against the baseline">
+      {outcomes.length === 0 ? (
+        <Empty>{canRecord ? "No outcome recorded yet." : "No outcome recorded."}</Empty>
+      ) : (
+        <ul className="list">
+          {outcomes.map((o) => (
+            <li key={o.id}>
+              <div className="list-main">
+                <span className="list-title">{o.metric}</span>
+                <span className="list-meta">
+                  baseline {o.baseline_value ?? "not recorded"} · expected {o.expected_value ?? "not stated"} · observed {o.observed_value ?? "not yet"} {o.unit ?? ""}
+                </span>
+                <span className="list-meta">{o.verified_at ? `Verified ${ago(o.verified_at)}: ${o.verification_method}` : "Not verified"}</span>
+                {o.note && <span className="list-meta">{o.note}</span>}
+              </div>
+              <StatusBadge status={o.verified_at ? "verified" : "unverified"} />
+            </li>
+          ))}
+        </ul>
+      )}
+      {canRecord && !open && (
+        <button className="btn btn-sm" style={{ marginTop: 10 }} onClick={() => setOpen(true)}>
+          Record an outcome
+        </button>
+      )}
+      {canRecord && open && (
+        <form className="form" onSubmit={save} style={{ marginTop: 12 }} aria-label="Record an outcome">
+          <Field label="Metric">
+            <input className="input" value={draft.metric} onChange={set("metric")} required placeholder="e.g. Orders captured per week" />
+          </Field>
+          <div className="form-row">
+            <Field label="Unit">
+              <input className="input" value={draft.unit} onChange={set("unit")} placeholder="orders" />
+            </Field>
+            <Field label="Baseline">
+              <input className="input" inputMode="decimal" value={draft.baseline} onChange={set("baseline")} />
+            </Field>
+          </div>
+          <div className="form-row">
+            <Field label="Expected">
+              <input className="input" inputMode="decimal" value={draft.expected} onChange={set("expected")} />
+            </Field>
+            <Field label="Observed">
+              <input className="input" inputMode="decimal" value={draft.observed} onChange={set("observed")} />
+            </Field>
+          </div>
+          <Field label="Observed on">
+            <input className="input" type="date" value={draft.observedAt} onChange={set("observedAt")} />
+          </Field>
+          <Field label="How was the observed value checked?" hint="Leave empty if it wasn't checked. Only a checked, observed value counts as verified.">
+            <input className="input" value={draft.verificationMethod} onChange={set("verificationMethod")} placeholder="e.g. Counted orders in the order form export" />
+          </Field>
+          <Field label="Note">
+            <input className="input" value={draft.note} onChange={set("note")} />
+          </Field>
+          {!numbersOk && <div className="note note-warn">Baseline, expected and observed must be numbers.</div>}
+          <ErrorNote error={error} title="Outcome not recorded" />
+          <div className="row">
+            <button className="btn btn-primary btn-sm" disabled={busy || !draft.metric.trim() || !numbersOk}>
+              {willVerify ? "Record verified outcome" : "Record outcome"}
+            </button>
+            <button type="button" className="btn btn-sm" onClick={() => setOpen(false)}>
+              Cancel
+            </button>
+          </div>
+        </form>
+      )}
+    </Card>
   );
 }

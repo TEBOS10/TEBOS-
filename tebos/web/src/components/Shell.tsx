@@ -1,4 +1,4 @@
-import { Building2, CheckSquare, Gauge, Home, LogOut, ScanSearch, ShieldCheck, Sparkles, Stamp } from "lucide-react";
+import { Building2, CheckSquare, Gauge, Home, LogOut, ScanSearch, ShieldCheck, Sparkles, Stamp, Users } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link, usePath } from "../lib/router";
 import { useOrg } from "../lib/session";
@@ -10,6 +10,7 @@ const NAV = [
   { to: "/findings", label: "Findings", icon: Sparkles },
   { to: "/actions", label: "Actions", icon: CheckSquare },
   { to: "/approvals", label: "Approvals", icon: Stamp },
+  { to: "/team", label: "Team", icon: Users },
   { to: "/system", label: "System", icon: Gauge },
 ];
 
@@ -18,7 +19,7 @@ export function Shell({ children }: { children: ReactNode }) {
   const { organisation, organisations, switchOrganisation, role, db, session } = useOrg();
   return (
     <div className="shell">
-      <aside className="sidebar">
+      <aside className="sidebar no-print">
         <div className="brand">
           <span className="brand-mark" aria-hidden>
             <ShieldCheck size={18} />

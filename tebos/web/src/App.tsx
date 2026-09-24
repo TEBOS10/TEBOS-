@@ -1,9 +1,12 @@
 import type { ReactNode } from "react";
+import { ProfilePrompt } from "./components/ProfilePrompt";
 import { Shell } from "./components/Shell";
 import { Loading } from "./components/ui";
 import { matchPath, RouterProvider, usePath } from "./lib/router";
+import { PeopleProvider } from "./lib/people";
 import { SessionProvider, useSessionState } from "./lib/session";
 import { supabase } from "./lib/supabase";
+import { AcceptInvite } from "./pages/AcceptInvite";
 import { ActionPage } from "./pages/ActionPage";
 import { ActionsPage } from "./pages/ActionsPage";
 import { ApprovalsPage } from "./pages/ApprovalsPage";
@@ -14,15 +17,18 @@ import { FindingPage } from "./pages/FindingPage";
 import { FindingsPage } from "./pages/FindingsPage";
 import { HomePage } from "./pages/HomePage";
 import { NotFound } from "./pages/NotFound";
+import { ReportPage } from "./pages/ReportPage";
 import { ScanPage } from "./pages/ScanPage";
 import { ScansPage } from "./pages/ScansPage";
 import { SignIn } from "./pages/SignIn";
 import { SystemPage } from "./pages/SystemPage";
+import { TeamPage } from "./pages/TeamPage";
 
 const ROUTES: Array<[string, (p: Record<string, string>) => ReactNode]> = [
   ["/", () => <HomePage />],
   ["/businesses", () => <BusinessesPage />],
   ["/businesses/:id", (p) => <BusinessPage id={p.id!} />],
+  ["/businesses/:id/report", (p) => <ReportPage id={p.id!} />],
   ["/scans", () => <ScansPage />],
   ["/scans/:id", (p) => <ScanPage id={p.id!} />],
   ["/findings", () => <FindingsPage />],
@@ -30,6 +36,7 @@ const ROUTES: Array<[string, (p: Record<string, string>) => ReactNode]> = [
   ["/actions", () => <ActionsPage />],
   ["/actions/:id", (p) => <ActionPage id={p.id!} />],
   ["/approvals", () => <ApprovalsPage />],
+  ["/team", () => <TeamPage />],
   ["/system", () => <SystemPage />],
 ];
 
@@ -44,6 +51,10 @@ function Routes() {
 
 function Gate() {
   const { state } = useSessionState();
+  const path = usePath();
+  // An invitation link works signed out (sign in first), with no organisation yet, or signed in elsewhere.
+  const invite = matchPath("/invite/:token", path);
+  if (invite && (state.phase === "signed_out" || state.phase === "no_organisation" || state.phase === "ready")) return <AcceptInvite token={invite.token!} />;
   switch (state.phase) {
     case "loading":
       return (
@@ -69,9 +80,12 @@ function Gate() {
       );
     case "ready":
       return (
-        <Shell>
-          <Routes />
-        </Shell>
+        <PeopleProvider>
+          <Shell>
+            <ProfilePrompt />
+            <Routes />
+          </Shell>
+        </PeopleProvider>
       );
   }
 }

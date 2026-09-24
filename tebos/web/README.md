@@ -17,6 +17,9 @@ them.
 | Findings | "Why did TEBOS say this?": the finding, its supporting and contradicting evidence with excerpts and sources, what is missing, and the checks TEBOS applied. Hypotheses are marked. |
 | Actions | Propose an action from a finding. The risk tier can't go below the capability's tier, and the approval requirement follows from the tier. Take only the legal next steps: ready, request approval, queue, start, record done or failed, verify, block, cancel. Each step is pre-checked with the same domain rules the database enforces. Each action has its full audit history. |
 | Approvals | Pending and decided requests. Approvers and admins decide on the action page. Deciding moves the action on automatically, and a tier-3 action can't be approved by the person who requested it. |
+| Outcomes | On a running, completed or verified action, record what changed: metric, unit, baseline, expected and observed values, and how the observed value was checked. An outcome is marked verified only when a value was observed and the check is described (the database enforces the same rule). A verified outcome lets a completed action be marked verified. |
+| Reports | `/businesses/:id/report`: everything recorded about one business, with each statement labelled as observed fact, interpretation, hypothesis, recommendation or user statement (dossier §26), and a section for what could not be read. Print it or save it as PDF. Download evidence, findings and actions as CSV; cells that a spreadsheet would run as formulas are neutralised. |
+| Team | Members with their names, emails and roles. Admins change roles, remove members (the last admin can't be removed) and create invitation links for an email and role. The link is shown once: only a fingerprint of its token is stored. It expires after 7 days and works only for someone signed in with that confirmed email (`/invite/:token`). Everyone is asked for a display name, so history, approvals and the audit trail show names instead of ids. |
 | System | Capabilities (what TEBOS knows how to do), verified connections (what is actually connected), worker runs, and the organisation's audit trail. |
 
 Controls appear according to the user's role (`org_admin`, `operator`, `approver`, `viewer`). This is only a
@@ -57,7 +60,7 @@ To set it up from scratch instead:
 
 ```bash
 npm run typecheck
-npm test              # unit tests (errors, formatting, routing, audit wording)
+npm test              # unit tests (errors, formatting, routing, audit wording, CSV escaping, invite links)
 npm run test:e2e      # the real app in Chromium against a network-level stand-in for Supabase
 ```
 

@@ -4,7 +4,9 @@ import { describeEvent } from "../pages/ActionPage";
 import { explainError } from "./errors";
 import { ago, domainOf, normaliseWebsite, pct } from "./format";
 import { matchPath } from "./router";
-import { slugify } from "./data";
+import { csvCell, toCsv } from "./csv";
+import { inviteLink, slugify } from "./data";
+import { findingsCsv } from "../pages/ReportPage";
 
 describe("explaining database refusals", () => {
   it("turns every rule the database enforces into a sentence", () => {
@@ -62,5 +64,43 @@ describe("display", () => {
     expect(describeEvent("actions.transition", { status: "awaiting_approval" })).toBe("Action → awaiting approval");
     expect(describeEvent("approvals.insert", { status: "pending" })).toBe("Approval created (pending)");
     expect(describeEvent("action_runs.update", {})).toBe("Run updated");
+  });
+});
+
+describe("CSV export", () => {
+  it("neutralises cells a spreadsheet would run as a formula", () => {
+    expect(csvCell("=HYPERLINK(\"http://x\")")).toBe(`"'=HYPERLINK(""http://x"")"`);
+    expect(csvCell("+27 82 000 0000")).toBe("'+27 82 000 0000");
+    expect(csvCell("-1")).toBe("'-1");
+    expect(csvCell("@SUM(A1)")).toBe("'@SUM(A1)");
+    expect(csvCell("\tcmd")).toBe("'\tcmd");
+  });
+  it("leaves real numbers and ordinary text alone, and quotes separators", () => {
+    expect(csvCell(-1)).toBe("-1");
+    expect(csvCell(0.46)).toBe("0.46");
+    expect(csvCell(null)).toBe("");
+    expect(csvCell("Order on WhatsApp")).toBe("Order on WhatsApp");
+    expect(csvCell("a, b")).toBe('"a, b"');
+    expect(csvCell("line1\nline2")).toBe('"line1\nline2"');
+  });
+  it("labels each finding for what it is and lists the evidence it rests on", () => {
+    const csv = findingsCsv({
+      activeFindings: [{ id: "f1", kind: "hypothesis", category: "sales", title: "=cmd", statement: "s", impact_hypothesis: null, confidence: 0.4, missing_information: ["a", "b"] }] as never,
+      links: [
+        { finding_id: "f1", evidence_id: "e1", relation: "supports" },
+        { finding_id: "f1", evidence_id: "e2", relation: "contradicts" },
+      ] as never,
+    });
+    const [header, row] = csv.trim().split("\r\n");
+    expect(header).toContain("label");
+    expect(row).toBe("f1,hypothesis,sales,'=cmd,s,,0.4,e1,e2,a; b");
+    expect(toCsv(["a"], [])).toBe("a\r\n");
+  });
+});
+
+describe("invitation links", () => {
+  it("carries the token in the path, encoded", () => {
+    expect(inviteLink("abc+def/1", "https://tebos.example")).toBe("https://tebos.example/invite/abc%2Bdef%2F1");
+    expect(matchPath("/invite/:token", "/invite/abc%2Bdef%2F1")).toEqual({ token: "abc+def/1" });
   });
 });
