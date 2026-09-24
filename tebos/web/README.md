@@ -34,6 +34,13 @@ npm run dev
 
 ## Deploy (Vercel)
 
+The Vercel project **`tebos-web`** (team "Tidy") is linked to this repository. Its root directory is
+`tebos/web`, it uses the Vite preset, and the two public variables below are set for every environment.
+Every push deploys automatically. Vercel Authentication is on (the default): only members of the Vercel
+team can open deployment URLs until a custom domain is added or protection is changed.
+
+To set it up from scratch instead:
+
 1. Vercel → **Add New Project** → import `TEBOS10/TEBOS-`. Set **Root Directory** to `tebos/web`. The
    framework preset is **Vite**.
 2. Add the environment variables `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`, with the values
