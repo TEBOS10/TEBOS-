@@ -1,0 +1,18 @@
+{
+  "name": "@tebos/core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TEBOS control-plane core: domain rules, schema and security primitives. No UI.",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:db": "./scripts/test-db.sh"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "typescript": "^5",
+    "vitest": "^3"
+  }
+}
