@@ -32,7 +32,18 @@ export async function PATCH(req: NextRequest) {
   const { id, ...fields } = body;
   if (!id) return NextResponse.json({ ok: false, error: "id is required" }, { status: 400 });
 
-  const allowed = ["full_name", "email", "sport", "package_tier", "status", "photo_url", "bio"];
+  const allowed = [
+    "full_name",
+    "email",
+    "sport",
+    "package_tier",
+    "status",
+    "photo_url",
+    "bio",
+    "highlights",
+    "achievements",
+    "portfolio_public",
+  ];
   const update: Record<string, unknown> = { updated_at: new Date().toISOString() };
   for (const key of allowed) {
     if (key in fields) update[key] = fields[key];
