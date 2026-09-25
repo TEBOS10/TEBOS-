@@ -189,6 +189,13 @@ The worker (acquisition, intelligence and execution) deploys as one Railway serv
 5. For delivery webhooks, generate a public domain for the service (**Settings → Networking**). Then set
    `VITE_TEBOS_WORKER_URL` to it in the web app, so admins see the URL to give Resend.
 
+Live deployment: Railway project `tebos`, service `tebos-worker`
+(`https://tebos-worker-production.up.railway.app`). It connects through the Supabase session pooler as a
+dedicated login, `tebos_worker`: it can log in and bypasses row-level security, inherits `service_role`,
+and allows at most 10 connections with a 60-second statement timeout. Every trigger, rule and audit still
+applies to it. The role was created outside the migrations, so its password never enters the repository.
+Rotate it with `alter role tebos_worker password '…'` and update `TEBOS_DATABASE_URL` in Railway.
+
 All three values are secrets. They live only in Railway's variables, never in the repository or a browser.
 
 ## Live project
