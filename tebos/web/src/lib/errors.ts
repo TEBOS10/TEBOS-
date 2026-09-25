@@ -33,6 +33,7 @@ const MESSAGES: Record<RuleCode, string> = {
   TEBOS_LAST_ADMIN: "An organisation must keep at least one admin. Make someone else an admin first.",
   TEBOS_SERVER_ONLY: "Only TEBOS itself can record that, after checking with the provider. It can't be set by hand.",
   TEBOS_INPUT_FROZEN: "What this action sends can't change once approval has been requested. Cancel it and propose a new one.",
+  TEBOS_CONSENT_REQUIRED: "A call can only be booked once the person being called has agreed to it and to the recording.",
 };
 
 export interface Explained {

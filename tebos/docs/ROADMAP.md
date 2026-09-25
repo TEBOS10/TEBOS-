@@ -90,3 +90,19 @@ Remaining for the stage-4 gate:
 2. Connect a real Resend account with a verified sending domain. Send real approved emails and see them
    verified by Resend.
 3. More connectors: CRM (HubSpot), calendar and WhatsApp, each with provider-side verification.
+
+## Internal evidence: diagnostic interviews
+
+Scans read the outside of a business. Interviews add what only its people know (migration
+`diagnostic_interviews`, `src/interviews/`, industry playbooks in `src/domain/playbooks/`):
+- a marketing-agency playbook (v1);
+- calls placed by an ElevenLabs voice agent at a booked time, with recorded consent and an upfront AI
+  disclosure, or the same questions answered in writing;
+- answers stored as the owner's statements, each quoted word for word from the transcript.
+
+Next:
+1. Connect a phone number: Twilio or SIP into ElevenLabs, then `ELEVENLABS_PHONE_NUMBER_ID` and
+   `ELEVENLABS_API_KEY` on the worker.
+2. Feed interview evidence into findings, alongside scans.
+3. Document uploads.
+4. Read-only connectors (accounting, CRM, project tools) to confirm answers against real data.

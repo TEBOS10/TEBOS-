@@ -260,3 +260,10 @@ table.table { width: 100%; border-collapse: collapse; }
 .link-button { background: none; border: 0; padding: 0; color: inherit; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; font: inherit; font-size: 14px; justify-self: start; opacity: .8; }
 .link-button:hover { opacity: 1; }
 .account-link { color: inherit; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgba(216, 255, 103, .4); }
+.consent { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; line-height: 1.45; }
+.consent input { margin-top: 3px; width: 18px; height: 18px; flex: none; }
+.transcript { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.transcript li { padding: 8px 12px; border-radius: 10px; background: var(--soft, #f6f7f5); }
+.transcript li.from-user { background: #eefbc9; }
+.transcript p { margin: 2px 0 0; }
+.plain-list { margin: 4px 0 0; padding-left: 18px; font-size: 14px; display: grid; gap: 4px; }

@@ -9,6 +9,8 @@ export * from "./domain/traceability";
 export * from "./domain/actions";
 export * from "./domain/capabilities";
 export * from "./domain/email";
+export * from "./domain/interview";
+export * from "./domain/playbooks";
 export * from "./security/url-safety";
 export * from "./acquisition/fetcher";
 export * from "./acquisition/extract";
@@ -23,3 +25,6 @@ export * from "./intelligence/worker";
 export * from "./execution/provider";
 export * from "./execution/worker";
 // ResendConnector (./execution/resend) and PgExecutionStore are server-only.
+export * from "./interviews/extract";
+export * from "./interviews/worker";
+// ElevenLabsVoice (./interviews/voice) and PgInterviewStore are server-only.

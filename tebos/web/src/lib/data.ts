@@ -613,3 +613,96 @@ export async function setConnectionEnabled(db: Db, id: string, enabled: boolean)
 /** Where a provider should send webhooks for a connection, when the worker's public address is known. */
 export const webhookUrl = (connectionId: string, workerUrl: string | undefined = import.meta.env.VITE_TEBOS_WORKER_URL) =>
   workerUrl ? `${workerUrl.replace(/\/+$/, "")}/webhooks/resend/${connectionId}` : null;
+
+// ---------------------------------------------------------------------------
+// Diagnostic interviews
+// ---------------------------------------------------------------------------
+
+export type Interview = Row<"interview_sessions">;
+
+export interface InterviewAnswer {
+  evidenceId: string;
+  questionKey: string;
+  question: string;
+  summary: string;
+  quote: string | null;
+  location: string | null;
+  channel: string;
+}
+
+export async function listInterviews(db: Db, businessId: string) {
+  return must(await db.from("interview_sessions").select("*").eq("business_id", businessId).order("created_at", { ascending: false }));
+}
+
+export async function bookInterviewCall(
+  db: Db,
+  business: { id: string; org_id: string },
+  input: { playbookKey: string; playbookVersion: number; phone: string; at: Date; consentText: string; userId: string },
+) {
+  return must(
+    await db
+      .from("interview_sessions")
+      .insert({
+        org_id: business.org_id,
+        business_id: business.id,
+        channel: "voice",
+        playbook_key: input.playbookKey,
+        playbook_version: input.playbookVersion,
+        status: "scheduled",
+        phone_number: input.phone,
+        scheduled_for: input.at.toISOString(),
+        consent_text: input.consentText,
+        // the database records consent as given by the signed-in person, now
+        consent_given_by: input.userId,
+        consent_given_at: new Date().toISOString(),
+      })
+      .select()
+      .single(),
+  );
+}
+
+export async function startWrittenInterview(db: Db, business: { id: string; org_id: string }, playbookKey: string, playbookVersion: number) {
+  return must(
+    await db
+      .from("interview_sessions")
+      .insert({ org_id: business.org_id, business_id: business.id, channel: "form", playbook_key: playbookKey, playbook_version: playbookVersion, status: "open" })
+      .select()
+      .single(),
+  );
+}
+
+export async function submitInterviewAnswers(db: Db, interviewId: string, answers: Array<{ question_key: string; question: string; answer: string }>) {
+  return must(await db.rpc("submit_interview_answers", { p_session: interviewId, p_answers: answers }));
+}
+
+export async function cancelInterview(db: Db, id: string) {
+  return must(await db.from("interview_sessions").update({ status: "cancelled" }).eq("id", id).select().single());
+}
+
+export async function rescheduleInterview(db: Db, id: string, at: Date) {
+  return must(await db.from("interview_sessions").update({ scheduled_for: at.toISOString() }).eq("id", id).select().single());
+}
+
+export async function getInterview(db: Db, id: string) {
+  const interview = maybe(await db.from("interview_sessions").select("*").eq("id", id).maybeSingle());
+  if (!interview) return null;
+  const [business, source] = await Promise.all([
+    db.from("businesses").select("id, name, org_id").eq("id", interview.business_id).single(),
+    db.from("sources").select("id").eq("business_id", interview.business_id).eq("source_type", "user_statement").eq("uri", `interview:${id}`).maybeSingle(),
+  ]);
+  const sourceRow = maybe(source);
+  const evidence = sourceRow ? must(await db.from("evidence").select("*").eq("source_id", sourceRow.id).order("created_at")) : [];
+  const answers: InterviewAnswer[] = evidence.map((e) => {
+    const v = (e.structured_value ?? {}) as { question_key?: string; question?: string; channel?: string };
+    return {
+      evidenceId: e.id,
+      questionKey: v.question_key ?? "",
+      question: v.question ?? "",
+      summary: e.fact ?? "",
+      quote: v.channel === "voice" ? e.excerpt : null,
+      location: e.content_location,
+      channel: v.channel ?? "",
+    };
+  });
+  return { interview, business: must(business), answers };
+}

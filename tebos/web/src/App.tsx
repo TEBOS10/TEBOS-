@@ -19,6 +19,7 @@ import { CreateOrganisation } from "./pages/CreateOrganisation";
 import { FindingPage } from "./pages/FindingPage";
 import { FindingsPage } from "./pages/FindingsPage";
 import { HomePage } from "./pages/HomePage";
+import { InterviewPage } from "./pages/InterviewPage";
 import { NotFound } from "./pages/NotFound";
 import { ReportPage } from "./pages/ReportPage";
 import { ScanPage } from "./pages/ScanPage";
@@ -39,6 +40,7 @@ const ROUTES: Array<[string, (p: Record<string, string>) => ReactNode]> = [
   ["/actions", () => <ActionsPage />],
   ["/actions/:id", (p) => <ActionPage id={p.id!} />],
   ["/approvals", () => <ApprovalsPage />],
+  ["/interviews/:id", (p) => <InterviewPage id={p.id!} />],
   ["/team", () => <TeamPage />],
   ["/account", () => <AccountPage />],
   ["/connections", () => <ConnectionsPage />],

@@ -33,6 +33,7 @@ export function fixtureTables(): Record<string, Array<Record<string, unknown>>> 
       { user_id: APPROVER_ID, display_name: "Nia Dlamini", email: "approver@fixture.test", created_at: minutesAgo(800), updated_at: minutesAgo(800) },
     ],
     invitations: [],
+    interview_sessions: [],
     businesses: [
       {
         id: BIZ, org_id: ORG, name: "Clayworks Studio (fictional)", website: "https://clayworks.example/", primary_domain: "clayworks.example",

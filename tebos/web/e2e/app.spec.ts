@@ -331,3 +331,70 @@ test("creating the first organisation explains what's missing instead of doing n
   await page.getByRole("button", { name: "Create organisation" }).click();
   await expect.poll(() => fake.writes.find((w) => w.table === "create_organisation")?.body).toEqual({ p_name: "Tidy Enterprise", p_slug: "tidy-enterprise" });
 });
+
+test("booking an interview call needs a valid number, a time and the person's consent", async ({ page }) => {
+  const fake = await installFakeSupabase(page);
+  await page.goto(`/businesses/${BIZ}`);
+  await page.getByRole("button", { name: "Book a call" }).click();
+  await page.getByLabel("Phone number to call").fill("12345");
+  await page.getByRole("button", { name: "Book the call" }).click();
+  await expect(page.getByText("Enter a valid phone number")).toBeVisible();
+  await page.getByLabel("Phone number to call").fill("082 123 4567");
+  await page.getByRole("button", { name: "Book the call" }).click();
+  await expect(page.getByText("Tick the consent box.")).toBeVisible();
+  expect(fake.writes.find((w) => w.table === "interview_sessions")).toBeUndefined();
+  await page.getByRole("checkbox").check();
+  await page.getByRole("button", { name: "Book the call" }).click();
+  await expect(page).toHaveURL(/\/interviews\//);
+  await expect(page.getByText("Booked. TEBOS's AI interviewer will call at the time below.")).toBeVisible();
+  expect(fake.writes.find((w) => w.table === "interview_sessions")?.body).toMatchObject({
+    channel: "voice", status: "scheduled", phone_number: "+27821234567", playbook_key: "marketing-agency",
+    consent_text: expect.stringContaining("recorded and transcribed"),
+  });
+  await snap(page, "8-interview-booked");
+});
+
+test("the same interview can be answered in writing, and becomes the owner's statements", async ({ page }) => {
+  const fake = await installFakeSupabase(page);
+  await page.goto(`/businesses/${BIZ}`);
+  await page.getByRole("button", { name: "Answer in writing" }).click();
+  await expect(page).toHaveURL(/\/interviews\//);
+  await page.getByLabel("Where do most of your new clients come from at the moment?").fill("Referrals from two past clients");
+  await page.getByLabel(/biggest client/).fill("About 40%");
+  await page.getByRole("button", { name: "Submit 2 answers" }).click();
+  const rpc = await expect.poll(() => fake.writes.find((w) => w.table === "submit_interview_answers")?.body).toBeTruthy().then(() => fake.writes.find((w) => w.table === "submit_interview_answers")!.body as { p_answers: Array<{ question_key: string; answer: string }> });
+  expect(rpc.p_answers.filter((a) => a.answer)).toEqual([
+    expect.objectContaining({ question_key: "clients.concentration", answer: "About 40%" }),
+    expect.objectContaining({ question_key: "pipeline.sources", answer: "Referrals from two past clients" }),
+  ]);
+});
+
+test("a completed call shows the transcript, the answers with quotes, and what wasn't covered", async ({ page }) => {
+  const fake = await installFakeSupabase(page);
+  const id = "90000000-0000-4000-8000-000000000001";
+  fake.tables.interview_sessions!.push({
+    id, org_id: ORG, business_id: BIZ, channel: "voice", playbook_key: "marketing-agency", playbook_version: 1, status: "completed",
+    phone_number: "+27821234567", scheduled_for: new Date(Date.now() - 3600e3).toISOString(), consent_text: "I agree to receive a call from TEBOS's AI interviewer and for the call to be recorded.",
+    consent_given_by: USER_ID, consent_given_at: new Date(Date.now() - 86400e3).toISOString(), requested_by: USER_ID, provider: "elevenlabs", provider_reference: "conv_1",
+    started_at: null, ended_at: null, duration_seconds: 612, extraction_status: "done", extraction_detail: "1 of 16 questions answered", failure_detail: null,
+    transcript: [
+      { role: "agent", message: "Hi, this is the TEBOS interviewer. I'm an AI assistant.", time_in_call_secs: 0 },
+      { role: "user", message: "Sure. We have nine clients, six on retainer.", time_in_call_secs: 14 },
+    ],
+    created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+  });
+  fake.tables.sources!.push({ id: "src-int", org_id: ORG, business_id: BIZ, source_type: "user_statement", uri: `interview:${id}`, label: "Diagnostic interview (call)", reliability: 0.6, created_at: new Date().toISOString() });
+  fake.tables.evidence!.push({
+    id: "ev-int", org_id: ORG, business_id: BIZ, source_id: "src-int", scan_id: null, scan_target_id: null, state: "user_supplied",
+    fact: "The owner says they have nine clients, six on retainer.", excerpt: "nine clients, six on retainer", missing_description: null,
+    structured_value: { interview_id: id, question_key: "clients.mix", question: "How many active clients do you have right now?", channel: "voice" },
+    content_location: "call at 0:14", retrieved_at: new Date().toISOString(), fresh_until: null, extraction_status: "complete", confidence: null, created_by_actor: "agent", created_at: new Date().toISOString(),
+  });
+  await page.goto(`/interviews/${id}`);
+  await expect(page.getByText("Interviewer (AI)")).toBeVisible();
+  await expect(page.getByText("“nine clients, six on retainer” · call at 0:14")).toBeVisible();
+  await expect(page.getByText("Not covered")).toBeVisible();
+  await expect(page.getByText("Where do most of your new clients come from at the moment?")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Cancel interview" })).toHaveCount(0);
+  await snap(page, "9-interview-done");
+});

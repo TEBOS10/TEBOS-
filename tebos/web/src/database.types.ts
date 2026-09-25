@@ -1089,6 +1089,90 @@ export type Database = {
           },
         ]
       }
+      interview_sessions: {
+        Row: {
+          business_id: string
+          channel: string
+          consent_given_at: string | null
+          consent_given_by: string | null
+          consent_text: string | null
+          created_at: string
+          duration_seconds: number | null
+          ended_at: string | null
+          extraction_detail: string | null
+          extraction_status: string
+          failure_detail: string | null
+          id: string
+          last_checked_at: string | null
+          org_id: string
+          phone_number: string | null
+          playbook_key: string
+          playbook_version: number
+          provider: string | null
+          provider_reference: string | null
+          requested_by: string | null
+          scheduled_for: string | null
+          started_at: string | null
+          status: string
+          transcript: Json | null
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          channel: string
+          consent_given_at?: string | null
+          consent_given_by?: string | null
+          consent_text?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          extraction_detail?: string | null
+          extraction_status?: string
+          failure_detail?: string | null
+          id?: string
+          last_checked_at?: string | null
+          org_id: string
+          phone_number?: string | null
+          playbook_key: string
+          playbook_version: number
+          provider?: string | null
+          provider_reference?: string | null
+          requested_by?: string | null
+          scheduled_for?: string | null
+          started_at?: string | null
+          status: string
+          transcript?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          channel?: string
+          consent_given_at?: string | null
+          consent_given_by?: string | null
+          consent_text?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          extraction_detail?: string | null
+          extraction_status?: string
+          failure_detail?: string | null
+          id?: string
+          last_checked_at?: string | null
+          org_id?: string
+          phone_number?: string | null
+          playbook_key?: string
+          playbook_version?: number
+          provider?: string | null
+          provider_reference?: string | null
+          requested_by?: string | null
+          scheduled_for?: string | null
+          started_at?: string | null
+          status?: string
+          transcript?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       invitations: {
         Row: {
           accepted_at: string | null
@@ -1543,6 +1627,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      submit_interview_answers: {
+        Args: { p_session: string; p_answers: Json }
+        Returns: number
+      }
       set_connection_secret: {
         Args: { p_connection: string; p_purpose: string; p_secret: string }
         Returns: string

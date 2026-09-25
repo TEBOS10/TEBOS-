@@ -169,6 +169,31 @@ Webhooks: when `PORT` is set (Railway sets it), the worker serves `POST /webhook
 connection. Unsigned, stale, forged or replayed events change nothing. Set `TEBOS_EXECUTION=off` to disable
 the stage.
 
+## Diagnostic interviews
+
+A website scan only sees the outside of a business. Interviews ask the owner what no public source shows,
+using an industry playbook (`src/domain/playbooks/`; the first is `marketing-agency` v1, with 16 questions
+covering clients, pipeline, scoping, delivery, capacity, results, retention and cash).
+
+- **By phone.** An admin or operator books a call: a number, a time within 30 days, and consent, recorded
+  word for word (`CALL_CONSENT_TEXT`). At the booked time the worker has the ElevenLabs voice agent call
+  (`src/interviews/`). The agent says it's an AI and that the call is recorded, waits through pauses and
+  follows up on vague answers. The worker follows the call to the end and stores the transcript, which
+  can't be edited afterwards.
+- **In writing.** The same questions as a form. `submit_interview_answers` stores each answer as evidence.
+- **Answers are evidence, labelled as the owner's statements** (`user_supplied`, source `user_statement`,
+  `interview:<id>`). For calls, Claude matches what was said to the playbook questions. An answer is kept
+  only if its quote appears word for word in something the person said. Answers the owner didn't give are
+  listed as not covered.
+- The database refuses: a booking without consent, a malformed number or a time outside the window; and
+  anyone other than the server marking a call as placed or done, or writing a transcript
+  (`supabase/tests/40_interviews.sql`).
+
+Worker settings: `ELEVENLABS_API_KEY`, `ELEVENLABS_AGENT_ID` (the TEBOS diagnostic interviewer agent) and
+`ELEVENLABS_PHONE_NUMBER_ID` (a Twilio or SIP number imported into ElevenLabs; set
+`ELEVENLABS_TELEPHONY=sip_trunk` for SIP). Without all three the worker places no calls: bookings stay
+booked, and the interface says so once the time has passed.
+
 ## Deploying on Railway
 
 The worker (acquisition, intelligence and execution) deploys as one Railway service from this repository.

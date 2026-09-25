@@ -126,6 +126,21 @@ export const invitationMachine = machine({
   },
 });
 
+// Diagnostic interviews: a booked call (voice) or a written form.
+export const interviewMachine = machine({
+  initial: ["scheduled", "open"],
+  transitions: {
+    scheduled: ["dialling", "cancelled"],
+    dialling: ["in_progress", "no_answer", "failed"],
+    in_progress: ["completed", "failed"],
+    open: ["completed", "cancelled"],
+    completed: [],
+    no_answer: [],
+    failed: [],
+    cancelled: [],
+  },
+});
+
 export const MACHINES = {
   scan: scanMachine,
   scan_target: scanTargetMachine,
@@ -136,6 +151,7 @@ export const MACHINES = {
   connection: connectionMachine,
   agent_run: agentRunMachine,
   invitation: invitationMachine,
+  interview: interviewMachine,
 } as const;
 
 export type MachineName = keyof typeof MACHINES;
@@ -149,6 +165,7 @@ export type ApprovalStatus = StatesOf<typeof approvalMachine>;
 export type ConnectionStatus = StatesOf<typeof connectionMachine>;
 export type AgentRunStatus = StatesOf<typeof agentRunMachine>;
 export type InvitationStatus = StatesOf<typeof invitationMachine>;
+export type InterviewStatus = StatesOf<typeof interviewMachine>;
 
 export function canTransition<M extends MachineName>(
   name: M,

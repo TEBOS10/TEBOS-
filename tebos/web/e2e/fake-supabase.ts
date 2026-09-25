@@ -164,11 +164,18 @@ function answerRpc(tables: FakeSupabase["tables"], name: string, args: Record<st
     tables.memberships!.push({ org_id: invite.org_id, user_id: USER_ID, role: invite.role, created_at: now });
     return invite.org_id;
   }
+  if (name === "submit_interview_answers") {
+    const session = tables.interview_sessions?.find((x) => x.id === args.p_session);
+    const answers = (args.p_answers as unknown as Array<{ answer: string }>).filter((a) => a.answer.trim());
+    if (session) Object.assign(session, { status: "completed", extraction_status: "done" });
+    return answers.length;
+  }
   return crypto.randomUUID();
 }
 
 // Column defaults the database would fill in, for tables the tests insert into.
 const COLUMN_DEFAULTS: Record<string, Record<string, unknown>> = {
+  interview_sessions: { transcript: null, extraction_status: "pending", extraction_detail: null, failure_detail: null, duration_seconds: null, provider: null, provider_reference: null, started_at: null, ended_at: null },
   connection_instances: { business_id: null, granted_scopes: [], credential_ref_id: null, webhook_credential_ref_id: null, last_verified_at: null, last_success_at: null, last_failure_at: null, failure_detail: null, verification_requested_at: null },
 };
 
