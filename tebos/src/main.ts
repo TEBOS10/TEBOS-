@@ -1,10 +1,14 @@
-// TEBOS worker process: runs the evidence pipeline.
+// TEBOS worker process: runs the evidence pipeline and executes approved actions.
 //
 //   TEBOS_DATABASE_URL=postgres://… ANTHROPIC_API_KEY=… npm run worker
 //
 // Each loop iteration does one unit of work per stage:
 //   acquisition   — queued scan  -> evidence            (always on)
 //   intelligence  — finished scan -> validated findings (on when ANTHROPIC_API_KEY is set)
+//   execution     — verify connections, send approved actions through them, confirm
+//                   delivery with the provider (on unless TEBOS_EXECUTION=off)
+// When PORT is set (Railway sets it), an HTTP server also receives provider
+// webhooks at /webhooks/resend/<connection id> and answers /health.
 // It sleeps only when neither stage had work, and stops cleanly on
 // SIGINT / SIGTERM after the current unit of work.
 //
@@ -21,6 +25,10 @@ import { AcquisitionWorker } from "./acquisition/worker";
 import { AnthropicProvider } from "./intelligence/anthropic-provider";
 import { PgIntelligenceStore } from "./intelligence/pg-store";
 import { IntelligenceWorker } from "./intelligence/worker";
+import { PgExecutionStore } from "./execution/pg-store";
+import { ResendConnector } from "./execution/resend";
+import { createWebhookServer } from "./execution/webhooks";
+import { ExecutionWorker } from "./execution/worker";
 
 const url = process.env.TEBOS_DATABASE_URL;
 if (!url) {
@@ -43,6 +51,14 @@ const intelligenceEnabled = Boolean(process.env.ANTHROPIC_API_KEY) && process.en
 const provider = intelligenceEnabled ? new AnthropicProvider() : null;
 const intelligence = provider ? new IntelligenceWorker(new PgIntelligenceStore(pool), provider, { workerId, log }) : null;
 
+const executionEnabled = process.env.TEBOS_EXECUTION !== "off";
+const executionStore = new PgExecutionStore(pool, workerId);
+const execution = executionEnabled ? new ExecutionWorker(executionStore, [new ResendConnector()], { workerId, log }) : null;
+
+const port = process.env.PORT ? Number(process.env.PORT) : null;
+const server = port ? createWebhookServer(executionStore, log) : null;
+server?.listen(port!, () => log({ event: "webhooks.listening", port }));
+
 let stopping = false;
 for (const signal of ["SIGINT", "SIGTERM"] as const) {
   process.on(signal, () => {
@@ -54,7 +70,7 @@ for (const signal of ["SIGINT", "SIGTERM"] as const) {
 log({
   event: "worker.started",
   pollMs,
-  stages: { acquisition: true, intelligence: intelligenceEnabled },
+  stages: { acquisition: true, intelligence: intelligenceEnabled, execution: executionEnabled, webhooks: Boolean(server) },
   ...(intelligenceEnabled ? {} : { note: "Findings are not generated: set ANTHROPIC_API_KEY to enable the intelligence stage" }),
 });
 
@@ -70,7 +86,9 @@ async function step(name: string, fn: () => Promise<unknown>): Promise<boolean> 
 while (!stopping) {
   const acquired = await step("acquisition", () => acquisition.runOnce());
   const analysed = intelligence && !stopping ? await step("intelligence", () => intelligence.runOnce()) : false;
-  if (!acquired && !analysed && !stopping) await new Promise((r) => setTimeout(r, pollMs));
+  const executed = execution && !stopping ? await step("execution", () => execution.runOnce()) : false;
+  if (!acquired && !analysed && !executed && !stopping) await new Promise((r) => setTimeout(r, pollMs));
 }
+await new Promise<void>((r) => (server ? server.close(() => r()) : r()));
 await pool.end();
 log({ event: "worker.stopped" });

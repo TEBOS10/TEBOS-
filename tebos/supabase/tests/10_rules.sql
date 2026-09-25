@@ -317,12 +317,7 @@ select t.ok((select status = 'ready' from public.actions where id = :'act_r'), '
 -- ===========================================================================
 -- Connections: "connected" only when verified
 -- ===========================================================================
-reset role;
-select set_config('request.jwt.claim.sub', '', false);
-insert into public.connectors (key, provider, name, auth_method, execution_method)
-  values ('resend', 'Resend', 'Resend email API', 'api_key', 'api');
-insert into public.connector_capabilities (connector_key, capability_key, operation, risk_tier)
-  values ('resend', 'email.send_transactional', 'write', 2);
+-- the Resend connector is seeded by the provider_execution migration
 set role authenticated;
 select set_config('request.jwt.claim.sub', :'admin_a', false);
 
@@ -331,12 +326,20 @@ select t.expect_error(format('insert into public.connection_instances (org_id, c
 insert into public.connection_instances (org_id, connector_key) values (:'org1', 'resend') returning id as conn1 \gset
 select t.expect_error(format('update public.connection_instances set status = %L, last_verified_at = now() where id = %L',
   'connected', :'conn1'), 'TEBOS_CONNECTION_UNVERIFIED');
+-- credential references are created only through set_connection_secret
+select t.expect_error(format('insert into public.credential_references (org_id, connector_key, vault_ref) values (%L, %L, %L)',
+  :'org1', 'resend', 'vault:00000000-0000-0000-0000-000000000000'), '42501');
+
+-- the server: a credential alone is not enough, it needs a fresh verification
+reset role;
+select set_config('request.jwt.claim.sub', '', false);
 insert into public.credential_references (org_id, connector_key, vault_ref, label)
   values (:'org1', 'resend', 'vault://tebos/org1/resend', 'Resend production key') returning id as cred1 \gset
 select t.expect_error(format('update public.connection_instances set status = %L, credential_ref_id = %L where id = %L',
   'connected', :'cred1', :'conn1'), 'TEBOS_CONNECTION_UNVERIFIED');
 update public.connection_instances set status = 'connected', credential_ref_id = :'cred1', last_verified_at = now()
   where id = :'conn1';
+set role authenticated;
 
 -- secrets pointers are never readable by clients
 select set_config('request.jwt.claim.sub', :'op_b', false);

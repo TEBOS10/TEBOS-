@@ -174,3 +174,33 @@ export function transitionTable(): Array<[MachineName, string, string]> {
   }
   return rows;
 }
+
+/**
+ * The shortest legal route from one state to another (excluding `from`), or
+ * null when there is none. Used by server code that must reach a state
+ * through the machine rather than around it.
+ */
+export function transitionPath<M extends MachineName>(
+  name: M,
+  from: StatesOf<(typeof MACHINES)[M]>,
+  to: StatesOf<(typeof MACHINES)[M]>,
+): Array<StatesOf<(typeof MACHINES)[M]>> | null {
+  if (from === to) return [];
+  const m = MACHINES[name] as Machine<string>;
+  const prev = new Map<string, string>([[from, from]]);
+  const queue = [from as string];
+  while (queue.length) {
+    const s = queue.shift()!;
+    for (const next of m.transitions[s] ?? []) {
+      if (prev.has(next)) continue;
+      prev.set(next, s);
+      if (next === to) {
+        const path = [next];
+        for (let p = s; p !== from; p = prev.get(p)!) path.unshift(p);
+        return path as Array<StatesOf<(typeof MACHINES)[M]>>;
+      }
+      queue.push(next);
+    }
+  }
+  return null;
+}
