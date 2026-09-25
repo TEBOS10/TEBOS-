@@ -316,3 +316,18 @@ test("the reset link opens a screen to choose a new password", async ({ page }) 
   await expect(page.getByRole("heading", { name: "What do you want TEBOS to work on?" })).toBeVisible();
   expect(fake.writes.find((w) => w.table.startsWith("auth/user"))?.body).toMatchObject({ password: "fresh-password-456" });
 });
+
+test("creating the first organisation explains what's missing instead of doing nothing", async ({ page }) => {
+  const fake = await installFakeSupabase(page);
+  fake.tables.memberships = [];
+  await page.goto("/");
+  await page.getByRole("button", { name: "Create organisation" }).click();
+  await expect(page.getByText("Type your organisation's name first.")).toBeVisible();
+  await page.getByLabel("Short name").fill("tidy-");
+  await expect(page.getByLabel("Short name")).toHaveValue("tidy-"); // dashes survive typing
+  await page.getByLabel("Organisation name").fill("Tidy Enterprise");
+  await page.getByLabel("Short name").fill("");
+  await expect(page.getByLabel("Short name")).toHaveValue("tidy-enterprise");
+  await page.getByRole("button", { name: "Create organisation" }).click();
+  await expect.poll(() => fake.writes.find((w) => w.table === "create_organisation")?.body).toEqual({ p_name: "Tidy Enterprise", p_slug: "tidy-enterprise" });
+});
