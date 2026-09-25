@@ -22,6 +22,9 @@ const routes: Record<string, FetchOutcome> = {
   [`${SITE}/`]: ok(`${SITE}/`, `<title>Mmupi &amp; Clay</title><body><h1>Handmade ceramics</h1>
     <a href="https://wa.me/27820000000">WhatsApp</a><a href="/contact">Contact</a><a href="/admin">Admin</a></body>`),
 };
+// These tests cover scan analyses; businesses left by other test files may be due a review (review-pg.test.ts).
+const scanOnly = (pool: pg.Pool) => Object.assign(new PgIntelligenceStore(pool), { claimNextReview: undefined });
+
 const fetcher: Fetcher = async (url) =>
   routes[url] ?? { kind: "http_error", requestedUrl: url, finalUrl: url, status: 503, detail: "HTTP 503" };
 
@@ -129,7 +132,7 @@ describe.skipIf(!enabled)("evidence pipeline against the TEBOS schema", () => {
   });
 
   it("turns the scan's evidence into stored, evidence-linked findings", async () => {
-    const worker = new IntelligenceWorker(new PgIntelligenceStore(pool), answering([
+    const worker = new IntelligenceWorker(scanOnly(pool), answering([
       {
         title: "Enquiries are routed to WhatsApp",
         statement: "The home page sends visitors to WhatsApp to enquire.",
@@ -169,7 +172,7 @@ describe.skipIf(!enabled)("evidence pipeline against the TEBOS schema", () => {
   });
 
   it("analyses each scan once", async () => {
-    const worker = new IntelligenceWorker(new PgIntelligenceStore(pool), answering([]), { workerId: "it2" });
+    const worker = new IntelligenceWorker(scanOnly(pool), answering([]), { workerId: "it2" });
     expect(await worker.runOnce()).toBeNull();
   });
 
@@ -180,7 +183,7 @@ describe.skipIf(!enabled)("evidence pipeline against the TEBOS schema", () => {
     expect(acquired?.status).toBe("completed");
 
     const failing: ReasoningProvider = { name: "fake", structured: async () => { throw new ReasoningError("provider_unavailable", "down"); } };
-    const worker = new IntelligenceWorker(new PgIntelligenceStore(pool), failing, { workerId: "it3" });
+    const worker = new IntelligenceWorker(scanOnly(pool), failing, { workerId: "it3" });
     for (let i = 0; i < 3; i++) expect(await worker.runOnce()).toMatchObject({ scanId: acquired!.scanId, status: "failed" });
     expect(await worker.runOnce()).toBeNull();
 

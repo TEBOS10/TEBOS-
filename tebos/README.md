@@ -116,7 +116,8 @@ connect directly, and keep egress to private ranges blocked at the network layer
 
 ## Intelligence worker
 
-The intelligence worker turns a finished scan's evidence into findings (pipeline stages 6–7). It runs in the
+The intelligence worker turns a finished scan's evidence into findings (pipeline stages 6–7), and reviews
+each business across all its evidence (below). It runs in the
 same process as acquisition, and only when `ANTHROPIC_API_KEY` is set.
 
 1. It claims a `completed` or `partial` scan that has no findings run yet. The claim is atomic, and a scan is
@@ -144,6 +145,35 @@ run is recorded as failed and no findings are invented.
 Requests use adaptive thinking, a cached system prompt, and Anthropic's server-side refusal fallback
 (`fallbacks: "default"`): if a safety classifier declines, Anthropic's recommended fallback model answers,
 and `agent_runs.model` shows which model did.
+
+### Business reviews: findings from all the evidence
+
+A scan analysis reads one website scan. A **business review** (`src/intelligence/review.ts`, migration
+`business_review`) reads everything TEBOS holds about a business together:
+- the latest website scan;
+- interview answers and other statements;
+- the latest snapshot from each connected system, such as BAME's operations figures.
+
+A finding can then join channels, for example "finance and sales have no deliverable checklists",
+measured in BAME and confirmed in an interview. The same validation applies, with these differences:
+- **Absence.** An absence stays an interpretation only when a cited connected-system figure records it
+  (a zero, or "none are defined for …"). The finding then notes that it was measured in that system only.
+  An absence backed only by what someone said, or by web pages, becomes a hypothesis.
+- **Confidence.** It uses each source's recorded reliability (connected system 0.95, interview 0.6,
+  website 0.7). Coverage is the share of the three channels with evidence. Figures older than 30 days
+  count as dated.
+- **When a review runs.** A business is due one when:
+  - it has statements or connected-system figures;
+  - something (those, or a finished scan) is newer than its last review;
+  - no review is running;
+  - it hasn't failed 3 times since;
+  - its last review is at least 6 hours old.
+- **Unchanged evidence.** If the evidence is unchanged (for example, a snapshot re-recorded with the same
+  figures), the run is recorded and no model is called.
+- **Superseding.** A review's findings replace the previous review's (`status = 'superseded'`,
+  `superseded_by_run`), except findings an action was proposed from.
+- **Server only.** Only the server can set `analysis_run_id` or `superseded_by_run`
+  (`TEBOS_SERVER_ONLY`).
 
 Before relying on it, run `ANTHROPIC_API_KEY=… npm run eval:findings`. It checks finding quality on fictional
 fixtures. It makes real, billed calls; expect a few cents per run at current prices.

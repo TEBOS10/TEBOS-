@@ -968,6 +968,7 @@ export type Database = {
       }
       findings: {
         Row: {
+          analysis_run_id: string | null
           business_id: string
           category: string
           confidence: number
@@ -983,6 +984,7 @@ export type Database = {
           statement: string
           status: string
           superseded_by: string | null
+          superseded_by_run: string | null
           title: string
           updated_at: string
         }
@@ -1002,10 +1004,12 @@ export type Database = {
           statement: string
           status?: string
           superseded_by?: string | null
+          superseded_by_run?: string | null
           title: string
           updated_at?: string
         }
         Update: {
+          analysis_run_id?: string | null
           business_id?: string
           category?: string
           confidence?: number
@@ -1021,6 +1025,7 @@ export type Database = {
           statement?: string
           status?: string
           superseded_by?: string | null
+          superseded_by_run?: string | null
           title?: string
           updated_at?: string
         }

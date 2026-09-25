@@ -91,8 +91,16 @@ export function bameFacts(raw: unknown): ParsedSnapshot {
     { by_department: byDept, admins: num(st.admins), invites_pending: pending, oldest_pending_invite_days: num(st.oldest_pending_invite_days) },
   );
 
+  // Departments that have staff but no checklist are stated explicitly: the
+  // absence is measured in BAME, not inferred.
   const cat = obj(s.deliverable_catalogue);
-  add("deliverables.catalogue", Object.keys(cat).length ? `Deliverable checklists exist for ${list(cat)}.` : "No deliverable checklists are defined.", { by_department: cat });
+  const without = Object.keys(byDept).filter((d) => !(num(cat[d]) ?? 0)).sort();
+  const none = without.length ? `; none are defined for ${without.join(", ")}` : "";
+  add(
+    "deliverables.catalogue",
+    Object.keys(cat).length ? `Deliverable checklists exist for ${list(cat)}${none}.` : "No deliverable checklists are defined.",
+    { by_department: cat, departments_without: without },
+  );
 
   const pl = obj(s.players);
   const players = Object.values(obj(pl.by_status)).reduce<number>((a, v) => a + (num(v) ?? 0), 0);

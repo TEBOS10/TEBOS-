@@ -103,7 +103,7 @@ Scans read the outside of a business. Interviews add what only its people know (
 Next:
 1. Connect a phone number: Twilio or SIP into ElevenLabs, then `ELEVENLABS_PHONE_NUMBER_ID` and
    `ELEVENLABS_API_KEY` on the worker.
-2. Feed interview evidence into findings, alongside scans.
+2. ~~Feed interview evidence into findings, alongside scans.~~ Done: business reviews (README).
 3. Document uploads.
 4. Read-only connectors (accounting, CRM, project tools) to confirm answers against real data.
 
@@ -113,5 +113,6 @@ Next:
   evidence. You can see it on the BAME business page under "Live operations".
 - **Tidy Capital and Tidy Property Revenue Architect:** not connected. Their code and data weren't found in
   the connected GitHub, Supabase or Railway accounts.
-- **Next:** feed these facts into findings. Then add approved actions on BAME (assign a lead, chase an
+- **Done:** these facts feed business reviews, alongside interviews and scans.
+- **Next:** add approved actions on BAME (assign a lead, chase an
   overdue deliverable) as their own capabilities.

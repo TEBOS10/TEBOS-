@@ -5,13 +5,39 @@
 // evidence is refused at commit.
 
 import pg from "pg";
-import type { AcceptedFinding, FindingsInput } from "./findings";
-import type { ClaimedAnalysis, IntelligenceStore, RunFinish } from "./worker";
+import type { AcceptedFinding, EvidenceForReasoning, FindingsInput } from "./findings";
+import { reviewChannels, reviewCoverage } from "./review";
+import type { ClaimedAnalysis, IntelligenceStore, ReviewInput, RunFinish } from "./worker";
 
 /** A finished scan is retried after a failed analysis at most this many times. */
 export const MAX_ANALYSIS_ATTEMPTS = 3;
 /** A "running" analysis older than this is considered abandoned. */
 const ABANDONED_AFTER = "30 minutes";
+/** A business is reviewed at most this often, however often its figures change. */
+export const REVIEW_MIN_INTERVAL = "6 hours";
+
+// Reviews are business_intelligence runs with no scan.
+const REVIEW_RUN = "a.business_id = b.id and a.agent_role = 'business_intelligence' and a.scan_id is null";
+
+const toEvidence = (e: Record<string, any>): EvidenceForReasoning => ({
+  id: e.id,
+  sourceId: e.source_id,
+  sourceUri: e.source_uri,
+  state: e.state,
+  fact: e.fact,
+  missingDescription: e.missing_description,
+  excerpt: e.excerpt,
+  contentLocation: e.content_location,
+  confidence: e.confidence === null ? null : Number(e.confidence),
+  ...(e.source_type !== undefined
+    ? {
+        sourceType: e.source_type,
+        sourceReliability: Number(e.reliability),
+        retrievedAt: e.retrieved_at ? new Date(e.retrieved_at).toISOString() : null,
+        question: e.question ?? null,
+      }
+    : {}),
+});
 
 export class PgIntelligenceStore implements IntelligenceStore {
   constructor(private readonly pool: pg.Pool) {}
@@ -99,17 +125,116 @@ export class PgIntelligenceStore implements IntelligenceStore {
         userContext: context,
         scanCoverage: Number(scan.coverage),
         pagesRead: scan.pages_read,
-        evidence: evidence.map((e) => ({
-          id: e.id,
-          sourceId: e.source_id,
-          sourceUri: e.source_uri,
-          state: e.state,
-          fact: e.fact,
-          missingDescription: e.missing_description,
-          excerpt: e.excerpt,
-          contentLocation: e.content_location,
-          confidence: e.confidence === null ? null : Number(e.confidence),
-        })),
+        evidence: evidence.map(toEvidence),
+      };
+    } finally {
+      client.release();
+    }
+  }
+
+  async claimNextReview(workerId: string): Promise<ClaimedAnalysis | null> {
+    return this.as(`intelligence-worker:${workerId}`, async (c) => {
+      // Due: the business has statements or connected-system figures, something
+      // (those, or a finished scan) is newer than its last review, no review is
+      // running, it hasn't failed too often since, and the last one isn't recent.
+      const { rows } = await c.query(
+        `with newest as (
+           select b.id, greatest(
+                    (select max(e.created_at) from public.evidence e join public.sources s on s.id = e.source_id
+                      where e.business_id = b.id and s.source_type in ('user_statement', 'connected_system')
+                        and e.state in ('acquired', 'partially_acquired', 'user_supplied')),
+                    (select max(sc.finished_at) from public.scans sc where sc.business_id = b.id and sc.status in ('completed', 'partial'))
+                  ) as at
+             from public.businesses b
+            where exists (select 1 from public.evidence e join public.sources s on s.id = e.source_id
+                           where e.business_id = b.id and s.source_type in ('user_statement', 'connected_system')
+                             and e.state in ('acquired', 'partially_acquired', 'user_supplied'))
+         ), next as (
+           select b.id, b.org_id
+             from public.businesses b join newest n on n.id = b.id
+            where not exists (select 1 from public.agent_runs a where ${REVIEW_RUN} and a.status = 'running')
+              and not exists (select 1 from public.agent_runs a where ${REVIEW_RUN} and a.status = 'succeeded' and a.started_at >= n.at)
+              and (select count(*) from public.agent_runs a where ${REVIEW_RUN} and a.status = 'failed' and a.started_at >= n.at) < $1
+              and not exists (select 1 from public.agent_runs a where ${REVIEW_RUN} and a.status = 'succeeded'
+                                 and coalesce((a.output_summary ->> 'unchanged')::boolean, false) = false
+                                 and a.started_at > now() - interval '${REVIEW_MIN_INTERVAL}')
+            order by n.at
+            for update of b skip locked
+            limit 1
+         )
+         insert into public.agent_runs (org_id, business_id, agent_role, purpose, input_context)
+         select org_id, id, 'business_intelligence', 'Business review: propose findings from all evidence held',
+                jsonb_build_object('kind', 'business_review')
+           from next
+         returning id, org_id, business_id`,
+        [MAX_ANALYSIS_ATTEMPTS],
+      );
+      const r = rows[0];
+      return r ? { kind: "review", runId: r.id, orgId: r.org_id, businessId: r.business_id, scanId: null } : null;
+    });
+  }
+
+  async loadReviewInput(claim: ClaimedAnalysis): Promise<ReviewInput> {
+    const client = await this.pool.connect();
+    try {
+      const business = (await client.query("select name, website, industry from public.businesses where id = $1", [claim.businessId])).rows[0];
+      const scan = (
+        await client.query(
+          `select s.id, (select count(*) from public.scan_targets t
+                           where t.scan_id = s.id and t.status in ('acquired', 'partially_acquired'))::int as pages_read
+             from public.scans s where s.business_id = $1 and s.status in ('completed', 'partial')
+            order by s.finished_at desc nulls last limit 1`,
+          [claim.businessId],
+        )
+      ).rows[0];
+      const context = (
+        await client.query(
+          "select kind, statement from public.business_contexts where business_id = $1 and retired_at is null order by created_at",
+          [claim.businessId],
+        )
+      ).rows;
+      // The latest website scan, every statement, and each connected system's latest snapshot.
+      const evidence = (
+        await client.query(
+          `with latest_snapshot as (
+             select e.source_id, max(e.retrieved_at) as at
+               from public.evidence e join public.sources s on s.id = e.source_id
+              where e.business_id = $1 and s.source_type = 'connected_system' and e.state = 'acquired'
+              group by e.source_id
+           )
+           select e.id, e.source_id, src.uri as source_uri, e.state, e.fact, e.missing_description, e.excerpt,
+                  e.content_location, e.confidence, src.source_type, src.reliability, e.retrieved_at,
+                  e.structured_value ->> 'question' as question
+             from public.evidence e join public.sources src on src.id = e.source_id
+            where e.business_id = $1
+              and (   (src.source_type = 'connected_system' and e.state = 'acquired'
+                       and (e.source_id, e.retrieved_at) in (select source_id, at from latest_snapshot))
+                   or (src.source_type <> 'connected_system' and e.scan_id is not null and e.scan_id = $2)
+                   or (src.source_type <> 'connected_system' and e.scan_id is null and e.state = 'user_supplied'))
+            order by e.created_at`,
+          [claim.businessId, scan?.id ?? null],
+        )
+      ).rows.map(toEvidence);
+      const last = (
+        await client.query(
+          `select a.output_summary ->> 'fingerprint' as fingerprint from public.agent_runs a
+            where a.business_id = $1 and a.agent_role = 'business_intelligence' and a.scan_id is null
+              and a.status = 'succeeded' and a.id <> $2
+            order by a.started_at desc limit 1`,
+          [claim.businessId, claim.runId],
+        )
+      ).rows[0];
+      return {
+        input: {
+          business: { name: business.name, website: business.website, industry: business.industry },
+          objective: null,
+          userContext: context,
+          evidence,
+          scanCoverage: reviewCoverage(reviewChannels(evidence)),
+          pagesRead: scan?.pages_read ?? 0,
+          mode: "review",
+        },
+        lastFingerprint: last?.fingerprint ?? null,
       };
     } finally {
       client.release();
@@ -123,10 +248,10 @@ export class PgIntelligenceStore implements IntelligenceStore {
       for (const f of findings) {
         const { rows } = await c.query(
           `insert into public.findings (org_id, business_id, scan_id, title, statement, kind, category, impact_hypothesis,
-                                        confidence, confidence_components, missing_information, status)
-           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'active') returning id`,
+                                        confidence, confidence_components, missing_information, status, analysis_run_id)
+           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'active', $12) returning id`,
           [claim.orgId, claim.businessId, claim.scanId, f.title, f.statement, f.kind, f.category, f.impactHypothesis,
-           f.confidence, f.confidenceComponents, f.missingInformation],
+           f.confidence, f.confidenceComponents, f.missingInformation, claim.runId],
         );
         const id = rows[0].id as string;
         ids.push(id);
@@ -138,6 +263,18 @@ export class PgIntelligenceStore implements IntelligenceStore {
             );
           }
         }
+      }
+      if (claim.scanId === null) {
+        // A review replaces the previous reviews' findings — except any an action
+        // was proposed from, which stay so that work keeps its reason.
+        await c.query(
+          `update public.findings f set status = 'superseded', superseded_by_run = $3
+            where f.business_id = $1 and f.status = 'active' and f.scan_id is null and not (f.id = any ($2::uuid[]))
+              and f.analysis_run_id in (select a.id from public.agent_runs a
+                                         where a.business_id = $1 and a.agent_role = 'business_intelligence' and a.scan_id is null)
+              and not exists (select 1 from public.actions x where x.finding_id = f.id)`,
+          [claim.businessId, ids, claim.runId],
+        );
       }
       return ids;
     });

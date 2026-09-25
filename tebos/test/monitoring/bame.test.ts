@@ -31,6 +31,7 @@ describe("BAME operations snapshot", () => {
     );
     expect(byKey["players.roster"]).toBe("No players are on BAME's roster yet.");
     expect(byKey["capital.ledger"]).toBe("The capital ledger has no entries.");
+    expect(byKey["deliverables.catalogue"]).toBe("Deliverable checklists exist for pr 21, tech 33; none are defined for admin, finance, production, sales.");
     expect(r.takenAt).toBe(snapshot.taken_at);
   });
 

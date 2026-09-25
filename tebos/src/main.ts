@@ -4,7 +4,8 @@
 //
 // Each loop iteration does one unit of work per stage:
 //   acquisition   — queued scan  -> evidence            (always on)
-//   intelligence  — finished scan -> validated findings (on when ANTHROPIC_API_KEY is set)
+//   intelligence  — finished scan -> validated findings; else a business review across scans,
+//                   interviews and connected systems (on when ANTHROPIC_API_KEY is set)
 //   execution     — verify connections, send approved actions through them, confirm
 //                   delivery with the provider (on unless TEBOS_EXECUTION=off)
 //   interviews    — place booked diagnostic calls (when ELEVENLABS_API_KEY, ELEVENLABS_AGENT_ID
