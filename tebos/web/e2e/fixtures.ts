@@ -126,10 +126,13 @@ export function fixtureTables(): Record<string, Array<Record<string, unknown>>> 
     capabilities: [
       { key: "web.read_public", name: "Read public web pages", description: null, default_risk_tier: 0, created_at: minutesAgo(999) },
       { key: "analysis.generate_findings", name: "Generate findings", description: null, default_risk_tier: 1, created_at: minutesAgo(999) },
+      { key: "email.send_transactional", name: "Send transactional email", description: null, default_risk_tier: 2, created_at: minutesAgo(999) },
       { key: "web.update_public_content", name: "Update public web content", description: null, default_risk_tier: 2, created_at: minutesAgo(999) },
       { key: "finance.initiate_payment", name: "Initiate payment", description: null, default_risk_tier: 3, created_at: minutesAgo(999) },
     ],
-    connectors: [],
+    connectors: [
+      { key: "resend", provider: "Resend", name: "Resend transactional email", auth_method: "api_key", supports_webhooks: true, supports_polling: true, rate_limit: null, data_sensitivity: "controlled", execution_method: "api", created_at: minutesAgo(999) },
+    ],
     connection_instances: [],
   };
 

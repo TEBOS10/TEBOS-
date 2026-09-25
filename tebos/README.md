@@ -36,6 +36,9 @@ source → evidence → finding → action → approval → run → verification
 | Actions come from active findings; tier ≥ 2 needs approval; no completion without a succeeded run; no verification without proof | `guard_action` |
 | Approvals: approvers only, self-attributed, no tier-3 self-approval, used up once executed | `guard_approval`, `guard_action` |
 | "Connected" only after a fresh verification with credentials | `guard_connection` |
+| Connection health, scopes and credentials are written only by TEBOS's server; secrets live in Supabase Vault and no client can read them | `guard_connection_client`, `set_connection_secret`, `read_credential` |
+| A provider action's input is frozen once approval is requested, and an approval covers only the input it saw | `guard_action_execution`, `bind_approval_input` |
+| Runs through a provider, and the provider's confirmations, are recorded only by the execution worker | `guard_run_origin`, `guard_action_execution` |
 | Every write audited, attributed, hash-chained, append-only | `audit_row`, `write_audit` |
 
 Database errors carry a `TEBOS_*` hint. `ruleFromDatabaseError()` maps it to a structured `RuleViolation`, so
@@ -145,9 +148,30 @@ and `agent_runs.model` shows which model did.
 Before relying on it, run `ANTHROPIC_API_KEY=… npm run eval:findings`. It checks finding quality on fictional
 fixtures. It makes real, billed calls; expect a few cents per run at current prices.
 
+## Execution worker (stage 4)
+
+`src/execution/` runs approved actions through verified providers. The first provider is Resend
+(`email.send_transactional`). See `docs/adr/0002-provider-execution.md` for the trust model.
+
+1. **Verify.** When an admin saves a key or clicks "Check now", the worker calls Resend. Only a working key
+   moves the connection to `connected`, with the scopes it proved: a full-access key gets `emails:read`, so
+   TEBOS can check delivery itself. A send-only key gets `emails:send`, and delivery is confirmed by webhook.
+2. **Execute.** A queued `api` action is routed to a usable connection (`routeCapability`). If none can run
+   it, the action is blocked, with the reason. Otherwise one run is created per approval. The run's
+   idempotency key is derived from the approval and is sent to Resend, so the email can't be sent twice.
+3. **Resume.** A send whose outcome is unknown (timeout, 5xx, 429) stays `running` and is retried with the
+   same key. After 23 hours it fails as "outcome unknown", never as success.
+4. **Confirm.** The action becomes `verified` only when Resend reports delivery, by polling or by a signed
+   webhook. A bounce or complaint fails it with `verification_failed`.
+
+Webhooks: when `PORT` is set (Railway sets it), the worker serves `POST /webhooks/resend/<connection id>` and
+`GET /health`. Give Resend that URL on the worker's public domain, and paste its signing secret into the
+connection. Unsigned, stale, forged or replayed events change nothing. Set `TEBOS_EXECUTION=off` to disable
+the stage.
+
 ## Deploying on Railway
 
-The worker (acquisition + intelligence) deploys as one Railway service from this repository.
+The worker (acquisition, intelligence and execution) deploys as one Railway service from this repository.
 
 1. Railway → **New Project** → **Deploy from GitHub repo** → `TEBOS10/TEBOS-`. Pick the branch that holds
    this code.
@@ -161,7 +185,9 @@ The worker (acquisition + intelligence) deploys as one Railway service from this
    | `TEBOS_DATABASE_CA` | Supabase's CA certificate (Supabase → Database settings → SSL → download), pasted as text. With it, the worker verifies the database's certificate. |
    | `ANTHROPIC_API_KEY` | A key from console.anthropic.com. Leave it unset to run acquisition only. |
 
-4. Deploy. The logs should show `worker.started` with `"stages":{"acquisition":true,"intelligence":true}`.
+4. Deploy. The logs should show `worker.started` with `"stages":{"acquisition":true,"intelligence":true,"execution":true,"webhooks":true}`.
+5. For delivery webhooks, generate a public domain for the service (**Settings → Networking**). Then set
+   `VITE_TEBOS_WORKER_URL` to it in the web app, so admins see the URL to give Resend.
 
 All three values are secrets. They live only in Railway's variables, never in the repository or a browser.
 

@@ -2,6 +2,7 @@ import { Card, Empty, ErrorNote, Loading, PageHeader, StatusBadge } from "../com
 import { auditTrail, systemOverview } from "../lib/data";
 import { ago, RISK_LABEL, statusLabel, when } from "../lib/format";
 import { usePeople } from "../lib/people";
+import { Link } from "../lib/router";
 import { useOrg } from "../lib/session";
 import { useQuery } from "../lib/useQuery";
 
@@ -47,7 +48,7 @@ function Overview({ data }: { data: Awaited<ReturnType<typeof systemOverview>> }
             </ul>
           </Card>
           <div className="stack">
-            <Card title="Connections" subtitle="Shown as connected only after a fresh, successful check">
+            <Card title="Connections" subtitle="Shown as connected only after a fresh, successful check" actions={<Link to="/connections" className="btn btn-sm">Manage</Link>}>
               {data.connections.length === 0 ? (
                 <Empty>No external systems connected. Actions that need one are carried out by a person for now.</Empty>
               ) : (

@@ -133,7 +133,7 @@ test("an admin invites a teammate and gets a one-time link", async ({ page }) =>
   await page.getByRole("button", { name: /Create invitation/ }).click();
   await expect(page.getByTestId("invite-link")).toContainText("/invite/fixture-invitation-token");
   expect(fake.writes.find((w) => w.table === "create_invitation")?.body).toMatchObject({ p_org: ORG, p_email: "Sipho@Clayworks.example" });
-  await expect(page.getByText("sipho@clayworks.example")).toBeVisible();
+  await expect(page.getByText("sipho@clayworks.example", { exact: true })).toBeVisible();
   await snap(page, "5-team");
 });
 
@@ -204,4 +204,76 @@ test("the business report labels every statement and exports CSV", async ({ page
   const text = await (await file.createReadStream()).toArray().then((c) => Buffer.concat(c).toString("utf8"));
   expect(text).toContain("finding_id,label,category");
   expect(text).toContain("hypothesis");
+});
+
+test("an admin connects Resend; the key goes to the vault and the connection waits for TEBOS's own check", async ({ page }) => {
+  const fake = await installFakeSupabase(page);
+  await page.goto("/connections");
+  await page.getByLabel("Sender").fill("Clay Studio <orders@clay.example>");
+  await page.getByLabel("Resend API key").fill("re_secret_test_key_123");
+  await page.getByRole("button", { name: "Save and check with Resend" }).click();
+  await expect(page.getByTestId("connection-label")).toHaveText("Configured — not yet verified");
+  const insert = fake.writes.find((w) => w.table === "connection_instances");
+  expect(insert?.body).toMatchObject({ connector_key: "resend", settings: { from: "Clay Studio <orders@clay.example>" } });
+  expect(JSON.stringify(insert?.body)).not.toContain("re_secret");
+  expect(fake.writes.find((w) => w.table === "set_connection_secret")?.body).toMatchObject({ p_purpose: "api_key", p_secret: "re_secret_test_key_123" });
+  await expect(page.getByText("re_secret_test_key_123")).toHaveCount(0);
+  await snap(page, "7-connections");
+});
+
+test("a send-only Resend key is shown as connected, with webhook-only delivery confirmation", async ({ page }) => {
+  const fake = await installFakeSupabase(page);
+  fake.tables.connection_instances!.push({
+    id: "c1", org_id: ORG, business_id: null, connector_key: "resend", status: "connected", granted_scopes: ["emails:send"], credential_ref_id: "k1",
+    webhook_credential_ref_id: null, last_verified_at: new Date(Date.now() - 6e4).toISOString(), last_success_at: null, last_failure_at: null, failure_detail: null,
+    verification_requested_at: null, settings: { from: "orders@clay.example" }, created_by: USER_ID, created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+  });
+  await page.goto("/connections");
+  await expect(page.getByTestId("connection-label")).toHaveText("Connected");
+  await expect(page.getByText("webhooks only (send-only key)")).toBeVisible();
+  await page.getByRole("button", { name: "Check now" }).click();
+  await expect.poll(() => fake.writes.find((w) => w.table === "connection_instances" && w.method === "PATCH")?.body).toHaveProperty("verification_requested_at");
+});
+
+test("an email action is proposed with the exact email, which is checked before anyone approves it", async ({ page }) => {
+  const fake = await installFakeSupabase(page);
+  await page.goto(`/findings/${FINDING}`);
+  await page.getByRole("button", { name: "Propose an action" }).click();
+  await page.getByLabel("Action", { exact: true }).fill("Confirm orders by email");
+  await page.getByLabel("Objective").fill("Every customer gets a confirmation");
+  await page.getByLabel("Capability required").selectOption("email.send_transactional");
+  await page.getByPlaceholder("customer@example.com").fill("buyer@clay, other@clay.example");
+  await page.getByLabel("Subject", { exact: true }).fill("Your order");
+  await page.getByRole("textbox", { name: /^Message/ }).fill("Thank you, we have your order.");
+  await expect(page.getByText("Not an email address: buyer@clay")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Create proposed action" })).toBeDisabled();
+  await page.getByPlaceholder("customer@example.com").fill("buyer@clay.example");
+  await page.getByRole("button", { name: "Create proposed action" }).click();
+  await expect(page).toHaveURL(/\/actions\//);
+  expect(fake.writes.find((w) => w.table === "actions")?.body).toMatchObject({
+    execution_method: "api", risk_tier: 2, approval_required: true,
+    execution_input: { to: ["buyer@clay.example"], subject: "Your order", text: "Thank you, we have your order.", replyTo: null },
+  });
+});
+
+test("a provider action can't be started or verified by hand; it waits for TEBOS and the provider", async ({ page }) => {
+  const fake = await installFakeSupabase(page);
+  const action = fake.tables.actions!.find((a) => a.id === ACTION)!;
+  Object.assign(action, { status: "queued", execution_method: "api", capability_key: "email.send_transactional",
+    execution_input: { to: ["buyer@clay.example"], subject: "Your order", text: "Thank you." } });
+  await page.goto(`/actions/${ACTION}`);
+  await expect(page.getByTestId("email-preview")).toHaveText("Thank you.");
+  await expect(page.getByText("Waiting for TEBOS to send it")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Start execution" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Edit email" })).toHaveCount(0); // frozen after approval
+
+  action.status = "completed";
+  fake.tables.action_runs!.push({ id: "r1", org_id: ORG, action_id: ACTION, approval_id: null, connection_instance_id: "c1", capability_key: "email.send_transactional",
+    execution_method: "api", status: "succeeded", idempotency_key: "k", request_summary: {}, response_summary: {}, error_class: null, error_detail: null,
+    started_at: null, finished_at: null, verified: false, verified_at: null, verification_method: null, provider_reference: "msg_1", provider_status: "accepted",
+    provider_status_at: null, created_at: new Date().toISOString() });
+  await page.reload();
+  await expect(page.getByText("Waiting for the provider to confirm delivery")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Verify" })).toHaveCount(0);
+  await expect(page.getByText(/provider ref msg_1/)).toBeVisible();
 });

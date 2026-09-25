@@ -22,7 +22,7 @@ the control plane itself.
 | 1. Live evidence | Worker deployed on Railway; real scans of real businesses | 5+ real businesses scanned; every page ends in an honest state | Built; awaiting deployment |
 | 2. Intelligence | Claude-proposed findings, validated and linked to evidence | `npm run eval:findings` healthy; findings on real scans reviewed by a person | Built; awaiting API key |
 | 3. Interface + actions | Sign-in; Home, Businesses, Scans, Findings, Actions, Approvals; action proposals from findings | A real business review run end to end in TEBOS | First slice built (`web/`); awaiting deployment |
-| 4. Capabilities | Verified connectors (email, CRM, calendar, WhatsApp); approved execution with verification | Actions verified as done by the provider, not just by TEBOS | Not started |
+| 4. Capabilities | Verified connectors (email, CRM, calendar, WhatsApp); approved execution with verification | Actions verified as done by the provider, not just by TEBOS | First connector (Resend email) built; gate blocked on stages 1–3 |
 | 5. Operating systems | Playbooks, workflow engine, operating-system specifications for new and existing businesses, scheduled rescans, change detection | One client (e.g. BAME) running on a TEBOS-generated operating system | Not started |
 | 6. Autonomy | Agents run the loop within permission boundaries | Autonomy granted per action type after measured success; tier-3 actions always need a person | Not started |
 
@@ -66,3 +66,27 @@ Remaining for the stage-3 gate:
    This needs the owner: the Supabase Auth Site URL, the Railway service and its secrets.
 2. Email delivery of invitations. For now the admin copies the link and sends it themselves.
 
+
+## Stage 4: first slice
+
+Started, at the owner's request, before the stage 1–3 gates were met. The code is built and tested, but it
+does nothing until an organisation connects a provider, and the stage 4 gate is not claimed until stages
+1–3 have met theirs.
+
+Built (migration `provider_execution`, `src/execution/`, and the Connections page):
+- the Resend connector: `email.send_transactional`, with key verification and scopes that follow what the
+  key proved;
+- credentials held in Supabase Vault. Connection health, scopes and credentials can only be written by the
+  server;
+- email actions whose exact recipients and text are approved. The input is frozen once approval is
+  requested, and the approval is pinned to its hash;
+- the execution worker: one send per approval (idempotency key), safe retries on unknown outcomes, and
+  blocking with a reason when no provider can run the action;
+- provider verification: an action is `verified` only on delivery reported by Resend, by polling or by a
+  signed, replay-safe webhook. Bounces fail it.
+
+Remaining for the stage-4 gate:
+1. Stages 1–3 meet their gates (deployment, real scans, a real business review).
+2. Connect a real Resend account with a verified sending domain. Send real approved emails and see them
+   verified by Resend.
+3. More connectors: CRM (HubSpot), calendar and WhatsApp, each with provider-side verification.

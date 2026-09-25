@@ -120,7 +120,7 @@ export async function installFakeSupabase(page: Page, opts: { signedIn?: boolean
       let result: Array<Record<string, unknown>>;
       if (req.method() === "POST") {
         const now = new Date().toISOString();
-        result = (Array.isArray(body) ? body : [body]).map((r: Record<string, unknown>) => ({ id: crypto.randomUUID(), created_at: now, updated_at: now, status: r.status ?? defaultStatus(name!), ...r }));
+        result = (Array.isArray(body) ? body : [body]).map((r: Record<string, unknown>) => ({ id: crypto.randomUUID(), created_at: now, updated_at: now, status: r.status ?? defaultStatus(name!), ...COLUMN_DEFAULTS[name!], ...r }));
         table.push(...result);
       } else {
         result = table.filter((r) => matches(r, url.searchParams));
@@ -164,6 +164,11 @@ function answerRpc(tables: FakeSupabase["tables"], name: string, args: Record<st
   return crypto.randomUUID();
 }
 
+// Column defaults the database would fill in, for tables the tests insert into.
+const COLUMN_DEFAULTS: Record<string, Record<string, unknown>> = {
+  connection_instances: { business_id: null, granted_scopes: [], credential_ref_id: null, webhook_credential_ref_id: null, last_verified_at: null, last_success_at: null, last_failure_at: null, failure_detail: null, verification_requested_at: null },
+};
+
 function defaultStatus(table: string): string | undefined {
-  return { scans: "queued", actions: "proposed", approvals: "pending", action_runs: "queued", findings: "draft" }[table];
+  return { scans: "queued", actions: "proposed", approvals: "pending", action_runs: "queued", findings: "draft", connection_instances: "configured" }[table];
 }

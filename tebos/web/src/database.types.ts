@@ -75,6 +75,9 @@ export type Database = {
           id: string
           idempotency_key: string
           org_id: string
+          provider_reference: string | null
+          provider_status: string | null
+          provider_status_at: string | null
           request_summary: Json | null
           response_summary: Json | null
           started_at: string | null
@@ -96,6 +99,9 @@ export type Database = {
           id?: string
           idempotency_key: string
           org_id: string
+          provider_reference?: string | null
+          provider_status?: string | null
+          provider_status_at?: string | null
           request_summary?: Json | null
           response_summary?: Json | null
           started_at?: string | null
@@ -117,6 +123,9 @@ export type Database = {
           id?: string
           idempotency_key?: string
           org_id?: string
+          provider_reference?: string | null
+          provider_status?: string | null
+          provider_status_at?: string | null
           request_summary?: Json | null
           response_summary?: Json | null
           started_at?: string | null
@@ -166,6 +175,7 @@ export type Database = {
           created_by: string | null
           due_at: string | null
           evidence_requirement: string | null
+          execution_input: Json | null
           execution_method: string
           expected_outcome: string | null
           finding_id: string
@@ -191,6 +201,7 @@ export type Database = {
           created_by?: string | null
           due_at?: string | null
           evidence_requirement?: string | null
+          execution_input?: Json | null
           execution_method?: string
           expected_outcome?: string | null
           finding_id: string
@@ -216,6 +227,7 @@ export type Database = {
           created_by?: string | null
           due_at?: string | null
           evidence_requirement?: string | null
+          execution_input?: Json | null
           execution_method?: string
           expected_outcome?: string | null
           finding_id?: string
@@ -348,6 +360,7 @@ export type Database = {
           decision_note: string | null
           expires_at: string | null
           id: string
+          input_hash: string | null
           org_id: string
           proposed_action: Json
           requested_at: string
@@ -367,6 +380,7 @@ export type Database = {
           decision_note?: string | null
           expires_at?: string | null
           id?: string
+          input_hash?: string | null
           org_id: string
           proposed_action?: Json
           requested_at?: string
@@ -386,6 +400,7 @@ export type Database = {
           decision_note?: string | null
           expires_at?: string | null
           id?: string
+          input_hash?: string | null
           org_id?: string
           proposed_action?: Json
           requested_at?: string
@@ -603,8 +618,11 @@ export type Database = {
           last_success_at: string | null
           last_verified_at: string | null
           org_id: string
+          settings: Json
           status: string
           updated_at: string
+          verification_requested_at: string | null
+          webhook_credential_ref_id: string | null
         }
         Insert: {
           business_id?: string | null
@@ -619,8 +637,11 @@ export type Database = {
           last_success_at?: string | null
           last_verified_at?: string | null
           org_id: string
+          settings?: Json
           status?: string
           updated_at?: string
+          verification_requested_at?: string | null
+          webhook_credential_ref_id?: string | null
         }
         Update: {
           business_id?: string | null
@@ -635,8 +656,11 @@ export type Database = {
           last_success_at?: string | null
           last_verified_at?: string | null
           org_id?: string
+          settings?: Json
           status?: string
           updated_at?: string
+          verification_requested_at?: string | null
+          webhook_credential_ref_id?: string | null
         }
         Relationships: [
           {
@@ -1519,6 +1543,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      set_connection_secret: {
+        Args: { p_connection: string; p_purpose: string; p_secret: string }
+        Returns: string
+      }
       accept_invitation: { Args: { p_token: string }; Returns: string }
       create_invitation: {
         Args: { p_email: string; p_org: string; p_role: string }

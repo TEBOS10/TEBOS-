@@ -254,7 +254,18 @@ export interface ActionDraft {
   approvalRequired: boolean;
   priority: number;
   evidenceRequirement: string;
+  /** When set, TEBOS sends this email through a connected provider after approval. */
+  email?: EmailDraft | null;
 }
+
+export interface EmailDraft {
+  to: string[];
+  subject: string;
+  text: string;
+  replyTo: string | null;
+}
+
+export const EMAIL_CAPABILITY = "email.send_transactional";
 
 export async function proposeAction(db: Db, finding: Finding, userId: string, draft: ActionDraft) {
   return must(
@@ -272,6 +283,8 @@ export async function proposeAction(db: Db, finding: Finding, userId: string, dr
         approval_required: draft.approvalRequired,
         priority: draft.priority,
         evidence_requirement: draft.evidenceRequirement || null,
+        execution_method: draft.email ? "api" : "manual",
+        execution_input: draft.email ? { ...draft.email } : null,
         owner_user_id: userId,
         created_by: userId,
       })
@@ -549,3 +562,54 @@ export async function businessReport(db: Db, businessId: string) {
     outcomes: must(outcomes) as Outcome[],
   };
 }
+
+/** Change what a provider action sends. The database refuses once approval has been requested. */
+export async function setExecutionInput(db: Db, actionId: string, email: EmailDraft) {
+  return must(await db.from("actions").update({ execution_input: { ...email } }).eq("id", actionId).select().single());
+}
+
+export function emailOf(input: unknown): EmailDraft | null {
+  const i = (input ?? null) as Partial<EmailDraft> | null;
+  if (!i || !Array.isArray(i.to)) return null;
+  return { to: i.to.map(String), subject: String(i.subject ?? ""), text: String(i.text ?? ""), replyTo: i.replyTo ? String(i.replyTo) : null };
+}
+
+// ---------------------------------------------------------------------------
+// Connections
+// ---------------------------------------------------------------------------
+
+export type Connection = Row<"connection_instances">;
+
+export async function listConnections(db: Db, orgId: string) {
+  const [connections, connectors] = await Promise.all([
+    db.from("connection_instances").select("*").eq("org_id", orgId).order("created_at"),
+    db.from("connectors").select("*"),
+  ]);
+  return { connections: must(connections), connectors: must(connectors) };
+}
+
+export async function createConnection(db: Db, orgId: string, connectorKey: string, settings: Record<string, string>) {
+  return must(await db.from("connection_instances").insert({ org_id: orgId, connector_key: connectorKey, settings }).select().single());
+}
+
+export async function updateConnectionSettings(db: Db, id: string, settings: Record<string, string>) {
+  return must(await db.from("connection_instances").update({ settings }).eq("id", id).select().single());
+}
+
+/** Hands a secret to the database, which stores it in Vault. It is never read back. */
+export async function setConnectionSecret(db: Db, id: string, purpose: "api_key" | "webhook_signing_secret", secret: string) {
+  return must(await db.rpc("set_connection_secret", { p_connection: id, p_purpose: purpose, p_secret: secret }));
+}
+
+/** Asks TEBOS's worker to check the connection with the provider. Only the worker can mark it connected. */
+export async function requestVerification(db: Db, id: string) {
+  return must(await db.from("connection_instances").update({ verification_requested_at: new Date().toISOString() }).eq("id", id).select().single());
+}
+
+export async function setConnectionEnabled(db: Db, id: string, enabled: boolean) {
+  return must(await db.from("connection_instances").update({ status: enabled ? "configured" : "disabled" }).eq("id", id).select().single());
+}
+
+/** Where a provider should send webhooks for a connection, when the worker's public address is known. */
+export const webhookUrl = (connectionId: string, workerUrl: string | undefined = import.meta.env.VITE_TEBOS_WORKER_URL) =>
+  workerUrl ? `${workerUrl.replace(/\/+$/, "")}/webhooks/resend/${connectionId}` : null;

@@ -1,4 +1,4 @@
-import { Building2, CheckSquare, Gauge, Home, LogOut, ScanSearch, ShieldCheck, Sparkles, Stamp, Users } from "lucide-react";
+import { Building2, CheckSquare, Gauge, Home, LogOut, Plug, ScanSearch, ShieldCheck, Sparkles, Stamp, Users } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link, usePath } from "../lib/router";
 import { useOrg } from "../lib/session";
@@ -11,6 +11,7 @@ const NAV = [
   { to: "/actions", label: "Actions", icon: CheckSquare },
   { to: "/approvals", label: "Approvals", icon: Stamp },
   { to: "/team", label: "Team", icon: Users },
+  { to: "/connections", label: "Connections", icon: Plug },
   { to: "/system", label: "System", icon: Gauge },
 ];
 
