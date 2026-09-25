@@ -10,6 +10,8 @@
 //   interviews    — place booked diagnostic calls (when ELEVENLABS_API_KEY, ELEVENLABS_AGENT_ID
 //                   and ELEVENLABS_PHONE_NUMBER_ID are set), follow them, and turn transcripts
 //                   into evidence (extraction needs ANTHROPIC_API_KEY)
+//   monitoring    — read connected platforms' operational snapshots (read-only logins,
+//                   aggregates only) and record them as connected-system evidence
 // When PORT is set (Railway sets it), an HTTP server also receives provider
 // webhooks at /webhooks/resend/<connection id> and answers /health.
 // It sleeps only when neither stage had work, and stops cleanly on
@@ -35,6 +37,8 @@ import { ExecutionWorker } from "./execution/worker";
 import { PgInterviewStore } from "./interviews/pg-store";
 import { ElevenLabsVoice } from "./interviews/voice";
 import { InterviewWorker } from "./interviews/worker";
+import { PgMonitorStore, PgSnapshotReader } from "./monitoring/pg-store";
+import { MonitorWorker } from "./monitoring/worker";
 
 const url = process.env.TEBOS_DATABASE_URL;
 if (!url) {
@@ -72,6 +76,8 @@ const voice = voiceEnabled
   : null;
 const interviews = new InterviewWorker(new PgInterviewStore(pool, workerId), voice, provider, { log });
 
+const monitor = new MonitorWorker(new PgMonitorStore(pool, workerId), new PgSnapshotReader(), { log });
+
 const port = process.env.PORT ? Number(process.env.PORT) : null;
 const server = port ? createWebhookServer(executionStore, log) : null;
 server?.listen(port!, () => log({ event: "webhooks.listening", port }));
@@ -105,7 +111,8 @@ while (!stopping) {
   const analysed = intelligence && !stopping ? await step("intelligence", () => intelligence.runOnce()) : false;
   const executed = execution && !stopping ? await step("execution", () => execution.runOnce()) : false;
   const interviewed = !stopping ? await step("interviews", () => interviews.runOnce()) : false;
-  if (!acquired && !analysed && !executed && !interviewed && !stopping) await new Promise((r) => setTimeout(r, pollMs));
+  const monitored = !stopping ? await step("monitoring", () => monitor.runOnce()) : false;
+  if (!acquired && !analysed && !executed && !interviewed && !monitored && !stopping) await new Promise((r) => setTimeout(r, pollMs));
 }
 await new Promise<void>((r) => (server ? server.close(() => r()) : r()));
 await pool.end();

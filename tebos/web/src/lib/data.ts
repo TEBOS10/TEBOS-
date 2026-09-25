@@ -706,3 +706,31 @@ export async function getInterview(db: Db, id: string) {
   });
   return { interview, business: must(business), answers };
 }
+
+// ---------------------------------------------------------------------------
+// Live operations (connected platforms, read-only)
+// ---------------------------------------------------------------------------
+
+export interface OperationsFact {
+  metric: string;
+  fact: string;
+  retrievedAt: string | null;
+}
+
+/** The latest reading of each operational metric from this business's connected platforms. */
+export async function liveOperations(db: Db, businessId: string) {
+  const [connections, sources] = await Promise.all([
+    db.from("connection_instances").select("*").eq("business_id", businessId).eq("connector_key", "bame-ops"),
+    db.from("sources").select("id, uri, label").eq("business_id", businessId).eq("source_type", "connected_system"),
+  ]);
+  const src = must(sources);
+  const evidence = src.length
+    ? must(await db.from("evidence").select("fact, structured_value, retrieved_at").in("source_id", src.map((s) => s.id)).order("retrieved_at", { ascending: false }).limit(200))
+    : [];
+  const latest = new Map<string, OperationsFact>();
+  for (const e of evidence) {
+    const metric = ((e.structured_value ?? {}) as { metric?: string }).metric ?? "";
+    if (metric && !latest.has(metric)) latest.set(metric, { metric, fact: e.fact ?? "", retrievedAt: e.retrieved_at });
+  }
+  return { connections: must(connections), facts: [...latest.values()].sort((a, b) => a.metric.localeCompare(b.metric)) };
+}

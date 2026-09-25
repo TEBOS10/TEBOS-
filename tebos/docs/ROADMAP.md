@@ -106,3 +106,12 @@ Next:
 2. Feed interview evidence into findings, alongside scans.
 3. Document uploads.
 4. Read-only connectors (accounting, CRM, project tools) to confirm answers against real data.
+
+## Platform monitoring
+
+- **BAME:** a read-only operations snapshot (aggregates only, no personal data) is read hourly into
+  evidence. You can see it on the BAME business page under "Live operations".
+- **Tidy Capital and Tidy Property Revenue Architect:** not connected. Their code and data weren't found in
+  the connected GitHub, Supabase or Railway accounts.
+- **Next:** feed these facts into findings. Then add approved actions on BAME (assign a lead, chase an
+  overdue deliverable) as their own capabilities.

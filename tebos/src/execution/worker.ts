@@ -69,7 +69,8 @@ export interface DeliveryCheck {
 }
 
 export interface ExecutionStore {
-  nextConnectionToVerify(): Promise<ConnectionRecord | null>;
+  /** A connection of one of `connectorKeys` that was asked to be checked, or is due a recheck. */
+  nextConnectionToVerify(connectorKeys: string[]): Promise<ConnectionRecord | null>;
   recordVerification(connection: ConnectionRecord, result: VerifyResult): Promise<void>;
 
   nextQueuedAction(): Promise<QueuedExecution | null>;
@@ -137,7 +138,7 @@ export class ExecutionWorker {
   }
 
   async verifyOnce(): Promise<ExecutionReport | null> {
-    const conn = await this.store.nextConnectionToVerify();
+    const conn = await this.store.nextConnectionToVerify([...this.connectors.keys()]);
     if (!conn) return null;
     const connector = this.connectors.get(conn.instance.connectorKey);
     let result: VerifyResult;

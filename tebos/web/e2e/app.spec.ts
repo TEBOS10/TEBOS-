@@ -398,3 +398,23 @@ test("a completed call shows the transcript, the answers with quotes, and what w
   await expect(page.getByRole("button", { name: "Cancel interview" })).toHaveCount(0);
   await snap(page, "9-interview-done");
 });
+
+test("a business with a connected platform shows its live operations, read-only, with when each number was read", async ({ page }) => {
+  const fake = await installFakeSupabase(page);
+  const now = new Date().toISOString();
+  fake.tables.connection_instances!.push({
+    id: "c-bame", org_id: ORG, business_id: BIZ, connector_key: "bame-ops", status: "connected", granted_scopes: ["operations:read"], credential_ref_id: "k",
+    webhook_credential_ref_id: null, last_verified_at: now, last_success_at: now, last_failure_at: null, failure_detail: null, verification_requested_at: null,
+    settings: {}, created_by: null, created_at: now, updated_at: now,
+  });
+  fake.tables.sources!.push({ id: "src-ops", org_id: ORG, business_id: BIZ, source_type: "connected_system", uri: "bame-ops:c-bame", label: "Operations snapshot (read-only)", reliability: 0.95, created_at: now });
+  fake.tables.evidence!.push(
+    { id: "ev-o1", org_id: ORG, business_id: BIZ, source_id: "src-ops", state: "acquired", fact: "2 leads are not assigned to any department; the oldest has waited 6 days.", structured_value: { metric: "leads.unassigned" }, retrieved_at: now, created_at: now },
+    { id: "ev-o0", org_id: ORG, business_id: BIZ, source_id: "src-ops", state: "acquired", fact: "Every lead is assigned to a department.", structured_value: { metric: "leads.unassigned" }, retrieved_at: new Date(Date.now() - 864e5).toISOString(), created_at: now },
+  );
+  await page.goto(`/businesses/${BIZ}`);
+  await expect(page.getByText("Live operations")).toBeVisible();
+  await expect(page.getByTestId("operations-status")).toContainText("Connected");
+  await expect(page.getByText("2 leads are not assigned to any department; the oldest has waited 6 days.")).toBeVisible();
+  await expect(page.getByText("Every lead is assigned to a department.")).toHaveCount(0); // only the latest reading per metric
+});

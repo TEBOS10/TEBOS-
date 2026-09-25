@@ -67,10 +67,10 @@ export class PgExecutionStore implements ExecutionStore {
   // Connections
   // -------------------------------------------------------------------------
 
-  async nextConnectionToVerify(): Promise<ConnectionRecord | null> {
+  async nextConnectionToVerify(connectorKeys: string[]): Promise<ConnectionRecord | null> {
     const { rows } = await this.pool.query(
       `select * from public.connection_instances
-        where status <> 'disabled' and (
+        where status <> 'disabled' and connector_key = any ($1) and (
           (verification_requested_at is not null
              and verification_requested_at > coalesce(last_verified_at, '-infinity')
              and verification_requested_at > coalesce(last_failure_at, '-infinity'))
@@ -78,6 +78,7 @@ export class PgExecutionStore implements ExecutionStore {
           or (status = 'unavailable' and last_failure_at < now() - interval '30 minutes'))
         order by coalesce(verification_requested_at, last_verified_at, created_at)
         limit 1`,
+      [connectorKeys],
     );
     return rows[0] ? connectionRecord(rows[0]) : null;
   }

@@ -4,6 +4,7 @@ import { Card, Empty, ErrorNote, Field, Loading, PageHeader, StatusBadge } from 
 import { addContext, CONTEXT_KINDS, getBusiness, requestScan, updateBusiness, type Business } from "../lib/data";
 import { ago, pct, RISK_LABEL, statusLabel } from "../lib/format";
 import { InterviewCard } from "../components/InterviewCard";
+import { OperationsCard } from "../components/OperationsCard";
 import { usePeople } from "../lib/people";
 import { Link, navigate } from "../lib/router";
 import { useOrg } from "../lib/session";
@@ -129,6 +130,7 @@ export function BusinessPage({ id }: { id: string }) {
           <Profile business={business} onSaved={q.reload} />
           <ContextCard businessId={business.id} contexts={contexts} onAdded={q.reload} />
           <InterviewCard business={business} />
+          <OperationsCard businessId={business.id} />
         </div>
       </div>
     </div>

@@ -194,6 +194,23 @@ Worker settings: `ELEVENLABS_API_KEY`, `ELEVENLABS_AGENT_ID` (the TEBOS diagnost
 `ELEVENLABS_TELEPHONY=sip_trunk` for SIP). Without all three the worker places no calls: bookings stay
 booked, and the interface says so once the time has passed.
 
+## Platform monitoring (read-only)
+
+TEBOS watches the platforms it runs for, without being able to change them or read personal data.
+BAME is the first (`src/monitoring/`, connector `bame-ops`, capability `operations.read_metrics`, tier 0):
+
+- On BAME's database (`bame-os`), `tebos_export.operational_snapshot()` returns counts and ages only: leads
+  and diagnostics (volume, unassigned and for how long), case-deliverable progress, unread staff
+  notifications, staff coverage and pending invitations, player roster, and capital-ledger totals.
+  The SQL is in `connectors/bame/bame_os_tebos_export.sql`.
+- TEBOS connects as `tebos_reader`, a login that can execute that one function and nothing else: no table
+  access and no row-level-security bypass. Its connection string is kept in TEBOS's Vault.
+- About once an hour (`settings.interval_minutes`), the worker reads the snapshot and turns it into plain
+  facts. They're recorded as `acquired` evidence from a `connected_system` source when the numbers change,
+  or at least daily. A refused login moves the connection to `authentication_required`, with the reason.
+- No write capability is mapped to this connector, so no action can be routed through it. Acting on BAME
+  (for example, assigning a lead) will be a separate capability with approvals.
+
 ## Deploying on Railway
 
 The worker (acquisition, intelligence and execution) deploys as one Railway service from this repository.
