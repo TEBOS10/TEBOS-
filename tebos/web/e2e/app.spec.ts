@@ -277,3 +277,42 @@ test("a provider action can't be started or verified by hand; it waits for TEBOS
   await expect(page.getByRole("button", { name: "Verify" })).toHaveCount(0);
   await expect(page.getByText(/provider ref msg_1/)).toBeVisible();
 });
+
+test("a signed-in person changes their password from their account page", async ({ page }) => {
+  const fake = await installFakeSupabase(page);
+  await page.goto("/");
+  await page.getByRole("link", { name: "operator@fixture.test" }).click();
+  await expect(page.getByRole("heading", { name: "Your account" })).toBeVisible();
+  await page.getByRole("textbox", { name: /^New password/ }).fill("a-new-password-123");
+  await page.getByRole("textbox", { name: /^Repeat new password/ }).fill("a-new-password-12");
+  await expect(page.getByText("The two passwords don't match.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Change password" })).toBeDisabled();
+  await page.getByRole("textbox", { name: /^Repeat new password/ }).fill("a-new-password-123");
+  await page.getByRole("button", { name: "Change password" }).click();
+  await expect(page.getByText("Password changed.")).toBeVisible();
+  expect(fake.writes.find((w) => w.table.startsWith("auth/user"))?.body).toMatchObject({ password: "a-new-password-123" });
+});
+
+test("someone who forgot their password can ask for a reset link", async ({ page }) => {
+  const fake = await installFakeSupabase(page, { signedIn: false });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Forgot password?" }).click();
+  await page.getByLabel("Email").fill("operator@fixture.test");
+  await page.getByRole("button", { name: "Send reset link" }).click();
+  await expect(page.getByText("If that address has a TEBOS account, a reset link is on its way.")).toBeVisible();
+  const reset = fake.writes.find((w) => w.table.startsWith("auth/recover"));
+  expect(reset?.body).toMatchObject({ email: "operator@fixture.test" });
+  expect(decodeURIComponent(reset!.table)).toContain("redirect_to=http://localhost:5174/reset-password");
+  await expect(page.getByLabel("Password")).toHaveCount(0);
+});
+
+test("the reset link opens a screen to choose a new password", async ({ page }) => {
+  const fake = await installFakeSupabase(page);
+  await page.goto("/reset-password");
+  await page.getByRole("textbox", { name: /^New password/ }).fill("fresh-password-456");
+  await page.getByRole("textbox", { name: /^Repeat new password/ }).fill("fresh-password-456");
+  await page.getByRole("button", { name: "Save new password" }).click();
+  await page.getByRole("button", { name: "Continue to TEBOS" }).click();
+  await expect(page.getByRole("heading", { name: "What do you want TEBOS to work on?" })).toBeVisible();
+  expect(fake.writes.find((w) => w.table.startsWith("auth/user"))?.body).toMatchObject({ password: "fresh-password-456" });
+});

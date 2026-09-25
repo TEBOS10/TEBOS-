@@ -53,7 +53,7 @@ export function Shell({ children }: { children: ReactNode }) {
             <div className="org-name">{organisation.name}</div>
           )}
           <div className="who">
-            <span className="mono">{session.user.email}</span>
+            <Link to="/account" className="mono account-link" title="Your account and password">{session.user.email}</Link>
             <span className="role">{role.replace("_", " ")}</span>
           </div>
           <button className="btn btn-ghost-dark" onClick={() => db.auth.signOut()}>

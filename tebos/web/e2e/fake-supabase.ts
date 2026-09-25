@@ -95,7 +95,10 @@ export async function installFakeSupabase(page: Page, opts: { signedIn?: boolean
     if (req.method() === "OPTIONS") return route.fulfill({ status: 204, headers: { ...headers, "access-control-allow-headers": "*", "access-control-allow-methods": "*" } });
 
     if (url.pathname.startsWith("/auth/v1/")) {
-      return route.fulfill({ status: 200, headers, body: JSON.stringify({}) });
+      if (req.method() !== "GET") writes.push({ method: req.method(), table: `auth${url.pathname.slice(8)}${url.search}`, body: req.postDataJSON() });
+      // Updating the user answers with the user, as Supabase does.
+      const user = { id: USER_ID, email: "operator@fixture.test", aud: "authenticated", role: "authenticated", app_metadata: {}, user_metadata: {}, created_at: new Date().toISOString() };
+      return route.fulfill({ status: 200, headers, body: JSON.stringify(url.pathname === "/auth/v1/user" ? user : {}) });
     }
 
     const m = /^\/rest\/v1\/(rpc\/)?([a-z_]+)$/.exec(url.pathname);

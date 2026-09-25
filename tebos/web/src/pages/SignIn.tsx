@@ -5,7 +5,7 @@ import { useSessionState } from "../lib/session";
 
 export function SignIn({ notice: intro }: { notice?: string } = {}) {
   const { db } = useSessionState();
-  const [mode, setMode] = useState<"sign_in" | "sign_up">("sign_in");
+  const [mode, setMode] = useState<"sign_in" | "sign_up" | "reset">("sign_in");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -17,6 +17,13 @@ export function SignIn({ notice: intro }: { notice?: string } = {}) {
     setBusy(true);
     setError(null);
     setNotice(null);
+    if (mode === "reset") {
+      const res = await db.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/reset-password` });
+      setBusy(false);
+      if (res.error) return setError(res.error);
+      // Same answer whether or not the address has an account.
+      return setNotice("If that address has a TEBOS account, a reset link is on its way. Open it on this device.");
+    }
     const res =
       mode === "sign_in"
         ? await db.auth.signInWithPassword({ email, password })
@@ -24,7 +31,7 @@ export function SignIn({ notice: intro }: { notice?: string } = {}) {
     setBusy(false);
     if (res.error) return setError(res.error);
     if (mode === "sign_up" && !res.data.session) {
-      setNotice("Check your email to confirm your address, then sign in.");
+      setNotice("Check your email to confirm your address, then sign in. You don't need to press the button again.");
     }
   }
 
@@ -44,16 +51,17 @@ export function SignIn({ notice: intro }: { notice?: string } = {}) {
         </div>
         {intro && <div className="note note-info">{intro}</div>}
         <div className="tabs" role="tablist">
-          <button type="button" role="tab" aria-selected={mode === "sign_in"} className={`tab ${mode === "sign_in" ? "active" : ""}`} onClick={() => setMode("sign_in")}>
+          <button type="button" role="tab" aria-selected={mode !== "sign_up"} className={`tab ${mode !== "sign_up" ? "active" : ""}`} onClick={() => { setMode("sign_in"); setNotice(null); }}>
             Sign in
           </button>
-          <button type="button" role="tab" aria-selected={mode === "sign_up"} className={`tab ${mode === "sign_up" ? "active" : ""}`} onClick={() => setMode("sign_up")}>
+          <button type="button" role="tab" aria-selected={mode === "sign_up"} className={`tab ${mode === "sign_up" ? "active" : ""}`} onClick={() => { setMode("sign_up"); setNotice(null); }}>
             Create account
           </button>
         </div>
         <Field label="Email">
           <input className="input" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
         </Field>
+        {mode !== "reset" && (
         <Field label="Password" hint={mode === "sign_up" ? "At least 8 characters." : undefined}>
           <input
             className="input"
@@ -65,11 +73,23 @@ export function SignIn({ notice: intro }: { notice?: string } = {}) {
             onChange={(e) => setPassword(e.target.value)}
           />
         </Field>
-        <ErrorNote error={error} title={mode === "sign_in" ? "Couldn't sign in" : "Couldn't create the account"} />
+        )}
+        {mode === "sign_in" && (
+          <button type="button" className="link-button" onClick={() => { setMode("reset"); setError(null); setNotice(null); }}>
+            Forgot password?
+          </button>
+        )}
+        {mode === "reset" && <p className="muted">Enter your email and TEBOS will send you a link to choose a new password.</p>}
+        <ErrorNote error={error} title={mode === "sign_in" ? "Couldn't sign in" : mode === "reset" ? "Couldn't send the link" : "Couldn't create the account"} />
         {notice && <div className="note note-info">{notice}</div>}
-        <button className="btn btn-primary" disabled={busy}>
-          {busy ? "Please wait…" : mode === "sign_in" ? "Sign in" : "Create account"}
+        <button className="btn btn-primary" disabled={busy || (mode !== "sign_in" && !!notice)}>
+          {busy ? "Please wait…" : mode === "sign_in" ? "Sign in" : mode === "reset" ? "Send reset link" : "Create account"}
         </button>
+        {mode === "reset" && (
+          <button type="button" className="link-button" onClick={() => { setMode("sign_in"); setNotice(null); setError(null); }}>
+            Back to sign in
+          </button>
+        )}
       </form>
     </div>
   );

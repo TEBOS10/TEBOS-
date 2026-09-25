@@ -7,6 +7,8 @@ import { PeopleProvider } from "./lib/people";
 import { SessionProvider, useSessionState } from "./lib/session";
 import { supabase } from "./lib/supabase";
 import { AcceptInvite } from "./pages/AcceptInvite";
+import { AccountPage } from "./pages/AccountPage";
+import { ResetPassword } from "./pages/ResetPassword";
 import { ActionPage } from "./pages/ActionPage";
 import { ActionsPage } from "./pages/ActionsPage";
 import { ApprovalsPage } from "./pages/ApprovalsPage";
@@ -38,6 +40,7 @@ const ROUTES: Array<[string, (p: Record<string, string>) => ReactNode]> = [
   ["/actions/:id", (p) => <ActionPage id={p.id!} />],
   ["/approvals", () => <ApprovalsPage />],
   ["/team", () => <TeamPage />],
+  ["/account", () => <AccountPage />],
   ["/connections", () => <ConnectionsPage />],
   ["/system", () => <SystemPage />],
 ];
@@ -57,6 +60,11 @@ function Gate() {
   // An invitation link works signed out (sign in first), with no organisation yet, or signed in elsewhere.
   const invite = matchPath("/invite/:token", path);
   if (invite && (state.phase === "signed_out" || state.phase === "no_organisation" || state.phase === "ready")) return <AcceptInvite token={invite.token!} />;
+  // The emailed reset link signs the person in just to choose a new password.
+  if (path === "/reset-password") {
+    if (state.phase === "ready" || state.phase === "no_organisation") return <ResetPassword />;
+    if (state.phase === "signed_out") return <SignIn notice="That reset link has expired or was already used. Use “Forgot password?” to get a new one." />;
+  }
   switch (state.phase) {
     case "loading":
       return (
