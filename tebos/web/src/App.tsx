@@ -27,6 +27,7 @@ import { ScanPage } from "./pages/ScanPage";
 import { ScansPage } from "./pages/ScansPage";
 import { SignIn } from "./pages/SignIn";
 import { SystemPage } from "./pages/SystemPage";
+import { TourPage } from "./pages/TourPage";
 import { TeamPage } from "./pages/TeamPage";
 
 const ROUTES: Array<[string, (p: Record<string, string>) => ReactNode]> = [
@@ -63,6 +64,8 @@ function Gate() {
   // An invitation link works signed out (sign in first), with no organisation yet, or signed in elsewhere.
   const invite = matchPath("/invite/:token", path);
   if (invite && (state.phase === "signed_out" || state.phase === "no_organisation" || state.phase === "ready")) return <AcceptInvite token={invite.token!} />;
+  // The tour is public: it shows no data.
+  if (path === "/tour") return <TourPage />;
   // The emailed reset link signs the person in just to choose a new password.
   if (path === "/reset-password") {
     if (state.phase === "ready" || state.phase === "no_organisation") return <ResetPassword />;

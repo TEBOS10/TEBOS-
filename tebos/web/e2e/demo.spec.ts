@@ -49,3 +49,23 @@ test("the demo opens without an account, says it is fictional, and walks through
   await page.getByRole("button", { name: "Leave demo" }).first().click();
   await expect(page.getByRole("link", { name: "Try the demo" })).toBeVisible({ timeout: 10_000 });
 });
+
+test("the tour plays without an account, can be paused and jumped, and leads to the demo", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  await page.goto("/tour");
+  await expect(page.getByRole("heading", { name: /See how TEBOS helps a business/ })).toBeVisible();
+  await expect(page.getByText("Busy agency, shrinking margin")).toBeVisible();
+  await expect(page.getByText("Illustrative example · fictional agency")).toBeVisible();
+
+  await page.getByRole("tab", { name: "Step 4 · Find" }).click();
+  await expect(page.getByText("Extra work is done but not billed")).toBeVisible();
+  await page.getByRole("button", { name: "Pause", exact: true }).click();
+  await page.waitForTimeout(8500);
+  await expect(page.getByText("Extra work is done but not billed")).toBeVisible(); // paused: still on this scene
+  await page.getByRole("button", { name: "Play", exact: true }).click();
+
+  await page.getByRole("link", { name: "Try the demo" }).click();
+  await expect(page.getByRole("note", { name: "Demo" })).toBeVisible();
+  expect(errors).toEqual([]);
+});

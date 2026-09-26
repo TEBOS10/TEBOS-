@@ -84,6 +84,7 @@ function DemoBanner() {
         <li><Link to={`/businesses/${DEMO_BUSINESS}`}>See what TEBOS knows about the agency</Link></li>
         <li><Link to="/findings">Open a finding and check its evidence</Link></li>
         <li><Link to="/approvals">Approve the change your ops lead proposed</Link></li>
+        <li><a href="/tour">Watch the 1-minute tour</a></li>
       </ol>
       <button className="btn btn-sm" onClick={exitDemo}>Leave demo</button>
     </div>
