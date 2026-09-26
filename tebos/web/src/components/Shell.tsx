@@ -1,5 +1,7 @@
 import { Building2, CheckSquare, Gauge, Home, LogOut, Plug, ScanSearch, ShieldCheck, Sparkles, Stamp, Users } from "lucide-react";
 import type { ReactNode } from "react";
+import { DEMO_BUSINESS } from "../demo/data";
+import { exitDemo, isDemo } from "../demo/mode";
 import { Link, usePath } from "../lib/router";
 import { useOrg } from "../lib/session";
 
@@ -56,13 +58,34 @@ export function Shell({ children }: { children: ReactNode }) {
             <Link to="/account" className="mono account-link" title="Your account and password">{session.user.email}</Link>
             <span className="role">{role.replace("_", " ")}</span>
           </div>
-          <button className="btn btn-ghost-dark" onClick={() => db.auth.signOut()}>
-            <LogOut size={15} aria-hidden /> Sign out
+          <button className="btn btn-ghost-dark" onClick={() => (isDemo ? exitDemo() : db.auth.signOut())}>
+            <LogOut size={15} aria-hidden /> {isDemo ? "Leave demo" : "Sign out"}
           </button>
           <p className="principle">Evidence before assertion</p>
         </div>
       </aside>
-      <main className="main">{children}</main>
+      <main className="main">
+        {isDemo && <DemoBanner />}
+        {children}
+      </main>
+    </div>
+  );
+}
+
+/** Says plainly that this is a demo on a fictional agency, and suggests a route through it. */
+function DemoBanner() {
+  return (
+    <div className="demo-banner no-print" role="note" aria-label="Demo">
+      <div>
+        <strong>Demo · Brightline Creative is a fictional agency.</strong> Every name, figure and quote is invented. Nothing you do here is saved or
+        sent anywhere; reloading starts over.
+      </div>
+      <ol className="demo-steps">
+        <li><Link to={`/businesses/${DEMO_BUSINESS}`}>See what TEBOS knows about the agency</Link></li>
+        <li><Link to="/findings">Open a finding and check its evidence</Link></li>
+        <li><Link to="/approvals">Approve the change your ops lead proposed</Link></li>
+      </ol>
+      <button className="btn btn-sm" onClick={exitDemo}>Leave demo</button>
     </div>
   );
 }

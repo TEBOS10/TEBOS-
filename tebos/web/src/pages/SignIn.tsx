@@ -90,6 +90,9 @@ export function SignIn({ notice: intro }: { notice?: string } = {}) {
             Back to sign in
           </button>
         )}
+        <p className="muted" style={{ textAlign: "center", fontSize: 14 }}>
+          New to TEBOS? <a href="/demo">Try the demo</a> on a fictional agency, no account needed.
+        </p>
       </form>
     </div>
   );

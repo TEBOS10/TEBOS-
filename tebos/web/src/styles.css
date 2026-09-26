@@ -267,3 +267,23 @@ table.table { width: 100%; border-collapse: collapse; }
 .transcript li.from-user { background: #eefbc9; }
 .transcript p { margin: 2px 0 0; }
 .plain-list { margin: 4px 0 0; padding-left: 18px; font-size: 14px; display: grid; gap: 4px; }
+
+/* Demo mode banner */
+.demo-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 20px;
+  margin: 0 0 20px;
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  background: var(--lime);
+  color: var(--green);
+  font-size: 14px;
+  line-height: 1.45;
+}
+.demo-banner > div { flex: 1 1 320px; }
+.demo-steps { display: flex; flex-wrap: wrap; gap: 6px 22px; margin: 0; padding: 0; list-style: none; counter-reset: demo-step; }
+.demo-steps li { counter-increment: demo-step; }
+.demo-steps li::before { content: counter(demo-step) ". "; font-weight: 700; }
+.demo-steps a { color: var(--green); font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }

@@ -6,6 +6,7 @@ import { matchPath, RouterProvider, usePath } from "./lib/router";
 import { PeopleProvider } from "./lib/people";
 import { SessionProvider, useSessionState } from "./lib/session";
 import { supabase } from "./lib/supabase";
+import { exitDemo, isDemo } from "./demo/mode";
 import { AcceptInvite } from "./pages/AcceptInvite";
 import { AccountPage } from "./pages/AccountPage";
 import { ResetPassword } from "./pages/ResetPassword";
@@ -75,6 +76,10 @@ function Gate() {
         </div>
       );
     case "signed_out":
+      if (isDemo) {
+        exitDemo();
+        return null;
+      }
       return <SignIn />;
     case "no_organisation":
       return <CreateOrganisation />;
