@@ -157,7 +157,7 @@ function Overview({ data }: { data: Awaited<ReturnType<typeof homeSummary>> }) {
           <Stamp size={16} aria-hidden />
           <div>
             <strong>Scans are waiting.</strong> A scan has been queued for more than three minutes. The acquisition worker may not be running —
-            check the Railway service.
+            check the worker service.
           </div>
         </div>
       )}

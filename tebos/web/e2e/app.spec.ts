@@ -34,7 +34,8 @@ test("a scan shows what was read, what wasn't, and why TEBOS is as confident as 
   await expect(page.getByRole("cell", { name: "HTTP 503 from the site" })).toBeVisible();
   await expect(page.getByText("not obtained").first()).toBeVisible();
   await expect(page.getByText("Few independent sources agree")).toBeVisible();
-  await expect(page.getByText(/claude-opus-5 · 2,140 in \/ 610 out tokens/)).toBeVisible();
+  await expect(page.getByText(/2,140 in \/ 610 out tokens/)).toBeVisible();
+  await expect(page.getByText(/claude/i)).toHaveCount(0); // the model is recorded, never shown
   await expect(page.getByText("1 proposed finding was rejected for lack of evidence")).toBeVisible();
   await snap(page, "2-scan");
 });

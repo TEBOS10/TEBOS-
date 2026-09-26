@@ -216,7 +216,7 @@ export function demoTables(): Tables {
     interview_sessions: [{
       id: INTERVIEW, org_id: ORG, business_id: BIZ, channel: "voice", playbook_key: "marketing-agency", playbook_version: 1, status: "completed",
       phone_number: "+27820000000", scheduled_for: ago(2 * DAY + 20), consent_text: "I agree to receive a call from TEBOS's AI interviewer and for the call to be recorded and transcribed.",
-      consent_given_by: DEMO_USER_ID, consent_given_at: ago(3 * DAY), requested_by: DEMO_USER_ID, provider: "elevenlabs", provider_reference: "demo",
+      consent_given_by: DEMO_USER_ID, consent_given_at: ago(3 * DAY), requested_by: DEMO_USER_ID, provider: null, provider_reference: null,
       started_at: ago(2 * DAY + 18), ended_at: ago(2 * DAY + 2), duration_seconds: 972, extraction_status: "done",
       extraction_detail: `${ANSWERS.length} of 16 questions answered`, failure_detail: null,
       transcript: TRANSCRIPT.map(([role, time_in_call_secs, message]) => ({ role, message, time_in_call_secs })),
@@ -256,8 +256,8 @@ export function demoTables(): Tables {
     outcomes: [],
     agent_runs: [
       { id: RUN_ACQ, org_id: ORG, business_id: BIZ, agent_role: "acquisition", purpose: "Read public website", scan_id: SCAN, action_id: null, input_context: {}, status: "succeeded", model_provider: null, model: null, tokens_in: null, tokens_out: null, output_summary: {}, error_detail: null, started_at: ago(3 * DAY + 4), finished_at: ago(3 * DAY) },
-      { id: RUN_SCAN, org_id: ORG, business_id: BIZ, agent_role: "business_intelligence", purpose: "Propose findings from scan evidence", scan_id: SCAN, action_id: null, input_context: {}, status: "succeeded", model_provider: "anthropic", model: "claude-opus-5", tokens_in: 3120, tokens_out: 540, output_summary: { findings: 1, rejected: [] }, error_detail: null, started_at: ago(3 * DAY - 22), finished_at: ago(3 * DAY - 20) },
-      { id: RUN_REVIEW, org_id: ORG, business_id: BIZ, agent_role: "business_intelligence", purpose: "Business review: propose findings from all evidence held", scan_id: null, action_id: null, input_context: { kind: "business_review" }, status: "succeeded", model_provider: "anthropic", model: "claude-opus-5", tokens_in: 6840, tokens_out: 1920,
+      { id: RUN_SCAN, org_id: ORG, business_id: BIZ, agent_role: "business_intelligence", purpose: "Propose findings from scan evidence", scan_id: SCAN, action_id: null, input_context: {}, status: "succeeded", model_provider: null, model: null, tokens_in: 3120, tokens_out: 540, output_summary: { findings: 1, rejected: [] }, error_detail: null, started_at: ago(3 * DAY - 22), finished_at: ago(3 * DAY - 20) },
+      { id: RUN_REVIEW, org_id: ORG, business_id: BIZ, agent_role: "business_intelligence", purpose: "Business review: propose findings from all evidence held", scan_id: null, action_id: null, input_context: { kind: "business_review" }, status: "succeeded", model_provider: null, model: null, tokens_in: 6840, tokens_out: 1920,
         output_summary: { findings: 5, rejected: [{ title: "Clients are unhappy with reporting", reason: "No obtained evidence supports it" }] }, error_detail: null, started_at: ago(DAY + 32), finished_at: ago(DAY + 30) },
     ],
     audit_events: [
