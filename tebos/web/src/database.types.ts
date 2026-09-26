@@ -75,6 +75,9 @@ export type Database = {
           id: string
           idempotency_key: string
           org_id: string
+          provider_reference: string | null
+          provider_status: string | null
+          provider_status_at: string | null
           request_summary: Json | null
           response_summary: Json | null
           started_at: string | null
@@ -96,6 +99,9 @@ export type Database = {
           id?: string
           idempotency_key: string
           org_id: string
+          provider_reference?: string | null
+          provider_status?: string | null
+          provider_status_at?: string | null
           request_summary?: Json | null
           response_summary?: Json | null
           started_at?: string | null
@@ -117,6 +123,9 @@ export type Database = {
           id?: string
           idempotency_key?: string
           org_id?: string
+          provider_reference?: string | null
+          provider_status?: string | null
+          provider_status_at?: string | null
           request_summary?: Json | null
           response_summary?: Json | null
           started_at?: string | null
@@ -166,6 +175,7 @@ export type Database = {
           created_by: string | null
           due_at: string | null
           evidence_requirement: string | null
+          execution_input: Json | null
           execution_method: string
           expected_outcome: string | null
           finding_id: string
@@ -191,6 +201,7 @@ export type Database = {
           created_by?: string | null
           due_at?: string | null
           evidence_requirement?: string | null
+          execution_input?: Json | null
           execution_method?: string
           expected_outcome?: string | null
           finding_id: string
@@ -216,6 +227,7 @@ export type Database = {
           created_by?: string | null
           due_at?: string | null
           evidence_requirement?: string | null
+          execution_input?: Json | null
           execution_method?: string
           expected_outcome?: string | null
           finding_id?: string
@@ -348,6 +360,7 @@ export type Database = {
           decision_note: string | null
           expires_at: string | null
           id: string
+          input_hash: string | null
           org_id: string
           proposed_action: Json
           requested_at: string
@@ -367,6 +380,7 @@ export type Database = {
           decision_note?: string | null
           expires_at?: string | null
           id?: string
+          input_hash?: string | null
           org_id: string
           proposed_action?: Json
           requested_at?: string
@@ -386,6 +400,7 @@ export type Database = {
           decision_note?: string | null
           expires_at?: string | null
           id?: string
+          input_hash?: string | null
           org_id?: string
           proposed_action?: Json
           requested_at?: string
@@ -603,8 +618,11 @@ export type Database = {
           last_success_at: string | null
           last_verified_at: string | null
           org_id: string
+          settings: Json
           status: string
           updated_at: string
+          verification_requested_at: string | null
+          webhook_credential_ref_id: string | null
         }
         Insert: {
           business_id?: string | null
@@ -619,8 +637,11 @@ export type Database = {
           last_success_at?: string | null
           last_verified_at?: string | null
           org_id: string
+          settings?: Json
           status?: string
           updated_at?: string
+          verification_requested_at?: string | null
+          webhook_credential_ref_id?: string | null
         }
         Update: {
           business_id?: string | null
@@ -635,8 +656,11 @@ export type Database = {
           last_success_at?: string | null
           last_verified_at?: string | null
           org_id?: string
+          settings?: Json
           status?: string
           updated_at?: string
+          verification_requested_at?: string | null
+          webhook_credential_ref_id?: string | null
         }
         Relationships: [
           {
@@ -944,6 +968,7 @@ export type Database = {
       }
       findings: {
         Row: {
+          analysis_run_id: string | null
           business_id: string
           category: string
           confidence: number
@@ -959,6 +984,7 @@ export type Database = {
           statement: string
           status: string
           superseded_by: string | null
+          superseded_by_run: string | null
           title: string
           updated_at: string
         }
@@ -978,10 +1004,12 @@ export type Database = {
           statement: string
           status?: string
           superseded_by?: string | null
+          superseded_by_run?: string | null
           title: string
           updated_at?: string
         }
         Update: {
+          analysis_run_id?: string | null
           business_id?: string
           category?: string
           confidence?: number
@@ -997,6 +1025,7 @@ export type Database = {
           statement?: string
           status?: string
           superseded_by?: string | null
+          superseded_by_run?: string | null
           title?: string
           updated_at?: string
         }
@@ -1064,6 +1093,90 @@ export type Database = {
             referencedColumns: ["id", "org_id"]
           },
         ]
+      }
+      interview_sessions: {
+        Row: {
+          business_id: string
+          channel: string
+          consent_given_at: string | null
+          consent_given_by: string | null
+          consent_text: string | null
+          created_at: string
+          duration_seconds: number | null
+          ended_at: string | null
+          extraction_detail: string | null
+          extraction_status: string
+          failure_detail: string | null
+          id: string
+          last_checked_at: string | null
+          org_id: string
+          phone_number: string | null
+          playbook_key: string
+          playbook_version: number
+          provider: string | null
+          provider_reference: string | null
+          requested_by: string | null
+          scheduled_for: string | null
+          started_at: string | null
+          status: string
+          transcript: Json | null
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          channel: string
+          consent_given_at?: string | null
+          consent_given_by?: string | null
+          consent_text?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          extraction_detail?: string | null
+          extraction_status?: string
+          failure_detail?: string | null
+          id?: string
+          last_checked_at?: string | null
+          org_id: string
+          phone_number?: string | null
+          playbook_key: string
+          playbook_version: number
+          provider?: string | null
+          provider_reference?: string | null
+          requested_by?: string | null
+          scheduled_for?: string | null
+          started_at?: string | null
+          status: string
+          transcript?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          channel?: string
+          consent_given_at?: string | null
+          consent_given_by?: string | null
+          consent_text?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          extraction_detail?: string | null
+          extraction_status?: string
+          failure_detail?: string | null
+          id?: string
+          last_checked_at?: string | null
+          org_id?: string
+          phone_number?: string | null
+          playbook_key?: string
+          playbook_version?: number
+          provider?: string | null
+          provider_reference?: string | null
+          requested_by?: string | null
+          scheduled_for?: string | null
+          started_at?: string | null
+          status?: string
+          transcript?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       invitations: {
         Row: {
@@ -1519,6 +1632,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      submit_interview_answers: {
+        Args: { p_session: string; p_answers: Json }
+        Returns: number
+      }
+      set_connection_secret: {
+        Args: { p_connection: string; p_purpose: string; p_secret: string }
+        Returns: string
+      }
       accept_invitation: { Args: { p_token: string }; Returns: string }
       create_invitation: {
         Args: { p_email: string; p_org: string; p_role: string }

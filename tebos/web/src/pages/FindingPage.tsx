@@ -2,7 +2,8 @@ import { approvalPolicy, effectiveRiskTier, type RiskTier } from "@core/risk";
 import { FileSearch, Lightbulb, Search } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
 import { Badge, Card, ConfidencePanel, Empty, ErrorNote, Field, Loading, PageHeader, StatusBadge } from "../components/ui";
-import { capabilities as loadCapabilities, getFinding, proposeAction, type Capability, type Finding } from "../lib/data";
+import { parseEmailInput } from "@core/email";
+import { capabilities as loadCapabilities, EMAIL_CAPABILITY, getFinding, proposeAction, type Capability, type Finding } from "../lib/data";
 import { RISK_LABEL, statusLabel, when } from "../lib/format";
 import { Link, navigate } from "../lib/router";
 import { useOrg } from "../lib/session";
@@ -156,6 +157,10 @@ function ProposeAction({ finding }: { finding: Finding }) {
   const [capabilityKey, setCapabilityKey] = useState("");
   const [tier, setTier] = useState<RiskTier>(1);
   const [priority, setPriority] = useState(3);
+  const [viaProvider, setViaProvider] = useState(true);
+  const [to, setTo] = useState("");
+  const [subject, setSubject] = useState("");
+  const [text, setText] = useState("");
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
 
@@ -163,6 +168,8 @@ function ProposeAction({ finding }: { finding: Finding }) {
   const minTier = (capability?.default_risk_tier ?? 0) as RiskTier;
   const riskTier = effectiveRiskTier(tier, minTier);
   const policy = useMemo(() => approvalPolicy(riskTier), [riskTier]);
+  const sendsEmail = capabilityKey === EMAIL_CAPABILITY && viaProvider;
+  const email = sendsEmail ? parseEmailInput({ to, subject, text }) : null;
 
   if (!open) {
     return (
@@ -176,6 +183,7 @@ function ProposeAction({ finding }: { finding: Finding }) {
 
   async function submit(e: FormEvent) {
     e.preventDefault();
+    if (email && !email.ok) return;
     setBusy(true);
     setError(null);
     try {
@@ -188,6 +196,7 @@ function ProposeAction({ finding }: { finding: Finding }) {
         approvalRequired: policy.required,
         priority,
         evidenceRequirement: evidenceRequirement.trim(),
+        email: email?.ok ? email.value : null,
       });
       navigate(`/actions/${action.id}`);
     } catch (err) {
@@ -228,6 +237,29 @@ function ProposeAction({ finding }: { finding: Finding }) {
           </select>
         </Field>
       </div>
+      {capabilityKey === EMAIL_CAPABILITY && (
+        <fieldset className="fieldset">
+          <legend>Email to send</legend>
+          <label className="row" style={{ gap: 8 }}>
+            <input type="checkbox" checked={viaProvider} onChange={(e) => setViaProvider(e.target.checked)} />
+            TEBOS sends it through the connected email provider after approval
+          </label>
+          {viaProvider && (
+            <>
+              <Field label="To" hint="One or more addresses, separated by commas.">
+                <input className="input" value={to} onChange={(e) => setTo(e.target.value)} placeholder="customer@example.com" />
+              </Field>
+              <Field label="Subject">
+                <input className="input" value={subject} onChange={(e) => setSubject(e.target.value)} />
+              </Field>
+              <Field label="Message" hint="Plain text. The approver sees exactly this, and it can't change after approval is requested.">
+                <textarea className="input" rows={6} value={text} onChange={(e) => setText(e.target.value)} />
+              </Field>
+              {email && !email.ok && (to || subject || text) && <div className="note note-warn">{email.problems.join(". ")}.</div>}
+            </>
+          )}
+        </fieldset>
+      )}
       <div className="form-row">
         <Field label="Priority">
           <select className="input" value={priority} onChange={(e) => setPriority(Number(e.target.value))}>
@@ -250,7 +282,7 @@ function ProposeAction({ finding }: { finding: Finding }) {
       </div>
       <ErrorNote error={error} title="The action wasn't created" />
       <div className="row">
-        <button className="btn btn-primary" disabled={busy}>
+        <button className="btn btn-primary" disabled={busy || (!!email && !email.ok)}>
           {busy ? "Creating…" : "Create proposed action"}
         </button>
         <button type="button" className="btn" onClick={() => setOpen(false)}>

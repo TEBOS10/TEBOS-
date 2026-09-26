@@ -1,4 +1,4 @@
-import { Building2, CheckSquare, Gauge, Home, LogOut, ScanSearch, ShieldCheck, Sparkles, Stamp, Users } from "lucide-react";
+import { Building2, CheckSquare, Gauge, Home, LogOut, Plug, ScanSearch, ShieldCheck, Sparkles, Stamp, Users } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link, usePath } from "../lib/router";
 import { useOrg } from "../lib/session";
@@ -11,6 +11,7 @@ const NAV = [
   { to: "/actions", label: "Actions", icon: CheckSquare },
   { to: "/approvals", label: "Approvals", icon: Stamp },
   { to: "/team", label: "Team", icon: Users },
+  { to: "/connections", label: "Connections", icon: Plug },
   { to: "/system", label: "System", icon: Gauge },
 ];
 
@@ -52,7 +53,7 @@ export function Shell({ children }: { children: ReactNode }) {
             <div className="org-name">{organisation.name}</div>
           )}
           <div className="who">
-            <span className="mono">{session.user.email}</span>
+            <Link to="/account" className="mono account-link" title="Your account and password">{session.user.email}</Link>
             <span className="role">{role.replace("_", " ")}</span>
           </div>
           <button className="btn btn-ghost-dark" onClick={() => db.auth.signOut()}>

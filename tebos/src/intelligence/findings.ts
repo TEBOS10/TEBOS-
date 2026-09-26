@@ -45,6 +45,13 @@ export interface EvidenceForReasoning {
   excerpt: string | null;
   contentLocation: string | null;
   confidence: number | null;
+  /** Where the evidence came from (sources.source_type); absent for scan analyses. */
+  sourceType?: "public_web" | "document" | "connected_system" | "user_statement" | "specialist" | "third_party" | "system";
+  /** The source's recorded reliability (0..1); absent for scan analyses. */
+  sourceReliability?: number;
+  retrievedAt?: string | null;
+  /** For an interview answer: the question it answers. */
+  question?: string | null;
 }
 
 export interface FindingsInput {
@@ -56,9 +63,11 @@ export interface FindingsInput {
   /** Scan-level coverage (0..1) from the acquisition confidence components. */
   scanCoverage: number;
   pagesRead: number;
+  /** "review" reads all of a business's evidence; "scan" (default) one website scan. */
+  mode?: "scan" | "review";
 }
 
-const OBTAINED = new Set(["acquired", "partially_acquired", "user_supplied", "system_generated", "stale", "conflicting"]);
+export const OBTAINED = new Set(["acquired", "partially_acquired", "user_supplied", "system_generated", "stale", "conflicting"]);
 export const MAX_EVIDENCE_FOR_REASONING = 250;
 const MAX_EXCERPT_CHARS = 400;
 
@@ -129,8 +138,8 @@ export interface PreparedRequest {
   omitted: number;
 }
 
-const clip = (s: string, n: number) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
-const quote = (s: string) => JSON.stringify(s);
+export const clip = (s: string, n: number) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
+export const quote = (s: string) => JSON.stringify(s);
 
 export function prepareFindingsRequest(input: FindingsInput): PreparedRequest {
   // Obtained evidence first, then what could not be read; cap the volume and say so.
@@ -197,22 +206,32 @@ export interface ValidationResult {
   rejected: RejectedFinding[];
 }
 
+/** Evidence older than this counts as dated when scoring recency. */
+export const STALE_AFTER_MS = 30 * 24 * 3600 * 1000;
+
 // Wording that asserts something is absent.
-const ABSENCE = /\b(no|not|none|lacks?|lacking|missing|without|absent|absence|doesn't|does not|don't|do not|fails? to|never)\b/i;
+export const ABSENCE = /\b(no|not|none|lacks?|lacking|missing|without|absent|absence|doesn't|does not|don't|do not|fails? to|never)\b/i;
 
 export function findingConfidence(
   supporting: EvidenceForReasoning[],
   contradicting: EvidenceForReasoning[],
   scanCoverage: number,
   kind: "interpretation" | "hypothesis",
+  now = Date.now(),
 ) {
   const sources = new Set(supporting.map((e) => e.sourceId)).size;
   const extraction = supporting.map((e) => e.confidence ?? 0.5);
   const hasCaveat = supporting.some((e) => e.state !== "acquired" && e.state !== "system_generated");
+  // A review knows each source's recorded reliability; a scan analysis only knows it read public pages.
+  const recorded = supporting.filter((e) => e.sourceReliability !== undefined);
+  const reliability = recorded.length === supporting.length
+    ? recorded.reduce((a, e) => a + e.sourceReliability!, 0) / recorded.length
+    : supporting.every((e) => e.state === "user_supplied") ? 0.5 : PUBLIC_WEB_RELIABILITY;
+  const old = (e: EvidenceForReasoning) => e.retrievedAt != null && now - Date.parse(e.retrievedAt) > STALE_AFTER_MS;
   const c = scoreConfidence({
     coverage: scanCoverage,
-    sourceReliability: supporting.every((e) => e.state === "user_supplied") ? 0.5 : PUBLIC_WEB_RELIABILITY,
-    recency: supporting.some((e) => e.state === "stale") ? 0.5 : 1,
+    sourceReliability: reliability,
+    recency: supporting.some((e) => e.state === "stale" || old(e)) ? 0.5 : 1,
     corroboration: Math.min(1, sources / 3),
     extractionQuality: (extraction.reduce((a, b) => a + b, 0) / extraction.length) * (hasCaveat ? 0.8 : 1),
     contradiction: contradicting.length / (supporting.length + contradicting.length),
@@ -261,13 +280,27 @@ export function validateProposals(raw: unknown, refs: Map<string, EvidenceForRea
 
     let kind = p.kind;
     const missing = [...p.missing_information];
-    if (kind === "interpretation" && ABSENCE.test(`${p.title} ${p.statement}`)) {
-      kind = "hypothesis";
-      adjustments.push("Reclassified as hypothesis: it asserts an absence, which reading public pages cannot prove");
-      missing.push(`Absence not verified: TEBOS read ${input.pagesRead} page(s); confirm with the business or a deeper scan`);
+    if (ABSENCE.test(`${p.title} ${p.statement}`)) {
+      // An absence can be observed only where it was measured: a connected
+      // system's own record that states it (a zero, "none are defined for …").
+      // Pages read and things people said cannot prove it.
+      const measured = supporting.filter((e) => e.sourceType === "connected_system" && e.state === "acquired" && ABSENCE.test(e.fact ?? ""));
+      if (measured.length > 0) {
+        missing.push(`Measured in ${[...new Set(measured.map((e) => e.sourceUri ?? "the connected system"))].join(", ")} only; anything kept outside it is not counted`);
+      } else if (kind === "interpretation") {
+        kind = "hypothesis";
+        if (input.mode === "review") {
+          adjustments.push("Reclassified as hypothesis: it asserts an absence that no connected system measured");
+          missing.push("Absence not verified: no connected system records it; confirm with the business");
+        } else {
+          adjustments.push("Reclassified as hypothesis: it asserts an absence, which reading public pages cannot prove");
+          missing.push(`Absence not verified: TEBOS read ${input.pagesRead} page(s); confirm with the business or a deeper scan`);
+        }
+      }
     }
 
     const { score, components } = findingConfidence(supporting, contradicting, input.scanCoverage, kind);
+    if (input.mode === "review") components.method = "findings.review.v1";
     accepted.push({
       title: p.title.trim(),
       statement: p.statement.trim(),

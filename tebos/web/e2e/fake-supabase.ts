@@ -95,7 +95,10 @@ export async function installFakeSupabase(page: Page, opts: { signedIn?: boolean
     if (req.method() === "OPTIONS") return route.fulfill({ status: 204, headers: { ...headers, "access-control-allow-headers": "*", "access-control-allow-methods": "*" } });
 
     if (url.pathname.startsWith("/auth/v1/")) {
-      return route.fulfill({ status: 200, headers, body: JSON.stringify({}) });
+      if (req.method() !== "GET") writes.push({ method: req.method(), table: `auth${url.pathname.slice(8)}${url.search}`, body: req.postDataJSON() });
+      // Updating the user answers with the user, as Supabase does.
+      const user = { id: USER_ID, email: "operator@fixture.test", aud: "authenticated", role: "authenticated", app_metadata: {}, user_metadata: {}, created_at: new Date().toISOString() };
+      return route.fulfill({ status: 200, headers, body: JSON.stringify(url.pathname === "/auth/v1/user" ? user : {}) });
     }
 
     const m = /^\/rest\/v1\/(rpc\/)?([a-z_]+)$/.exec(url.pathname);
@@ -120,7 +123,7 @@ export async function installFakeSupabase(page: Page, opts: { signedIn?: boolean
       let result: Array<Record<string, unknown>>;
       if (req.method() === "POST") {
         const now = new Date().toISOString();
-        result = (Array.isArray(body) ? body : [body]).map((r: Record<string, unknown>) => ({ id: crypto.randomUUID(), created_at: now, updated_at: now, status: r.status ?? defaultStatus(name!), ...r }));
+        result = (Array.isArray(body) ? body : [body]).map((r: Record<string, unknown>) => ({ id: crypto.randomUUID(), created_at: now, updated_at: now, status: r.status ?? defaultStatus(name!), ...COLUMN_DEFAULTS[name!], ...r }));
         table.push(...result);
       } else {
         result = table.filter((r) => matches(r, url.searchParams));
@@ -161,9 +164,21 @@ function answerRpc(tables: FakeSupabase["tables"], name: string, args: Record<st
     tables.memberships!.push({ org_id: invite.org_id, user_id: USER_ID, role: invite.role, created_at: now });
     return invite.org_id;
   }
+  if (name === "submit_interview_answers") {
+    const session = tables.interview_sessions?.find((x) => x.id === args.p_session);
+    const answers = (args.p_answers as unknown as Array<{ answer: string }>).filter((a) => a.answer.trim());
+    if (session) Object.assign(session, { status: "completed", extraction_status: "done" });
+    return answers.length;
+  }
   return crypto.randomUUID();
 }
 
+// Column defaults the database would fill in, for tables the tests insert into.
+const COLUMN_DEFAULTS: Record<string, Record<string, unknown>> = {
+  interview_sessions: { transcript: null, extraction_status: "pending", extraction_detail: null, failure_detail: null, duration_seconds: null, provider: null, provider_reference: null, started_at: null, ended_at: null },
+  connection_instances: { business_id: null, granted_scopes: [], credential_ref_id: null, webhook_credential_ref_id: null, last_verified_at: null, last_success_at: null, last_failure_at: null, failure_detail: null, verification_requested_at: null },
+};
+
 function defaultStatus(table: string): string | undefined {
-  return { scans: "queued", actions: "proposed", approvals: "pending", action_runs: "queued", findings: "draft" }[table];
+  return { scans: "queued", actions: "proposed", approvals: "pending", action_runs: "queued", findings: "draft", connection_instances: "configured" }[table];
 }

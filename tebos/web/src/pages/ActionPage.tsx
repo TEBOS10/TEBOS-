@@ -3,7 +3,8 @@ import { approvalPolicy, type RiskTier } from "@core/risk";
 import type { ActionStatus, ApprovalStatus, ActionRunStatus } from "@core/states";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { Card, Empty, ErrorNote, Field, Loading, PageHeader, StatusBadge } from "../components/ui";
-import { auditTrail, decideApproval, getAction, recordManualRun, recordOutcome, requestApproval, setActionStatus, verifyAction, type Action, type OutcomeDraft } from "../lib/data";
+import { parseEmailInput } from "@core/email";
+import { auditTrail, decideApproval, emailOf, getAction, recordManualRun, recordOutcome, requestApproval, setActionStatus, setExecutionInput, verifyAction, type Action, type OutcomeDraft } from "../lib/data";
 import { ago, RISK_LABEL, statusLabel, when } from "../lib/format";
 import { usePeople } from "../lib/people";
 import { Link } from "../lib/router";
@@ -72,6 +73,7 @@ export function ActionPage({ id }: { id: string }) {
               {action.result && <Detail k="Result">{action.result}</Detail>}
             </dl>
           </Card>
+          {action.execution_method === "api" && <EmailCard action={action} onChange={q.reload} />}
           <NextSteps data={q.data} onChange={q.reload} />
           <Card title="History" subtitle="Every change, who made it, and when">
             {audit.loading && !audit.data && <Loading />}
@@ -127,7 +129,9 @@ export function ActionPage({ id }: { id: string }) {
                       <span className="list-title">{statusLabel(r.execution_method)} run</span>
                       <span className="list-meta">
                         {when(r.created_at)}
-                        {r.verified ? ` · verified: ${r.verification_method}` : ""}
+                        {r.provider_reference ? ` · provider ref ${r.provider_reference}` : ""}
+                        {r.provider_status ? ` · provider says ${statusLabel(r.provider_status)}` : ""}
+                        {r.verified ? ` · verified: ${r.verification_method?.startsWith("provider:") ? "confirmed by the provider" : r.verification_method}` : ""}
                         {r.error_detail ? ` · ${r.error_detail}` : ""}
                       </span>
                     </div>
@@ -215,6 +219,17 @@ function NextSteps({ data, onChange }: { data: Loaded; onChange: () => void }) {
   const canDecide = org.can("approval.decide");
   const pending = approvals.find((a) => a.status === "pending");
   const succeededRun = runs.find((r) => r.status === "succeeded" && !r.verified);
+  const viaProvider = action.execution_method === "api";
+  const emailProblems = viaProvider ? (() => { const p = parseEmailInput(action.execution_input); return p.ok ? null : p.problems; })() : null;
+  const waiting = (key: string, title: string, detail: string) =>
+    steps.push(
+      <div className="next-step" key={key}>
+        <div className="list-main" style={{ flex: 1 }}>
+          <span className="list-title">{title}</span>
+          <span className="list-meta">{detail}</span>
+        </div>
+      </div>,
+    );
 
   async function run(fn: () => Promise<unknown>) {
     setBusy(true);
@@ -257,20 +272,42 @@ function NextSteps({ data, onChange }: { data: Loaded; onChange: () => void }) {
         step("ready", "Mark ready", "ready", () => move("ready"));
         break;
       case "ready":
-        if (action.approval_required) step("request", "Request approval", null, () => run(() => requestApproval(org.db, action, note)), <NoteInput value={note} onChange={setNote} placeholder="Anything the approver should know (optional)" />);
+        if (emailProblems) {
+          steps.push(
+            <div className="next-step" key="fix">
+              <div className="list-main" style={{ flex: 1 }}>
+                <span className="list-title">Fix the email before asking for approval</span>
+                <span className="why-not">{emailProblems.join(". ")}.</span>
+              </div>
+            </div>,
+          );
+        } else if (action.approval_required) step("request", "Request approval", null, () => run(() => requestApproval(org.db, action, note)), <NoteInput value={note} onChange={setNote} placeholder="Anything the approver should know (optional)" />);
         else step("queue", "Queue for execution", "queued", () => move("queued"));
         break;
       case "approved":
         step("queue", "Queue for execution", "queued", () => move("queued"));
         break;
       case "queued":
+        if (viaProvider) {
+          waiting("worker", "Waiting for TEBOS to send it", "The execution worker sends it through the connected provider. If no provider can, the action is blocked with the reason.");
+          break;
+        }
         step("start", "Start execution", "running", () => move("running"), <span className="list-meta">{action.approval_required ? "Starting uses up the approval." : "Marks the work as in progress."}</span>);
         break;
       case "running":
+        if (viaProvider) {
+          waiting("sending", "Sending through the provider", "The worker records the provider's answer. An unclear answer is retried safely, never sent twice.");
+          break;
+        }
         step("done", "Record as done", null, () => run(() => recordManualRun(org.db, action, { succeeded: true, summary: note || "Completed" })), <NoteInput value={note} onChange={setNote} placeholder="What was done" />);
         step("fail", "Record as failed", null, () => run(() => recordManualRun(org.db, action, { succeeded: false, summary: note || "Failed" })), undefined, "btn-danger");
         break;
       case "completed":
+        if (viaProvider) {
+          waiting("delivery", "Waiting for the provider to confirm delivery", "The action is verified only when the provider confirms it was delivered.");
+          if (ctx.hasVerifiedOutcome) step("verify-outcome", "Mark verified by outcome", "verified", () => move("verified"), <span className="list-meta">A verified outcome has been recorded for this action.</span>);
+          break;
+        }
         // Verification is the proof itself, so it can't be pre-checked against a verified run; it needs a method and a succeeded run.
         steps.push(
           <div className="next-step" key="verify">
@@ -464,6 +501,67 @@ function OutcomesCard({ action, outcomes, onChange }: { action: Action; outcomes
             </button>
           </div>
         </form>
+      )}
+    </Card>
+  );
+}
+
+/** The exact email a provider action sends. Editable only until approval is requested. */
+function EmailCard({ action, onChange }: { action: Action; onChange: () => void }) {
+  const org = useOrg();
+  const email = emailOf(action.execution_input);
+  const editable = org.can("action.transition") && ["proposed", "ready", "blocked", "failed"].includes(action.status);
+  const [editing, setEditing] = useState(false);
+  const [to, setTo] = useState(email?.to.join(", ") ?? "");
+  const [subject, setSubject] = useState(email?.subject ?? "");
+  const [text, setText] = useState(email?.text ?? "");
+  const [error, setError] = useState<unknown>(null);
+  const parsed = parseEmailInput({ to, subject, text, replyTo: email?.replyTo ?? "" });
+
+  async function save(e: FormEvent) {
+    e.preventDefault();
+    if (!parsed.ok) return;
+    setError(null);
+    try {
+      await setExecutionInput(org.db, action.id, parsed.value);
+      setEditing(false);
+      onChange();
+    } catch (err) {
+      setError(err);
+    }
+  }
+
+  return (
+    <Card title="Email" subtitle={editable ? "Exactly what will be sent. Approval covers this text only." : "Exactly what was approved to be sent"}>
+      {!editing ? (
+        email ? (
+          <>
+            <dl className="confidence-parts">
+              <Detail k="To">{email.to.join(", ")}</Detail>
+              <Detail k="Subject">{email.subject}</Detail>
+            </dl>
+            <p className="email-preview" data-testid="email-preview">{email.text}</p>
+          </>
+        ) : (
+          <Empty>No email has been written yet.</Empty>
+        )
+      ) : (
+        <form className="form" onSubmit={save} aria-label="Edit email">
+          <Field label="To"><input className="input" value={to} onChange={(e) => setTo(e.target.value)} /></Field>
+          <Field label="Subject"><input className="input" value={subject} onChange={(e) => setSubject(e.target.value)} /></Field>
+          <Field label="Message"><textarea className="input" rows={6} value={text} onChange={(e) => setText(e.target.value)} /></Field>
+          {!parsed.ok && <div className="note note-warn">{parsed.problems.join(". ")}.</div>}
+          <ErrorNote error={error} title="Not saved" />
+          <div className="row">
+            <button className="btn btn-primary btn-sm" disabled={!parsed.ok}>Save email</button>
+            <button type="button" className="btn btn-sm" onClick={() => setEditing(false)}>Cancel</button>
+          </div>
+        </form>
+      )}
+      {editable && !editing && (
+        <button className="btn btn-sm" style={{ marginTop: 10 }} onClick={() => setEditing(true)}>
+          Edit email
+        </button>
       )}
     </Card>
   );

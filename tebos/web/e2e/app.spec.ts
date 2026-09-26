@@ -133,7 +133,7 @@ test("an admin invites a teammate and gets a one-time link", async ({ page }) =>
   await page.getByRole("button", { name: /Create invitation/ }).click();
   await expect(page.getByTestId("invite-link")).toContainText("/invite/fixture-invitation-token");
   expect(fake.writes.find((w) => w.table === "create_invitation")?.body).toMatchObject({ p_org: ORG, p_email: "Sipho@Clayworks.example" });
-  await expect(page.getByText("sipho@clayworks.example")).toBeVisible();
+  await expect(page.getByText("sipho@clayworks.example", { exact: true })).toBeVisible();
   await snap(page, "5-team");
 });
 
@@ -204,4 +204,217 @@ test("the business report labels every statement and exports CSV", async ({ page
   const text = await (await file.createReadStream()).toArray().then((c) => Buffer.concat(c).toString("utf8"));
   expect(text).toContain("finding_id,label,category");
   expect(text).toContain("hypothesis");
+});
+
+test("an admin connects Resend; the key goes to the vault and the connection waits for TEBOS's own check", async ({ page }) => {
+  const fake = await installFakeSupabase(page);
+  await page.goto("/connections");
+  await page.getByLabel("Sender").fill("Clay Studio <orders@clay.example>");
+  await page.getByLabel("Resend API key").fill("re_secret_test_key_123");
+  await page.getByRole("button", { name: "Save and check with Resend" }).click();
+  await expect(page.getByTestId("connection-label")).toHaveText("Configured — not yet verified");
+  const insert = fake.writes.find((w) => w.table === "connection_instances");
+  expect(insert?.body).toMatchObject({ connector_key: "resend", settings: { from: "Clay Studio <orders@clay.example>" } });
+  expect(JSON.stringify(insert?.body)).not.toContain("re_secret");
+  expect(fake.writes.find((w) => w.table === "set_connection_secret")?.body).toMatchObject({ p_purpose: "api_key", p_secret: "re_secret_test_key_123" });
+  await expect(page.getByText("re_secret_test_key_123")).toHaveCount(0);
+  await snap(page, "7-connections");
+});
+
+test("a send-only Resend key is shown as connected, with webhook-only delivery confirmation", async ({ page }) => {
+  const fake = await installFakeSupabase(page);
+  fake.tables.connection_instances!.push({
+    id: "c1", org_id: ORG, business_id: null, connector_key: "resend", status: "connected", granted_scopes: ["emails:send"], credential_ref_id: "k1",
+    webhook_credential_ref_id: null, last_verified_at: new Date(Date.now() - 6e4).toISOString(), last_success_at: null, last_failure_at: null, failure_detail: null,
+    verification_requested_at: null, settings: { from: "orders@clay.example" }, created_by: USER_ID, created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+  });
+  await page.goto("/connections");
+  await expect(page.getByTestId("connection-label")).toHaveText("Connected");
+  await expect(page.getByText("webhooks only (send-only key)")).toBeVisible();
+  await page.getByRole("button", { name: "Check now" }).click();
+  await expect.poll(() => fake.writes.find((w) => w.table === "connection_instances" && w.method === "PATCH")?.body).toHaveProperty("verification_requested_at");
+});
+
+test("an email action is proposed with the exact email, which is checked before anyone approves it", async ({ page }) => {
+  const fake = await installFakeSupabase(page);
+  await page.goto(`/findings/${FINDING}`);
+  await page.getByRole("button", { name: "Propose an action" }).click();
+  await page.getByLabel("Action", { exact: true }).fill("Confirm orders by email");
+  await page.getByLabel("Objective").fill("Every customer gets a confirmation");
+  await page.getByLabel("Capability required").selectOption("email.send_transactional");
+  await page.getByPlaceholder("customer@example.com").fill("buyer@clay, other@clay.example");
+  await page.getByLabel("Subject", { exact: true }).fill("Your order");
+  await page.getByRole("textbox", { name: /^Message/ }).fill("Thank you, we have your order.");
+  await expect(page.getByText("Not an email address: buyer@clay")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Create proposed action" })).toBeDisabled();
+  await page.getByPlaceholder("customer@example.com").fill("buyer@clay.example");
+  await page.getByRole("button", { name: "Create proposed action" }).click();
+  await expect(page).toHaveURL(/\/actions\//);
+  expect(fake.writes.find((w) => w.table === "actions")?.body).toMatchObject({
+    execution_method: "api", risk_tier: 2, approval_required: true,
+    execution_input: { to: ["buyer@clay.example"], subject: "Your order", text: "Thank you, we have your order.", replyTo: null },
+  });
+});
+
+test("a provider action can't be started or verified by hand; it waits for TEBOS and the provider", async ({ page }) => {
+  const fake = await installFakeSupabase(page);
+  const action = fake.tables.actions!.find((a) => a.id === ACTION)!;
+  Object.assign(action, { status: "queued", execution_method: "api", capability_key: "email.send_transactional",
+    execution_input: { to: ["buyer@clay.example"], subject: "Your order", text: "Thank you." } });
+  await page.goto(`/actions/${ACTION}`);
+  await expect(page.getByTestId("email-preview")).toHaveText("Thank you.");
+  await expect(page.getByText("Waiting for TEBOS to send it")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Start execution" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Edit email" })).toHaveCount(0); // frozen after approval
+
+  action.status = "completed";
+  fake.tables.action_runs!.push({ id: "r1", org_id: ORG, action_id: ACTION, approval_id: null, connection_instance_id: "c1", capability_key: "email.send_transactional",
+    execution_method: "api", status: "succeeded", idempotency_key: "k", request_summary: {}, response_summary: {}, error_class: null, error_detail: null,
+    started_at: null, finished_at: null, verified: false, verified_at: null, verification_method: null, provider_reference: "msg_1", provider_status: "accepted",
+    provider_status_at: null, created_at: new Date().toISOString() });
+  await page.reload();
+  await expect(page.getByText("Waiting for the provider to confirm delivery")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Verify" })).toHaveCount(0);
+  await expect(page.getByText(/provider ref msg_1/)).toBeVisible();
+});
+
+test("a signed-in person changes their password from their account page", async ({ page }) => {
+  const fake = await installFakeSupabase(page);
+  await page.goto("/");
+  await page.getByRole("link", { name: "operator@fixture.test" }).click();
+  await expect(page.getByRole("heading", { name: "Your account" })).toBeVisible();
+  await page.getByRole("textbox", { name: /^New password/ }).fill("a-new-password-123");
+  await page.getByRole("textbox", { name: /^Repeat new password/ }).fill("a-new-password-12");
+  await expect(page.getByText("The two passwords don't match.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Change password" })).toBeDisabled();
+  await page.getByRole("textbox", { name: /^Repeat new password/ }).fill("a-new-password-123");
+  await page.getByRole("button", { name: "Change password" }).click();
+  await expect(page.getByText("Password changed.")).toBeVisible();
+  expect(fake.writes.find((w) => w.table.startsWith("auth/user"))?.body).toMatchObject({ password: "a-new-password-123" });
+});
+
+test("someone who forgot their password can ask for a reset link", async ({ page }) => {
+  const fake = await installFakeSupabase(page, { signedIn: false });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Forgot password?" }).click();
+  await page.getByLabel("Email").fill("operator@fixture.test");
+  await page.getByRole("button", { name: "Send reset link" }).click();
+  await expect(page.getByText("If that address has a TEBOS account, a reset link is on its way.")).toBeVisible();
+  const reset = fake.writes.find((w) => w.table.startsWith("auth/recover"));
+  expect(reset?.body).toMatchObject({ email: "operator@fixture.test" });
+  expect(decodeURIComponent(reset!.table)).toContain("redirect_to=http://localhost:5174/reset-password");
+  await expect(page.getByLabel("Password")).toHaveCount(0);
+});
+
+test("the reset link opens a screen to choose a new password", async ({ page }) => {
+  const fake = await installFakeSupabase(page);
+  await page.goto("/reset-password");
+  await page.getByRole("textbox", { name: /^New password/ }).fill("fresh-password-456");
+  await page.getByRole("textbox", { name: /^Repeat new password/ }).fill("fresh-password-456");
+  await page.getByRole("button", { name: "Save new password" }).click();
+  await page.getByRole("button", { name: "Continue to TEBOS" }).click();
+  await expect(page.getByRole("heading", { name: "What do you want TEBOS to work on?" })).toBeVisible();
+  expect(fake.writes.find((w) => w.table.startsWith("auth/user"))?.body).toMatchObject({ password: "fresh-password-456" });
+});
+
+test("creating the first organisation explains what's missing instead of doing nothing", async ({ page }) => {
+  const fake = await installFakeSupabase(page);
+  fake.tables.memberships = [];
+  await page.goto("/");
+  await page.getByRole("button", { name: "Create organisation" }).click();
+  await expect(page.getByText("Type your organisation's name first.")).toBeVisible();
+  await page.getByLabel("Short name").fill("tidy-");
+  await expect(page.getByLabel("Short name")).toHaveValue("tidy-"); // dashes survive typing
+  await page.getByLabel("Organisation name").fill("Tidy Enterprise");
+  await page.getByLabel("Short name").fill("");
+  await expect(page.getByLabel("Short name")).toHaveValue("tidy-enterprise");
+  await page.getByRole("button", { name: "Create organisation" }).click();
+  await expect.poll(() => fake.writes.find((w) => w.table === "create_organisation")?.body).toEqual({ p_name: "Tidy Enterprise", p_slug: "tidy-enterprise" });
+});
+
+test("booking an interview call needs a valid number, a time and the person's consent", async ({ page }) => {
+  const fake = await installFakeSupabase(page);
+  await page.goto(`/businesses/${BIZ}`);
+  await page.getByRole("button", { name: "Book a call" }).click();
+  await page.getByLabel("Phone number to call").fill("12345");
+  await page.getByRole("button", { name: "Book the call" }).click();
+  await expect(page.getByText("Enter a valid phone number")).toBeVisible();
+  await page.getByLabel("Phone number to call").fill("082 123 4567");
+  await page.getByRole("button", { name: "Book the call" }).click();
+  await expect(page.getByText("Tick the consent box.")).toBeVisible();
+  expect(fake.writes.find((w) => w.table === "interview_sessions")).toBeUndefined();
+  await page.getByRole("checkbox").check();
+  await page.getByRole("button", { name: "Book the call" }).click();
+  await expect(page).toHaveURL(/\/interviews\//);
+  await expect(page.getByText("Booked. TEBOS's AI interviewer will call at the time below.")).toBeVisible();
+  expect(fake.writes.find((w) => w.table === "interview_sessions")?.body).toMatchObject({
+    channel: "voice", status: "scheduled", phone_number: "+27821234567", playbook_key: "marketing-agency",
+    consent_text: expect.stringContaining("recorded and transcribed"),
+  });
+  await snap(page, "8-interview-booked");
+});
+
+test("the same interview can be answered in writing, and becomes the owner's statements", async ({ page }) => {
+  const fake = await installFakeSupabase(page);
+  await page.goto(`/businesses/${BIZ}`);
+  await page.getByRole("button", { name: "Answer in writing" }).click();
+  await expect(page).toHaveURL(/\/interviews\//);
+  await page.getByLabel("Where do most of your new clients come from at the moment?").fill("Referrals from two past clients");
+  await page.getByLabel(/biggest client/).fill("About 40%");
+  await page.getByRole("button", { name: "Submit 2 answers" }).click();
+  const rpc = await expect.poll(() => fake.writes.find((w) => w.table === "submit_interview_answers")?.body).toBeTruthy().then(() => fake.writes.find((w) => w.table === "submit_interview_answers")!.body as { p_answers: Array<{ question_key: string; answer: string }> });
+  expect(rpc.p_answers.filter((a) => a.answer)).toEqual([
+    expect.objectContaining({ question_key: "clients.concentration", answer: "About 40%" }),
+    expect.objectContaining({ question_key: "pipeline.sources", answer: "Referrals from two past clients" }),
+  ]);
+});
+
+test("a completed call shows the transcript, the answers with quotes, and what wasn't covered", async ({ page }) => {
+  const fake = await installFakeSupabase(page);
+  const id = "90000000-0000-4000-8000-000000000001";
+  fake.tables.interview_sessions!.push({
+    id, org_id: ORG, business_id: BIZ, channel: "voice", playbook_key: "marketing-agency", playbook_version: 1, status: "completed",
+    phone_number: "+27821234567", scheduled_for: new Date(Date.now() - 3600e3).toISOString(), consent_text: "I agree to receive a call from TEBOS's AI interviewer and for the call to be recorded.",
+    consent_given_by: USER_ID, consent_given_at: new Date(Date.now() - 86400e3).toISOString(), requested_by: USER_ID, provider: "elevenlabs", provider_reference: "conv_1",
+    started_at: null, ended_at: null, duration_seconds: 612, extraction_status: "done", extraction_detail: "1 of 16 questions answered", failure_detail: null,
+    transcript: [
+      { role: "agent", message: "Hi, this is the TEBOS interviewer. I'm an AI assistant.", time_in_call_secs: 0 },
+      { role: "user", message: "Sure. We have nine clients, six on retainer.", time_in_call_secs: 14 },
+    ],
+    created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+  });
+  fake.tables.sources!.push({ id: "src-int", org_id: ORG, business_id: BIZ, source_type: "user_statement", uri: `interview:${id}`, label: "Diagnostic interview (call)", reliability: 0.6, created_at: new Date().toISOString() });
+  fake.tables.evidence!.push({
+    id: "ev-int", org_id: ORG, business_id: BIZ, source_id: "src-int", scan_id: null, scan_target_id: null, state: "user_supplied",
+    fact: "The owner says they have nine clients, six on retainer.", excerpt: "nine clients, six on retainer", missing_description: null,
+    structured_value: { interview_id: id, question_key: "clients.mix", question: "How many active clients do you have right now?", channel: "voice" },
+    content_location: "call at 0:14", retrieved_at: new Date().toISOString(), fresh_until: null, extraction_status: "complete", confidence: null, created_by_actor: "agent", created_at: new Date().toISOString(),
+  });
+  await page.goto(`/interviews/${id}`);
+  await expect(page.getByText("Interviewer (AI)")).toBeVisible();
+  await expect(page.getByText("“nine clients, six on retainer” · call at 0:14")).toBeVisible();
+  await expect(page.getByText("Not covered")).toBeVisible();
+  await expect(page.getByText("Where do most of your new clients come from at the moment?")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Cancel interview" })).toHaveCount(0);
+  await snap(page, "9-interview-done");
+});
+
+test("a business with a connected platform shows its live operations, read-only, with when each number was read", async ({ page }) => {
+  const fake = await installFakeSupabase(page);
+  const now = new Date().toISOString();
+  fake.tables.connection_instances!.push({
+    id: "c-bame", org_id: ORG, business_id: BIZ, connector_key: "bame-ops", status: "connected", granted_scopes: ["operations:read"], credential_ref_id: "k",
+    webhook_credential_ref_id: null, last_verified_at: now, last_success_at: now, last_failure_at: null, failure_detail: null, verification_requested_at: null,
+    settings: {}, created_by: null, created_at: now, updated_at: now,
+  });
+  fake.tables.sources!.push({ id: "src-ops", org_id: ORG, business_id: BIZ, source_type: "connected_system", uri: "bame-ops:c-bame", label: "Operations snapshot (read-only)", reliability: 0.95, created_at: now });
+  fake.tables.evidence!.push(
+    { id: "ev-o1", org_id: ORG, business_id: BIZ, source_id: "src-ops", state: "acquired", fact: "2 leads are not assigned to any department; the oldest has waited 6 days.", structured_value: { metric: "leads.unassigned" }, retrieved_at: now, created_at: now },
+    { id: "ev-o0", org_id: ORG, business_id: BIZ, source_id: "src-ops", state: "acquired", fact: "Every lead is assigned to a department.", structured_value: { metric: "leads.unassigned" }, retrieved_at: new Date(Date.now() - 864e5).toISOString(), created_at: now },
+  );
+  await page.goto(`/businesses/${BIZ}`);
+  await expect(page.getByText("Live operations")).toBeVisible();
+  await expect(page.getByTestId("operations-status")).toContainText("Connected");
+  await expect(page.getByText("2 leads are not assigned to any department; the oldest has waited 6 days.")).toBeVisible();
+  await expect(page.getByText("Every lead is assigned to a department.")).toHaveCount(0); // only the latest reading per metric
 });

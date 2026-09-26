@@ -254,7 +254,18 @@ export interface ActionDraft {
   approvalRequired: boolean;
   priority: number;
   evidenceRequirement: string;
+  /** When set, TEBOS sends this email through a connected provider after approval. */
+  email?: EmailDraft | null;
 }
+
+export interface EmailDraft {
+  to: string[];
+  subject: string;
+  text: string;
+  replyTo: string | null;
+}
+
+export const EMAIL_CAPABILITY = "email.send_transactional";
 
 export async function proposeAction(db: Db, finding: Finding, userId: string, draft: ActionDraft) {
   return must(
@@ -272,6 +283,8 @@ export async function proposeAction(db: Db, finding: Finding, userId: string, dr
         approval_required: draft.approvalRequired,
         priority: draft.priority,
         evidence_requirement: draft.evidenceRequirement || null,
+        execution_method: draft.email ? "api" : "manual",
+        execution_input: draft.email ? { ...draft.email } : null,
         owner_user_id: userId,
         created_by: userId,
       })
@@ -548,4 +561,176 @@ export async function businessReport(db: Db, businessId: string) {
     sources: must(sources),
     outcomes: must(outcomes) as Outcome[],
   };
+}
+
+/** Change what a provider action sends. The database refuses once approval has been requested. */
+export async function setExecutionInput(db: Db, actionId: string, email: EmailDraft) {
+  return must(await db.from("actions").update({ execution_input: { ...email } }).eq("id", actionId).select().single());
+}
+
+export function emailOf(input: unknown): EmailDraft | null {
+  const i = (input ?? null) as Partial<EmailDraft> | null;
+  if (!i || !Array.isArray(i.to)) return null;
+  return { to: i.to.map(String), subject: String(i.subject ?? ""), text: String(i.text ?? ""), replyTo: i.replyTo ? String(i.replyTo) : null };
+}
+
+// ---------------------------------------------------------------------------
+// Connections
+// ---------------------------------------------------------------------------
+
+export type Connection = Row<"connection_instances">;
+
+export async function listConnections(db: Db, orgId: string) {
+  const [connections, connectors] = await Promise.all([
+    db.from("connection_instances").select("*").eq("org_id", orgId).order("created_at"),
+    db.from("connectors").select("*"),
+  ]);
+  return { connections: must(connections), connectors: must(connectors) };
+}
+
+export async function createConnection(db: Db, orgId: string, connectorKey: string, settings: Record<string, string>) {
+  return must(await db.from("connection_instances").insert({ org_id: orgId, connector_key: connectorKey, settings }).select().single());
+}
+
+export async function updateConnectionSettings(db: Db, id: string, settings: Record<string, string>) {
+  return must(await db.from("connection_instances").update({ settings }).eq("id", id).select().single());
+}
+
+/** Hands a secret to the database, which stores it in Vault. It is never read back. */
+export async function setConnectionSecret(db: Db, id: string, purpose: "api_key" | "webhook_signing_secret", secret: string) {
+  return must(await db.rpc("set_connection_secret", { p_connection: id, p_purpose: purpose, p_secret: secret }));
+}
+
+/** Asks TEBOS's worker to check the connection with the provider. Only the worker can mark it connected. */
+export async function requestVerification(db: Db, id: string) {
+  return must(await db.from("connection_instances").update({ verification_requested_at: new Date().toISOString() }).eq("id", id).select().single());
+}
+
+export async function setConnectionEnabled(db: Db, id: string, enabled: boolean) {
+  return must(await db.from("connection_instances").update({ status: enabled ? "configured" : "disabled" }).eq("id", id).select().single());
+}
+
+/** Where a provider should send webhooks for a connection, when the worker's public address is known. */
+export const webhookUrl = (connectionId: string, workerUrl: string | undefined = import.meta.env.VITE_TEBOS_WORKER_URL) =>
+  workerUrl ? `${workerUrl.replace(/\/+$/, "")}/webhooks/resend/${connectionId}` : null;
+
+// ---------------------------------------------------------------------------
+// Diagnostic interviews
+// ---------------------------------------------------------------------------
+
+export type Interview = Row<"interview_sessions">;
+
+export interface InterviewAnswer {
+  evidenceId: string;
+  questionKey: string;
+  question: string;
+  summary: string;
+  quote: string | null;
+  location: string | null;
+  channel: string;
+}
+
+export async function listInterviews(db: Db, businessId: string) {
+  return must(await db.from("interview_sessions").select("*").eq("business_id", businessId).order("created_at", { ascending: false }));
+}
+
+export async function bookInterviewCall(
+  db: Db,
+  business: { id: string; org_id: string },
+  input: { playbookKey: string; playbookVersion: number; phone: string; at: Date; consentText: string; userId: string },
+) {
+  return must(
+    await db
+      .from("interview_sessions")
+      .insert({
+        org_id: business.org_id,
+        business_id: business.id,
+        channel: "voice",
+        playbook_key: input.playbookKey,
+        playbook_version: input.playbookVersion,
+        status: "scheduled",
+        phone_number: input.phone,
+        scheduled_for: input.at.toISOString(),
+        consent_text: input.consentText,
+        // the database records consent as given by the signed-in person, now
+        consent_given_by: input.userId,
+        consent_given_at: new Date().toISOString(),
+      })
+      .select()
+      .single(),
+  );
+}
+
+export async function startWrittenInterview(db: Db, business: { id: string; org_id: string }, playbookKey: string, playbookVersion: number) {
+  return must(
+    await db
+      .from("interview_sessions")
+      .insert({ org_id: business.org_id, business_id: business.id, channel: "form", playbook_key: playbookKey, playbook_version: playbookVersion, status: "open" })
+      .select()
+      .single(),
+  );
+}
+
+export async function submitInterviewAnswers(db: Db, interviewId: string, answers: Array<{ question_key: string; question: string; answer: string }>) {
+  return must(await db.rpc("submit_interview_answers", { p_session: interviewId, p_answers: answers }));
+}
+
+export async function cancelInterview(db: Db, id: string) {
+  return must(await db.from("interview_sessions").update({ status: "cancelled" }).eq("id", id).select().single());
+}
+
+export async function rescheduleInterview(db: Db, id: string, at: Date) {
+  return must(await db.from("interview_sessions").update({ scheduled_for: at.toISOString() }).eq("id", id).select().single());
+}
+
+export async function getInterview(db: Db, id: string) {
+  const interview = maybe(await db.from("interview_sessions").select("*").eq("id", id).maybeSingle());
+  if (!interview) return null;
+  const [business, source] = await Promise.all([
+    db.from("businesses").select("id, name, org_id").eq("id", interview.business_id).single(),
+    db.from("sources").select("id").eq("business_id", interview.business_id).eq("source_type", "user_statement").eq("uri", `interview:${id}`).maybeSingle(),
+  ]);
+  const sourceRow = maybe(source);
+  const evidence = sourceRow ? must(await db.from("evidence").select("*").eq("source_id", sourceRow.id).order("created_at")) : [];
+  const answers: InterviewAnswer[] = evidence.map((e) => {
+    const v = (e.structured_value ?? {}) as { question_key?: string; question?: string; channel?: string };
+    return {
+      evidenceId: e.id,
+      questionKey: v.question_key ?? "",
+      question: v.question ?? "",
+      summary: e.fact ?? "",
+      quote: v.channel === "voice" ? e.excerpt : null,
+      location: e.content_location,
+      channel: v.channel ?? "",
+    };
+  });
+  return { interview, business: must(business), answers };
+}
+
+// ---------------------------------------------------------------------------
+// Live operations (connected platforms, read-only)
+// ---------------------------------------------------------------------------
+
+export interface OperationsFact {
+  metric: string;
+  fact: string;
+  retrievedAt: string | null;
+}
+
+/** The latest reading of each operational metric from this business's connected platforms. */
+export async function liveOperations(db: Db, businessId: string) {
+  const [connections, sources] = await Promise.all([
+    db.from("connection_instances").select("*").eq("business_id", businessId).eq("connector_key", "bame-ops"),
+    db.from("sources").select("id, uri, label").eq("business_id", businessId).eq("source_type", "connected_system"),
+  ]);
+  const src = must(sources);
+  const evidence = src.length
+    ? must(await db.from("evidence").select("fact, structured_value, retrieved_at").in("source_id", src.map((s) => s.id)).order("retrieved_at", { ascending: false }).limit(200))
+    : [];
+  const latest = new Map<string, OperationsFact>();
+  for (const e of evidence) {
+    const metric = ((e.structured_value ?? {}) as { metric?: string }).metric ?? "";
+    if (metric && !latest.has(metric)) latest.set(metric, { metric, fact: e.fact ?? "", retrievedAt: e.retrieved_at });
+  }
+  return { connections: must(connections), facts: [...latest.values()].sort((a, b) => a.metric.localeCompare(b.metric)) };
 }

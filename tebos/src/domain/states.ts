@@ -126,6 +126,21 @@ export const invitationMachine = machine({
   },
 });
 
+// Diagnostic interviews: a booked call (voice) or a written form.
+export const interviewMachine = machine({
+  initial: ["scheduled", "open"],
+  transitions: {
+    scheduled: ["dialling", "cancelled"],
+    dialling: ["in_progress", "no_answer", "failed"],
+    in_progress: ["completed", "failed"],
+    open: ["completed", "cancelled"],
+    completed: [],
+    no_answer: [],
+    failed: [],
+    cancelled: [],
+  },
+});
+
 export const MACHINES = {
   scan: scanMachine,
   scan_target: scanTargetMachine,
@@ -136,6 +151,7 @@ export const MACHINES = {
   connection: connectionMachine,
   agent_run: agentRunMachine,
   invitation: invitationMachine,
+  interview: interviewMachine,
 } as const;
 
 export type MachineName = keyof typeof MACHINES;
@@ -149,6 +165,7 @@ export type ApprovalStatus = StatesOf<typeof approvalMachine>;
 export type ConnectionStatus = StatesOf<typeof connectionMachine>;
 export type AgentRunStatus = StatesOf<typeof agentRunMachine>;
 export type InvitationStatus = StatesOf<typeof invitationMachine>;
+export type InterviewStatus = StatesOf<typeof interviewMachine>;
 
 export function canTransition<M extends MachineName>(
   name: M,
@@ -173,4 +190,34 @@ export function transitionTable(): Array<[MachineName, string, string]> {
     for (const [from, tos] of Object.entries(m.transitions)) for (const to of tos) rows.push([name, from, to]);
   }
   return rows;
+}
+
+/**
+ * The shortest legal route from one state to another (excluding `from`), or
+ * null when there is none. Used by server code that must reach a state
+ * through the machine rather than around it.
+ */
+export function transitionPath<M extends MachineName>(
+  name: M,
+  from: StatesOf<(typeof MACHINES)[M]>,
+  to: StatesOf<(typeof MACHINES)[M]>,
+): Array<StatesOf<(typeof MACHINES)[M]>> | null {
+  if (from === to) return [];
+  const m = MACHINES[name] as Machine<string>;
+  const prev = new Map<string, string>([[from, from]]);
+  const queue = [from as string];
+  while (queue.length) {
+    const s = queue.shift()!;
+    for (const next of m.transitions[s] ?? []) {
+      if (prev.has(next)) continue;
+      prev.set(next, s);
+      if (next === to) {
+        const path = [next];
+        for (let p = s; p !== from; p = prev.get(p)!) path.unshift(p);
+        return path as Array<StatesOf<(typeof MACHINES)[M]>>;
+      }
+      queue.push(next);
+    }
+  }
+  return null;
 }

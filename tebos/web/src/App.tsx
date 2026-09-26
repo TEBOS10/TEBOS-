@@ -7,15 +7,19 @@ import { PeopleProvider } from "./lib/people";
 import { SessionProvider, useSessionState } from "./lib/session";
 import { supabase } from "./lib/supabase";
 import { AcceptInvite } from "./pages/AcceptInvite";
+import { AccountPage } from "./pages/AccountPage";
+import { ResetPassword } from "./pages/ResetPassword";
 import { ActionPage } from "./pages/ActionPage";
 import { ActionsPage } from "./pages/ActionsPage";
 import { ApprovalsPage } from "./pages/ApprovalsPage";
 import { BusinessesPage } from "./pages/BusinessesPage";
 import { BusinessPage } from "./pages/BusinessPage";
+import { ConnectionsPage } from "./pages/ConnectionsPage";
 import { CreateOrganisation } from "./pages/CreateOrganisation";
 import { FindingPage } from "./pages/FindingPage";
 import { FindingsPage } from "./pages/FindingsPage";
 import { HomePage } from "./pages/HomePage";
+import { InterviewPage } from "./pages/InterviewPage";
 import { NotFound } from "./pages/NotFound";
 import { ReportPage } from "./pages/ReportPage";
 import { ScanPage } from "./pages/ScanPage";
@@ -36,7 +40,10 @@ const ROUTES: Array<[string, (p: Record<string, string>) => ReactNode]> = [
   ["/actions", () => <ActionsPage />],
   ["/actions/:id", (p) => <ActionPage id={p.id!} />],
   ["/approvals", () => <ApprovalsPage />],
+  ["/interviews/:id", (p) => <InterviewPage id={p.id!} />],
   ["/team", () => <TeamPage />],
+  ["/account", () => <AccountPage />],
+  ["/connections", () => <ConnectionsPage />],
   ["/system", () => <SystemPage />],
 ];
 
@@ -55,6 +62,11 @@ function Gate() {
   // An invitation link works signed out (sign in first), with no organisation yet, or signed in elsewhere.
   const invite = matchPath("/invite/:token", path);
   if (invite && (state.phase === "signed_out" || state.phase === "no_organisation" || state.phase === "ready")) return <AcceptInvite token={invite.token!} />;
+  // The emailed reset link signs the person in just to choose a new password.
+  if (path === "/reset-password") {
+    if (state.phase === "ready" || state.phase === "no_organisation") return <ResetPassword />;
+    if (state.phase === "signed_out") return <SignIn notice="That reset link has expired or was already used. Use “Forgot password?” to get a new one." />;
+  }
   switch (state.phase) {
     case "loading":
       return (
