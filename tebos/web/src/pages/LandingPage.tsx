@@ -7,7 +7,7 @@ const STEPS = [
   { icon: FileSearch, title: "It looks", text: "TEBOS reads your business the way your customers see it, and notes what's missing." },
   { icon: Mic, title: "It listens", text: "A short AI phone interview with you or your team about how the work really gets done." },
   { icon: Workflow, title: "It measures", text: "Read-only connections to the tools you already use. The real numbers, nothing changed." },
-  { icon: ShieldCheck, title: "It finds", text: "Where money is leaking, with the proof behind every finding." },
+  { icon: ShieldCheck, title: "It finds", text: "Where money, time and effort are leaking, with the proof behind every finding." },
   { icon: Stamp, title: "You decide", text: "TEBOS proposes the fix. Nothing happens until you say yes." },
   { icon: Check, title: "It proves", text: "A month later it checks the numbers again, so you know the fix worked." },
 ];
@@ -34,6 +34,7 @@ export function LandingPage() {
         </a>
         <nav className="lp-links" aria-label="Site">
           <a href="/demo">Demo</a>
+          <a href="/pricing">Pricing</a>
           <a className="lp-signin" href="/sign-in">Sign in</a>
         </nav>
       </header>
@@ -41,10 +42,10 @@ export function LandingPage() {
       <section className="lp-hero">
         <div className="lp-copy">
           <p className="lp-kicker">Business intelligence you can check</p>
-          <h1 className="lp-title">Find where your business is losing money. Then fix it.</h1>
+          <h1 className="lp-title">Find what's holding your business back. Then fix it.</h1>
           <p className="lp-sub">
-            TEBOS looks at your business from the outside, listens to the people running it and reads your real numbers. It shows you
-            what's costing you, with the proof, and checks that each fix actually worked.
+            Lost money, wasted time, stalled momentum. TEBOS looks at your business from the outside, listens to the people running it
+            and reads your real numbers. It shows you what's costing you, with the proof, and checks that each fix actually worked.
           </p>
           <div className="lp-ctas">
             <a className="btn btn-lime lp-cta" href="/demo">Try the demo</a>
@@ -92,6 +93,7 @@ export function LandingPage() {
 
       <footer className="lp-foot">
         <span>TEBOS · Evidence before assertion</span>
+        <a href="/pricing" className="tour-link">Pricing</a>
         <span>The business in the film and the demo is fictional.</span>
       </footer>
     </div>

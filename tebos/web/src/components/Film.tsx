@@ -2,7 +2,7 @@
 // in the browser and captured as the home page's video (scripts/record-film).
 // Each scene lasts as long as its narration line plus a breath, so picture
 // and voice stay in step. It says what TEBOS does for a business, not how.
-import { Check, FileText, Lock, Mic, Phone, ShieldCheck, Sparkles, Stamp } from "lucide-react";
+import { Check, FileText, Lock, Mic, Phone, ShieldCheck, Stamp } from "lucide-react";
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import "../film.css";
 
@@ -15,15 +15,15 @@ export interface FilmScene {
 }
 
 export const FILM_SCENES: FilmScene[] = [
-  { line: "You're busier than ever. More clients, more work, longer days. So why is there less to show for it?", voiceAt: 0.5, seconds: 8.2, render: () => <Hook /> },
-  { line: "Meet TEBOS. It finds out where your business is losing money, and helps you fix it.", voiceAt: 0.3, seconds: 6.2, render: () => <Meet /> },
-  { line: "First, it looks at your business the way your customers do.", voiceAt: 0.3, seconds: 5.2, render: () => <Look /> },
+  { line: "You're busier than ever. More clients, more work, longer days. So why is there less to show for it?", voiceAt: 0.5, seconds: 7.8, render: () => <Hook /> },
+  { line: "Meet TEBOS. It finds what's holding your business back, whether it's money, time or momentum, and helps you fix it.", voiceAt: 0.3, seconds: 7.9, render: () => <Meet /> },
+  { line: "First, it looks at your business the way your customers do.", voiceAt: 0.3, seconds: 4.6, render: () => <Look /> },
   { line: "Then it listens. A short AI phone call with you or your team, about how the work really gets done.", voiceAt: 0.3, seconds: 7.0, render: () => <Listen /> },
   { line: "It connects to the tools you already use, read-only, and reads the real numbers.", voiceAt: 0.3, seconds: 6.1, render: () => <Measure /> },
-  { line: "Now it puts it all together, and shows you exactly where the money is leaking. Every finding comes with its proof.", voiceAt: 0.3, seconds: 8.0, render: () => <Find /> },
-  { line: "TEBOS suggests the fix. Nothing changes until you say yes.", voiceAt: 0.3, seconds: 5.9, render: () => <Decide /> },
-  { line: "A month later, it checks the numbers again, so you know the fix actually worked.", voiceAt: 0.3, seconds: 5.9, render: () => <Prove /> },
-  { line: "TEBOS. Understand your business. Fix what matters. Prove it.", voiceAt: 0.3, seconds: 7.2, render: () => <Outro /> },
+  { line: "Now it puts it all together, and shows you exactly where money, time and effort are leaking. Every finding comes with its proof.", voiceAt: 0.3, seconds: 9.2, render: () => <Find /> },
+  { line: "TEBOS suggests the fix. Nothing changes until you say yes.", voiceAt: 0.3, seconds: 5.4, render: () => <Decide /> },
+  { line: "A month later, it checks the numbers again, so you know the fix actually worked.", voiceAt: 0.3, seconds: 5.3, render: () => <Prove /> },
+  { line: "TEBOS. Understand your business. Fix what matters. Prove it.", voiceAt: 0.3, seconds: 6.0, render: () => <Outro /> },
 ];
 
 export const FILM_SECONDS = FILM_SCENES.reduce((a, s) => a + s.seconds, 0);
@@ -139,8 +139,10 @@ function Meet() {
       <div className="fm-cube-wrap fm-drop" style={d(0.1)}><Cube size={13} /></div>
       <div className="fm-word fm-in" style={d(0.9)}>TEBOS</div>
       <div className="fm-meet-lines">
-        <span className="fm-chip fm-zoom" style={d(2.3)}><Sparkles aria-hidden /> Finds where money is lost</span>
-        <span className="fm-chip fm-zoom" style={d(3.6)}><Check aria-hidden /> Helps you fix it</span>
+        <span className="fm-chip ghost fm-zoom" style={d(3.2)}>Money</span>
+        <span className="fm-chip ghost fm-zoom" style={d(3.8)}>Time</span>
+        <span className="fm-chip ghost fm-zoom" style={d(4.4)}>Momentum</span>
+        <span className="fm-chip fm-zoom" style={d(5.6)}><Check aria-hidden /> Helps you fix it</span>
       </div>
     </div>
   );
@@ -222,15 +224,16 @@ function Find() {
     <div className="fm-find">
       <div className="fm-ev left fm-fly-left" style={d(0.3)}><Mic aria-hidden /> “Honestly… not always.”</div>
       <div className="fm-ev right fm-fly-right" style={d(0.9)}><FileText aria-hidden /> 38 extra requests · 5 billed</div>
-      <div className="fm-finding fm-merge" style={d(2.4)}>
-        <div className="fm-finding-kicker">Money leak found</div>
+      <div className="fm-finding fm-merge" style={d(2.2)}>
+        <div className="fm-finding-kicker">Leak found</div>
         <div className="fm-finding-title">Extra work is done but not billed</div>
-        <div className="fm-meter"><span className="fm-fill" style={d(3.3, { "--w": "81%" })} /></div>
-        <div className="fm-finding-foot fm-in" style={d(3.9)}>81% confidence · backed by 2 pieces of evidence</div>
-        <div className="fm-stamp fm-slam" style={d(5.0)}><Stamp aria-hidden /> Proof attached</div>
-      </div>
-      <div className="fm-drips" aria-hidden>
-        {[0, 1, 2, 3].map((i) => <span key={i} className="fm-coin" style={{ animationDelay: `${2.6 + i * 0.35}s` }}>R</span>)}
+        <div className="fm-costs">
+          <span className="fm-cost fm-zoom" style={d(3.6)}>≈ R40k a month unbilled</span>
+          <span className="fm-cost fm-zoom" style={d(4.2)}>≈ 12 hours a week of unpaid work</span>
+        </div>
+        <div className="fm-meter"><span className="fm-fill" style={d(5.0, { "--w": "81%" })} /></div>
+        <div className="fm-finding-foot fm-in" style={d(5.4)}>81% confidence · backed by 2 pieces of evidence</div>
+        <div className="fm-stamp fm-slam" style={d(7.2)}><Stamp aria-hidden /> Proof attached</div>
       </div>
     </div>
   );
@@ -282,7 +285,7 @@ function Outro() {
         <span className="fm-in" style={d(2.2)}>Fix what matters.</span>
         <span className="fm-in lime" style={d(3.3)}>Prove it.</span>
       </div>
-      <div className="fm-cta fm-pop-z" style={d(4.6)}>Try the demo · tebos-demo.vercel.app</div>
+      <div className="fm-cta fm-pop-z" style={d(4.2)}>Try the demo · tebos-demo.vercel.app</div>
     </div>
   );
 }

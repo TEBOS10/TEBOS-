@@ -200,3 +200,10 @@
 .fm-tag { display: flex; gap: calc(1.4 * var(--u)); font-size: calc(3 * var(--u)); font-weight: 800; }
 .fm-tag .lime { color: var(--lime); }
 .fm-cta { margin-top: calc(1.4 * var(--u)); font-size: calc(2 * var(--u)); font-weight: 800; padding: calc(1.2 * var(--u)) calc(2.6 * var(--u)); border-radius: calc(3 * var(--u)); background: var(--lime); color: #102b28; }
+
+.fm-chip.ghost { background: rgba(216, 255, 103, 0.12); color: var(--lime); border: 1px solid rgba(216, 255, 103, 0.55); }
+.fm-meet-lines { flex-wrap: wrap; justify-content: center; }
+.fm-costs { display: flex; flex-wrap: wrap; gap: calc(1 * var(--u)); }
+.fm-cost { font-size: calc(1.6 * var(--u)); font-weight: 800; padding: calc(0.6 * var(--u)) calc(1.3 * var(--u)); border-radius: calc(2 * var(--u)); background: rgba(255, 138, 122, 0.16); color: #ffb3a8; border: 1px solid rgba(255, 138, 122, 0.45); }
+.fm-find .fm-stamp { top: auto; bottom: calc(-2.6 * var(--u)); }
+.fm-find .fm-finding { margin-top: calc(9 * var(--u)); }

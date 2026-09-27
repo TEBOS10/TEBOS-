@@ -30,6 +30,7 @@ import { SystemPage } from "./pages/SystemPage";
 import { TourPage } from "./pages/TourPage";
 import { FilmPage } from "./pages/FilmPage";
 import { LandingPage } from "./pages/LandingPage";
+import { PricingPage } from "./pages/PricingPage";
 import { TeamPage } from "./pages/TeamPage";
 
 const ROUTES: Array<[string, (p: Record<string, string>) => ReactNode]> = [
@@ -70,6 +71,7 @@ function Gate() {
   // The tour is public: it shows no data.
   if (path === "/tour") return <TourPage />;
   if (path === "/film") return <FilmPage />;
+  if (path === "/pricing") return <PricingPage />;
   // The emailed reset link signs the person in just to choose a new password.
   if (path === "/reset-password") {
     if (state.phase === "ready" || state.phase === "no_organisation") return <ResetPassword />;
