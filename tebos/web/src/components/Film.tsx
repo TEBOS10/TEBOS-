@@ -113,7 +113,7 @@ function Hook() {
     <div className="fm-hook">
       <div className="iso">
         <div className="iso-group">
-          {work.map((h, i) => <Prism key={i} w={5} h={h} dp={5} color="#d8ff67" grow delay={0.3 + i * 0.25} />)}
+          {work.map((h, i) => <Prism key={i} w={5} h={h} dp={5} color="#7fb2ff" grow delay={0.3 + i * 0.25} />)}
         </div>
         <div className="iso-caption fm-in" style={d(1.2)}>Work</div>
       </div>
@@ -270,7 +270,7 @@ function Prove() {
       <div className="iso iso-prove">
         <div className="iso-group">
           <div className="iso-bar"><Prism w={7} h={5} dp={7} color="#ff8a7a" grow delay={0.8} /><span className="fm-in" style={d(1.2)}>Before · 5 of 38</span></div>
-          <div className="iso-bar"><Prism w={7} h={22} dp={7} color="#d8ff67" grow delay={1.6} /><span className="fm-in" style={d(2.4)}>After · 27 of 35</span></div>
+          <div className="iso-bar"><Prism w={7} h={22} dp={7} color="#7fb2ff" grow delay={1.6} /><span className="fm-in" style={d(2.4)}>After · 27 of 35</span></div>
         </div>
       </div>
       <div className="fm-seal fm-slam" style={d(3.4)}><ShieldCheck aria-hidden /> Checked against your numbers</div>
