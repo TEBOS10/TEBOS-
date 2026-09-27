@@ -324,7 +324,7 @@ function Result() {
 function Outro() {
   return (
     <div className="xp-outro">
-      <div className="xp-logo xp-pop" style={d(0.2)}><ShieldCheck size={34} aria-hidden /></div>
+      <img className="xp-lockup xp-pop" style={d(0.2)} src="/brand/tebos-logo.png" alt="TEBOS · Business Operating Systems" />
       <div className="xp-cycle">
         {["Look", "Listen", "Measure", "Find", "Decide", "Prove"].map((w, i) => (
           <span key={w} className="xp-in" style={d(0.8 + i * 0.25)}>{w}</span>

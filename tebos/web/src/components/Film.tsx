@@ -67,6 +67,7 @@ export function Film() {
         <div className="fm-glow" aria-hidden />
         <div className="fm-scene" key={index}>{scene.render()}</div>
         <p className="fm-sub" key={`s${index}`} style={d(scene.voiceAt)}>{scene.line}</p>
+        <img className="fm-watermark" src="/brand/tebos-mark-clear.png" alt="" aria-hidden />
         <span className="fm-label">Illustrative example</span>
       </div>
     </div>
@@ -94,7 +95,7 @@ function Cube({ size = 16, spin = true }: { size?: number; spin?: boolean }) {
     <div className={`cube ${spin ? "cube-spin" : ""}`} style={{ "--s": size } as CSSProperties}>
       {["front", "back", "right", "left", "top", "bottom"].map((f) => (
         <div key={f} className={`cube-face cube-${f}`}>
-          {(f === "front" || f === "back" || f === "right" || f === "left") && <ShieldCheck aria-hidden />}
+          {(f === "front" || f === "back" || f === "right" || f === "left") && <img src="/brand/tebos-mark-clear.png" alt="" aria-hidden />}
         </div>
       ))}
     </div>
@@ -136,8 +137,10 @@ function Meet() {
   return (
     <div className="fm-meet">
       <div className="fm-rays" aria-hidden />
-      <div className="fm-cube-wrap fm-drop" style={d(0.1)}><Cube size={13} /></div>
-      <div className="fm-word fm-in" style={d(0.9)}>TEBOS</div>
+      <div className="fm-logo fm-drop" style={d(0.1)}>
+        <img src="/brand/tebos-logo.png" alt="TEBOS · Business Operating Systems" />
+        <span className="fm-sheen" style={d(1.0)} />
+      </div>
       <div className="fm-meet-lines">
         <span className="fm-chip ghost fm-zoom" style={d(3.2)}>Money</span>
         <span className="fm-chip ghost fm-zoom" style={d(3.8)}>Time</span>
@@ -278,8 +281,10 @@ function Prove() {
 function Outro() {
   return (
     <div className="fm-outro">
-      <div className="fm-cube-wrap fm-in" style={d(0)}><Cube size={10} /></div>
-      <div className="fm-word fm-in" style={d(0.3)}>TEBOS</div>
+      <div className="fm-logo small fm-in" style={d(0)}>
+        <img src="/brand/tebos-logo.png" alt="TEBOS · Business Operating Systems" />
+        <span className="fm-sheen" style={d(0.5)} />
+      </div>
       <div className="fm-tag">
         <span className="fm-in" style={d(1.1)}>Understand your business.</span>
         <span className="fm-in" style={d(2.2)}>Fix what matters.</span>

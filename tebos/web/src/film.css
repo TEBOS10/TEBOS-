@@ -207,3 +207,18 @@
 .fm-cost { font-size: calc(1.6 * var(--u)); font-weight: 800; padding: calc(0.6 * var(--u)) calc(1.3 * var(--u)); border-radius: calc(2 * var(--u)); background: rgba(255, 138, 122, 0.16); color: #ffb3a8; border: 1px solid rgba(255, 138, 122, 0.45); }
 .fm-find .fm-stamp { top: auto; bottom: calc(-2.6 * var(--u)); }
 .fm-find .fm-finding { margin-top: calc(9 * var(--u)); }
+
+/* TEBOS logo in the film. Its black ground blends into the dark stage. */
+.fm-logo { position: relative; width: calc(24 * var(--u)); overflow: hidden; }
+.fm-logo.small { width: calc(18 * var(--u)); }
+.fm-logo img { display: block; width: 100%; height: auto; }
+.fm-sheen { position: absolute; top: 0; bottom: 0; width: 40%; left: -60%; background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.18), transparent); animation: fm-sheen 1.4s ease-in-out both; animation-delay: var(--d); }
+@keyframes fm-sheen { to { left: 120%; } }
+.fm-watermark { position: absolute; top: calc(1.6 * var(--u)); left: calc(2 * var(--u)); width: calc(5 * var(--u)); height: auto; opacity: 0.9; }
+/* the cube carries the monogram on brushed dark faces */
+.cube-face { background: linear-gradient(145deg, #2a2f36, #0b0d10); border: 1px solid rgba(255, 255, 255, 0.14); }
+.cube-right, .cube-left { background: linear-gradient(145deg, #1c2026, #07080a); }
+.cube-top { background: linear-gradient(145deg, #3a414a, #1a1e23); }
+.cube-bottom { background: #050607; }
+.cube-face img { width: 78%; height: auto; }
+.fm-cube-wrap { filter: drop-shadow(0 calc(3 * var(--u)) calc(4 * var(--u)) rgba(120, 170, 255, 0.28)); }

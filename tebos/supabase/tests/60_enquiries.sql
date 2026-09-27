@@ -33,6 +33,8 @@ select t6.expect_error($$insert into public.enquiries (plan, name, business, ema
 select t6.expect_error($$insert into public.enquiries (plan, name, business, email) values ('starter', ' ', 'B', 'a@b.co')$$, '23514');
 -- a submission cannot set its own status or id
 select t6.expect_error($$insert into public.enquiries (plan, name, business, email, status) values ('starter', 'A', 'B', 'a@b.co', 'closed')$$, '42501');
+-- nor fake that the team was told about it
+select t6.expect_error($$insert into public.enquiries (plan, name, business, email, notified_at, notify_reference) values ('starter', 'A', 'B', 'a@b.co', now(), 'x')$$, '42501');
 -- and nobody can read or change enquiries through the API
 select t6.expect_error($$select * from public.enquiries$$, '42501');
 select t6.expect_error($$update public.enquiries set status = 'closed'$$, '42501');

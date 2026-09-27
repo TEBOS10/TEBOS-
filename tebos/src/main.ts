@@ -13,6 +13,8 @@
 //                   into evidence (extraction needs ANTHROPIC_API_KEY)
 //   monitoring    — read connected platforms' operational snapshots (read-only logins,
 //                   aggregates only) and record them as connected-system evidence
+//   alerts        — email each new pricing-page enquiry to the team once (when
+//                   RESEND_API_KEY and ENQUIRY_ALERT_TO are set)
 // When PORT is set (Railway sets it), an HTTP server also receives provider
 // webhooks at /webhooks/resend/<connection id> and answers /health.
 // It sleeps only when neither stage had work, and stops cleanly on
@@ -29,6 +31,9 @@ import { poolConfig } from "./db";
 import { PgAcquisitionStore } from "./acquisition/pg-store";
 import { AcquisitionWorker } from "./acquisition/worker";
 import { AnthropicProvider } from "./intelligence/anthropic-provider";
+import { isEmailAddress } from "./domain/email";
+import { EnquiryAlertWorker } from "./notify/enquiries";
+import { PgEnquiryStore } from "./notify/pg-store";
 import { PgIntelligenceStore } from "./intelligence/pg-store";
 import { IntelligenceWorker } from "./intelligence/worker";
 import { PgExecutionStore } from "./execution/pg-store";
@@ -79,6 +84,17 @@ const interviews = new InterviewWorker(new PgInterviewStore(pool, workerId), voi
 
 const monitor = new MonitorWorker(new PgMonitorStore(pool, workerId), new PgSnapshotReader(), { log });
 
+// Enquiry alerts: on when a Resend key and at least one valid recipient are set.
+const alertTo = (process.env.ENQUIRY_ALERT_TO ?? "").split(",").map((a) => a.trim()).filter(isEmailAddress);
+const alertsEnabled = Boolean(process.env.RESEND_API_KEY) && alertTo.length > 0;
+const alerts = alertsEnabled
+  ? new EnquiryAlertWorker(new PgEnquiryStore(pool), new ResendConnector(), {
+      apiKey: process.env.RESEND_API_KEY!,
+      from: process.env.ENQUIRY_ALERT_FROM || "TEBOS <onboarding@resend.dev>",
+      to: alertTo,
+    }, log)
+  : null;
+
 const port = process.env.PORT ? Number(process.env.PORT) : null;
 const server = port ? createWebhookServer(executionStore, log) : null;
 server?.listen(port!, () => log({ event: "webhooks.listening", port }));
@@ -94,7 +110,7 @@ for (const signal of ["SIGINT", "SIGTERM"] as const) {
 log({
   event: "worker.started",
   pollMs,
-  stages: { acquisition: true, intelligence: intelligenceEnabled, execution: executionEnabled, webhooks: Boolean(server), voiceInterviews: voiceEnabled },
+  stages: { acquisition: true, intelligence: intelligenceEnabled, execution: executionEnabled, webhooks: Boolean(server), voiceInterviews: voiceEnabled, enquiryAlerts: alertsEnabled },
   ...(intelligenceEnabled ? {} : { note: "Findings are not generated: set ANTHROPIC_API_KEY to enable the intelligence stage" }),
 });
 
@@ -113,7 +129,8 @@ while (!stopping) {
   const executed = execution && !stopping ? await step("execution", () => execution.runOnce()) : false;
   const interviewed = !stopping ? await step("interviews", () => interviews.runOnce()) : false;
   const monitored = !stopping ? await step("monitoring", () => monitor.runOnce()) : false;
-  if (!acquired && !analysed && !executed && !interviewed && !monitored && !stopping) await new Promise((r) => setTimeout(r, pollMs));
+  const alerted = alerts && !stopping ? await step("alerts", () => alerts.runOnce()) : false;
+  if (!acquired && !analysed && !executed && !interviewed && !monitored && !alerted && !stopping) await new Promise((r) => setTimeout(r, pollMs));
 }
 await new Promise<void>((r) => (server ? server.close(() => r()) : r()));
 await pool.end();

@@ -29,7 +29,7 @@ export function Shell({ children }: { children: ReactNode }) {
           </span>
           <div>
             <div className="brand-name">TEBOS</div>
-            <div className="brand-sub">Business intelligence</div>
+            <div className="brand-sub">Business Operating Systems</div>
           </div>
         </div>
         <nav className="nav" aria-label="Main">
