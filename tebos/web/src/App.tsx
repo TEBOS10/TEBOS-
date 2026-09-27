@@ -28,10 +28,13 @@ import { ScansPage } from "./pages/ScansPage";
 import { SignIn } from "./pages/SignIn";
 import { SystemPage } from "./pages/SystemPage";
 import { TourPage } from "./pages/TourPage";
+import { FilmPage } from "./pages/FilmPage";
+import { LandingPage } from "./pages/LandingPage";
 import { TeamPage } from "./pages/TeamPage";
 
 const ROUTES: Array<[string, (p: Record<string, string>) => ReactNode]> = [
   ["/", () => <HomePage />],
+  ["/sign-in", () => <HomePage />],
   ["/businesses", () => <BusinessesPage />],
   ["/businesses/:id", (p) => <BusinessPage id={p.id!} />],
   ["/businesses/:id/report", (p) => <ReportPage id={p.id!} />],
@@ -66,6 +69,7 @@ function Gate() {
   if (invite && (state.phase === "signed_out" || state.phase === "no_organisation" || state.phase === "ready")) return <AcceptInvite token={invite.token!} />;
   // The tour is public: it shows no data.
   if (path === "/tour") return <TourPage />;
+  if (path === "/film") return <FilmPage />;
   // The emailed reset link signs the person in just to choose a new password.
   if (path === "/reset-password") {
     if (state.phase === "ready" || state.phase === "no_organisation") return <ResetPassword />;
@@ -83,7 +87,8 @@ function Gate() {
         exitDemo();
         return null;
       }
-      return <SignIn />;
+      // Visitors land on the home page; everything else asks them to sign in.
+      return path === "/" ? <LandingPage /> : <SignIn />;
     case "no_organisation":
       return <CreateOrganisation />;
     case "error":

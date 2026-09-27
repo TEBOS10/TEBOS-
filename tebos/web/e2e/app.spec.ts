@@ -7,12 +7,23 @@ const snap = async (page: Page, name: string) => {
   if (shots) await page.screenshot({ path: `${shots}/${name}.png`, fullPage: true });
 };
 
-test("signed-out visitors see sign-in, not data", async ({ page }) => {
+test("signed-out visitors see the home page and sign-in, not data", async ({ page }) => {
   await installFakeSupabase(page, { signedIn: false });
   await page.goto("/");
+  await expect(page.getByRole("heading", { name: /Find where your business is losing money/ })).toBeVisible();
+  await expect(page.locator("video")).toHaveAttribute("src", "/tebos-film.mp4");
+  await expect(page.getByRole("link", { name: "Try the demo" })).toBeVisible();
+  await expect(page.getByText("Clayworks")).toHaveCount(0);
+  await snap(page, "0-home");
+
+  await page.getByRole("link", { name: "Sign in" }).click();
+  await expect(page).toHaveURL(/\/sign-in$/);
   await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
   await expect(page.getByText("Clayworks")).toHaveCount(0);
   await snap(page, "0-sign-in");
+
+  await page.goto(`/businesses/${BIZ}`); // a deep link asks for sign-in too
+  await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
 });
 
 test("home shows honest scan states and the command-centre cards", async ({ page }) => {
@@ -296,7 +307,7 @@ test("a signed-in person changes their password from their account page", async 
 
 test("someone who forgot their password can ask for a reset link", async ({ page }) => {
   const fake = await installFakeSupabase(page, { signedIn: false });
-  await page.goto("/");
+  await page.goto("/sign-in");
   await page.getByRole("button", { name: "Forgot password?" }).click();
   await page.getByLabel("Email").fill("operator@fixture.test");
   await page.getByRole("button", { name: "Send reset link" }).click();
