@@ -11,4 +11,17 @@ export default defineConfig({
     alias: { "@core": fileURLToPath(new URL("../src/domain", import.meta.url)) },
   },
   server: { fs: { allow: [".."] } },
+  // three.js is only reached through the lazily loaded board world; bundle it
+  // up front so the dev server doesn't discover it mid-session and reload.
+  optimizeDeps: {
+    include: [
+      "three",
+      "three/addons/renderers/CSS2DRenderer.js",
+      "three/addons/postprocessing/EffectComposer.js",
+      "three/addons/postprocessing/OutputPass.js",
+      "three/addons/postprocessing/RenderPass.js",
+      "three/addons/postprocessing/UnrealBloomPass.js",
+      "three/addons/environments/RoomEnvironment.js",
+    ],
+  },
 });
