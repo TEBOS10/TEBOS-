@@ -81,9 +81,73 @@ const OPERATIONS: Array<[metric: string, fact: string, value: Record<string, unk
     { by_department: { design: 24, social: 18 }, departments_without: ["paid media", "strategy", "web"] }],
   ["deliverables.awaiting_client", "14 deliverables are waiting on client approval; the oldest has waited 19 days.", { waiting: 14, oldest_days: 19 }],
   ["invoices.overdue", "7 invoices (R186 400) are more than 30 days overdue; the oldest is 74 days.", { overdue_30d: 7, amount_zar: 186400, oldest_days: 74 }],
-  ["time.billable", "61% of logged hours in the last 30 days were billable to a client.", { billable_share: 0.61 }],
-  ["clients.revenue_share", "The largest client accounts for 44% of invoiced revenue in the last 90 days.", { largest_share_90d: 0.44 }],
+  ["time.billable", "61% of logged hours in the last 30 days were billable to a client.", { billable_share: 0.61, billable_pct: 61 }],
+  ["clients.revenue_share", "The largest client accounts for 44% of invoiced revenue in the last 90 days.", { largest_share_90d: 0.44, largest_pct_90d: 44 }],
 ];
+
+// ---------------------------------------------------------------------------
+// The operating board: objectives, pieces and flows as the owner described
+// them (stated), with the project platform confirmed by its own evidence.
+// ---------------------------------------------------------------------------
+
+const OBJ = (n: number) => `de000000-0000-4000-8000-00000000000${n}`;
+const CMP = (n: number) => `df000000-0000-4000-8000-00000000000${n}`;
+const FLOW = (n: number) => `e0000000-0000-4000-8000-00000000000${n}`;
+const inDays = (days: number) => new Date(Date.now() + days * 86_400_000).toISOString().slice(0, 10);
+
+function boardTables(op: (metric: string) => string, iv: (key: string) => string) {
+  const objective = (n: number, over: Record<string, unknown>) => ({
+    id: OBJ(n), org_id: ORG, business_id: BIZ, status: "active", period: "year", owner_id: DEMO_USER_ID, achieved_measurement_id: null, status_reason: null,
+    created_by: DEMO_USER_ID, created_at: ago(DAY), updated_at: ago(DAY), ...over,
+  });
+  const component = (n: number, name: string, kind: string, over: Record<string, unknown> = {}) => ({
+    id: CMP(n), org_id: ORG, business_id: BIZ, name, kind, description: null, supplier: null, owner_role: null, connection_id: null, basis: "stated", evidence_id: null,
+    created_by: DEMO_USER_ID, created_at: ago(DAY), updated_at: ago(DAY), retired_at: null, ...over,
+  });
+  let stepN = 0;
+  const step = (flow: number, position: number, name: string, performer: string, over: Record<string, unknown> = {}) => ({
+    id: `e1000000-0000-4000-8000-0000000000${String(++stepN).padStart(2, "0")}`, org_id: ORG, business_id: BIZ, flow_id: FLOW(flow), position, name, performer,
+    performer_role: null, component_id: null, decision_rule: null, documented: false, basis: "stated", evidence_id: null, created_at: ago(DAY), updated_at: ago(DAY), retired_at: null, ...over,
+  });
+  return {
+    objectives: [
+      objective(1, { title: "R9m revenue this year", metric: "revenue", unit: "ZAR", direction: "at_least", target_value: 9_000_000, due_on: inDays(270) }),
+      objective(2, { title: "At least 70% of hours billable", metric: "custom", unit: "percent", direction: "at_least", target_value: 70, period: "month", due_on: inDays(90) }),
+      objective(3, { title: "No client above 30% of revenue", metric: "custom", unit: "percent", direction: "at_most", target_value: 30, period: "quarter", due_on: inDays(180), owner_id: COLLEAGUE }),
+    ],
+    objective_measurements: [
+      { id: "e2000000-0000-4000-8000-000000000001", org_id: ORG, business_id: BIZ, objective_id: OBJ(2), basis: "measured", value: 61, value_path: ["billable_pct"], evidence_id: op("time.billable"), measured_at: ago(HOUR), recorded_by: DEMO_USER_ID, created_at: ago(HOUR) },
+      { id: "e2000000-0000-4000-8000-000000000002", org_id: ORG, business_id: BIZ, objective_id: OBJ(3), basis: "measured", value: 44, value_path: ["largest_pct_90d"], evidence_id: op("clients.revenue_share"), measured_at: ago(HOUR), recorded_by: DEMO_USER_ID, created_at: ago(HOUR) },
+      { id: "e2000000-0000-4000-8000-000000000003", org_id: ORG, business_id: BIZ, objective_id: OBJ(3), basis: "stated", value: 45, value_path: null, evidence_id: iv("clients.concentration"), measured_at: ago(2 * DAY), recorded_by: DEMO_USER_ID, created_at: ago(DAY) },
+    ],
+    board_components: [
+      component(1, "Website", "provider", { supplier: "Studio North (web studio)", owner_role: "Founder", description: "Brochure site with a contact form" }),
+      component(2, "Project platform", "software", { owner_role: "Operations lead", basis: "observed", evidence_id: op("time.billable"), connection_id: CONN }),
+      component(3, "Email inbox", "channel", { owner_role: "Founder" }),
+      component(4, "WhatsApp", "channel", { owner_role: "Account managers" }),
+      component(5, "Accounting package", "software", { supplier: "Outsourced bookkeeper", owner_role: "Bookkeeper" }),
+      component(6, "Paid media lead", "role", { owner_role: "Kea", description: "Runs paid media and web work; nothing is written down" }),
+    ],
+    board_flows: [
+      { id: FLOW(1), org_id: ORG, business_id: BIZ, name: "Lead to onboarded client", starts_when: "An enquiry arrives through the website or a referral", done_when: "The client has signed, is set up on the platform and has been invoiced",
+        objective_id: OBJ(1), owner_role: "Founder", created_by: DEMO_USER_ID, created_at: ago(DAY), updated_at: ago(DAY), retired_at: null },
+      { id: FLOW(2), org_id: ORG, business_id: BIZ, name: "Change request to invoice", starts_when: "A client asks for work outside the agreed scope", done_when: "The change is quoted, delivered and invoiced",
+        objective_id: OBJ(2), owner_role: "Account managers", created_by: DEMO_USER_ID, created_at: ago(DAY), updated_at: ago(DAY), retired_at: null },
+    ],
+    board_steps: [
+      step(1, 1, "Enquiry arrives through the contact form", "client", { component_id: CMP(1), documented: true }),
+      step(1, 2, "Reply and book an intro call", "founder", { component_id: CMP(3) }),
+      step(1, 3, "Scope and price the work", "founder", { decision_rule: "Lerato prices from experience; there's no rate card" }),
+      step(1, 4, "Write and send the proposal", "founder", { component_id: CMP(3) }),
+      step(1, 5, "Set the client up on the project platform", "staff", { performer_role: "Operations lead", component_id: CMP(2), documented: true }),
+      step(1, 6, "Run the kick-off call", "founder"),
+      step(2, 1, "Client asks for a change", "client", { component_id: CMP(4) }),
+      step(2, 2, "Log the request on the platform", "staff", { performer_role: "Account manager", component_id: CMP(2), documented: true }),
+      step(2, 3, "Decide whether to charge for it", "founder", { decision_rule: "Usually done free, to avoid friction" }),
+      step(2, 4, "Invoice the change", "staff", { performer_role: "Bookkeeper", component_id: CMP(5) }),
+    ],
+  };
+}
 
 export function demoTables(): Tables {
   const interviewEvidence = ANSWERS.map(([key, question, turn, fact, quote], i) => ({
@@ -213,6 +277,7 @@ export function demoTables(): Tables {
       content_hash: "demo", bytes: 12000 + i * 3000, attempted_at: ago(3 * DAY + 3), created_at: ago(3 * DAY + 3),
     })),
     evidence: [...webEvidence, ...interviewEvidence, ...opsEvidence],
+    ...boardTables(op, iv),
     interview_sessions: [{
       id: INTERVIEW, org_id: ORG, business_id: BIZ, channel: "voice", playbook_key: "marketing-agency", playbook_version: 1, status: "completed",
       phone_number: "+27820000000", scheduled_for: ago(2 * DAY + 20), consent_text: "I agree to receive a call from TEBOS's AI interviewer and for the call to be recorded and transcribed.",

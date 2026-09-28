@@ -50,6 +50,56 @@ test("the demo opens without an account, says it is fictional, and walks through
   await expect(page.getByRole("link", { name: "Try the demo" })).toBeVisible({ timeout: 10_000 });
 });
 
+test("the operating board shows objectives, pieces and flows, and measures only from a connected system", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  await page.goto("/demo");
+  await expect(page.getByRole("note", { name: "Demo" })).toBeVisible();
+  await page.goto("/businesses/d2000000-0000-4000-8000-000000000001");
+  await page.getByRole("link", { name: "Operating board" }).click();
+  await expect(page.getByRole("heading", { name: "Operating board" })).toBeVisible();
+
+  const summary = page.getByTestId("board-summary");
+  await expect(summary).toContainText("3Active objectives");
+  await expect(summary).toContainText("Founder-only steps");
+
+  const billable = page.getByTestId("objective").filter({ hasText: "At least 70% of hours billable" });
+  await expect(billable.getByTestId("objective-progress")).toContainText("Measured: 61%");
+  await expect(billable.getByTestId("objective-progress")).toContainText("9% to go");
+  await expect(billable.getByRole("button", { name: "Mark achieved" })).toBeDisabled();
+
+  const concentration = page.getByTestId("objective").filter({ hasText: "No client above 30% of revenue" });
+  await expect(concentration.getByTestId("objective-progress")).toContainText("Owner says 45%, which doesn't count toward the target");
+
+  const revenue = page.getByTestId("objective").filter({ hasText: "R9m revenue this year" });
+  await expect(revenue.getByTestId("objective-progress")).toContainText("Not measured yet");
+
+  const lead = page.locator(".card").filter({ has: page.getByRole("heading", { name: "Lead to onboarded client" }) });
+  await expect(lead.getByTestId("flow-dependency")).toContainText("4 of 6 steps need the founder · 4 exist only in the founder's head");
+  await expect(lead.getByTestId("flow-step")).toHaveCount(6);
+  await expect(page.getByTestId("pieces")).toContainText("Studio North (web studio)");
+  await snap(page, "demo-6-board");
+
+  // writing down a founder step moves it out of the founder's head
+  await lead.getByRole("checkbox", { name: "Scope and price the work is written down" }).click();
+  await expect(lead.getByTestId("flow-dependency")).toContainText("3 exist only in the founder's head");
+
+  // add a step: an automation needs a tool
+  await lead.getByLabel("Step 7").fill("Send the welcome pack");
+  await lead.getByLabel("Who does it").selectOption("automation");
+  await expect(lead.getByRole("button", { name: "Add step" })).toBeDisabled();
+  await lead.getByLabel("Tool").selectOption({ label: "Email inbox" });
+  await lead.getByRole("button", { name: "Add step" }).click();
+  await expect(lead.getByTestId("flow-step")).toHaveCount(7);
+
+  // a measurement is read from the platform's evidence, never typed
+  await billable.getByRole("button", { name: "Measure from a connected system" }).click();
+  await expect(billable.getByLabel("Reading")).toContainText("billable_pct = 61");
+  await expect(billable.locator("input[type=number]")).toHaveCount(0);
+
+  expect(errors).toEqual([]);
+});
+
 test("the tour plays without an account, can be paused and jumped, and leads to the demo", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));

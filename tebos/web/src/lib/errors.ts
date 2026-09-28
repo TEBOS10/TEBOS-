@@ -32,8 +32,12 @@ const MESSAGES: Record<RuleCode, string> = {
   TEBOS_ALREADY_MEMBER: "That person is already a member of this organisation.",
   TEBOS_LAST_ADMIN: "An organisation must keep at least one admin. Make someone else an admin first.",
   TEBOS_SERVER_ONLY: "Only TEBOS itself can record that, after checking with the provider. It can't be set by hand.",
-  TEBOS_INPUT_FROZEN: "What this action sends can't change once approval has been requested. Cancel it and propose a new one.",
+  TEBOS_INPUT_FROZEN: "This is fixed now: what an action sends can't change once approval is requested, and an objective's target can't change once it's active. Cancel or retire it and create a new one.",
   TEBOS_CONSENT_REQUIRED: "A call can only be booked once the person being called has agreed to it and to the recording.",
+  TEBOS_OBJECTIVE_UNMEASURED: "An objective counts as achieved only on a value read from a connected system that meets its target.",
+  TEBOS_OBJECTIVE_NOT_DUE: "An objective can be marked missed only after its due date.",
+  TEBOS_MEASUREMENT_UNSUPPORTED: "A measured value has to be read from a connected system's evidence, and a stated value has to cite the owner's own statement.",
+  TEBOS_EVIDENCE_REQUIRED: "To mark this as observed, link evidence that was actually obtained. Otherwise record it as stated.",
 };
 
 export interface Explained {

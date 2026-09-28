@@ -1,4 +1,4 @@
-import { FileText, Pencil } from "lucide-react";
+import { FileText, LayoutGrid, Pencil } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { Card, Empty, ErrorNote, Field, Loading, PageHeader, StatusBadge } from "../components/ui";
 import { addContext, CONTEXT_KINDS, getBusiness, requestScan, updateBusiness, type Business } from "../lib/data";
@@ -38,6 +38,9 @@ export function BusinessPage({ id }: { id: string }) {
         title={business.name}
         actions={
           <div className="row">
+            <Link to={`/businesses/${business.id}/board`} className="btn">
+              <LayoutGrid size={15} aria-hidden /> Operating board
+            </Link>
             <Link to={`/businesses/${business.id}/report`} className="btn">
               <FileText size={15} aria-hidden /> Report
             </Link>
