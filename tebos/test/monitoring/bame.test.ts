@@ -35,6 +35,16 @@ describe("BAME operations snapshot", () => {
     expect(r.takenAt).toBe(snapshot.taken_at);
   });
 
+  it("gives objectives numbers to measure: checklist coverage and the roster total", () => {
+    const r = bameFacts({ ...snapshot, players: { by_status: { active: 2, onboarding: 1 }, public_portfolios: 1 } });
+    if (!r.ok) throw new Error();
+    const value = (key: string) => r.facts.find((f) => f.key === key)!.value;
+    expect(value("deliverables.catalogue")).toMatchObject({ departments_staffed: 6, departments_with_checklists: 2 });
+    expect(value("players.roster")).toMatchObject({ total: 3 });
+    expect(value("capital.ledger")).toMatchObject({ last_30_days: 0 });
+    expect(value("leads.unassigned")).toMatchObject({ unassigned: 2 });
+  });
+
   it("contains no personal data: only numbers and department names", () => {
     const r = bameFacts(snapshot);
     if (!r.ok) throw new Error();
