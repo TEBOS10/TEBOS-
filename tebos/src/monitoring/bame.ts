@@ -27,9 +27,17 @@ const list = (m: Json) =>
 
 export type ParsedSnapshot = { ok: true; takenAt: string; hash: string; facts: OperationalFact[] } | { ok: false; reason: string };
 
-/** A stable fingerprint of what the snapshot says (ignoring when it was taken). */
+/**
+ * The version of the facts this parser derives. Bump it when a fact gains a
+ * field, so the next reading is recorded even if BAME's figures are unchanged.
+ * v2: checklist coverage and the roster total as numbers objectives can measure.
+ */
+export const FACTS_VERSION = 2;
+
+/** A stable fingerprint of what the snapshot says (ignoring when it was taken), per facts version. */
 export function snapshotHash(snapshot: Json): string {
   const { taken_at: _ignored, ...rest } = snapshot;
+  (rest as Json).__facts_version = FACTS_VERSION;
   const canonical = (v: unknown): unknown =>
     Array.isArray(v) ? v.map(canonical) : v && typeof v === "object" ? Object.fromEntries(Object.keys(v as Json).sort().map((k) => [k, canonical((v as Json)[k])])) : v;
   return createHash("sha256").update(JSON.stringify(canonical(rest))).digest("hex");
@@ -99,13 +107,19 @@ export function bameFacts(raw: unknown): ParsedSnapshot {
   add(
     "deliverables.catalogue",
     Object.keys(cat).length ? `Deliverable checklists exist for ${list(cat)}${none}.` : "No deliverable checklists are defined.",
-    { by_department: cat, departments_without: without },
+    {
+      by_department: cat,
+      departments_without: without,
+      // counts objectives can be measured against: staffed departments with and without a checklist
+      departments_staffed: Object.keys(byDept).length,
+      departments_with_checklists: Object.keys(byDept).length - without.length,
+    },
   );
 
   const pl = obj(s.players);
   const players = Object.values(obj(pl.by_status)).reduce<number>((a, v) => a + (num(v) ?? 0), 0);
   add("players.roster", players === 0 ? "No players are on BAME's roster yet." : `BAME's roster has ${plural(players, "player")} (${list(obj(pl.by_status))}); ${num(pl.public_portfolios) ?? 0} with a public portfolio.`, {
-    by_status: obj(pl.by_status), public_portfolios: num(pl.public_portfolios),
+    total: players, by_status: obj(pl.by_status), public_portfolios: num(pl.public_portfolios),
   });
 
   const cap = obj(s.capital);
