@@ -16,6 +16,39 @@ Where TEBOS aims to be better than a general AI model or an agent tool is in wha
 Models such as Claude are the reasoning engines behind the control plane (§49). The TEBOS product is
 the control plane itself.
 
+## The model: business operating architecture
+
+TEBOS is business operating architecture ([ADR 0003](adr/0003-business-operating-architecture.md)): it makes a
+business structurally capable of producing its intended outcomes with less dependence on individual people,
+memory, improvisation and founder intervention. It orchestrates the systems a business already has; it does not
+replace them.
+
+The client lifecycle, and where each stage stands in the build:
+
+| Lifecycle stage | What TEBOS does | Built on | Status |
+|---|---|---|---|
+| Assess | Reads the business: scans, interviews, connected-system snapshots | Stages 1–2 | Built |
+| Map | The board: objectives, pieces, flows, steps, founder dependency | Migration `board_objectives` | First slice built |
+| Architect | Rules, owners and handovers per flow step | `board_steps.decision_rule`, owners | Recorded by hand; no design assistance yet |
+| Integrate | Connects the systems already on the board | Stage 4 connectors | Read-only snapshot + Resend |
+| Automate | Only steps with a rule and a tool, only after approval | Stages 4–6 | Email only |
+| Govern | Approvals by risk tier, guarded transitions, audit trail | Stages 0 and 3 | Built |
+| Optimise | Objectives measured on connected numbers; changes judged against them | `objectives`, outcomes | Measurement built; optimisation loop not started |
+
+The chess framework (board, pieces, position, objective, moves, rules, clock, opponent, engine) maps onto these
+tables in ADR 0003. Every new capability must attach to a piece, a flow step or an objective. That is the guard
+against building "a platform that does everything".
+
+### Next for the board (in order)
+
+1. **Gate: map one real business.** Map BAME's main flows and set 2–3 objectives with an owner and a date.
+   Measure at least one objective from its connected platform. Until this is done, nothing below starts.
+2. Findings that name their flow and objective, in the business review. The model proposes the link, and TEBOS
+   validates that the flow belongs to the business.
+3. Observed pieces: link board pieces to the connections and evidence that confirm them.
+4. Architecture proposals: suggested rules and owners for founder-only steps, each one an approvable action.
+5. Only then: automation of steps that have a written rule and a connected tool.
+
 | Stage | Delivers | Gate (proof) | Status |
 |---|---|---|---|
 | 0. Foundations | Schema with enforced rules, tenancy, audit, domain core | Rule tests pass on Postgres and on `tebos-core` | Done |
@@ -121,12 +154,19 @@ Next:
 
 - **Public site:** home page with the narrated film (`/`), interactive demo (`/demo`), animated tour
   (`/tour`) and pricing (`/pricing`). None of them names the AI or voice providers.
-- **Pricing:** Starter R2,500/month, Growth R7,500/month (excl. VAT), and an equity partnership (a fixed
-  5% instead of fees, subject to a fit assessment, valuation and signed shareholder agreement). Plans
+- **Pricing** follows the lifecycle (ADR 0003). All prices exclude VAT, and the enquiry keys stay
+  `starter` / `growth`:
+  - Diagnostic: R2,500/month.
+  - Architecture & Operations: R7,500/month.
+  - Equity partnership: a fixed 5% instead of fees, subject to a fit assessment, a valuation and a signed
+    shareholder agreement.
+- **Positioning:** "business operating architecture", not an AI agency. The site promises structure, never
+  results. Plans
   live in `web/src/lib/pricing.ts`. Enquiries are stored in `public.enquiries` (insert-only through the
   API; read them with the service role).
 - **Before taking equity:** have a lawyer draft the shareholder agreement and the terms the pricing page
   refers to.
-- **Next:** a content agent that drafts new commercials (script → voice → animated scenes → video) from
+- **Next:** a new commercial that tells the board story (the current film tells the diagnostic one). Then a
+  content agent that drafts new commercials (script → voice → animated scenes → video) from
   the same film components, with a person approving each one before it's published. Later: ads with
   characters.

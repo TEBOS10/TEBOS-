@@ -757,3 +757,153 @@ export async function submitEnquiry(db: Db, e: EnquiryDraft): Promise<void> {
   });
   if (error) throw error;
 }
+
+// ---------------------------------------------------------------------------
+// The operating board: objectives, pieces and flows (ADR 0003)
+// ---------------------------------------------------------------------------
+
+export type Objective = Row<"objectives">;
+export type ObjectiveMeasurement = Row<"objective_measurements">;
+export type BoardComponent = Row<"board_components">;
+export type BoardFlow = Row<"board_flows">;
+export type BoardStep = Row<"board_steps">;
+
+/** A reading from a connected system that an objective can be measured against. */
+export interface MeasurableEvidence {
+  evidenceId: string;
+  fact: string;
+  structuredValue: unknown;
+  retrievedAt: string | null;
+  sourceLabel: string | null;
+}
+
+/** An owner's statement a stated value can cite. */
+export interface Statement {
+  evidenceId: string;
+  fact: string;
+  createdAt: string;
+}
+
+export async function getBoard(db: Db, businessId: string) {
+  const business = maybe(await db.from("businesses").select("*").eq("id", businessId).maybeSingle());
+  if (!business) return null;
+  const [objectives, measurements, components, flows, steps, sources] = await Promise.all([
+    db.from("objectives").select("*").eq("business_id", businessId).order("created_at"),
+    db.from("objective_measurements").select("*").eq("business_id", businessId).order("measured_at", { ascending: false }),
+    db.from("board_components").select("*").eq("business_id", businessId).is("retired_at", null).order("name"),
+    db.from("board_flows").select("*").eq("business_id", businessId).is("retired_at", null).order("created_at"),
+    db.from("board_steps").select("*").eq("business_id", businessId).is("retired_at", null).order("position"),
+    db.from("sources").select("id, source_type, label").eq("business_id", businessId).in("source_type", ["connected_system", "system", "user_statement"]),
+  ]);
+  const src = must(sources);
+  const evidence = src.length
+    ? must(await db.from("evidence").select("id, source_id, state, fact, structured_value, retrieved_at, created_at").in("source_id", src.map((s) => s.id))
+        .order("created_at", { ascending: false }).limit(300))
+    : [];
+  const typeOf = new Map(src.map((s) => [s.id, s]));
+  const measurable: MeasurableEvidence[] = [];
+  const seen = new Set<string>();
+  const statements: Statement[] = [];
+  for (const e of evidence) {
+    const s = typeOf.get(e.source_id);
+    if (!s || !e.fact) continue;
+    if (s.source_type === "user_statement") {
+      if (e.state !== "unavailable") statements.push({ evidenceId: e.id, fact: e.fact, createdAt: e.created_at });
+      continue;
+    }
+    if (!["acquired", "partially_acquired", "system_generated"].includes(e.state)) continue;
+    // the latest reading of each metric is the one worth measuring against
+    const metric = ((e.structured_value ?? {}) as { metric?: string }).metric ?? e.id;
+    if (seen.has(metric)) continue;
+    seen.add(metric);
+    measurable.push({ evidenceId: e.id, fact: e.fact, structuredValue: e.structured_value, retrievedAt: e.retrieved_at, sourceLabel: s.label });
+  }
+  return {
+    business,
+    objectives: must(objectives),
+    measurements: must(measurements),
+    components: must(components),
+    flows: must(flows),
+    steps: must(steps),
+    measurable,
+    statements,
+  };
+}
+
+export interface ObjectiveDraft {
+  title: string;
+  metric: string;
+  unit: string;
+  direction: "at_least" | "at_most";
+  targetValue: number;
+  period: string;
+  dueOn: string;
+  ownerId: string;
+  activate: boolean;
+}
+
+export async function createObjective(db: Db, orgId: string, businessId: string, d: ObjectiveDraft) {
+  return must(await db.from("objectives").insert({
+    org_id: orgId, business_id: businessId, title: d.title.trim(), metric: d.metric, unit: d.unit, direction: d.direction,
+    target_value: d.targetValue, period: d.period, due_on: d.dueOn, owner_id: d.ownerId, status: d.activate ? "active" : "draft",
+  }).select().single());
+}
+
+export async function activateObjective(db: Db, objectiveId: string) {
+  return must(await db.from("objectives").update({ status: "active" }).eq("id", objectiveId).select().single());
+}
+
+export async function achieveObjective(db: Db, objectiveId: string, measurementId: string) {
+  return must(await db.from("objectives").update({ status: "achieved", achieved_measurement_id: measurementId }).eq("id", objectiveId).select().single());
+}
+
+export async function closeObjective(db: Db, objectiveId: string, status: "retired" | "cancelled" | "missed", reason: string | null) {
+  return must(await db.from("objectives").update({ status, status_reason: reason }).eq("id", objectiveId).select().single());
+}
+
+/** A measured value: the database reads the number from the evidence at `path`. */
+export async function recordMeasured(db: Db, o: Objective, evidenceId: string, path: string[]) {
+  return must(await db.from("objective_measurements").insert({
+    org_id: o.org_id, business_id: o.business_id, objective_id: o.id, basis: "measured", evidence_id: evidenceId, value_path: path,
+  }).select().single());
+}
+
+/** A value the owner stated, citing their statement. It never counts toward achieving the objective. */
+export async function recordStated(db: Db, o: Objective, evidenceId: string, value: number) {
+  return must(await db.from("objective_measurements").insert({
+    org_id: o.org_id, business_id: o.business_id, objective_id: o.id, basis: "stated", evidence_id: evidenceId, value,
+  }).select().single());
+}
+
+export async function addComponent(db: Db, orgId: string, businessId: string, c: { name: string; kind: string; supplier?: string; ownerRole?: string; description?: string }) {
+  const clean = (v?: string) => (v && v.trim() ? v.trim() : null);
+  return must(await db.from("board_components").insert({
+    org_id: orgId, business_id: businessId, name: c.name.trim(), kind: c.kind, supplier: clean(c.supplier), owner_role: clean(c.ownerRole), description: clean(c.description),
+  }).select().single());
+}
+
+export async function retireComponent(db: Db, componentId: string) {
+  return must(await db.from("board_components").update({ retired_at: new Date().toISOString() }).eq("id", componentId).select().single());
+}
+
+export async function addFlow(db: Db, orgId: string, businessId: string, f: { name: string; startsWhen: string; doneWhen: string; objectiveId?: string | null; ownerRole?: string }) {
+  return must(await db.from("board_flows").insert({
+    org_id: orgId, business_id: businessId, name: f.name.trim(), starts_when: f.startsWhen.trim(), done_when: f.doneWhen.trim(),
+    objective_id: f.objectiveId || null, owner_role: f.ownerRole?.trim() || null,
+  }).select().single());
+}
+
+export async function addStep(db: Db, flow: BoardFlow, position: number, s: { name: string; performer: string; performerRole?: string; componentId?: string | null; decisionRule?: string; documented: boolean }) {
+  return must(await db.from("board_steps").insert({
+    org_id: flow.org_id, business_id: flow.business_id, flow_id: flow.id, position, name: s.name.trim(), performer: s.performer,
+    performer_role: s.performerRole?.trim() || null, component_id: s.componentId || null, decision_rule: s.decisionRule?.trim() || null, documented: s.documented,
+  }).select().single());
+}
+
+export async function updateStep(db: Db, stepId: string, patch: Partial<Pick<BoardStep, "documented" | "performer" | "component_id" | "decision_rule">>) {
+  return must(await db.from("board_steps").update(patch).eq("id", stepId).select().single());
+}
+
+export async function retireStep(db: Db, stepId: string) {
+  return must(await db.from("board_steps").update({ retired_at: new Date().toISOString() }).eq("id", stepId).select().single());
+}

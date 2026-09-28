@@ -40,6 +40,9 @@ source → evidence → finding → action → approval → run → verification
 | A provider action's input is frozen once approval is requested, and an approval covers only the input it saw | `guard_action_execution`, `bind_approval_input` |
 | Runs through a provider, and the provider's confirmations, are recorded only by the execution worker | `guard_run_origin`, `guard_action_execution` |
 | Every write audited, attributed, hash-chained, append-only | `audit_row`, `write_audit` |
+| Only TEBOS's server records connected-system sources and system-generated evidence, or says who created evidence or a finding | `guard_source_origin`, `guard_created_by_actor` |
+| An objective's target is fixed once active; it is achieved only on a value the database read from a connected system's evidence; missed only after its due date | `guard_objective`, `guard_measurement` |
+| Board pieces and steps marked "observed" cite obtained evidence; automated steps name their tool | `guard_board_basis`, `board_steps` checks |
 
 Database errors carry a `TEBOS_*` hint. `ruleFromDatabaseError()` maps it to a structured `RuleViolation`, so
 the interface can show an actionable state rather than a raw error string.
@@ -240,6 +243,20 @@ BAME is the first (`src/monitoring/`, connector `bame-ops`, capability `operatio
   or at least daily. A refused login moves the connection to `authentication_required`, with the reason.
 - No write capability is mapped to this connector, so no action can be routed through it. Acting on BAME
   (for example, assigning a lead) will be a separate capability with approvals.
+
+## The operating board
+
+TEBOS is business operating architecture ([ADR 0003](docs/adr/0003-business-operating-architecture.md)). For each
+business it keeps an operating board (migration `board_objectives`, `src/domain/board.ts`, page
+`/businesses/:id/board`):
+
+- **Objectives:** quantified targets with an owner and a due date. A measured value is read by the database
+  from a connected system's evidence; nobody can type one in. The owner's own figure can be recorded as
+  *stated*, citing their statement, but it never counts toward the target.
+- **Pieces:** the tools, providers, channels, teams and roles the business runs on.
+- **Flows:** ordered steps, each with who performs it, the tool it uses, its decision rule, and whether it is
+  written down anywhere.
+- **Founder dependency:** a count of the steps that exist only in the founder's head, per flow and overall.
 
 ## Enquiry alerts
 

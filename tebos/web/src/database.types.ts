@@ -477,6 +477,162 @@ export type Database = {
           },
         ]
       }
+      board_components: {
+        Row: {
+          basis: string
+          business_id: string
+          connection_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          evidence_id: string | null
+          id: string
+          kind: string
+          name: string
+          org_id: string
+          owner_role: string | null
+          retired_at: string | null
+          supplier: string | null
+          updated_at: string
+        }
+        Insert: {
+          basis?: string
+          business_id: string
+          connection_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          evidence_id?: string | null
+          id?: string
+          kind: string
+          name: string
+          org_id: string
+          owner_role?: string | null
+          retired_at?: string | null
+          supplier?: string | null
+          updated_at?: string
+        }
+        Update: {
+          basis?: string
+          business_id?: string
+          connection_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          evidence_id?: string | null
+          id?: string
+          kind?: string
+          name?: string
+          org_id?: string
+          owner_role?: string | null
+          retired_at?: string | null
+          supplier?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      board_flows: {
+        Row: {
+          business_id: string
+          created_at: string
+          created_by: string | null
+          done_when: string
+          id: string
+          name: string
+          objective_id: string | null
+          org_id: string
+          owner_role: string | null
+          retired_at: string | null
+          starts_when: string
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          created_by?: string | null
+          done_when: string
+          id?: string
+          name: string
+          objective_id?: string | null
+          org_id: string
+          owner_role?: string | null
+          retired_at?: string | null
+          starts_when: string
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          created_by?: string | null
+          done_when?: string
+          id?: string
+          name?: string
+          objective_id?: string | null
+          org_id?: string
+          owner_role?: string | null
+          retired_at?: string | null
+          starts_when?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      board_steps: {
+        Row: {
+          basis: string
+          business_id: string
+          component_id: string | null
+          created_at: string
+          decision_rule: string | null
+          documented: boolean
+          evidence_id: string | null
+          flow_id: string
+          id: string
+          name: string
+          org_id: string
+          performer: string
+          performer_role: string | null
+          position: number
+          retired_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          basis?: string
+          business_id: string
+          component_id?: string | null
+          created_at?: string
+          decision_rule?: string | null
+          documented?: boolean
+          evidence_id?: string | null
+          flow_id: string
+          id?: string
+          name: string
+          org_id: string
+          performer: string
+          performer_role?: string | null
+          position: number
+          retired_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          basis?: string
+          business_id?: string
+          component_id?: string | null
+          created_at?: string
+          decision_rule?: string | null
+          documented?: boolean
+          evidence_id?: string | null
+          flow_id?: string
+          id?: string
+          name?: string
+          org_id?: string
+          performer?: string
+          performer_role?: string | null
+          position?: number
+          retired_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       business_contexts: {
         Row: {
           business_id: string
@@ -1007,6 +1163,8 @@ export type Database = {
       }
       findings: {
         Row: {
+          flow_id: string | null
+          objective_id: string | null
           analysis_run_id: string | null
           business_id: string
           category: string
@@ -1028,6 +1186,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          flow_id?: string | null
+          objective_id?: string | null
           business_id: string
           category: string
           confidence: number
@@ -1048,6 +1208,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          flow_id?: string | null
+          objective_id?: string | null
           analysis_run_id?: string | null
           business_id?: string
           category?: string
@@ -1295,6 +1457,108 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      objective_measurements: {
+        Row: {
+          basis: string
+          business_id: string
+          created_at: string
+          evidence_id: string
+          id: string
+          measured_at: string
+          objective_id: string
+          org_id: string
+          recorded_by: string | null
+          value: number
+          value_path: string[] | null
+        }
+        Insert: {
+          basis: string
+          business_id: string
+          created_at?: string
+          evidence_id: string
+          id?: string
+          measured_at?: string
+          objective_id: string
+          org_id: string
+          recorded_by?: string | null
+          value?: number
+          value_path?: string[] | null
+        }
+        Update: {
+          basis?: string
+          business_id?: string
+          created_at?: string
+          evidence_id?: string
+          id?: string
+          measured_at?: string
+          objective_id?: string
+          org_id?: string
+          recorded_by?: string | null
+          value?: number
+          value_path?: string[] | null
+        }
+        Relationships: []
+      }
+      objectives: {
+        Row: {
+          achieved_measurement_id: string | null
+          business_id: string
+          created_at: string
+          created_by: string | null
+          direction: string
+          due_on: string
+          id: string
+          metric: string
+          org_id: string
+          owner_id: string
+          period: string
+          status: string
+          status_reason: string | null
+          target_value: number
+          title: string
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          achieved_measurement_id?: string | null
+          business_id: string
+          created_at?: string
+          created_by?: string | null
+          direction: string
+          due_on: string
+          id?: string
+          metric: string
+          org_id: string
+          owner_id: string
+          period: string
+          status?: string
+          status_reason?: string | null
+          target_value: number
+          title: string
+          unit: string
+          updated_at?: string
+        }
+        Update: {
+          achieved_measurement_id?: string | null
+          business_id?: string
+          created_at?: string
+          created_by?: string | null
+          direction?: string
+          due_on?: string
+          id?: string
+          metric?: string
+          org_id?: string
+          owner_id?: string
+          period?: string
+          status?: string
+          status_reason?: string | null
+          target_value?: number
+          title?: string
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       organisations: {
         Row: {

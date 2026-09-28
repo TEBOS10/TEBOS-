@@ -4,6 +4,7 @@
 // reads, inserts and updates), and mirrors the one database rule the demo
 // walk-through relies on: an approval decision moves its action on.
 // Nothing leaves the browser.
+import { extractMeasuredValue } from "@core/board";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "../database.types";
 import type { Db } from "../lib/supabase";
@@ -74,6 +75,20 @@ function applyApproval(tables: Tables, approval: Row, inserted: boolean) {
   action.updated_at = new Date().toISOString();
 }
 
+// The database reads a measured value from its evidence (migration
+// board_objectives); the demo does the same, so nothing typed is ever shown
+// as a measurement.
+function readMeasurement(tables: Tables, m: Row) {
+  const e = tables.evidence?.find((x) => x.id === m.evidence_id);
+  if (m.basis === "measured") {
+    m.value = e ? extractMeasuredValue(e.structured_value, (m.value_path ?? []) as string[]) : null;
+    m.measured_at = e?.retrieved_at ?? null;
+  } else {
+    m.measured_at = e?.retrieved_at ?? e?.created_at ?? new Date().toISOString();
+  }
+  m.recorded_by = DEMO_USER_ID;
+}
+
 function answerRpc(tables: Tables, name: string, args: Record<string, unknown>): unknown {
   if (name === "submit_interview_answers") {
     const session = tables.interview_sessions?.find((x) => x.id === args.p_session);
@@ -115,6 +130,7 @@ export function demoFetch(tables: Tables): typeof fetch {
         result = (Array.isArray(body) ? body : [body]).map((r: Row) => ({
           id: crypto.randomUUID(), created_at: now, updated_at: now, status: r.status ?? DEFAULT_STATUS[name!], ...r,
         }));
+        if (name === "objective_measurements") for (const r of result) readMeasurement(tables, r);
         table.push(...result);
         if (name === "approvals") for (const r of result) applyApproval(tables, r, true);
       } else {

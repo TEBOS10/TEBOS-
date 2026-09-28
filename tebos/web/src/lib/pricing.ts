@@ -15,34 +15,38 @@ export interface Plan {
 
 export const EQUITY_SHARE = "5%";
 
+// The plans follow the TEBOS lifecycle (ADR 0003): a Diagnostic, then
+// Architecture & Operations. The keys stay "starter" and "growth": they are
+// what enquiries store.
 export const PLANS: Plan[] = [
   {
     key: "starter",
-    name: "Starter",
+    name: "Diagnostic",
     price: "R2,500",
     cadence: "per month",
-    pitch: "See clearly what's holding the business back.",
+    pitch: "Map how the business really runs, and where it still runs through you.",
     features: [
-      "Website and public-presence scan, re-run monthly",
-      "A diagnostic interview each quarter (AI call or written)",
+      "Assess: a website scan every month and a diagnostic interview each quarter (AI call or written)",
+      "Map: your operating board of objectives, pieces and flows",
+      "See which steps depend on the founder's memory",
       "Findings with the evidence behind each one",
-      "Action tracking with approvals",
       "Up to 3 team members",
     ],
-    cta: "Get started",
+    cta: "Start with a diagnostic",
   },
   {
     key: "growth",
-    name: "Growth",
+    name: "Architecture & Operations",
     price: "R7,500",
     cadence: "per month",
-    pitch: "Connect your real numbers and prove every fix.",
+    pitch: "Design how the business should run, connect what you already use, and run it against your objectives.",
     features: [
-      "Everything in Starter",
-      "Read-only connections to the tools you already use",
-      "Reviews that combine interviews, live figures and your website",
+      "Everything in the Diagnostic",
+      "Architect: rules, owners and handovers for each flow",
+      "Integrate: read-only connections to the tools and providers you already use",
+      "Govern: every change proposed, approved and on the record",
+      "Measure: objectives tracked on your real numbers, not estimates",
       "A diagnostic interview every month",
-      "Outcome checks: each fix measured against your numbers",
       "Unlimited team members",
     ],
     cta: "Get started",
@@ -54,9 +58,9 @@ export const PLANS: Plan[] = [
     cadence: "equity, instead of fees",
     pitch: "For businesses that can't pay upfront: we take a fixed share and grow with you.",
     features: [
-      "Everything in Growth",
+      "Everything in Architecture & Operations",
       "No monthly fees",
-      "Hands-on support from the TEBOS team to put fixes in place",
+      "Hands-on support from the TEBOS team to put the architecture in place",
       "A fixed share, agreed upfront",
     ],
     cta: "Apply",

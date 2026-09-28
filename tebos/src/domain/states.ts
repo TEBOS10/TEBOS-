@@ -141,6 +141,20 @@ export const interviewMachine = machine({
   },
 });
 
+// Objectives (the business's quantified targets). Achieved and missed are
+// earned: see src/domain/board.ts and migration board_objectives.
+export const objectiveMachine = machine({
+  initial: ["draft", "active"],
+  transitions: {
+    draft: ["active", "cancelled"],
+    active: ["achieved", "missed", "retired"],
+    achieved: [],
+    missed: [],
+    retired: [],
+    cancelled: [],
+  },
+});
+
 export const MACHINES = {
   scan: scanMachine,
   scan_target: scanTargetMachine,
@@ -152,6 +166,7 @@ export const MACHINES = {
   agent_run: agentRunMachine,
   invitation: invitationMachine,
   interview: interviewMachine,
+  objective: objectiveMachine,
 } as const;
 
 export type MachineName = keyof typeof MACHINES;
@@ -166,6 +181,7 @@ export type ConnectionStatus = StatesOf<typeof connectionMachine>;
 export type AgentRunStatus = StatesOf<typeof agentRunMachine>;
 export type InvitationStatus = StatesOf<typeof invitationMachine>;
 export type InterviewStatus = StatesOf<typeof interviewMachine>;
+export type ObjectiveStatus = StatesOf<typeof objectiveMachine>;
 
 export function canTransition<M extends MachineName>(
   name: M,
