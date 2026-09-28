@@ -22,6 +22,7 @@ export default defineConfig({
       "three/addons/postprocessing/RenderPass.js",
       "three/addons/postprocessing/UnrealBloomPass.js",
       "three/addons/environments/RoomEnvironment.js",
+      "three/addons/controls/OrbitControls.js",
     ],
   },
 });

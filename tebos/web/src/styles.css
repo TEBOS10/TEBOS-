@@ -610,3 +610,26 @@ table.table { width: 100%; border-collapse: collapse; }
   .bw-dots { right: 10px; }
   .lp-film { grid-template-columns: 1fr; padding-top: 64px; }
 }
+
+/* The client's board in 3D (board page) */
+.cb-card { overflow: hidden; }
+.cb-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.cb-chip-count { color: #b5761c; font-weight: 700; }
+.cb-stage { position: relative; height: clamp(360px, 56vh, 560px); border-radius: 14px; overflow: hidden; background: #070a10; cursor: grab; }
+.cb-stage:active { cursor: grabbing; }
+.cb-loading { animation: cb-pulse 1.6s ease-in-out infinite; }
+@keyframes cb-pulse { 50% { opacity: 0.7; } }
+.cb-label { font-size: 11px; }
+.cb-sub { color: #9aa6b8; font-weight: 600; }
+.cb-value { display: block; margin-top: 2px; color: #9fc2ff; font-weight: 600; text-align: center; }
+.bw-label-objective { text-align: center; }
+.cb-stated { border-style: dashed; border-color: rgba(188, 211, 255, 0.55); background: rgba(8, 11, 17, 0.55); }
+.cb-anchor { border-color: rgba(255, 255, 255, 0.2); color: #c8d0dc; }
+.cb-unmeasured { border-style: dashed; border-color: rgba(255, 255, 255, 0.3); color: #c8d0dc; }
+.cb-legend { display: flex; flex-wrap: wrap; gap: 8px 18px; list-style: none; margin: 12px 0 0; padding: 0; color: var(--muted); font-size: 12px; }
+.cb-legend li { display: flex; align-items: center; gap: 7px; }
+.cb-key { display: inline-block; width: 12px; height: 12px; border-radius: 50%; }
+.cb-key-solid { background: #161b24; box-shadow: 0 0 0 2px #7fb2ff; }
+.cb-key-glass { background: rgba(188, 211, 255, 0.35); border: 1px dashed #7fb2ff; }
+.cb-key-amber { background: #ffb04a; box-shadow: 0 0 8px #ffb04a; }
+.cb-key-column { width: 8px; height: 14px; border-radius: 3px; background: linear-gradient(0deg, #7fb2ff 60%, rgba(127, 178, 255, 0.15) 60%); }

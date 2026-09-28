@@ -5,6 +5,7 @@
 // reduced motion, the same story is told as plain cards.
 import { Cable, Compass, FileSearch, LayoutGrid, LineChart, Play, ShieldCheck, Stamp, Volume2, Workflow } from "lucide-react";
 import { lazy, Suspense, useRef, useState } from "react";
+import { use3d } from "../world/support";
 
 const BoardWorldView = lazy(() => import("../world/BoardWorldView"));
 
@@ -17,17 +18,6 @@ export const STAGES = [
   { icon: Stamp, title: "Govern", text: "Every change is proposed with its evidence, approved by a person, and kept on the record." },
   { icon: LineChart, title: "Optimise", text: "Progress is measured against your objectives on real numbers, never on a figure someone typed in." },
 ];
-
-function canRender3d(): boolean {
-  if (typeof window === "undefined") return false;
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return false;
-  try {
-    const c = document.createElement("canvas");
-    return !!(c.getContext("webgl2") || c.getContext("webgl"));
-  } catch {
-    return false;
-  }
-}
 
 function Hero({ onWatch }: { onWatch: () => void }) {
   return (
@@ -51,7 +41,7 @@ export function LandingPage() {
   const video = useRef<HTMLVideoElement>(null);
   const filmRef = useRef<HTMLElement>(null);
   const [withSound, setWithSound] = useState(false);
-  const [three] = useState(canRender3d);
+  const [three] = useState(() => use3d());
 
   function playWithSound() {
     const v = video.current;

@@ -257,6 +257,12 @@ business it keeps an operating board (migration `board_objectives`, `src/domain/
 - **Flows:** ordered steps, each with who performs it, the tool it uses, its decision rule, and whether it is
   written down anywhere.
 - **Founder dependency:** a count of the steps that exist only in the founder's head, per flow and overall.
+- **The board in 3D** (`web/src/world/`): the same records drawn as a chessboard.
+  - Pieces confirmed by evidence are solid, and pieces the business only described are glass.
+  - Flows can be followed one at a time.
+  - Founder-only steps glow amber at the founder.
+  - Objective columns fill only from measured values.
+  - The page draws it only when the device has a graphics chip; other devices get the page without it.
 
 ## Enquiry alerts
 
