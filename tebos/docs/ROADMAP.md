@@ -43,6 +43,17 @@ against building "a platform that does everything".
 
 1. **Gate: map one real business.** Map BAME's main flows and set 2–3 objectives with an owner and a date.
    Measure at least one objective from its connected platform. Until this is done, nothing below starts.
+   - Done (28 Sep 2026): BAME's board is mapped from evidence.
+     - Sources: its own system's code, recorded as a `document` source pinned to a commit, and the live
+       read-only platform.
+     - Contents: 12 observed pieces, the flows "Enquiry to rostered client" and "Package fees to departments",
+       and 8 steps.
+     - Open steps: routing to a department has no written rule, and deliverables have checklists for PR and
+       Technology only.
+   - Still open: the objectives, which only the owner can set. The live platform already reports numbers that
+     can measure them (e.g. unassigned cases, open notifications, ledger entries, roster size). Also still
+     open: who does which step, where that isn't visible in the system (for example, whether the admin is the
+     founder).
 2. Findings that name their flow and objective, in the business review. The model proposes the link, and TEBOS
    validates that the flow belongs to the business.
 3. Observed pieces: link board pieces to the connections and evidence that confirm them.
