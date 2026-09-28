@@ -139,7 +139,6 @@ export function ScanPage({ id }: { id: string }) {
                       <span className="list-title">{r.agent_role === "acquisition" ? "Acquisition" : r.agent_role === "business_intelligence" ? "Business intelligence" : statusLabel(r.agent_role)}</span>
                       <span className="list-meta">
                         {ago(r.started_at)}
-                        {r.model ? ` · ${r.model}` : ""}
                         {r.tokens_in ? ` · ${r.tokens_in.toLocaleString()} in / ${(r.tokens_out ?? 0).toLocaleString()} out tokens` : ""}
                       </span>
                       {r.error_detail && <span className="list-meta" style={{ color: "var(--bad-fg)" }}>{r.error_detail}</span>}

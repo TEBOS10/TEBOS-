@@ -241,6 +241,22 @@ BAME is the first (`src/monitoring/`, connector `bame-ops`, capability `operatio
 - No write capability is mapped to this connector, so no action can be routed through it. Acting on BAME
   (for example, assigning a lead) will be a separate capability with approvals.
 
+## Enquiry alerts
+
+Pricing-page enquiries (`public.enquiries`) are emailed to the team once, by the worker's `alerts` stage
+(`src/notify/`). It runs when both of these are set on the worker:
+
+- `RESEND_API_KEY`: a Resend API key (a send-only key is enough).
+- `ENQUIRY_ALERT_TO`: who receives the alerts, comma-separated.
+- Optional `ENQUIRY_ALERT_FROM`: the sender. It defaults to Resend's test sender `onboarding@resend.dev`, which
+  can only deliver to the email address that owns the Resend account. Verify a domain in Resend and set,
+  e.g., `TEBOS <alerts@yourdomain.com>` to send to anyone.
+
+Each email uses an idempotency key per enquiry, so a retry after an unclear outcome never sends twice. An
+enquiry is marked notified only when Resend accepts it, with Resend's message id recorded
+(`notify_reference`). Failures are recorded in `notify_error` and retried up to 5 times, 5 minutes apart.
+The public can't write any of these columns.
+
 ## Deploying on Railway
 
 The worker (acquisition, intelligence and execution) deploys as one Railway service from this repository.

@@ -7,12 +7,23 @@ const snap = async (page: Page, name: string) => {
   if (shots) await page.screenshot({ path: `${shots}/${name}.png`, fullPage: true });
 };
 
-test("signed-out visitors see sign-in, not data", async ({ page }) => {
+test("signed-out visitors see the home page and sign-in, not data", async ({ page }) => {
   await installFakeSupabase(page, { signedIn: false });
   await page.goto("/");
+  await expect(page.getByRole("heading", { name: /Find what's holding your business back/ })).toBeVisible();
+  await expect(page.locator("video")).toHaveAttribute("src", "/tebos-film.mp4");
+  await expect(page.getByRole("link", { name: "Try the demo" })).toBeVisible();
+  await expect(page.getByText("Clayworks")).toHaveCount(0);
+  await snap(page, "0-home");
+
+  await page.getByRole("link", { name: "Sign in" }).click();
+  await expect(page).toHaveURL(/\/sign-in$/);
   await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
   await expect(page.getByText("Clayworks")).toHaveCount(0);
   await snap(page, "0-sign-in");
+
+  await page.goto(`/businesses/${BIZ}`); // a deep link asks for sign-in too
+  await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
 });
 
 test("home shows honest scan states and the command-centre cards", async ({ page }) => {
@@ -34,7 +45,8 @@ test("a scan shows what was read, what wasn't, and why TEBOS is as confident as 
   await expect(page.getByRole("cell", { name: "HTTP 503 from the site" })).toBeVisible();
   await expect(page.getByText("not obtained").first()).toBeVisible();
   await expect(page.getByText("Few independent sources agree")).toBeVisible();
-  await expect(page.getByText(/claude-opus-5 · 2,140 in \/ 610 out tokens/)).toBeVisible();
+  await expect(page.getByText(/2,140 in \/ 610 out tokens/)).toBeVisible();
+  await expect(page.getByText(/claude/i)).toHaveCount(0); // the model is recorded, never shown
   await expect(page.getByText("1 proposed finding was rejected for lack of evidence")).toBeVisible();
   await snap(page, "2-scan");
 });
@@ -295,7 +307,7 @@ test("a signed-in person changes their password from their account page", async 
 
 test("someone who forgot their password can ask for a reset link", async ({ page }) => {
   const fake = await installFakeSupabase(page, { signedIn: false });
-  await page.goto("/");
+  await page.goto("/sign-in");
   await page.getByRole("button", { name: "Forgot password?" }).click();
   await page.getByLabel("Email").fill("operator@fixture.test");
   await page.getByRole("button", { name: "Send reset link" }).click();
@@ -417,4 +429,34 @@ test("a business with a connected platform shows its live operations, read-only,
   await expect(page.getByTestId("operations-status")).toContainText("Connected");
   await expect(page.getByText("2 leads are not assigned to any department; the oldest has waited 6 days.")).toBeVisible();
   await expect(page.getByText("Every lead is assigned to a department.")).toHaveCount(0); // only the latest reading per metric
+});
+
+test("pricing shows two monthly plans and the equity partnership, and records an application", async ({ page }) => {
+  const fake = await installFakeSupabase(page, { signedIn: false });
+  await page.goto("/");
+  await page.getByRole("link", { name: "Pricing" }).first().click();
+  await expect(page).toHaveURL(/\/pricing$/);
+  await expect(page.getByRole("heading", { name: "Starter", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Growth", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Equity partnership", exact: true })).toBeVisible();
+  await expect(page.getByText("R2,500")).toBeVisible();
+  await expect(page.getByText("R7,500")).toBeVisible();
+  await expect(page.getByText(/nothing on this page is an offer/)).toBeVisible();
+  await snap(page, "10-pricing");
+
+  await page.getByRole("button", { name: "Apply" }).click();
+  await expect(page.getByRole("heading", { name: "Apply for an equity partnership (5%)" })).toBeVisible();
+  await page.getByRole("button", { name: "Send application" }).click();
+  await expect(page.getByText("Please add your name, the business name, a valid email address.")).toBeVisible();
+  expect(fake.writes.find((w) => w.table === "enquiries")).toBeUndefined();
+
+  await page.getByLabel("Your name").fill("Lerato");
+  await page.getByLabel("Business name").fill("Brightline Creative");
+  await page.getByLabel("Email").fill("lerato@brightline.example");
+  await page.getByLabel(/why equity suits you/).fill("Growing fast, cash is tight.");
+  await page.getByRole("button", { name: "Send application" }).click();
+  await expect(page.getByText("Thank you. We've got it.")).toBeVisible();
+  expect(fake.writes.find((w) => w.table === "enquiries")?.body).toMatchObject({
+    plan: "equity", name: "Lerato", business: "Brightline Creative", email: "lerato@brightline.example", message: "Growing fast, cash is tight.", phone: null,
+  });
 });

@@ -116,3 +116,17 @@ Next:
 - **Done:** these facts feed business reviews, alongside interviews and scans.
 - **Next:** add approved actions on BAME (assign a lead, chase an
   overdue deliverable) as their own capabilities.
+
+## Go to market
+
+- **Public site:** home page with the narrated film (`/`), interactive demo (`/demo`), animated tour
+  (`/tour`) and pricing (`/pricing`). None of them names the AI or voice providers.
+- **Pricing:** Starter R2,500/month, Growth R7,500/month (excl. VAT), and an equity partnership (a fixed
+  5% instead of fees, subject to a fit assessment, valuation and signed shareholder agreement). Plans
+  live in `web/src/lib/pricing.ts`. Enquiries are stored in `public.enquiries` (insert-only through the
+  API; read them with the service role).
+- **Before taking equity:** have a lawyer draft the shareholder agreement and the terms the pricing page
+  refers to.
+- **Next:** a content agent that drafts new commercials (script → voice → animated scenes → video) from
+  the same film components, with a person approving each one before it's published. Later: ads with
+  characters.

@@ -76,7 +76,6 @@ function Overview({ data }: { data: Awaited<ReturnType<typeof systemOverview>> }
                         <span className="list-title">{statusLabel(r.agent_role)}</span>
                         <span className="list-meta">
                           {ago(r.started_at)}
-                          {r.model ? ` · ${r.model}` : ""}
                           {r.error_detail ? ` · ${r.error_detail}` : ""}
                         </span>
                       </div>

@@ -734,3 +734,26 @@ export async function liveOperations(db: Db, businessId: string) {
   }
   return { connections: must(connections), facts: [...latest.values()].sort((a, b) => a.metric.localeCompare(b.metric)) };
 }
+
+// ---------------------------------------------------------------------------
+// Public enquiries (pricing page). Insert-only: the API never reads them back.
+// ---------------------------------------------------------------------------
+
+export interface EnquiryDraft {
+  plan: "starter" | "growth" | "equity";
+  name: string;
+  business: string;
+  email: string;
+  phone?: string;
+  website?: string;
+  message?: string;
+}
+
+export async function submitEnquiry(db: Db, e: EnquiryDraft): Promise<void> {
+  const clean = (v?: string) => (v && v.trim() ? v.trim() : null);
+  const { error } = await db.from("enquiries").insert({
+    plan: e.plan, name: e.name.trim(), business: e.business.trim(), email: e.email.trim(),
+    phone: clean(e.phone), website: clean(e.website), message: clean(e.message),
+  });
+  if (error) throw error;
+}

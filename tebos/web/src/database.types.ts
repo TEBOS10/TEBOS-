@@ -822,6 +822,45 @@ export type Database = {
           },
         ]
       }
+      enquiries: {
+        Row: {
+          business: string
+          created_at: string
+          email: string
+          id: string
+          message: string | null
+          name: string
+          phone: string | null
+          plan: string
+          status: string
+          website: string | null
+        }
+        Insert: {
+          business: string
+          created_at?: string
+          email: string
+          id?: string
+          message?: string | null
+          name: string
+          phone?: string | null
+          plan: string
+          status?: string
+          website?: string | null
+        }
+        Update: {
+          business?: string
+          created_at?: string
+          email?: string
+          id?: string
+          message?: string | null
+          name?: string
+          phone?: string | null
+          plan?: string
+          status?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       evidence: {
         Row: {
           business_id: string
