@@ -12,6 +12,7 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+import { isSoftwareRenderer, lathe, PROFILES, RoundedTile } from "./kit";
 
 export const STAGE_COUNT = 9; // hero + seven stages + outro
 
@@ -20,20 +21,6 @@ const AMBER = new THREE.Color("#ffb04a");
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
 const smooth = (x: number) => { const t = clamp01(x); return t * t * (3 - 2 * t); };
 const seg = (p: number, a: number, b: number) => smooth((p - a) / (b - a));
-
-type Profile = Array<[number, number]>;
-const PROFILES: Record<string, Profile> = {
-  pawn: [[0, 0], [0.34, 0], [0.34, 0.07], [0.26, 0.11], [0.22, 0.16], [0.13, 0.34], [0.11, 0.44], [0.18, 0.48], [0.1, 0.52], [0.16, 0.58], [0.18, 0.66], [0.15, 0.74], [0.08, 0.79], [0, 0.8]],
-  rook: [[0, 0], [0.36, 0], [0.36, 0.08], [0.28, 0.12], [0.24, 0.18], [0.2, 0.62], [0.28, 0.66], [0.28, 0.86], [0.2, 0.86], [0.2, 0.8], [0, 0.8]],
-  bishop: [[0, 0], [0.34, 0], [0.34, 0.07], [0.26, 0.11], [0.2, 0.18], [0.12, 0.58], [0.2, 0.62], [0.1, 0.66], [0.17, 0.78], [0.14, 0.92], [0.06, 1.0], [0.08, 1.04], [0, 1.08]],
-  king: [[0, 0], [0.4, 0], [0.4, 0.08], [0.3, 0.13], [0.24, 0.22], [0.15, 0.78], [0.26, 0.83], [0.14, 0.88], [0.2, 1.05], [0.24, 1.18], [0.12, 1.24], [0, 1.25]],
-};
-
-function lathe(profile: Profile) {
-  const g = new THREE.LatheGeometry(profile.map(([r, y]) => new THREE.Vector2(r, y)), 48);
-  g.computeVertexNormals();
-  return g;
-}
 
 interface Piece { key: string; label: string; kind: keyof typeof PROFILES; tile: [number, number] }
 
@@ -98,6 +85,8 @@ export function createBoardWorld(host: HTMLElement, opts: { reducedMotion: boole
   labels.domElement.className = "bw-labels";
   host.appendChild(labels.domElement);
 
+  // Without a graphics chip, jump to each scroll position and draw only then.
+  const still = isSoftwareRenderer(renderer);
   const scene = new THREE.Scene();
   scene.background = new THREE.Color("#05070b");
   scene.fog = new THREE.Fog("#05070b", 16, 34);
@@ -279,6 +268,7 @@ export function createBoardWorld(host: HTMLElement, opts: { reducedMotion: boole
   timer.connect(document);
   let frameId = 0;
   let lastArchitect = -1;
+  let dirty = true;
   let running = true;
 
   function shot(p: number) {
@@ -292,10 +282,12 @@ export function createBoardWorld(host: HTMLElement, opts: { reducedMotion: boole
   function frame() {
     if (!running) return;
     frameId = requestAnimationFrame(frame);
+    if (still && !dirty) return;
+    dirty = false;
     timer.update();
     const dt = Math.min(timer.getDelta(), 0.1);
     const time = timer.getElapsed();
-    const follow = opts.reducedMotion || opts.snap;
+    const follow = opts.reducedMotion || opts.snap || still;
     progress += (target - progress) * (follow ? 1 : 1 - Math.exp(-dt * 3.2));
     const p = progress;
 
@@ -374,7 +366,7 @@ export function createBoardWorld(host: HTMLElement, opts: { reducedMotion: boole
   }
 
   const world: BoardWorld = {
-    setProgress(p) { target = Math.max(0, Math.min(STAGE_COUNT - 1, p)); },
+    setProgress(p) { target = Math.max(0, Math.min(STAGE_COUNT - 1, p)); dirty = true; },
     resize() {
       const w = host.clientWidth, h = host.clientHeight;
       if (!w || !h) return;
@@ -386,6 +378,7 @@ export function createBoardWorld(host: HTMLElement, opts: { reducedMotion: boole
       bloom.setSize(w / 2, h / 2);
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
+      dirty = true;
     },
     dispose() {
       running = false;
@@ -402,24 +395,4 @@ export function createBoardWorld(host: HTMLElement, opts: { reducedMotion: boole
   world.resize();
   frame();
   return world;
-}
-
-// A tile with softened edges: a box whose top face is slightly bevelled.
-class RoundedTile extends THREE.ExtrudeGeometry {
-  constructor(w: number, h: number, d: number, r = 0.06) {
-    const s = new THREE.Shape();
-    const x = -w / 2, y = -d / 2;
-    s.moveTo(x + r, y);
-    s.lineTo(x + w - r, y);
-    s.quadraticCurveTo(x + w, y, x + w, y + r);
-    s.lineTo(x + w, y + d - r);
-    s.quadraticCurveTo(x + w, y + d, x + w - r, y + d);
-    s.lineTo(x + r, y + d);
-    s.quadraticCurveTo(x, y + d, x, y + d - r);
-    s.lineTo(x, y + r);
-    s.quadraticCurveTo(x, y, x + r, y);
-    super(s, { depth: h - 0.02, bevelEnabled: true, bevelSize: 0.012, bevelThickness: 0.01, bevelSegments: 2, curveSegments: 6 });
-    this.rotateX(-Math.PI / 2);
-    this.translate(0, -h / 2, 0);
-  }
 }

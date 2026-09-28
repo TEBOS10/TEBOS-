@@ -56,7 +56,7 @@ test("the operating board shows objectives, pieces and flows, and measures only 
   await page.goto("/demo");
   await expect(page.getByRole("note", { name: "Demo" })).toBeVisible();
   await page.goto("/businesses/d2000000-0000-4000-8000-000000000001");
-  await page.getByRole("link", { name: "Operating board" }).click();
+  await page.getByRole("link", { name: "Operating board", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Operating board" })).toBeVisible();
 
   const summary = page.getByTestId("board-summary");

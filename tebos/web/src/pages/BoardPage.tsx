@@ -19,7 +19,9 @@ import {
   type Performer,
 } from "@core/board";
 import type { ObjectiveStatus } from "@core/states";
-import { useState, type FormEvent } from "react";
+import { lazy, Suspense, useMemo, useState, type FormEvent } from "react";
+import { layoutBoard } from "../world/layout";
+import { use3d } from "../world/support";
 import { Badge, Card, Empty, ErrorNote, Field, Loading, PageHeader, StatusBadge } from "../components/ui";
 import {
   achieveObjective,
@@ -48,6 +50,8 @@ import { Link } from "../lib/router";
 import { useOrg } from "../lib/session";
 import { useQuery } from "../lib/useQuery";
 
+const ClientBoardView = lazy(() => import("../world/ClientBoardView"));
+
 const UNIT_LABEL: Record<string, string> = { ZAR: "R", percent: "%", hours_per_week: "h/week", hours: "hours", days: "days", count: "" };
 const PERFORMER_LABEL: Record<Performer, string> = { founder: "Founder", staff: "Team", automation: "Automation", provider: "Provider", client: "Client" };
 
@@ -65,6 +69,7 @@ const toState = (m: ObjectiveMeasurement): MeasurementState => ({
 export function BoardPage({ id }: { id: string }) {
   const org = useOrg();
   const q = useQuery(() => getBoard(org.db, id), [id]);
+  const layout = useMemo(() => (q.data ? layoutBoard(q.data, formatValue) : null), [q.data]);
   if (q.loading && !q.data) return <Loading />;
   if (q.error) return <ErrorNote error={q.error} title="Couldn't load the operating board" />;
   if (!q.data) return <PageHeader title="Business not found">It doesn't exist, or it belongs to another organisation.</PageHeader>;
@@ -89,6 +94,8 @@ export function BoardPage({ id }: { id: string }) {
           sub={allSteps.steps ? `done by the founder and written down nowhere · ${allSteps.founder} of ${allSteps.steps} steps need the founder` : "map a flow to see this"}
         />
       </div>
+
+      {layout && (layout.flows.length > 0 || components.length > 0) && <Board3d layout={layout} />}
 
       <Card title="Objectives" subtitle="Targets with an owner and a date. Only a value read from a connected system can show one was achieved.">
         {objectives.length === 0 ? (
@@ -122,6 +129,26 @@ export function BoardPage({ id }: { id: string }) {
         </div>
       </div>
     </div>
+  );
+}
+
+function Board3d({ layout }: { layout: ReturnType<typeof layoutBoard> }) {
+  const [three] = useState(() => use3d({ allowReducedMotion: true }));
+  const [open, setOpen] = useState(() => !window.matchMedia("(max-width: 760px)").matches);
+  if (!three) return null;
+  return (
+    <Card
+      title="The board in 3D"
+      subtitle="Drawn only from what's recorded below. Drag to turn it; pick a flow to follow it."
+      actions={<button className="btn btn-sm" onClick={() => setOpen(!open)} aria-expanded={open}>{open ? "Hide" : "Show"}</button>}
+      className="cb-card"
+    >
+      {open && (
+        <Suspense fallback={<div className="cb-stage cb-loading" />}>
+          <ClientBoardView layout={layout} />
+        </Suspense>
+      )}
+    </Card>
   );
 }
 
