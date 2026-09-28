@@ -10,7 +10,7 @@ const snap = async (page: Page, name: string) => {
 test("signed-out visitors see the home page and sign-in, not data", async ({ page }) => {
   await installFakeSupabase(page, { signedIn: false });
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /Find what's holding your business back/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /A business that runs on structure, not on you/ })).toBeVisible();
   await expect(page.locator("video")).toHaveAttribute("src", "/tebos-film.mp4");
   await expect(page.getByRole("link", { name: "Try the demo" })).toBeVisible();
   await expect(page.getByText("Clayworks")).toHaveCount(0);
@@ -431,13 +431,13 @@ test("a business with a connected platform shows its live operations, read-only,
   await expect(page.getByText("Every lead is assigned to a department.")).toHaveCount(0); // only the latest reading per metric
 });
 
-test("pricing shows two monthly plans and the equity partnership, and records an application", async ({ page }) => {
+test("pricing shows the diagnostic, architecture & operations and the equity partnership, and records an application", async ({ page }) => {
   const fake = await installFakeSupabase(page, { signedIn: false });
   await page.goto("/");
   await page.getByRole("link", { name: "Pricing" }).first().click();
   await expect(page).toHaveURL(/\/pricing$/);
-  await expect(page.getByRole("heading", { name: "Starter", exact: true })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Growth", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Diagnostic", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Architecture & Operations", exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Equity partnership", exact: true })).toBeVisible();
   await expect(page.getByText("R2,500")).toBeVisible();
   await expect(page.getByText("R7,500")).toBeVisible();

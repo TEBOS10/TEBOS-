@@ -41,8 +41,8 @@ export interface AlertConfig {
 export const MAX_ALERT_ATTEMPTS = 5;
 
 const PLAN_NAMES: Record<Enquiry["plan"], string> = {
-  starter: "Starter",
-  growth: "Growth",
+  starter: "Diagnostic",
+  growth: "Architecture & Operations",
   equity: "Equity partnership application",
 };
 

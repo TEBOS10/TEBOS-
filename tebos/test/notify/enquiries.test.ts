@@ -52,7 +52,7 @@ describe("enquiry alerts", () => {
 
   it("keeps what visitors typed out of the subject's structure", () => {
     const m = alertEmail(enquiry({ business: "Evil\r\nBcc: someone@else.example", plan: "starter" }), config.to);
-    expect(m.subject).toBe("New TEBOS enquiry: Starter · Evil Bcc: someone@else.example");
+    expect(m.subject).toBe("New TEBOS enquiry: Diagnostic · Evil Bcc: someone@else.example");
     expect(m.subject).not.toMatch(/[\r\n]/);
   });
 

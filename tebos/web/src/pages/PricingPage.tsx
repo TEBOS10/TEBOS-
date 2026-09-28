@@ -1,5 +1,5 @@
-// Public pricing: two monthly plans and an equity partnership for businesses
-// that can't pay upfront. The form records an enquiry; nothing is bought or
+// Public pricing: the Diagnostic, Architecture & Operations, and an equity
+// partnership for businesses that can't pay upfront. The form records an enquiry; nothing is bought or
 // agreed online.
 import { Check, ShieldCheck } from "lucide-react";
 import { useState, type FormEvent } from "react";
@@ -61,13 +61,13 @@ export function PricingPage() {
       <section className="pr-head">
         <p className="lp-kicker">Pricing</p>
         <h1 className="lp-title">Pay monthly, or grow together.</h1>
-        <p className="lp-sub">Two plans for businesses ready to pay, and an equity partnership for those that can't pay upfront yet.</p>
+        <p className="lp-sub">Start with a diagnostic of how the business runs. Move to architecture and operations when you're ready. Or, if you can't pay upfront yet, grow together through an equity partnership.</p>
       </section>
 
       <section className="pr-plans" aria-label="Plans">
         {PLANS.map((p) => (
           <article key={p.key} className={`pr-plan ${p.key === "equity" ? "pr-plan-equity" : ""} ${p.key === "growth" ? "pr-plan-featured" : ""}`}>
-            {p.key === "growth" && <span className="pr-badge">Most complete</span>}
+            {p.key === "growth" && <span className="pr-badge">Full lifecycle</span>}
             <h2>{p.name}</h2>
             <p className="pr-pitch">{p.pitch}</p>
             <div className="pr-price"><strong>{p.price}</strong> <span>{p.cadence}</span></div>
