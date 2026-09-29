@@ -158,6 +158,8 @@ export function LandingPage() {
         <span>TEBOS · Evidence before assertion</span>
         <a href="/pricing" className="tour-link">Pricing</a>
         <span>The board, the film and the demo show a fictional business.</span>
+        <a href="/privacy" className="tour-link">Privacy</a>
+        <a href="/terms" className="tour-link">Terms</a>
       </footer>
     </div>
   );

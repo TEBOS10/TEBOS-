@@ -17,27 +17,41 @@ function useTitle(title: string) {
   }, [title]);
 }
 
-function Frame({ children }: { children: ReactNode }) {
+/** The public site's frame: header, navigation and footer. */
+export function SiteFrame({ current, children }: { current?: "blog" | "pricing"; children: ReactNode }) {
   return (
     <div className="lp">
       <header className="lp-nav">
         <a className="lp-brand" href="/"><span className="brand-mark" aria-hidden><ShieldCheck size={18} /></span> TEBOS</a>
         <nav className="lp-links" aria-label="Site">
           <a href="/demo">Demo</a>
-          <a href="/blog" aria-current="page">Blog</a>
-          <a href="/pricing">Pricing</a>
+          <a href="/blog" aria-current={current === "blog" ? "page" : undefined}>Blog</a>
+          <a href="/pricing" aria-current={current === "pricing" ? "page" : undefined}>Pricing</a>
           <a className="lp-signin" href="/sign-in">Sign in</a>
         </nav>
       </header>
       <main className="blog-wrap">{children}</main>
+      <SiteFooter />
     </div>
+  );
+}
+
+export function SiteFooter() {
+  return (
+    <footer className="lp-foot">
+      <span>TEBOS · Evidence before assertion</span>
+      <nav className="row" style={{ gap: 14 }} aria-label="Legal">
+        <a href="/privacy" className="tour-link">Privacy</a>
+        <a href="/terms" className="tour-link">Terms</a>
+      </nav>
+    </footer>
   );
 }
 
 export function BlogIndex() {
   useTitle("TEBOS · Articles on business operating architecture");
   return (
-    <Frame>
+    <SiteFrame current="blog">
       <p className="lp-kicker">Blog</p>
       <h1 className="lp-title">Structure, flows and measurement</h1>
       <p className="lp-sub">Practical pieces for founders and leadership teams of growing businesses. Each one works on its own; you don't need TEBOS to use it.</p>
@@ -52,7 +66,7 @@ export function BlogIndex() {
           </li>
         ))}
       </ul>
-    </Frame>
+    </SiteFrame>
   );
 }
 
@@ -61,14 +75,14 @@ export function BlogPost({ slug }: { slug: string }) {
   useTitle(post ? `${post.title} · TEBOS` : "Not found · TEBOS");
   if (!post) {
     return (
-      <Frame>
+      <SiteFrame current="blog">
         <h1 className="lp-title">That article doesn't exist</h1>
         <p className="lp-sub"><a href="/blog">See all articles</a></p>
-      </Frame>
+      </SiteFrame>
     );
   }
   return (
-    <Frame>
+    <SiteFrame current="blog">
       <article className="contract-card blog-post">
         <p className="lp-kicker"><a href="/blog">Blog</a> · {longDate(post.date)} · {post.minutes} min read</p>
         <h1>{post.title}</h1>
@@ -78,6 +92,6 @@ export function BlogPost({ slug }: { slug: string }) {
           <a className="btn" href="/pricing">Plans and pricing</a>
         </div>
       </article>
-    </Frame>
+    </SiteFrame>
   );
 }

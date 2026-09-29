@@ -37,6 +37,7 @@ import { ContractTemplatesPage, OpportunityPage, PipelinePage } from "./pages/Pi
 import { SalesPlaybookPage, StaffInvitePage, StaffTeamPage } from "./pages/SalesPages";
 import { StaffShell } from "./components/StaffShell";
 import { BlogIndex, BlogPost } from "./pages/BlogPage";
+import { LegalPage } from "./pages/LegalPage";
 import { StaffProvider, useStaff } from "./lib/staff";
 import { TeamPage } from "./pages/TeamPage";
 
@@ -96,6 +97,8 @@ function Gate() {
   if (path === "/film") return <FilmPage />;
   if (path === "/pricing") return <PricingPage />;
   if (path === "/blog") return <BlogIndex />;
+  if (path === "/privacy") return <LegalPage which="privacy" />;
+  if (path === "/terms") return <LegalPage which="terms" />;
   const blogPost = matchPath("/blog/:slug", path);
   if (blogPost) return <BlogPost slug={blogPost.slug!} />;
   // The client's contract and payment return pages: no account needed, the link is the key.

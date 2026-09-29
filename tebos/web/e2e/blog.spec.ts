@@ -31,3 +31,17 @@ test("text links render only for this site or https, never script links", async 
   await expect(page.getByRole("link", { name: "other" })).toHaveCount(0);
   await expect(page.getByText("[trap](javascript:alert(1))")).toBeVisible();
 });
+
+test("the privacy policy and terms are public and linked from the site and the enquiry form", async ({ page }) => {
+  await installFakeSupabase(page, { signedIn: false });
+  await page.goto("/pricing");
+  await page.getByRole("button", { name: "Start with a diagnostic" }).click();
+  await expect(page.getByText("We use your details only to reply about TEBOS.")).toBeVisible();
+  await page.getByRole("link", { name: "privacy policy" }).click();
+  await expect(page.getByRole("heading", { name: "Privacy policy" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Your rights" })).toBeVisible();
+  await expect(page.getByText(/being reviewed by our legal advisers/)).toBeVisible();
+  await page.getByRole("link", { name: "Terms" }).click();
+  await expect(page.getByRole("heading", { name: "Website terms" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "The demo is fictional" })).toBeVisible();
+});
