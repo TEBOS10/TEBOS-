@@ -15,8 +15,14 @@
 //                   aggregates only) and record them as connected-system evidence
 //   alerts        — email each new pricing-page enquiry to the team once (when
 //                   RESEND_API_KEY and ENQUIRY_ALERT_TO are set)
+//   pipeline      — each enquiry becomes a screened opportunity; approved ones get a
+//                   Paystack payment page (when PAYSTACK_SECRET_KEY is set), paid ones
+//                   their contract (from a lawyer-approved template), contracted ones
+//                   their organisation and invitation; the client's emails go out
+//                   through Resend (when RESEND_API_KEY is set)
 // When PORT is set (Railway sets it), an HTTP server also receives provider
-// webhooks at /webhooks/resend/<connection id> and answers /health.
+// webhooks at /webhooks/resend/<connection id> and /webhooks/paystack, and
+// answers /health.
 // It sleeps only when neither stage had work, and stops cleanly on
 // SIGINT / SIGTERM after the current unit of work.
 //
@@ -45,6 +51,9 @@ import { ElevenLabsVoice } from "./interviews/voice";
 import { InterviewWorker } from "./interviews/worker";
 import { PgMonitorStore, PgSnapshotReader } from "./monitoring/pg-store";
 import { MonitorWorker } from "./monitoring/worker";
+import { PaystackGateway } from "./pipeline/paystack";
+import { PgPipelineStore } from "./pipeline/pg-store";
+import { PipelineWorker } from "./pipeline/worker";
 
 const url = process.env.TEBOS_DATABASE_URL;
 if (!url) {
@@ -95,8 +104,23 @@ const alerts = alertsEnabled
     }, log)
   : null;
 
+// The client pipeline. Payment pages need Paystack; client emails need Resend.
+const paystackKey = process.env.PAYSTACK_SECRET_KEY || null;
+const pipelineStore = new PgPipelineStore(pool, `pipeline-worker:${workerId}`);
+const pipeline = new PipelineWorker(pipelineStore, paystackKey ? new PaystackGateway(paystackKey) : null, {
+  siteUrl: (process.env.TEBOS_SITE_URL || "https://tebos-demo.vercel.app").replace(/\/+$/, ""),
+  email: process.env.RESEND_API_KEY
+    ? {
+        connector: new ResendConnector(),
+        apiKey: process.env.RESEND_API_KEY,
+        from: process.env.PIPELINE_EMAIL_FROM || process.env.ENQUIRY_ALERT_FROM || "TEBOS <onboarding@resend.dev>",
+        replyTo: alertTo[0] ?? null,
+      }
+    : null,
+}, log);
+
 const port = process.env.PORT ? Number(process.env.PORT) : null;
-const server = port ? createWebhookServer(executionStore, log) : null;
+const server = port ? createWebhookServer(executionStore, log, paystackKey ? { paystack: { secretKey: paystackKey, store: pipelineStore } } : {}) : null;
 server?.listen(port!, () => log({ event: "webhooks.listening", port }));
 
 let stopping = false;
@@ -110,7 +134,8 @@ for (const signal of ["SIGINT", "SIGTERM"] as const) {
 log({
   event: "worker.started",
   pollMs,
-  stages: { acquisition: true, intelligence: intelligenceEnabled, execution: executionEnabled, webhooks: Boolean(server), voiceInterviews: voiceEnabled, enquiryAlerts: alertsEnabled },
+  stages: { acquisition: true, intelligence: intelligenceEnabled, execution: executionEnabled, webhooks: Boolean(server), voiceInterviews: voiceEnabled, enquiryAlerts: alertsEnabled,
+    pipeline: { payments: Boolean(paystackKey), clientEmails: Boolean(process.env.RESEND_API_KEY) } },
   ...(intelligenceEnabled ? {} : { note: "Findings are not generated: set ANTHROPIC_API_KEY to enable the intelligence stage" }),
 });
 
@@ -130,7 +155,8 @@ while (!stopping) {
   const interviewed = !stopping ? await step("interviews", () => interviews.runOnce()) : false;
   const monitored = !stopping ? await step("monitoring", () => monitor.runOnce()) : false;
   const alerted = alerts && !stopping ? await step("alerts", () => alerts.runOnce()) : false;
-  if (!acquired && !analysed && !executed && !interviewed && !monitored && !alerted && !stopping) await new Promise((r) => setTimeout(r, pollMs));
+  const piped = !stopping ? await step("pipeline", () => pipeline.runOnce()) : false;
+  if (!acquired && !analysed && !executed && !interviewed && !monitored && !alerted && !piped && !stopping) await new Promise((r) => setTimeout(r, pollMs));
 }
 await new Promise<void>((r) => (server ? server.close(() => r()) : r()));
 await pool.end();

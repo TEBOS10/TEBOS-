@@ -927,6 +927,99 @@ export type Database = {
         }
         Relationships: []
       }
+      contract_templates: {
+        Row: {
+          key: string
+          version: number
+          plan: string
+          title: string
+          body: string
+          status: string
+          approval_note: string | null
+          approved_by: string | null
+          approved_at: string | null
+          created_at: string
+        }
+        Insert: {
+          key: string
+          version: number
+          plan: string
+          title: string
+          body: string
+          status?: string
+          approval_note?: string | null
+          approved_by?: string | null
+          approved_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          key?: string
+          version?: number
+          plan?: string
+          title?: string
+          body?: string
+          status?: string
+          approval_note?: string | null
+          approved_by?: string | null
+          approved_at?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      contracts: {
+        Row: {
+          id: string
+          opportunity_id: string
+          template_key: string
+          template_version: number
+          title: string
+          body: string
+          body_hash: string
+          status: string
+          sent_at: string
+          expires_at: string
+          accepted_at: string | null
+          accepted_name: string | null
+          accepted_ip: string | null
+          accepted_agent: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          opportunity_id: string
+          template_key: string
+          template_version: number
+          title: string
+          body: string
+          body_hash: string
+          status?: string
+          sent_at?: string
+          expires_at?: string
+          accepted_at?: string | null
+          accepted_name?: string | null
+          accepted_ip?: string | null
+          accepted_agent?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          opportunity_id?: string
+          template_key?: string
+          template_version?: number
+          title?: string
+          body?: string
+          body_hash?: string
+          status?: string
+          sent_at?: string
+          expires_at?: string
+          accepted_at?: string | null
+          accepted_name?: string | null
+          accepted_ip?: string | null
+          accepted_agent?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
       credential_references: {
         Row: {
           connector_key: string
@@ -1560,6 +1653,84 @@ export type Database = {
         }
         Relationships: []
       }
+      opportunities: {
+        Row: {
+          id: string
+          enquiry_id: string
+          plan: string
+          contact_name: string
+          business: string
+          email: string
+          phone: string | null
+          website: string | null
+          message: string | null
+          status: string
+          screening: Json
+          screened_at: string | null
+          amount_cents: number | null
+          currency: string
+          payment_url: string | null
+          payment_reference: string | null
+          org_id: string | null
+          decision_note: string | null
+          decided_by: string | null
+          decided_at: string | null
+          maintainer_id: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          enquiry_id: string
+          plan: string
+          contact_name: string
+          business: string
+          email: string
+          phone?: string | null
+          website?: string | null
+          message?: string | null
+          status?: string
+          screening?: Json
+          screened_at?: string | null
+          amount_cents?: number | null
+          currency?: string
+          payment_url?: string | null
+          payment_reference?: string | null
+          org_id?: string | null
+          decision_note?: string | null
+          decided_by?: string | null
+          decided_at?: string | null
+          maintainer_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          enquiry_id?: string
+          plan?: string
+          contact_name?: string
+          business?: string
+          email?: string
+          phone?: string | null
+          website?: string | null
+          message?: string | null
+          status?: string
+          screening?: Json
+          screened_at?: string | null
+          amount_cents?: number | null
+          currency?: string
+          payment_url?: string | null
+          payment_reference?: string | null
+          org_id?: string | null
+          decision_note?: string | null
+          decided_by?: string | null
+          decided_at?: string | null
+          maintainer_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       organisations: {
         Row: {
           created_at: string
@@ -1578,6 +1749,45 @@ export type Database = {
           id?: string
           name?: string
           slug?: string
+        }
+        Relationships: []
+      }
+      outbox_emails: {
+        Row: {
+          id: string
+          opportunity_id: string
+          kind: string
+          to_email: string
+          subject: string
+          created_at: string
+          attempts: number
+          last_try: string | null
+          sent_at: string | null
+          error: string | null
+        }
+        Insert: {
+          id?: string
+          opportunity_id: string
+          kind: string
+          to_email: string
+          subject: string
+          created_at?: string
+          attempts?: number
+          last_try?: string | null
+          sent_at?: string | null
+          error?: string | null
+        }
+        Update: {
+          id?: string
+          opportunity_id?: string
+          kind?: string
+          to_email?: string
+          subject?: string
+          created_at?: string
+          attempts?: number
+          last_try?: string | null
+          sent_at?: string | null
+          error?: string | null
         }
         Relationships: []
       }
@@ -1647,6 +1857,48 @@ export type Database = {
           },
         ]
       }
+      payments: {
+        Row: {
+          id: string
+          opportunity_id: string
+          provider: string
+          reference: string
+          amount_cents: number
+          currency: string
+          status: string
+          paid_at: string | null
+          note: string | null
+          recorded_by: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          opportunity_id: string
+          provider: string
+          reference: string
+          amount_cents: number
+          currency?: string
+          status: string
+          paid_at?: string | null
+          note?: string | null
+          recorded_by?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          opportunity_id?: string
+          provider?: string
+          reference?: string
+          amount_cents?: number
+          currency?: string
+          status?: string
+          paid_at?: string | null
+          note?: string | null
+          recorded_by?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
       platform_admins: {
         Row: {
           created_at: string
@@ -1659,6 +1911,27 @@ export type Database = {
         Update: {
           created_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      platform_staff: {
+        Row: {
+          user_id: string
+          role: string
+          added_by: string | null
+          created_at: string
+        }
+        Insert: {
+          user_id: string
+          role: string
+          added_by?: string | null
+          created_at?: string
+        }
+        Update: {
+          user_id?: string
+          role?: string
+          added_by?: string | null
+          created_at?: string
         }
         Relationships: []
       }
@@ -1950,6 +2223,14 @@ export type Database = {
       }
       create_organisation: {
         Args: { p_name: string; p_slug: string }
+        Returns: string
+      }
+      contract_for_token: {
+        Args: { p_token: string }
+        Returns: { title: string; body: string; body_hash: string; business: string; status: string; expires_at: string; accepted_at: string | null; accepted_name: string | null }[]
+      }
+      accept_contract: {
+        Args: { p_token: string; p_name: string; p_body_hash: string }
         Returns: string
       }
     }

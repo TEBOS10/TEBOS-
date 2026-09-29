@@ -40,6 +40,7 @@ source → evidence → finding → action → approval → run → verification
 | A provider action's input is frozen once approval is requested, and an approval covers only the input it saw | `guard_action_execution`, `bind_approval_input` |
 | Runs through a provider, and the provider's confirmations, are recorded only by the execution worker | `guard_run_origin`, `guard_action_execution` |
 | Every write audited, attributed, hash-chained, append-only | `audit_row`, `write_audit` |
+| Client pipeline: staff decide; paid only on a signed provider confirmation (or an admin-recorded EFT) of the full amount; contracts only from lawyer-approved templates and accepted against the exact text; organisations only after both; payments and accepted contracts immutable | `guard_opportunity`, `guard_payment`, `guard_contract_template`, `guard_contract`, `accept_contract` |
 | Invite-only: only TEBOS's platform admins create organisations; everyone else joins by an invitation bound to their confirmed email, and an account with neither sees nothing | `create_organisation` (migration `invite_only`), `accept_invitation`, RLS |
 | Only TEBOS's server records connected-system sources and system-generated evidence, or says who created evidence or a finding | `guard_source_origin`, `guard_created_by_actor` |
 | An objective's target is fixed once active; it is achieved only on a value the database read from a connected system's evidence; missed only after its due date | `guard_objective`, `guard_measurement` |
@@ -264,6 +265,58 @@ business it keeps an operating board (migration `board_objectives`, `src/domain/
   - Founder-only steps glow amber at the founder.
   - Objective columns fill only from measured values.
   - The page draws it only when the device has a graphics chip; other devices get the page without it.
+
+## Client pipeline
+
+The pipeline takes a pricing-page enquiry through to an onboarded, maintained client (migration `client_pipeline`,
+`src/pipeline/`). TEBOS's staff use the **Pipeline** page (`/pipeline`); the client uses the contract page, which needs
+no account.
+
+```
+enquiry → screened → approved → awaiting payment → paid → contract sent → contracted → onboarded
+                  ↘ declined            (an open opportunity can also be cancelled, with a reason)
+```
+
+- **Screened automatically.** Each enquiry is checked for:
+  - a personal or throwaway email address;
+  - a missing website, or a website on a different domain from the email;
+  - words that overlap TEBOS's services (a possible competitor);
+  - earlier enquiries from the same person or business.
+
+  Each flag is a reason to look closer, not a verdict.
+- **Decided by people.** Platform admins and staff with the `sales` role approve, decline or cancel. Approving a
+  flagged enquiry needs a written reason, and who decided is recorded.
+- **Paid before anything costly.**
+  - The worker creates a Paystack payment page for the plan's monthly fee.
+  - An opportunity is `paid` only on Paystack's signed confirmation (`POST /webhooks/paystack` on the worker) of the
+    full amount in Rand, or on an EFT that a platform admin records with its bank reference.
+  - The client's organisation only exists after payment and a signed contract, so no call or review can happen
+    before then.
+- **Contract from a lawyer-approved template.**
+  - Templates live on **Pipeline → Contract templates**. TEBOS's starting draft is in `web/src/lib/contract-drafts.ts`
+    and needs a lawyer's review.
+  - Nothing is sent until a template is approved with a note saying who approved it. An approved template is fixed.
+  - The contract is rendered with the plan's deliverables (`src/domain/plans.ts`), and the client accepts it at
+    `/contract/<link>`.
+  - The database records the name, time, network address and browser against the exact text's fingerprint.
+    Accepted contracts and payments are never edited.
+- **Onboarded.**
+  - TEBOS creates the client's organisation and invites their admin; the invitation is bound to their email.
+  - The assigned maintainer (staff with the `maintainer` role) joins the organisation as an operator.
+- **Emails.** Every client email goes through an outbox with retries (5 attempts, 5 minutes apart), so a one-time link
+  is never lost. Staff see whether each email went out, but never the link inside it.
+- **Equity applications** stop at `approved`: they need a valuation and a shareholder agreement.
+
+Worker settings:
+
+| Variable | Purpose |
+|---|---|
+| `PAYSTACK_SECRET_KEY` | Creates payment pages and verifies Paystack's webhook signatures. Set the webhook URL in Paystack to `https://<worker domain>/webhooks/paystack`. |
+| `RESEND_API_KEY` | Sends the client's emails. Without it, they wait in the outbox. |
+| `PIPELINE_EMAIL_FROM` | The sender, e.g. `TEBOS <hello@yourdomain.com>`. It defaults to `ENQUIRY_ALERT_FROM`. |
+| `TEBOS_SITE_URL` | The public site used in links. The default is `https://tebos-demo.vercel.app`. |
+
+Staff roles: platform admins are in `platform_admins`, and `sales` and `maintainer` roles are in `platform_staff`.
 
 ## Enquiry alerts
 

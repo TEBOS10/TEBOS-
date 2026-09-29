@@ -32,6 +32,8 @@ import { TourPage } from "./pages/TourPage";
 import { FilmPage } from "./pages/FilmPage";
 import { LandingPage } from "./pages/LandingPage";
 import { PricingPage } from "./pages/PricingPage";
+import { ContractPage, PaidPage } from "./pages/ContractPage";
+import { ContractTemplatesPage, OpportunityPage, PipelinePage } from "./pages/PipelinePage";
 import { TeamPage } from "./pages/TeamPage";
 
 const ROUTES: Array<[string, (p: Record<string, string>) => ReactNode]> = [
@@ -53,6 +55,9 @@ const ROUTES: Array<[string, (p: Record<string, string>) => ReactNode]> = [
   ["/account", () => <AccountPage />],
   ["/connections", () => <ConnectionsPage />],
   ["/system", () => <SystemPage />],
+  ["/pipeline", () => <PipelinePage />],
+  ["/pipeline/contracts", () => <ContractTemplatesPage />],
+  ["/pipeline/:id", (p) => <OpportunityPage id={p.id!} />],
 ];
 
 function Routes() {
@@ -74,6 +79,10 @@ function Gate() {
   if (path === "/tour") return <TourPage />;
   if (path === "/film") return <FilmPage />;
   if (path === "/pricing") return <PricingPage />;
+  // The client's contract and payment return pages: no account needed, the link is the key.
+  const contract = matchPath("/contract/:token", path);
+  if (contract) return <ContractPage token={contract.token!} />;
+  if (path === "/paid") return <PaidPage />;
   // The emailed reset link signs the person in just to choose a new password.
   if (path === "/reset-password") {
     if (state.phase === "ready" || state.phase === "no_organisation") return <ResetPassword />;

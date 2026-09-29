@@ -1,9 +1,11 @@
-import { Building2, CheckSquare, Gauge, Home, LogOut, Plug, ScanSearch, ShieldCheck, Sparkles, Stamp, Users } from "lucide-react";
+import { Briefcase, Building2, CheckSquare, Gauge, Home, LogOut, Plug, ScanSearch, ShieldCheck, Sparkles, Stamp, Users } from "lucide-react";
 import type { ReactNode } from "react";
 import { DEMO_BUSINESS } from "../demo/data";
 import { exitDemo, isDemo } from "../demo/mode";
 import { Link, usePath } from "../lib/router";
 import { useOrg } from "../lib/session";
+import { staffAccess } from "../lib/data";
+import { useQuery } from "../lib/useQuery";
 
 const NAV = [
   { to: "/", label: "Home", icon: Home, exact: true },
@@ -19,7 +21,10 @@ const NAV = [
 
 export function Shell({ children }: { children: ReactNode }) {
   const path = usePath();
-  const { organisation, organisations, switchOrganisation, role, db, session } = useOrg();
+  const { organisation, organisations, switchOrganisation, role, db, session, userId } = useOrg();
+  // TEBOS's own staff also see the client pipeline
+  const staff = useQuery(() => (isDemo ? Promise.resolve(null) : staffAccess(db, userId)), [userId]);
+  const nav = staff.data?.sales || staff.data?.maintainer ? [...NAV, { to: "/pipeline", label: "Pipeline", icon: Briefcase, exact: false }] : NAV;
   return (
     <div className="shell">
       <aside className="sidebar no-print">
@@ -33,7 +38,7 @@ export function Shell({ children }: { children: ReactNode }) {
           </div>
         </div>
         <nav className="nav" aria-label="Main">
-          {NAV.map(({ to, label, icon: Icon, exact }) => {
+          {nav.map(({ to, label, icon: Icon, exact }) => {
             const active = exact ? path === to : path === to || path.startsWith(`${to}/`);
             return (
               <Link key={to} to={to} className={`nav-link ${active ? "active" : ""}`} aria-current={active ? "page" : undefined}>

@@ -37,6 +37,9 @@ const MESSAGES: Record<RuleCode, string> = {
   TEBOS_OBJECTIVE_UNMEASURED: "An objective counts as achieved only on a value read from a connected system that meets its target.",
   TEBOS_OBJECTIVE_NOT_DUE: "An objective can be marked missed only after its due date.",
   TEBOS_MEASUREMENT_UNSUPPORTED: "A measured value has to be read from a connected system's evidence, and a stated value has to cite the owner's own statement.",
+  TEBOS_PAYMENT_UNPROVEN: "A payment counts only once the payment provider confirms it (or an EFT is recorded with its reference by a TEBOS admin).",
+  TEBOS_CONTRACT_UNSIGNED: "The contract hasn't been sent or accepted yet.",
+  TEBOS_CONTRACT_UNAPPROVED: "Contracts can only be sent from a template a lawyer has approved. Approve the template first.",
   TEBOS_EVIDENCE_REQUIRED: "To mark this as observed, link evidence that was actually obtained. Otherwise record it as stated.",
 };
 
