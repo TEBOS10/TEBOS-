@@ -1010,3 +1010,82 @@ export async function contractForToken(db: Db, token: string) {
 export async function acceptContract(db: Db, token: string, name: string, bodyHash: string) {
   return must(await db.rpc("accept_contract", { p_token: token, p_name: name, p_body_hash: bodyHash }));
 }
+
+// ---------------------------------------------------------------------------
+// The sales team. Staff join by an invitation bound to their email; a lead a
+// salesperson adds is theirs (the database marks it, from who sent it).
+// ---------------------------------------------------------------------------
+
+export type StaffInvitation = Row<"staff_invitations">;
+export type StaffMember = { user_id: string; display_name: string; email: string; roles: string[] };
+
+/** Names and roles of TEBOS's staff, readable only by staff. */
+export async function staffDirectory(db: Db): Promise<StaffMember[]> {
+  return must(await db.rpc("staff_directory")) as StaffMember[];
+}
+
+export interface NewLead {
+  plan: "starter" | "growth" | "equity";
+  name: string;
+  business: string;
+  email: string;
+  phone?: string;
+  website?: string;
+  message?: string;
+}
+
+/** A lead from a salesperson's own outreach. The database records it as theirs; TEBOS screens it within seconds. */
+export async function addLead(db: Db, lead: NewLead) {
+  const blank = (v?: string) => (v?.trim() ? v.trim() : null);
+  const { error } = await db.from("enquiries").insert({
+    plan: lead.plan, name: lead.name.trim(), business: lead.business.trim(), email: lead.email.trim(),
+    phone: blank(lead.phone), website: blank(lead.website), message: blank(lead.message),
+  });
+  if (error) throw error;
+}
+
+/** Take an unowned lead (yourself), or reassign one (platform admins). */
+export async function setLeadOwner(db: Db, id: string, ownerId: string | null) {
+  return must(await db.from("opportunities").update({ owner_id: ownerId }).eq("id", id).select().single());
+}
+
+export async function listStaffInvitations(db: Db) {
+  return must(await db.from("staff_invitations").select("id, email, role, status, invited_by, accepted_by, created_at, expires_at, accepted_at").order("created_at", { ascending: false }).limit(100)) as StaffInvitation[];
+}
+
+/** Returns the one-time token for the link; it is shown once and never stored. */
+export async function createStaffInvitation(db: Db, email: string, role: "sales" | "maintainer") {
+  return must(await db.rpc("create_staff_invitation", { p_email: email.trim(), p_role: role })) as string;
+}
+
+export async function revokeStaffInvitation(db: Db, id: string) {
+  const { error } = await db.from("staff_invitations").update({ status: "revoked" }).eq("id", id);
+  if (error) throw error;
+}
+
+export async function removeStaffRole(db: Db, userId: string, role: string) {
+  const { error } = await db.from("platform_staff").delete().eq("user_id", userId).eq("role", role);
+  if (error) throw error;
+}
+
+export async function staffInvitationForToken(db: Db, token: string) {
+  const { data, error } = await db.rpc("staff_invitation_for_token", { p_token: token });
+  if (error) throw error;
+  return (data ?? [])[0] ?? null;
+}
+
+/** The role granted, or null when the link had expired (the expiry is recorded). */
+export async function acceptStaffInvitation(db: Db, token: string) {
+  return maybe(await db.rpc("accept_staff_invitation", { p_token: token })) as string | null;
+}
+
+export type PlaybookSection = Row<"sales_playbook">;
+
+/** The playbook, readable only by staff (row-level security). */
+export async function listPlaybook(db: Db) {
+  return must(await db.from("sales_playbook").select("*").order("position")) as PlaybookSection[];
+}
+
+export async function savePlaybookSection(db: Db, id: string, patch: { title: string; body: string }) {
+  return must(await db.from("sales_playbook").update(patch).eq("id", id).select().single());
+}

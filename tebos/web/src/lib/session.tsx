@@ -112,3 +112,16 @@ export function useOrg(): OrgContext {
     can: (p) => can(role, p),
   };
 }
+
+export interface SignedIn {
+  db: Db;
+  session: Session;
+  userId: string;
+}
+
+/** The signed-in person, with or without an organisation (TEBOS's staff may have none). */
+export function useSignedIn(): SignedIn {
+  const { state, db } = useSessionState();
+  if (state.phase !== "ready" && state.phase !== "no_organisation") throw new Error("useSignedIn used while signed out");
+  return { db, session: state.session, userId: state.session.user.id };
+}

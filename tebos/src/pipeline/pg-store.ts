@@ -44,7 +44,7 @@ export class PgPipelineStore implements PipelineStore, PaystackWebhookStore {
 
   async nextNewEnquiry(): Promise<{ enquiry: NewEnquiry; history: ScreeningHistory } | null> {
     const { rows } = await this.pool.query(
-      `select e.id, e.plan, e.name, e.business, e.email, e.phone, e.website, e.message,
+      `select e.id, e.plan, e.name, e.business, e.email, e.phone, e.website, e.message, e.source, e.added_by,
               (select count(*)::int from public.enquiries p where p.created_at < e.created_at and lower(p.email) = lower(e.email)) as same_email,
               (select count(*)::int from public.enquiries p where p.created_at < e.created_at
                   and split_part(lower(p.email), '@', 2) = split_part(lower(e.email), '@', 2)) as same_domain
@@ -55,7 +55,8 @@ export class PgPipelineStore implements PipelineStore, PaystackWebhookStore {
     const r = rows[0];
     if (!r) return null;
     return {
-      enquiry: { id: r.id, plan: r.plan, name: r.name, business: r.business, email: r.email, phone: r.phone, website: r.website, message: r.message },
+      enquiry: { id: r.id, plan: r.plan, name: r.name, business: r.business, email: r.email, phone: r.phone, website: r.website, message: r.message,
+                 source: r.source, addedBy: r.added_by },
       history: { sameEmail: r.same_email, sameDomain: r.same_domain },
     };
   }
@@ -63,9 +64,10 @@ export class PgPipelineStore implements PipelineStore, PaystackWebhookStore {
   async openOpportunity(e: NewEnquiry, s: Screening): Promise<string> {
     return this.tx(async (c) => {
       const ins = await c.query(
-        `insert into public.opportunities (enquiry_id, plan, contact_name, business, email, phone, website, message)
-         values ($1, $2, $3, $4, $5, $6, $7, $8) on conflict (enquiry_id) do nothing returning id`,
-        [e.id, e.plan, e.name, e.business, e.email.trim().toLowerCase(), e.phone, e.website, e.message],
+        // a lead from sales stays with the salesperson who added it
+        `insert into public.opportunities (enquiry_id, plan, contact_name, business, email, phone, website, message, source, owner_id)
+         values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) on conflict (enquiry_id) do nothing returning id`,
+        [e.id, e.plan, e.name, e.business, e.email.trim().toLowerCase(), e.phone, e.website, e.message, e.source ?? "website", e.addedBy ?? null],
       );
       const id: string = ins.rows[0]?.id ?? (await c.query("select id from public.opportunities where enquiry_id = $1", [e.id])).rows[0].id;
       await c.query(

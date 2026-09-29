@@ -1,0 +1,31 @@
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+import { fillPlaybook, PLAYBOOK_FIELDS } from "./playbook";
+
+const migrations = join(__dirname, "../../../supabase/migrations");
+const seed = () => {
+  const file = readdirSync(migrations).find((f) => f.endsWith("_sales_playbook.sql"))!;
+  const sql = readFileSync(join(migrations, file), "utf8");
+  return sql.slice(sql.indexOf("-- The first edition."));
+};
+
+describe("sales playbook", () => {
+  it("fills prices and deliverables from the plan terms", () => {
+    expect(fillPlaybook("{{starter_name}}: {{starter_fee}}")).toBe("Diagnostic: R2,500 a month, excluding VAT");
+    expect(fillPlaybook("{{growth_deliverables}}")).toContain("- Everything in the Diagnostic");
+    expect(fillPlaybook("{{equity_share}}")).toBe("5%");
+  });
+
+  it("leaves an unknown placeholder visible", () => {
+    expect(fillPlaybook("{{starter_price}}")).toBe("{{starter_price}}");
+  });
+
+  it("uses only placeholders it can fill, and never types a price in", () => {
+    const text = seed();
+    const used = [...text.matchAll(/\{\{([a-z_]+)\}\}/g)].map((m) => m[1]!);
+    expect(used.length).toBeGreaterThan(5);
+    for (const key of used) expect(PLAYBOOK_FIELDS).toHaveProperty(key);
+    expect(text).not.toMatch(/R\d/);
+  });
+});

@@ -172,10 +172,13 @@ To go live:
    - set `PAYSTACK_SECRET_KEY` on the worker;
    - set the webhook URL to `https://<worker domain>/webhooks/paystack`.
 3. Resend: set `RESEND_API_KEY` and a verified sender (`PIPELINE_EMAIL_FROM`).
-4. Add staff: `sales` for the sales team and `maintainer` for the people who look after clients (`platform_staff`).
+4. Invite staff on Pipeline → Staff: `sales` for the sales team and `maintainer` for the people who look after clients.
+
+The sales team pack (built 29 Sep 2026): staff invitations, leads owned by the salesperson who added them, and the
+sales playbook, readable only by staff. See the README.
 
 Next:
-- a sales role page with the sales playbook and scripts;
+- commission tracking on the leads each salesperson owns;
 - monthly billing after the first month;
 - the maintainer's queue, fed from each client's live readings and missed objectives.
 

@@ -1,31 +1,33 @@
-// TEBOS's own client pipeline: every enquiry from the pricing page, screened,
-// decided by staff, then paid, contracted and onboarded by TEBOS on proof.
-// Visible only to TEBOS's staff (row-level security); people decide, the
-// server records the rest.
+// TEBOS's own client pipeline: every enquiry from the pricing page or from a
+// salesperson's outreach, screened, decided by staff, then paid, contracted
+// and onboarded by TEBOS on proof. Visible only to TEBOS's staff (row-level
+// security); people decide, the server records the rest. Staff need no
+// organisation of their own, so these pages use the signed-in session.
 import { useState, type FormEvent } from "react";
 import { Badge, Card, Empty, ErrorNote, Field, Loading, PageHeader, StatusBadge } from "../components/ui";
 import { formatRand, PLAN_TERMS, type PlanKey } from "@core/plans";
 import { CONTRACT_PLACEHOLDERS, DRAFT_AGREEMENT } from "../lib/contract-drafts";
 import {
+  addLead,
   assignMaintainer,
   decideOpportunity,
   getOpportunity,
   listContractTemplates,
   listOpportunities,
-  listStaff,
   recordEft,
   saveTemplateDraft,
+  setLeadOwner,
   setTemplateStatus,
-  staffAccess,
   updateTemplateDraft,
+  type NewLead,
   type ContractTemplate,
   type OpportunityRow,
   type StaffAccess,
 } from "../lib/data";
 import { ago, statusLabel, when } from "../lib/format";
-import { usePeople } from "../lib/people";
 import { Link } from "../lib/router";
-import { useOrg } from "../lib/session";
+import { useSignedIn } from "../lib/session";
+import { useStaff } from "../lib/staff";
 import { useQuery } from "../lib/useQuery";
 
 export const STAGES: Array<{ status: string; label: string; hint: string }> = [
@@ -45,38 +47,50 @@ interface Flag {
 const flagsOf = (o: OpportunityRow): Flag[] => ((o.screening as { flags?: Flag[] } | null)?.flags ?? []);
 const planName = (p: string) => PLAN_TERMS[p as PlanKey]?.name ?? p;
 
-function useStaff() {
-  const org = useOrg();
-  return useQuery(() => staffAccess(org.db, org.userId), [org.userId]);
-}
-
-function StaffOnly({ access, children }: { access: ReturnType<typeof useStaff>; children: (a: StaffAccess) => React.ReactNode }) {
-  if (access.loading && !access.data) return <Loading />;
-  if (!access.data?.sales && !access.data?.maintainer) {
-    return <PageHeader title="Pipeline">This page is for TEBOS's own staff.</PageHeader>;
+export function StaffOnly({ title = "Pipeline", children }: { title?: string; children: (a: StaffAccess) => React.ReactNode }) {
+  const { access, loading } = useStaff();
+  if (loading) return <Loading />;
+  if (!access?.sales && !access?.maintainer) {
+    return <PageHeader title={title}>This page is for TEBOS's own staff.</PageHeader>;
   }
-  return <>{children(access.data)}</>;
+  return <>{children(access)}</>;
 }
 
 export function PipelinePage() {
-  const org = useOrg();
-  const access = useStaff();
+  const org = useSignedIn();
+  const { nameOf } = useStaff();
   const q = useQuery(() => listOpportunities(org.db), []);
-  const all = q.data ?? [];
+  const [mine, setMine] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const all = (q.data ?? []).filter((o) => !mine || o.owner_id === org.userId);
   return (
-    <StaffOnly access={access}>
+    <StaffOnly>
       {(a) => (
         <div className="stack">
           <PageHeader
             eyebrow="TEBOS"
             title="Client pipeline"
-            actions={a.admin ? <Link to="/pipeline/contracts" className="btn">Contract templates</Link> : undefined}
+            actions={
+              <div className="row" style={{ gap: 8 }}>
+                {a.sales && <button className="btn btn-primary" onClick={() => setAdding(true)}>Add a lead</button>}
+                <Link to="/sales" className="btn">Sales playbook</Link>
+                {a.admin && <Link to="/pipeline/team" className="btn">Staff</Link>}
+                {a.admin && <Link to="/pipeline/contracts" className="btn">Contract templates</Link>}
+              </div>
+            }
           >
-            Every enquiry from the pricing page. Your team decides who to take on; TEBOS takes the payment, sends the contract and
-            sets the client up, each only on proof.
+            Every enquiry from the pricing page and every lead your team adds. Your team decides who to take on; TEBOS takes the
+            payment, sends the contract and sets the client up, each only on proof.
           </PageHeader>
+          {adding && <AddLead onDone={() => { setAdding(false); q.reload(); }} />}
           {q.error ? <ErrorNote error={q.error} title="Couldn't load the pipeline" /> : !q.data ? <Loading /> : (
             <>
+              {a.sales && (
+                <div className="row" role="group" aria-label="Show">
+                  <button className={`btn btn-sm ${mine ? "" : "btn-primary"}`} aria-pressed={!mine} onClick={() => setMine(false)}>Everyone's</button>
+                  <button className={`btn btn-sm ${mine ? "btn-primary" : ""}`} aria-pressed={mine} onClick={() => setMine(true)}>Mine</button>
+                </div>
+              )}
               <div className="grid grid-4" data-testid="pipeline-counts">
                 {STAGES.slice(0, 4).map((s) => (
                   <section key={s.status} className="card stat" title={s.hint}>
@@ -96,16 +110,22 @@ export function PipelinePage() {
                         <li key={o.id} data-testid="opportunity">
                           <div className="list-main">
                             <Link to={`/pipeline/${o.id}`} className="list-title">{o.business}</Link>
-                            <span className="list-meta">{planName(o.plan)} · {o.contact_name} · {o.email} · {ago(o.created_at)}</span>
+                            <span className="list-meta">
+                              {planName(o.plan)} · {o.contact_name} · {o.email} · {ago(o.created_at)} · {o.owner_id ? nameOf(o.owner_id) : "No owner"}
+                            </span>
                           </div>
-                          {flagsOf(o).length > 0 ? <Badge tone="warn">{flagsOf(o).length} flag{flagsOf(o).length === 1 ? "" : "s"}</Badge> : <Badge tone="good">clear</Badge>}
+                          <div className="row" style={{ gap: 6 }}>
+                            <Badge tone={o.source === "sales" ? "info" : "neutral"}>{o.source === "sales" ? "sales lead" : "website"}</Badge>
+                            {flagsOf(o).length > 0 ? <Badge tone="warn">{flagsOf(o).length} flag{flagsOf(o).length === 1 ? "" : "s"}</Badge> : <Badge tone="good">clear</Badge>}
+                          </div>
                         </li>
                       ))}
                     </ul>
                   </Card>
                 );
               })}
-              {all.length === 0 && <Card><Empty>No enquiries yet. They appear here within a few seconds of arriving.</Empty></Card>}
+              {q.data.length === 0 && <Card><Empty>No enquiries yet. They appear here within a few seconds of arriving.</Empty></Card>}
+              {q.data.length > 0 && all.length === 0 && <Card><Empty>You don't own any leads yet. Add one, or take an unowned lead from its page.</Empty></Card>}
               {all.some((o) => o.status === "declined" || o.status === "cancelled") && (
                 <Card title="Closed" subtitle="Declined or cancelled, with the reason">
                   <ul className="list">
@@ -129,12 +149,61 @@ export function PipelinePage() {
   );
 }
 
+/** A lead from the salesperson's own outreach. It is theirs, and TEBOS screens it like any enquiry. */
+function AddLead({ onDone }: { onDone: () => void }) {
+  const org = useSignedIn();
+  const empty: NewLead = { plan: "starter", name: "", business: "", email: "", phone: "", website: "", message: "" };
+  const [form, setForm] = useState<NewLead>(empty);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<unknown>(null);
+  const set = (k: keyof NewLead) => (e: { target: { value: string } }) => setForm({ ...form, [k]: e.target.value });
+  async function save(e: FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+    try {
+      await addLead(org.db, form);
+      onDone();
+    } catch (err) {
+      setError(err);
+      setBusy(false);
+    }
+  }
+  return (
+    <Card title="Add a lead" subtitle="From your own outreach. It's yours: nobody else can take it. TEBOS screens it within seconds, like any enquiry.">
+      <form className="form" onSubmit={save} aria-label="Add a lead">
+        <div className="form-row">
+          <Field label="Business"><input className="input" required maxLength={160} value={form.business} onChange={set("business")} /></Field>
+          <Field label="Contact name"><input className="input" required maxLength={120} value={form.name} onChange={set("name")} /></Field>
+        </div>
+        <div className="form-row">
+          <Field label="Email"><input className="input" type="email" required maxLength={254} value={form.email} onChange={set("email")} /></Field>
+          <Field label="Phone"><input className="input" maxLength={40} value={form.phone} onChange={set("phone")} /></Field>
+          <Field label="Website"><input className="input" maxLength={300} value={form.website} onChange={set("website")} placeholder="e.g. northwind.co.za" /></Field>
+        </div>
+        <Field label="Plan they're considering">
+          <select className="input" value={form.plan} onChange={set("plan")}>
+            {(["starter", "growth", "equity"] as const).map((k) => <option key={k} value={k}>{PLAN_TERMS[k].name}</option>)}
+          </select>
+        </Field>
+        <Field label="Notes" hint="Where you met, what they need, who decides. Don't paste anything confidential they told you.">
+          <textarea className="input" rows={3} maxLength={2000} value={form.message} onChange={set("message")} />
+        </Field>
+        <ErrorNote error={error} title="Lead not added" />
+        <div className="row">
+          <button className="btn btn-primary" disabled={busy}>{busy ? "Adding…" : "Add lead"}</button>
+          <button type="button" className="btn" onClick={onDone}>Cancel</button>
+        </div>
+      </form>
+    </Card>
+  );
+}
+
 export function OpportunityPage({ id }: { id: string }) {
-  const org = useOrg();
-  const access = useStaff();
+  const org = useSignedIn();
   const q = useQuery(() => getOpportunity(org.db, id), [id]);
   return (
-    <StaffOnly access={access}>
+    <StaffOnly>
       {(a) => {
         if (q.loading && !q.data) return <Loading />;
         if (q.error) return <ErrorNote error={q.error} title="Couldn't load this opportunity" />;
@@ -149,7 +218,7 @@ export function OpportunityPage({ id }: { id: string }) {
             </PageHeader>
             <div className="grid grid-main">
               <div className="stack">
-                <Card title="Enquiry" subtitle={`Received ${when(o.created_at)}`}>
+                <Card title={o.source === "sales" ? "Lead" : "Enquiry"} subtitle={`${o.source === "sales" ? "Added by sales" : "From the website"} · ${when(o.created_at)}`}>
                   <dl className="confidence-parts">
                     {([["Name", o.contact_name], ["Email", o.email], ["Phone", o.phone], ["Website", o.website], ["Message", o.message]] as const).map(([k, v]) => (
                       <div key={k}><dt>{k}</dt><dd style={{ display: "block", whiteSpace: "pre-wrap" }}>{v ?? <span className="faint">Not given</span>}</dd></div>
@@ -219,6 +288,7 @@ export function OpportunityPage({ id }: { id: string }) {
                     </ul>
                   )}
                 </Card>
+                <Owner opportunity={o} admin={a.admin} sales={a.sales} onDone={q.reload} />
                 <Maintainer opportunity={o} admin={a.admin} onDone={q.reload} />
                 {o.org_id && <Card title="Client organisation"><p className="list-meta">Set up and invited. Their maintainer is a member of it.</p></Card>}
               </div>
@@ -231,7 +301,7 @@ export function OpportunityPage({ id }: { id: string }) {
 }
 
 function Decide({ opportunity: o, flagged, onDone }: { opportunity: OpportunityRow; flagged: boolean; onDone: () => void }) {
-  const org = useOrg();
+  const org = useSignedIn();
   const [note, setNote] = useState("");
   const [error, setError] = useState<unknown>(null);
   async function go(status: "approved" | "declined" | "cancelled") {
@@ -261,7 +331,7 @@ function Decide({ opportunity: o, flagged, onDone }: { opportunity: OpportunityR
 }
 
 function RecordEft({ opportunity: o, onDone }: { opportunity: OpportunityRow; onDone: () => void }) {
-  const org = useOrg();
+  const org = useSignedIn();
   const [form, setForm] = useState({ reference: "", amount: o.amount_cents ? String(o.amount_cents / 100) : "", paidOn: new Date().toISOString().slice(0, 10), note: "" });
   const [error, setError] = useState<unknown>(null);
   async function save(e: FormEvent) {
@@ -289,12 +359,36 @@ function RecordEft({ opportunity: o, onDone }: { opportunity: OpportunityRow; on
   );
 }
 
-function Maintainer({ opportunity: o, admin, onDone }: { opportunity: OpportunityRow; admin: boolean; onDone: () => void }) {
-  const org = useOrg();
-  const { nameOf } = usePeople();
-  const staff = useQuery(() => (admin ? listStaff(org.db) : Promise.resolve([])), [admin]);
+function Owner({ opportunity: o, admin, sales, onDone }: { opportunity: OpportunityRow; admin: boolean; sales: boolean; onDone: () => void }) {
+  const org = useSignedIn();
+  const { members, nameOf } = useStaff();
   const [error, setError] = useState<unknown>(null);
-  const maintainers = (staff.data ?? []).filter((s) => s.role === "maintainer");
+  const set = async (id: string | null) => {
+    setError(null);
+    try { await setLeadOwner(org.db, o.id, id); onDone(); } catch (err) { setError(err); }
+  };
+  const reps = members.filter((m) => m.roles.includes("sales"));
+  return (
+    <Card title="Owner" subtitle="The salesperson this lead belongs to. Only an admin reassigns a lead that has an owner.">
+      <p className="list-meta" data-testid="owner">{o.owner_id ? nameOf(o.owner_id) : "No owner yet."}</p>
+      {admin ? (
+        <select className="input" style={{ marginTop: 8 }} aria-label="Owner" value={o.owner_id ?? ""} onChange={(e) => set(e.target.value || null)}>
+          <option value="">No owner</option>
+          {reps.map((m) => <option key={m.user_id} value={m.user_id}>{nameOf(m.user_id)}</option>)}
+        </select>
+      ) : sales && !o.owner_id ? (
+        <button className="btn btn-sm" style={{ marginTop: 8 }} onClick={() => set(org.userId)}>Take this lead</button>
+      ) : null}
+      <ErrorNote error={error} title="Owner not changed" />
+    </Card>
+  );
+}
+
+function Maintainer({ opportunity: o, admin, onDone }: { opportunity: OpportunityRow; admin: boolean; onDone: () => void }) {
+  const org = useSignedIn();
+  const { members, nameOf } = useStaff();
+  const [error, setError] = useState<unknown>(null);
+  const maintainers = members.filter((m) => m.roles.includes("maintainer") || m.roles.includes("admin"));
   return (
     <Card title="Maintainer" subtitle="The TEBOS person who looks after this client's operating system once they're onboarded.">
       <p className="list-meta">{o.maintainer_id ? nameOf(o.maintainer_id) : "Not assigned yet."}</p>
@@ -303,8 +397,8 @@ function Maintainer({ opportunity: o, admin, onDone }: { opportunity: Opportunit
           <select className="input" style={{ marginTop: 8 }} aria-label="Maintainer" value={o.maintainer_id ?? ""}
             onChange={async (e) => { setError(null); try { await assignMaintainer(org.db, o.id, e.target.value || null); onDone(); } catch (err) { setError(err); } }}>
             <option value="">Unassigned</option>
-            <option value={org.userId}>You</option>
-            {maintainers.filter((m) => m.user_id !== org.userId).map((m) => <option key={m.user_id} value={m.user_id}>{nameOf(m.user_id)}</option>)}
+            {!maintainers.some((m) => m.user_id === org.userId) && <option value={org.userId}>You</option>}
+            {maintainers.map((m) => <option key={m.user_id} value={m.user_id}>{nameOf(m.user_id)}</option>)}
           </select>
           <ErrorNote error={error} title="Not assigned" />
         </>
@@ -318,12 +412,11 @@ function Maintainer({ opportunity: o, admin, onDone }: { opportunity: Opportunit
 // ---------------------------------------------------------------------------
 
 export function ContractTemplatesPage() {
-  const org = useOrg();
-  const access = useStaff();
+  const org = useSignedIn();
   const q = useQuery(() => listContractTemplates(org.db), []);
   const [editing, setEditing] = useState<ContractTemplate | "new" | null>(null);
   return (
-    <StaffOnly access={access}>
+    <StaffOnly>
       {(a) => !a.admin ? <PageHeader title="Contract templates">Only TEBOS's admins manage contract templates.</PageHeader> : (
         <div className="stack">
           <PageHeader eyebrow={<Link to="/pipeline">Client pipeline</Link>} title="Contract templates"
@@ -360,7 +453,7 @@ export function ContractTemplatesPage() {
 }
 
 function TemplateEditor({ template, existing, onDone }: { template: ContractTemplate | null; existing: ContractTemplate[]; onDone: () => void }) {
-  const org = useOrg();
+  const org = useSignedIn();
   const [form, setForm] = useState({
     plan: template?.plan ?? "starter",
     key: template?.key ?? "agreement",
