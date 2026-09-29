@@ -1615,6 +1615,8 @@ export type Database = {
           status: string
           status_reason: string | null
           target_value: number
+          measure_metric: string | null
+          measure_path: string[] | null
           title: string
           unit: string
           updated_at: string
@@ -1634,6 +1636,8 @@ export type Database = {
           status?: string
           status_reason?: string | null
           target_value: number
+          measure_metric?: string | null
+          measure_path?: string[] | null
           title: string
           unit: string
           updated_at?: string
@@ -1653,6 +1657,8 @@ export type Database = {
           status?: string
           status_reason?: string | null
           target_value?: number
+          measure_metric?: string | null
+          measure_path?: string[] | null
           title?: string
           unit?: string
           updated_at?: string

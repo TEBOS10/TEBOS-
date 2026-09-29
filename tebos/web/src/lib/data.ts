@@ -875,6 +875,15 @@ export async function recordMeasured(db: Db, o: Objective, evidenceId: string, p
   }).select().single());
 }
 
+/**
+ * Keep measuring an objective from this reading: every new reading of the
+ * metric records a measured value (the database reads it). Once the
+ * objective is active, what it is measured by can be set but not changed.
+ */
+export async function measureAutomatically(db: Db, objectiveId: string, metric: string, path: string[]) {
+  return must(await db.from("objectives").update({ measure_metric: metric, measure_path: path }).eq("id", objectiveId).select().single());
+}
+
 /** A value the owner stated, citing their statement. It never counts toward achieving the objective. */
 export async function recordStated(db: Db, o: Objective, evidenceId: string, value: number) {
   return must(await db.from("objective_measurements").insert({

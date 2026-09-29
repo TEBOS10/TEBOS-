@@ -31,6 +31,7 @@ import {
   addStep,
   closeObjective,
   createObjective,
+  measureAutomatically,
   getBoard,
   recordMeasured,
   recordStated,
@@ -205,6 +206,11 @@ function ObjectiveItem({ objective: o, measurements, measurable, statements, can
               : "Not measured yet: connect a system that reports it."}
             {progress.stated ? ` · Owner says ${formatValue(progress.stated.value, o.unit)}, which doesn't count toward the target` : ""}
           </span>
+          {o.measure_metric && (
+            <span className="list-meta" data-testid="objective-auto">
+              Measured automatically from each new reading of {o.measure_metric} · {(o.measure_path ?? []).join(".")}{o.status === "draft" ? " (once active)" : ""}
+            </span>
+          )}
           {o.status_reason && <span className="list-meta">Reason: {o.status_reason}</span>}
         </div>
         <StatusBadge status={o.status} />
@@ -224,7 +230,13 @@ function ObjectiveItem({ objective: o, measurements, measurable, statements, can
           <button className="btn btn-sm" onClick={() => setMode(mode === "retire" ? "none" : "retire")}>{o.status === "draft" ? "Cancel" : "Retire"}</button>
         </div>
       )}
-      {mode === "measure" && <MeasureForm measurable={measurable} onSubmit={(ev, path) => run(() => recordMeasured(org.db, o, ev, path))} />}
+      {mode === "measure" && (
+        <MeasureForm measurable={measurable} canBind={!o.measure_metric}
+          onSubmit={(ev, path, bind) => run(async () => {
+            if (bind) await measureAutomatically(org.db, o.id, bind, path);
+            await recordMeasured(org.db, o, ev, path);
+          })} />
+      )}
       {mode === "state" && <StatedForm statements={statements} onSubmit={(ev, v) => run(() => recordStated(org.db, o, ev, v))} />}
       {mode === "retire" && (
         <ReasonForm label={o.status === "draft" ? "Why cancel it?" : "Why retire it?"}
@@ -235,15 +247,20 @@ function ObjectiveItem({ objective: o, measurements, measurable, statements, can
   );
 }
 
-function MeasureForm({ measurable, onSubmit }: { measurable: MeasurableEvidence[]; onSubmit: (evidenceId: string, path: string[]) => void }) {
+function MeasureForm({ measurable, canBind, onSubmit }: {
+  measurable: MeasurableEvidence[]; canBind: boolean; onSubmit: (evidenceId: string, path: string[], bindMetric: string | null) => void;
+}) {
   const options = measurable.flatMap((m) => measurablePaths(m.structuredValue).filter((p) => p.path.join(".") !== "snapshot_hash").map((p) => ({ m, p })));
   const [choice, setChoice] = useState(0);
+  const [auto, setAuto] = useState(true);
   if (options.length === 0) {
     return <p className="muted" style={{ marginTop: 8 }}>No connected system has reported a number yet. Connect one on the Connections page; TEBOS never takes a typed number as a measurement.</p>;
   }
   const picked = options[choice]!;
+  const metric = ((picked.m.structuredValue ?? {}) as { metric?: unknown }).metric;
+  const bindable = canBind && typeof metric === "string";
   return (
-    <form className="form" style={{ marginTop: 8 }} onSubmit={(e) => { e.preventDefault(); onSubmit(picked.m.evidenceId, picked.p.path); }}>
+    <form className="form" style={{ marginTop: 8 }} onSubmit={(e) => { e.preventDefault(); onSubmit(picked.m.evidenceId, picked.p.path, bindable && auto ? (metric as string) : null); }}>
       <Field label="Reading" hint="TEBOS reads the value from the evidence itself.">
         <select className="input" value={choice} onChange={(e) => setChoice(Number(e.target.value))}>
           {options.map(({ m, p }, i) => (
@@ -253,6 +270,12 @@ function MeasureForm({ measurable, onSubmit }: { measurable: MeasurableEvidence[
           ))}
         </select>
       </Field>
+      {bindable && (
+        <label className="row" style={{ gap: 8 }}>
+          <input type="checkbox" checked={auto} onChange={(e) => setAuto(e.target.checked)} />
+          <span>Measure this automatically from now on</span>
+        </label>
+      )}
       <div><button className="btn btn-primary btn-sm">Record measurement</button></div>
     </form>
   );

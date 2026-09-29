@@ -49,7 +49,7 @@ import { ExecutionWorker } from "./execution/worker";
 import { PgInterviewStore } from "./interviews/pg-store";
 import { ElevenLabsVoice } from "./interviews/voice";
 import { InterviewWorker } from "./interviews/worker";
-import { PgMonitorStore, PgSnapshotReader } from "./monitoring/pg-store";
+import { CompanySnapshotReader, PgMonitorStore, PgSnapshotReader } from "./monitoring/pg-store";
 import { MonitorWorker } from "./monitoring/worker";
 import { PaystackGateway } from "./pipeline/paystack";
 import { PgPipelineStore } from "./pipeline/pg-store";
@@ -91,7 +91,10 @@ const voice = voiceEnabled
   : null;
 const interviews = new InterviewWorker(new PgInterviewStore(pool, workerId), voice, provider, { log });
 
-const monitor = new MonitorWorker(new PgMonitorStore(pool, workerId), new PgSnapshotReader(), { log });
+const monitor = new MonitorWorker(new PgMonitorStore(pool, workerId), new PgSnapshotReader(), {
+  log,
+  readers: { "tebos-company": new CompanySnapshotReader(pool) },
+});
 
 // Enquiry alerts: on when a Resend key and at least one valid recipient are set.
 const alertTo = (process.env.ENQUIRY_ALERT_TO ?? "").split(",").map((a) => a.trim()).filter(isEmailAddress);

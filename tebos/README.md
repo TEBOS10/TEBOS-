@@ -334,6 +334,23 @@ Staff roles: platform admins are in `platform_admins`, and `sales` and `maintain
   staff, so it is not in the public web bundle. Admins edit it in the app (audited). Prices are `{{placeholders}}`
   filled from `src/domain/plans.ts`, so it can't quote a different price from the contract.
 
+## TEBOS on its own board (migration `company_board`)
+
+TEBOS runs on TEBOS. Its own company is the business "TEBOS" in TEBOS's organisation, with a board of its
+departments (sales, client operations, finance, people, marketing, security, legal, capital), the tools and
+providers they use, and flows that say who really does each step today, so what still runs through the founder
+is counted on the board.
+
+- **Company numbers.** The `tebos-company` connector reads `tebos_private.company_snapshot()`: aggregates from
+  TEBOS's pipeline and payments (leads, decisions waiting, wins, cash collected, active clients, team, failed
+  client emails), never names or client details. The monitor records them hourly as connected-system evidence.
+  Only an organisation in `tebos_private.company_orgs` can hold the connector, so a client can't read TEBOS's
+  revenue.
+- **Automatic measurement.** An objective can be bound to a reading (`measure_metric`, `measure_path`). Each new
+  reading then records a measured value for every active objective bound to it, read by the database from the
+  evidence. Once an objective is active, what it's measured by can't change. Tick "Measure this automatically
+  from now on" when measuring an objective from a connected system; it works for any client's platform too.
+
 ## Enquiry alerts
 
 Pricing-page enquiries (`public.enquiries`) are emailed to the team once, by the worker's `alerts` stage
