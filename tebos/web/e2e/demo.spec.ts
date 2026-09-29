@@ -96,6 +96,12 @@ test("the operating board shows objectives, pieces and flows, and measures only 
   await billable.getByRole("button", { name: "Measure from a connected system" }).click();
   await expect(billable.getByLabel("Reading")).toContainText("billable_pct = 61");
   await expect(billable.locator("input[type=number]")).toHaveCount(0);
+  // and it can keep measuring itself with every new reading
+  const option = await billable.getByLabel("Reading").locator("option", { hasText: "billable_pct = 61" }).getAttribute("value");
+  await billable.getByLabel("Reading").selectOption(option!);
+  await expect(billable.getByLabel("Measure this automatically from now on")).toBeChecked();
+  await billable.getByRole("button", { name: "Record measurement" }).click();
+  await expect(billable.getByTestId("objective-auto")).toContainText("Measured automatically from each new reading of time.billable");
 
   expect(errors).toEqual([]);
 });
