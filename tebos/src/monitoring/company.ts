@@ -80,6 +80,18 @@ export function companyFacts(raw: unknown): ParsedSnapshot {
     });
   }
 
+  if (num(d.steps_open) !== null) {
+    const overdue = n0(d.steps_overdue);
+    const done = n0(d.steps_done_30_days), onTime = n0(d.steps_done_on_time_30_days);
+    add("delivery.steps", `${overdue === 0
+      ? `No client delivery step is overdue (${plural(n0(d.steps_open), "step")} open).`
+      : `${plural(overdue, "client delivery step")} ${overdue === 1 ? "is" : "are"} overdue; the oldest by ${plural(n0(d.oldest_overdue_days), "day")}.`} ${done} completed in the last 30 days, ${onTime} on time.`, {
+      open: n0(d.steps_open), overdue, oldest_overdue_days: n0(d.oldest_overdue_days),
+      done_30_days: done, done_on_time_30_days: onTime,
+      on_time_pct_30_days: done === 0 ? 100 : Math.round((onTime / done) * 100),
+    });
+  }
+
   if (facts.length === 0) return { ok: false, reason: "The snapshot held no figures" };
   return { ok: true, takenAt: s.taken_at, hash: snapshotHash(s), facts };
 }

@@ -38,6 +38,7 @@ import { SalesPlaybookPage, StaffInvitePage, StaffTeamPage } from "./pages/Sales
 import { StaffShell } from "./components/StaffShell";
 import { BlogIndex, BlogPost } from "./pages/BlogPage";
 import { LegalPage } from "./pages/LegalPage";
+import { DeliveryQueuePage } from "./pages/DeliveryPage";
 import { StaffProvider, useStaff } from "./lib/staff";
 import { TeamPage } from "./pages/TeamPage";
 
@@ -69,6 +70,7 @@ function staffRoutes(): Array<[string, (p: Record<string, string>) => ReactNode]
     ["/pipeline", () => <PipelinePage />],
     ["/pipeline/contracts", () => <ContractTemplatesPage />],
     ["/pipeline/team", () => <StaffTeamPage />],
+    ["/pipeline/queue", () => <DeliveryQueuePage />],
     ["/pipeline/:id", (p) => <OpportunityPage id={p.id!} />],
     ["/sales", () => <SalesPlaybookPage />],
   ];

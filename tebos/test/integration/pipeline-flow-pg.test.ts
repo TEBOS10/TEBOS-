@@ -148,6 +148,12 @@ describe.skipIf(!enabled)("client pipeline against the TEBOS schema", () => {
     const invToken = linkIn("account is ready").split("/invite/")[1]!;
     expect((await pool.query("select count(*)::int as n from public.invitations where token_hash = $1", [sha256(invToken)])).rows[0].n).toBe(1);
 
+    // TEBOS now owes the client a dated delivery plan, and the maintainer can see it
+    const steps = (await pool.query("select key, status, due_at > now() as future from public.delivery_tasks where opportunity_id = $1 order by position", [id])).rows;
+    expect(steps.map((x) => x.key)).toEqual(["kickoff", "diagnostic", "board", "objectives", "review"]);
+    expect(steps.every((x) => x.status === "open" && x.future)).toBe(true);
+    expect((await as<pg.QueryResult>(MAINT, "select count(*)::int as n from public.delivery_tasks where opportunity_id = $1", [id])).rows[0].n).toBe(5);
+
     // staff see the emails went out, but never the links in them
     await expect(as(SALES, "select body from public.outbox_emails where opportunity_id = $1", [id])).rejects.toThrow(/permission denied/);
     const sent = (await as<pg.QueryResult>(SALES, "select kind, sent_at is not null as sent from public.outbox_emails where opportunity_id = $1 order by created_at", [id])).rows;

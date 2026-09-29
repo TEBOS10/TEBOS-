@@ -1,7 +1,7 @@
 // The workspace for TEBOS's staff who aren't members of any organisation
 // (salespeople, and maintainers before their first client): the pipeline and
 // the playbook, and nothing of any client's.
-import { BookOpen, Briefcase, LogOut, ShieldCheck, Users } from "lucide-react";
+import { BookOpen, Briefcase, ListChecks, LogOut, ShieldCheck, Users } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link, usePath } from "../lib/router";
 import { useSignedIn } from "../lib/session";
@@ -14,6 +14,7 @@ export function StaffShell({ children }: { children: ReactNode }) {
   const nav = [
     { to: "/pipeline", label: "Pipeline", icon: Briefcase },
     { to: "/sales", label: "Sales playbook", icon: BookOpen },
+    ...(access?.maintainer ? [{ to: "/pipeline/queue", label: "Delivery queue", icon: ListChecks }] : []),
     ...(access?.admin ? [{ to: "/pipeline/team", label: "Staff", icon: Users }] : []),
   ];
   const roles = [access?.admin && "admin", access?.sales && "sales", access?.maintainer && "maintainer"].filter(Boolean);
@@ -29,7 +30,7 @@ export function StaffShell({ children }: { children: ReactNode }) {
         </div>
         <nav className="nav" aria-label="Main">
           {nav.map(({ to, label, icon: Icon }) => {
-            const active = to === "/pipeline" ? path === to || (path.startsWith("/pipeline/") && !path.startsWith("/pipeline/team")) : path === to || path.startsWith(`${to}/`);
+            const active = to === "/pipeline" ? path === to || (path.startsWith("/pipeline/") && !/^\/pipeline\/(team|queue)/.test(path)) : path === to || path.startsWith(`${to}/`);
             return (
               <Link key={to} to={to} className={`nav-link ${active ? "active" : ""}`} aria-current={active ? "page" : undefined}>
                 <Icon size={17} aria-hidden /> {label}

@@ -2,7 +2,8 @@ import { Activity, Building2, CheckSquare, Eye, FileSearch, Plug, ScanSearch, St
 import { useState, type FormEvent } from "react";
 import { ScanRow } from "../components/ScanRow";
 import { Card, Empty, ErrorNote, Loading } from "../components/ui";
-import { homeSummary, requestScan } from "../lib/data";
+import { DeliveryStep } from "../components/DeliveryPlan";
+import { deliveryFor, homeSummary, requestScan } from "../lib/data";
 import { ago, normaliseWebsite } from "../lib/format";
 import { Link, navigate } from "../lib/router";
 import { useOrg } from "../lib/session";
@@ -21,8 +22,24 @@ export function HomePage() {
       {org.can("scan.run") ? <ScanBox /> : <ViewerHero />}
       {summary.loading && !summary.data && <Loading />}
       <ErrorNote error={summary.error} title="Couldn't load the command centre" />
+      <ClientDelivery />
       {summary.data && <Overview data={summary.data} />}
     </div>
+  );
+}
+
+/** For TEBOS's clients: the plan TEBOS owes them, with what was done. Shown only when there is one. */
+function ClientDelivery() {
+  const { db, organisation } = useOrg();
+  const q = useQuery(() => deliveryFor(db, { orgId: organisation.id }), [organisation.id]);
+  if (!q.data || q.data.length === 0) return null;
+  const done = q.data.filter((t) => t.status !== "open").length;
+  return (
+    <Card title="Your TEBOS delivery plan" subtitle={`${done} of ${q.data.length} steps done. Your maintainer closes each step with a note of what was done.`}>
+      <ul className="list" data-testid="client-delivery">
+        {q.data.map((t) => <DeliveryStep key={t.id} task={t} canClose={false} />)}
+      </ul>
+    </Card>
   );
 }
 

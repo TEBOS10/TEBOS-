@@ -1953,6 +1953,38 @@ export type Database = {
         }
         Relationships: []
       }
+      delivery_tasks: {
+        Row: {
+          id: string
+          opportunity_id: string
+          org_id: string
+          key: string
+          position: number
+          title: string
+          done_means: string
+          due_at: string
+          status: string
+          note: string | null
+          closed_by: string | null
+          closed_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          opportunity_id: string
+          org_id: string
+          key: string
+          position: number
+          title: string
+          done_means: string
+          due_at: string
+        }
+        Update: {
+          status?: string
+          note?: string | null
+        }
+        Relationships: []
+      }
       sales_playbook: {
         Row: {
           id: string
