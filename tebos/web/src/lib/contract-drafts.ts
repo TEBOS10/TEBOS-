@@ -7,8 +7,8 @@ export const CONTRACT_PLACEHOLDERS: Array<[string, string]> = [
   ["business", "The client business's name"],
   ["contact_name", "The person accepting for the client"],
   ["email", "Their email address"],
-  ["plan_name", "Diagnostic, or Architecture & Operations"],
-  ["monthly_fee", "e.g. R2,500 per month, excluding VAT"],
+  ["plan_name", "Diagnostic, Architecture & Operations, or Company Operating Architecture"],
+  ["monthly_fee", "The fee terms, e.g. R2,500 per month, excluding VAT (or the Company Diagnostic fee)"],
   ["deliverables", "The plan's deliverables, one per line"],
   ["date", "The date the agreement is sent"],
   ["reference", "TEBOS's reference for this client"],
@@ -62,3 +62,14 @@ Neither side is liable for indirect or consequential loss. Except where the law 
 
 This agreement is governed by the laws of the Republic of South Africa. It is the whole agreement between the parties for this service. Changes must be agreed in writing (email is enough). The client accepts this agreement electronically, and the parties agree that this acceptance is valid and binding.
 `;
+
+/** The company plan's draft: the same agreement, with the fee clause for a one-off Company Diagnostic. */
+export const DRAFT_COMPANY_AGREEMENT = DRAFT_AGREEMENT.replace(
+  /## 2\. Fees and payment\n\n[^\n]+\n/,
+  `## 2. Fees and payment
+
+The fee is {{monthly_fee}}. The Company Diagnostic has been paid before this agreement was sent. After the Company Diagnostic, TEBOS gives the client a written proposal for ongoing work, with a fixed monthly fee; ongoing work starts only once both sides have agreed that proposal in writing. If a payment is more than 14 days late, TEBOS may pause the service until it is paid.
+`,
+);
+
+export const draftFor = (plan: string) => (plan === "company" ? DRAFT_COMPANY_AGREEMENT : DRAFT_AGREEMENT);

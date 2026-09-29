@@ -12,7 +12,7 @@ import type { EmailConnector } from "../execution/provider";
 
 export interface Enquiry {
   id: string;
-  plan: "starter" | "growth" | "equity";
+  plan: "starter" | "growth" | "company" | "equity";
   name: string;
   business: string;
   email: string;
@@ -43,6 +43,7 @@ export const MAX_ALERT_ATTEMPTS = 5;
 const PLAN_NAMES: Record<Enquiry["plan"], string> = {
   starter: "Diagnostic",
   growth: "Architecture & Operations",
+  company: "Company Operating Architecture",
   equity: "Equity partnership application",
 };
 

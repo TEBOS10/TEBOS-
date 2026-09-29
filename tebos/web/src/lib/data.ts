@@ -747,7 +747,7 @@ export async function liveOperations(db: Db, businessId: string) {
 // ---------------------------------------------------------------------------
 
 export interface EnquiryDraft {
-  plan: "starter" | "growth" | "equity";
+  plan: "starter" | "growth" | "company" | "equity";
   name: string;
   business: string;
   email: string;
@@ -1034,7 +1034,7 @@ export async function staffDirectory(db: Db): Promise<StaffMember[]> {
 }
 
 export interface NewLead {
-  plan: "starter" | "growth" | "equity";
+  plan: "starter" | "growth" | "company" | "equity";
   name: string;
   business: string;
   email: string;

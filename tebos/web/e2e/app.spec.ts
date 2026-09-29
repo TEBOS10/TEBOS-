@@ -484,3 +484,19 @@ test("pricing shows the diagnostic, architecture & operations and the equity par
     plan: "equity", name: "Lerato", business: "Brightline Creative", email: "lerato@brightline.example", message: "Growing fast, cash is tight.", phone: null,
   });
 });
+
+test("established companies see a Company plan that starts with a paid diagnostic, and can enquire for it", async ({ page }) => {
+  const fake = await installFakeSupabase(page, { signedIn: false });
+  await page.goto("/pricing");
+  const company = page.locator("article", { has: page.getByRole("heading", { name: "Company Operating Architecture", exact: true }) });
+  await expect(company).toContainText("R25,000 per month and up");
+  await expect(company).toContainText("after a R15,000 Company Diagnostic");
+  await expect(page.getByTestId("international")).toContainText("Outside South Africa? Every plan is available.");
+  await company.getByRole("button", { name: "Start with a Company Diagnostic" }).click();
+  await page.getByLabel("Your name").fill("Naledi");
+  await page.getByLabel("Business name").fill("Big Co");
+  await page.getByLabel("Email").fill("naledi@bigco.example");
+  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await expect(page.getByText("Thank you. We've got it.")).toBeVisible();
+  expect(fake.writes.find((w) => w.table === "enquiries")?.body).toMatchObject({ plan: "company", business: "Big Co" });
+});

@@ -41,6 +41,15 @@ export const PLANS: Plan[] = [
     cta: "Get started",
   },
   {
+    key: "company",
+    name: PLAN_TERMS.company.name,
+    price: formatRand(PLAN_TERMS.company.monthlyFromCents!),
+    cadence: `per month and up, after a ${formatRand(PLAN_TERMS.company.firstPaymentCents!)} Company Diagnostic`,
+    pitch: "For established companies: every department architected, measured and run, with a proposal scoped to you.",
+    features: PLAN_TERMS.company.deliverables,
+    cta: "Start with a Company Diagnostic",
+  },
+  {
     key: "equity",
     name: PLAN_TERMS.equity.name,
     price: EQUITY_SHARE,

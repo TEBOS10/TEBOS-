@@ -175,4 +175,14 @@ describe.skipIf(!enabled)("client pipeline against the TEBOS schema", () => {
     const row = (await pool.query("select source, owner_id, status from public.opportunities where id = $1", [id])).rows[0];
     expect(row).toEqual({ source: "sales", owner_id: SALES, status: "screened" });
   });
+
+  it("charges a company the one-off Company Diagnostic, and asks for it by name", async () => {
+    await as(null, "insert into public.enquiries (plan, name, business, email, website) values ('company', 'Naledi', 'Big Co', 'naledi@bigco.co.za', 'bigco.co.za')");
+    const id = ((await worker.runOnce()) as { id: string }).id;
+    await as(SALES, "update public.opportunities set status = 'approved' where id = $1", [id]);
+    expect(await worker.runOnce()).toMatchObject({ step: "payment", outcome: "linked" });
+    expect(gateway.requests.at(-1)).toMatchObject({ amountCents: 1500000, reference: `tebos-${id}` });
+    expect(await worker.runOnce()).toMatchObject({ step: "email", outcome: "sent" });
+    expect(email.sends.at(-1)!.input.text).toContain("please pay the Company Diagnostic here:");
+  });
 });

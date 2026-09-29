@@ -6,7 +6,7 @@
 import { useState, type FormEvent } from "react";
 import { Badge, Card, Empty, ErrorNote, Field, Loading, PageHeader, StatusBadge } from "../components/ui";
 import { formatRand, PLAN_TERMS, type PlanKey } from "@core/plans";
-import { CONTRACT_PLACEHOLDERS, DRAFT_AGREEMENT } from "../lib/contract-drafts";
+import { CONTRACT_PLACEHOLDERS, draftFor } from "../lib/contract-drafts";
 import {
   addLead,
   assignMaintainer,
@@ -183,7 +183,7 @@ function AddLead({ onDone }: { onDone: () => void }) {
         </div>
         <Field label="Plan they're considering">
           <select className="input" value={form.plan} onChange={set("plan")}>
-            {(["starter", "growth", "equity"] as const).map((k) => <option key={k} value={k}>{PLAN_TERMS[k].name}</option>)}
+            {(["starter", "growth", "company", "equity"] as const).map((k) => <option key={k} value={k}>{PLAN_TERMS[k].name}</option>)}
           </select>
         </Field>
         <Field label="Notes" hint="Where you met, what they need, who decides. Don't paste anything confidential they told you.">
@@ -458,7 +458,7 @@ function TemplateEditor({ template, existing, onDone }: { template: ContractTemp
     plan: template?.plan ?? "starter",
     key: template?.key ?? "agreement",
     title: template?.title ?? "TEBOS client agreement",
-    body: template?.body ?? DRAFT_AGREEMENT,
+    body: template?.body ?? draftFor("starter"),
   });
   const [approval, setApproval] = useState("");
   const [error, setError] = useState<unknown>(null);
@@ -492,9 +492,14 @@ function TemplateEditor({ template, existing, onDone }: { template: ContractTemp
       <form className="form" onSubmit={save} aria-label="Contract template">
         <div className="form-row">
           <Field label="Plan">
-            <select className="input" value={form.plan} disabled={!!template} onChange={(e) => setForm({ ...form, plan: e.target.value })}>
+            <select className="input" value={form.plan} disabled={!!template} onChange={(e) => {
+              const plan = e.target.value;
+              // an untouched starting draft follows the plan
+              setForm({ ...form, plan, body: form.body === draftFor(form.plan) ? draftFor(plan) : form.body });
+            }}>
               <option value="starter">{PLAN_TERMS.starter.name}</option>
               <option value="growth">{PLAN_TERMS.growth.name}</option>
+              <option value="company">{PLAN_TERMS.company.name}</option>
             </select>
           </Field>
           <Field label="Title"><input className="input" required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></Field>
