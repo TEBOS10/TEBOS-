@@ -45,6 +45,9 @@ insert into auth.users (id) values (:'admin_a'), (:'op_b'), (:'appr_c'), (:'op_d
 -- ===========================================================================
 -- Tenancy
 -- ===========================================================================
+-- organisations are created by TEBOS's platform admins (migration invite_only)
+insert into public.platform_admins (user_id) values (:'admin_a');
+insert into public.platform_admins (user_id) values (:'op_d');
 set role authenticated;
 select set_config('request.jwt.claim.sub', :'admin_a', false);
 select public.create_organisation('Tidy Enterprise', 'tidy') as org1 \gset
@@ -393,6 +396,11 @@ select t.ok((select actor_type = 'agent' and actor_id = 'agent-run-42' from publ
              where entity_id = :'run_ag'), 'agent actor recorded');
 
 -- only signed-in users can create organisations; anon cannot even call the function
+-- invite-only: a signed-in user who isn't a platform admin can't create an organisation
+set role authenticated;
+select set_config('request.jwt.claim.sub', :'op_b', false);
+select t.expect_error($$select public.create_organisation('Competitor', 'competitor')$$, 'TEBOS_PERMISSION_DENIED');
+reset role;
 select t.ok(not has_function_privilege('anon', 'public.create_organisation(text, text)', 'execute'),
   'anon cannot execute create_organisation');
 select t.ok(has_function_privilege('authenticated', 'public.create_organisation(text, text)', 'execute'),

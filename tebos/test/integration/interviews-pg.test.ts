@@ -74,6 +74,7 @@ describe.skipIf(!enabled)("diagnostic interviews against the TEBOS schema", () =
     pool = new pg.Pool({ max: 3 });
     worker = new InterviewWorker(new PgInterviewStore(pool, "it"), voice, new FakeModel());
     await pool.query("insert into auth.users (id, email, email_confirmed_at) values ($1, 'owner@bright.test', now())", [OWNER]);
+    await pool.query("insert into public.platform_admins (user_id) values ($1)", [OWNER]); // organisations are created by platform admins
     org = (await asOwner<pg.QueryResult>("select public.create_organisation('Interview IT', 'interview-it') as id")).rows[0].id;
     biz = (await asOwner<pg.QueryResult>("insert into public.businesses (org_id, name, website) values ($1, 'Bright Agency', 'https://bright.example/') returning id", [org])).rows[0].id;
     await asOwner("insert into public.business_contexts (org_id, business_id, kind, statement, supplied_by) values ($1, $2, 'problem', 'Projects always run over', $3)", [org, biz, OWNER]);

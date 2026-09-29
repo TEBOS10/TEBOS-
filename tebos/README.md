@@ -40,6 +40,7 @@ source → evidence → finding → action → approval → run → verification
 | A provider action's input is frozen once approval is requested, and an approval covers only the input it saw | `guard_action_execution`, `bind_approval_input` |
 | Runs through a provider, and the provider's confirmations, are recorded only by the execution worker | `guard_run_origin`, `guard_action_execution` |
 | Every write audited, attributed, hash-chained, append-only | `audit_row`, `write_audit` |
+| Invite-only: only TEBOS's platform admins create organisations; everyone else joins by an invitation bound to their confirmed email, and an account with neither sees nothing | `create_organisation` (migration `invite_only`), `accept_invitation`, RLS |
 | Only TEBOS's server records connected-system sources and system-generated evidence, or says who created evidence or a finding | `guard_source_origin`, `guard_created_by_actor` |
 | An objective's target is fixed once active; it is achieved only on a value the database read from a connected system's evidence; missed only after its due date | `guard_objective`, `guard_measurement` |
 | Board pieces and steps marked "observed" cite obtained evidence; automated steps name their tool | `guard_board_basis`, `board_steps` checks |

@@ -332,6 +332,8 @@ test("the reset link opens a screen to choose a new password", async ({ page }) 
 test("creating the first organisation explains what's missing instead of doing nothing", async ({ page }) => {
   const fake = await installFakeSupabase(page);
   fake.tables.memberships = [];
+  // only TEBOS's platform admins create organisations
+  (fake.tables as Record<string, unknown[]>).platform_admins = [{ user_id: USER_ID, created_at: new Date().toISOString() }];
   await page.goto("/");
   await page.getByRole("button", { name: "Create organisation" }).click();
   await expect(page.getByText("Type your organisation's name first.")).toBeVisible();
@@ -342,6 +344,28 @@ test("creating the first organisation explains what's missing instead of doing n
   await expect(page.getByLabel("Short name")).toHaveValue("tidy-enterprise");
   await page.getByRole("button", { name: "Create organisation" }).click();
   await expect.poll(() => fake.writes.find((w) => w.table === "create_organisation")?.body).toEqual({ p_name: "Tidy Enterprise", p_slug: "tidy-enterprise" });
+});
+
+test("TEBOS is invite-only: no public sign-up, and an account without an organisation sees nothing", async ({ page }) => {
+  await installFakeSupabase(page, { signedIn: false });
+  await page.goto("/sign-in");
+  await expect(page.getByRole("button", { name: "Sign in", exact: true })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Create account" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "see the plans" })).toBeVisible();
+  // someone holding an invitation can still create their account
+  await page.goto("/invite/some-token");
+  await expect(page.getByRole("tab", { name: "Create account" })).toBeVisible();
+});
+
+test("a signed-in account that isn't a platform admin can't create an organisation", async ({ page }) => {
+  const fake = await installFakeSupabase(page);
+  fake.tables.memberships = [];
+  (fake.tables as Record<string, unknown[]>).platform_admins = [];
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "Your account isn't linked to an organisation yet" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Create organisation" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "See the plans" })).toBeVisible();
+  expect(fake.writes.find((w) => w.table === "create_organisation")).toBeUndefined();
 });
 
 test("booking an interview call needs a valid number, a time and the person's consent", async ({ page }) => {

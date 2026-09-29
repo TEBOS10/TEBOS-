@@ -3,7 +3,12 @@ import { useState, type FormEvent } from "react";
 import { ErrorNote, Field } from "../components/ui";
 import { useSessionState } from "../lib/session";
 
-export function SignIn({ notice: intro }: { notice?: string } = {}) {
+/**
+ * TEBOS is invite-only: accounts are made for clients once their plan starts,
+ * and for teammates they invite. "Create account" is offered only to someone
+ * holding an invitation (allowSignUp).
+ */
+export function SignIn({ notice: intro, allowSignUp = false }: { notice?: string; allowSignUp?: boolean } = {}) {
   const { db } = useSessionState();
   const [mode, setMode] = useState<"sign_in" | "sign_up" | "reset">("sign_in");
   const [email, setEmail] = useState("");
@@ -50,6 +55,7 @@ export function SignIn({ notice: intro }: { notice?: string } = {}) {
           </div>
         </div>
         {intro && <div className="note note-info">{intro}</div>}
+        {allowSignUp && (
         <div className="tabs" role="tablist">
           <button type="button" role="tab" aria-selected={mode !== "sign_up"} className={`tab ${mode !== "sign_up" ? "active" : ""}`} onClick={() => { setMode("sign_in"); setNotice(null); }}>
             Sign in
@@ -58,6 +64,7 @@ export function SignIn({ notice: intro }: { notice?: string } = {}) {
             Create account
           </button>
         </div>
+        )}
         <Field label="Email">
           <input className="input" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
         </Field>
@@ -91,7 +98,7 @@ export function SignIn({ notice: intro }: { notice?: string } = {}) {
           </button>
         )}
         <p className="muted" style={{ textAlign: "center", fontSize: 14 }}>
-          New to TEBOS? <a href="/tour">Watch the tour</a> or <a href="/demo">try the demo</a>. No account needed.
+          New to TEBOS? Accounts are set up when your plan starts: <a href="/pricing">see the plans</a>, or <a href="/demo">try the demo</a> with no account.
         </p>
       </form>
     </div>

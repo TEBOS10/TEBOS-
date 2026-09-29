@@ -58,6 +58,13 @@ export async function myOrganisations(db: Db, userId: string) {
     .sort((a, b) => a.organisation.name.localeCompare(b.organisation.name));
 }
 
+/** TEBOS's own staff: the only people who can create an organisation (migration invite_only). */
+export async function isPlatformAdmin(db: Db, userId: string): Promise<boolean> {
+  const { data, error } = await db.from("platform_admins").select("user_id").eq("user_id", userId).maybeSingle();
+  if (error) throw error;
+  return !!data;
+}
+
 export async function createOrganisation(db: Db, name: string, slug: string) {
   return must(await db.rpc("create_organisation", { p_name: name, p_slug: slug }));
 }
