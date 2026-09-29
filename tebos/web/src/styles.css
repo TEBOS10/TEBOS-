@@ -644,3 +644,13 @@ table.table { width: 100%; border-collapse: collapse; }
 .agreement p, .agreement li { line-height: 1.6; color: #2a313c; }
 .agreement ul { padding-left: 20px; }
 .contract-accept { margin-top: 28px; padding-top: 20px; border-top: 1px solid #e3e7ee; }
+
+/* Sales playbook */
+.playbook-toc { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; }
+.playbook-toc a { color: var(--ink-soft); text-decoration: none; }
+.playbook-toc a:hover { color: var(--ink); text-decoration: underline; }
+.playbook-section { scroll-margin-top: 16px; }
+.playbook-section .agreement h3 { font-size: 15px; margin: 18px 0 6px; }
+@media print {
+  .playbook-section { break-inside: auto; }
+}

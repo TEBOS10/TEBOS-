@@ -1083,6 +1083,8 @@ export type Database = {
           plan: string
           status: string
           website: string | null
+          source: string
+          added_by: string | null
         }
         Insert: {
           business: string
@@ -1095,6 +1097,8 @@ export type Database = {
           plan: string
           status?: string
           website?: string | null
+          source?: string
+          added_by?: string | null
         }
         Update: {
           business?: string
@@ -1107,6 +1111,8 @@ export type Database = {
           plan?: string
           status?: string
           website?: string | null
+          source?: string
+          added_by?: string | null
         }
         Relationships: []
       }
@@ -1676,6 +1682,8 @@ export type Database = {
           decided_by: string | null
           decided_at: string | null
           maintainer_id: string | null
+          source: string
+          owner_id: string | null
           created_at: string
           updated_at: string
         }
@@ -1701,6 +1709,8 @@ export type Database = {
           decided_by?: string | null
           decided_at?: string | null
           maintainer_id?: string | null
+          source?: string
+          owner_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -1726,6 +1736,8 @@ export type Database = {
           decided_by?: string | null
           decided_at?: string | null
           maintainer_id?: string | null
+          source?: string
+          owner_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -1932,6 +1944,53 @@ export type Database = {
           role?: string
           added_by?: string | null
           created_at?: string
+        }
+        Relationships: []
+      }
+      sales_playbook: {
+        Row: {
+          id: string
+          key: string
+          position: number
+          title: string
+          body: string
+          updated_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          key: string
+          position: number
+          title: string
+          body: string
+        }
+        Update: {
+          position?: number
+          title?: string
+          body?: string
+        }
+        Relationships: []
+      }
+      staff_invitations: {
+        Row: {
+          id: string
+          email: string
+          role: string
+          status: string
+          invited_by: string | null
+          accepted_by: string | null
+          created_at: string
+          expires_at: string
+          accepted_at: string | null
+        }
+        Insert: {
+          id?: string
+          email: string
+          role: string
+          status?: string
+        }
+        Update: {
+          status?: string
         }
         Relationships: []
       }
@@ -2208,6 +2267,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_staff_invitation: {
+        Args: { p_email: string; p_role: string }
+        Returns: string
+      }
+      accept_staff_invitation: { Args: { p_token: string }; Returns: string | null }
+      staff_invitation_for_token: {
+        Args: { p_token: string }
+        Returns: { email: string; role: string; expires_at: string }[]
+      }
+      staff_directory: {
+        Args: Record<string, never>
+        Returns: { user_id: string; display_name: string; email: string; roles: string[] }[]
+      }
       submit_interview_answers: {
         Args: { p_session: string; p_answers: Json }
         Returns: number

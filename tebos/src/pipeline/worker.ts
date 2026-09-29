@@ -29,6 +29,9 @@ export interface NewEnquiry {
   phone: string | null;
   website: string | null;
   message: string | null;
+  /** Where it came from: the public website, or a salesperson who added it (and owns it). */
+  source?: "website" | "sales";
+  addedBy?: string | null;
 }
 
 export interface Opportunity {

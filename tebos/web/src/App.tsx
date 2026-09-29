@@ -34,6 +34,9 @@ import { LandingPage } from "./pages/LandingPage";
 import { PricingPage } from "./pages/PricingPage";
 import { ContractPage, PaidPage } from "./pages/ContractPage";
 import { ContractTemplatesPage, OpportunityPage, PipelinePage } from "./pages/PipelinePage";
+import { SalesPlaybookPage, StaffInvitePage, StaffTeamPage } from "./pages/SalesPages";
+import { StaffShell } from "./components/StaffShell";
+import { StaffProvider, useStaff } from "./lib/staff";
 import { TeamPage } from "./pages/TeamPage";
 
 const ROUTES: Array<[string, (p: Record<string, string>) => ReactNode]> = [
@@ -55,14 +58,24 @@ const ROUTES: Array<[string, (p: Record<string, string>) => ReactNode]> = [
   ["/account", () => <AccountPage />],
   ["/connections", () => <ConnectionsPage />],
   ["/system", () => <SystemPage />],
-  ["/pipeline", () => <PipelinePage />],
-  ["/pipeline/contracts", () => <ContractTemplatesPage />],
-  ["/pipeline/:id", (p) => <OpportunityPage id={p.id!} />],
+  ...staffRoutes(),
 ];
 
-function Routes() {
+// TEBOS's own staff pages: the same in the normal app and in the staff workspace.
+function staffRoutes(): Array<[string, (p: Record<string, string>) => ReactNode]> {
+  return [
+    ["/pipeline", () => <PipelinePage />],
+    ["/pipeline/contracts", () => <ContractTemplatesPage />],
+    ["/pipeline/team", () => <StaffTeamPage />],
+    ["/pipeline/:id", (p) => <OpportunityPage id={p.id!} />],
+    ["/sales", () => <SalesPlaybookPage />],
+  ];
+}
+const STAFF_ROUTES = staffRoutes();
+
+function Routes({ routes = ROUTES }: { routes?: typeof ROUTES }) {
   const path = usePath();
-  for (const [pattern, render] of ROUTES) {
+  for (const [pattern, render] of routes) {
     const params = matchPath(pattern, path);
     if (params) return render(params);
   }
@@ -75,6 +88,8 @@ function Gate() {
   // An invitation link works signed out (sign in first), with no organisation yet, or signed in elsewhere.
   const invite = matchPath("/invite/:token", path);
   if (invite && (state.phase === "signed_out" || state.phase === "no_organisation" || state.phase === "ready")) return <AcceptInvite token={invite.token!} />;
+  const staffInvite = matchPath("/staff-invite/:token", path);
+  if (staffInvite && (state.phase === "signed_out" || state.phase === "no_organisation" || state.phase === "ready")) return <StaffInvitePage token={staffInvite.token!} />;
   // The tour is public: it shows no data.
   if (path === "/tour") return <TourPage />;
   if (path === "/film") return <FilmPage />;
@@ -103,7 +118,11 @@ function Gate() {
       // Visitors land on the home page; everything else asks them to sign in.
       return path === "/" ? <LandingPage /> : <SignIn />;
     case "no_organisation":
-      return <CreateOrganisation />;
+      return (
+        <StaffProvider>
+          <NoOrganisation />
+        </StaffProvider>
+      );
     case "error":
       return (
         <div className="auth">
@@ -119,13 +138,33 @@ function Gate() {
     case "ready":
       return (
         <PeopleProvider>
-          <Shell>
-            <ProfilePrompt />
-            <Routes />
-          </Shell>
+          <StaffProvider>
+            <Shell>
+              <ProfilePrompt />
+              <Routes />
+            </Shell>
+          </StaffProvider>
         </PeopleProvider>
       );
   }
+}
+
+/**
+ * Signed in, but in no organisation. TEBOS's staff work from the staff
+ * workspace (a platform admin can still create an organisation from "/");
+ * anyone else is told how access works.
+ */
+function NoOrganisation() {
+  const { access, loading } = useStaff();
+  const path = usePath();
+  if (loading) return <div className="auth"><Loading label="Opening TEBOS" /></div>;
+  const staff = access?.sales || access?.maintainer;
+  if (!staff || (access?.admin && path === "/")) return <CreateOrganisation />;
+  return (
+    <StaffShell>
+      {path === "/" ? <PipelinePage /> : <Routes routes={STAFF_ROUTES} />}
+    </StaffShell>
+  );
 }
 
 export function App() {

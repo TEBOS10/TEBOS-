@@ -114,6 +114,13 @@ export async function installFakeSupabase(page: Page, opts: { signedIn?: boolean
     const wantsObject = (req.headers()["accept"] ?? "").includes("vnd.pgrst.object");
     const prefer = req.headers()["prefer"] ?? "";
 
+    if (req.method() === "DELETE") {
+      writes.push({ method: "DELETE", table: name!, body: Object.fromEntries(url.searchParams) });
+      const gone = table.filter((r) => matches(r, url.searchParams));
+      tables[name!] = table.filter((r) => !gone.includes(r));
+      return route.fulfill({ status: 204, headers, body: "" });
+    }
+
     if (req.method() === "POST" || req.method() === "PATCH") {
       const body = req.postDataJSON();
       writes.push({ method: req.method(), table: name!, body });
@@ -172,6 +179,30 @@ function answerRpc(tables: FakeSupabase["tables"], name: string, args: Record<st
     const c = (tables as Record<string, Array<Record<string, unknown>>>).contract_links?.find((x) => x.token === args.p_token);
     if (c) Object.assign(c, { status: "accepted", accepted_at: now, accepted_name: args.p_name });
     return now;
+  }
+  const t = tables as Record<string, Array<Record<string, unknown>>>;
+  if (name === "staff_directory") {
+    const roles = new Map<string, string[]>();
+    for (const a of t.platform_admins ?? []) roles.set(String(a.user_id), ["admin"]);
+    for (const s of t.platform_staff ?? []) roles.set(String(s.user_id), [...(roles.get(String(s.user_id)) ?? []), String(s.role)]);
+    return [...roles].map(([user_id, r]) => {
+      const p = (t.staff_profiles ?? []).find((x) => x.user_id === user_id);
+      return { user_id, display_name: p?.display_name ?? "Staff", email: p?.email ?? `${user_id}@tebos.test`, roles: r };
+    });
+  }
+  if (name === "create_staff_invitation") {
+    (t.staff_invitations ??= []).unshift({ id: crypto.randomUUID(), email: args.p_email.toLowerCase(), role: args.p_role, status: "pending", invited_by: USER_ID, accepted_by: null, created_at: now, expires_at: new Date(Date.now() + 7 * 864e5).toISOString(), accepted_at: null });
+    return "fixture-staff-token";
+  }
+  if (name === "staff_invitation_for_token") {
+    const i = (t.staff_invitation_links ?? []).find((x) => x.token === args.p_token);
+    return i ? [{ email: i.email, role: i.role, expires_at: new Date(Date.now() + 864e5).toISOString() }] : [];
+  }
+  if (name === "accept_staff_invitation") {
+    const i = (t.staff_invitation_links ?? []).find((x) => x.token === args.p_token);
+    if (!i) return null;
+    (t.platform_staff ??= []).push({ user_id: USER_ID, role: i.role, added_by: null, created_at: now });
+    return i.role;
   }
   if (name === "submit_interview_answers") {
     const session = tables.interview_sessions?.find((x) => x.id === args.p_session);

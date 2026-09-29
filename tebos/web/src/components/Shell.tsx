@@ -1,11 +1,10 @@
-import { Briefcase, Building2, CheckSquare, Gauge, Home, LogOut, Plug, ScanSearch, ShieldCheck, Sparkles, Stamp, Users } from "lucide-react";
+import { BookOpen, Briefcase, Building2, CheckSquare, Gauge, Home, LogOut, Plug, ScanSearch, ShieldCheck, Sparkles, Stamp, Users } from "lucide-react";
 import type { ReactNode } from "react";
 import { DEMO_BUSINESS } from "../demo/data";
 import { exitDemo, isDemo } from "../demo/mode";
 import { Link, usePath } from "../lib/router";
 import { useOrg } from "../lib/session";
-import { staffAccess } from "../lib/data";
-import { useQuery } from "../lib/useQuery";
+import { useStaff } from "../lib/staff";
 
 const NAV = [
   { to: "/", label: "Home", icon: Home, exact: true },
@@ -21,10 +20,12 @@ const NAV = [
 
 export function Shell({ children }: { children: ReactNode }) {
   const path = usePath();
-  const { organisation, organisations, switchOrganisation, role, db, session, userId } = useOrg();
-  // TEBOS's own staff also see the client pipeline
-  const staff = useQuery(() => (isDemo ? Promise.resolve(null) : staffAccess(db, userId)), [userId]);
-  const nav = staff.data?.sales || staff.data?.maintainer ? [...NAV, { to: "/pipeline", label: "Pipeline", icon: Briefcase, exact: false }] : NAV;
+  const { organisation, organisations, switchOrganisation, role, db, session } = useOrg();
+  // TEBOS's own staff also see the client pipeline and the sales playbook
+  const { access } = useStaff();
+  const nav = access?.sales || access?.maintainer
+    ? [...NAV, { to: "/pipeline", label: "Pipeline", icon: Briefcase, exact: false }, { to: "/sales", label: "Sales playbook", icon: BookOpen, exact: false }]
+    : NAV;
   return (
     <div className="shell">
       <aside className="sidebar no-print">

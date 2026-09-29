@@ -168,4 +168,11 @@ describe.skipIf(!enabled)("client pipeline against the TEBOS schema", () => {
     const row = (await pool.query("select attempts, sent_at, error from public.outbox_emails where opportunity_id = $1", [id])).rows[0];
     expect(row).toEqual({ attempts: 5, sent_at: null, error: "timeout" });
   });
+
+  it("keeps a lead from sales with the salesperson who added it", async () => {
+    await as(SALES, "insert into public.enquiries (plan, name, business, email, website, message) values ('growth', 'Lerato', 'Lerato Studio', 'lerato@leratostudio.co.za', 'leratostudio.co.za', 'Met at a founders breakfast')");
+    const id = ((await worker.runOnce()) as { id: string }).id;
+    const row = (await pool.query("select source, owner_id, status from public.opportunities where id = $1", [id])).rows[0];
+    expect(row).toEqual({ source: "sales", owner_id: SALES, status: "screened" });
+  });
 });

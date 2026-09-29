@@ -318,6 +318,22 @@ Worker settings:
 
 Staff roles: platform admins are in `platform_admins`, and `sales` and `maintainer` roles are in `platform_staff`.
 
+### The sales team (migrations `sales_team`, `sales_playbook`)
+
+- **Joining.** A platform admin invites a salesperson or maintainer on Pipeline → Staff. The link is bound to the
+  invited, confirmed email address, lasts 7 days and is shown once. Accepting it grants the staff role only: staff
+  are never members of a client's organisation. Staff without an organisation get a staff workspace (pipeline and
+  playbook) instead of the client app.
+- **Leads.** Sales add leads from their own outreach (Pipeline → Add a lead). The database decides where an enquiry
+  came from by who sent it: a salesperson's lead is `source = 'sales'` and owned by them; anyone else's is
+  `website`. A salesperson can take an unowned lead; only a platform admin reassigns one that has an owner.
+  Leads are screened and move through the pipeline like any enquiry.
+- **The playbook** (`/sales`): what TEBOS is, who to sell to, plans and prices, how a sale works, a call script,
+  message templates, objection handling, how to show the demo, and the rules (nothing of value before payment,
+  no promised results, no internal material leaves TEBOS). It lives in `public.sales_playbook`, readable only by
+  staff, so it is not in the public web bundle. Admins edit it in the app (audited). Prices are `{{placeholders}}`
+  filled from `src/domain/plans.ts`, so it can't quote a different price from the contract.
+
 ## Enquiry alerts
 
 Pricing-page enquiries (`public.enquiries`) are emailed to the team once, by the worker's `alerts` stage
