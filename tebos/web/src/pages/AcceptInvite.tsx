@@ -18,7 +18,7 @@ export function AcceptInvite({ token }: { token: string }) {
   const [expired, setExpired] = useState(false);
 
   if (state.phase === "signed_out") {
-    return <SignIn notice="You've been invited to TEBOS. Sign in, or create an account, with the email address the invitation was sent to." />;
+    return <SignIn allowSignUp notice="You've been invited to TEBOS. Sign in, or create an account, with the email address the invitation was sent to." />;
   }
   const email = state.phase === "ready" || state.phase === "no_organisation" ? state.session.user.email : null;
 

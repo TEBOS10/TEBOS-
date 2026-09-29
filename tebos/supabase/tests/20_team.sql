@@ -37,6 +37,8 @@ create function t2.as_user(p_id uuid, p_email text) returns void language sql as
 $$;
 grant execute on function t2.as_user(uuid, text) to authenticated;
 
+-- organisations are created by TEBOS's platform admins (migration invite_only)
+insert into public.platform_admins (user_id) values (:'admin');
 set role authenticated;
 select t2.as_user(:'admin', 'admin@team.test');
 select public.create_organisation('Team test', 'team-test') as org \gset

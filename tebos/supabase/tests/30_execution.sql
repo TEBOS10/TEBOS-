@@ -30,6 +30,8 @@ insert into auth.users (id, email, email_confirmed_at) values
   (:'admin', 'admin@exec.test', now()), (:'op', 'op@exec.test', now()), (:'appr', 'appr@exec.test', now()),
   (:'outsider', 'out@exec.test', now());
 
+-- organisations are created by TEBOS's platform admins (migration invite_only)
+insert into public.platform_admins (user_id) values (:'admin');
 set role authenticated;
 select set_config('request.jwt.claim.sub', :'admin', false);
 select public.create_organisation('Execution test', 'exec-test') as org \gset

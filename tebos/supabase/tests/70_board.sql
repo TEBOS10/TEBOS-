@@ -30,6 +30,8 @@ select '70000000-0000-0000-0000-00000000000a' as admin, '70000000-0000-0000-0000
 insert into auth.users (id, email, email_confirmed_at) values
   (:'admin', 'admin@board.test', now()), (:'outsider', 'outsider@board.test', now()), (:'viewer', 'viewer@board.test', now());
 
+-- organisations are created by TEBOS's platform admins (migration invite_only)
+insert into public.platform_admins (user_id) values (:'admin');
 set role authenticated;
 select set_config('request.jwt.claim.sub', :'admin', false);
 select public.create_organisation('Board test', 'board-test') as org \gset

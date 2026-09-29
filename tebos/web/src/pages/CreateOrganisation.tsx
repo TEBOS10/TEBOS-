@@ -1,10 +1,49 @@
 import { useState, type FormEvent } from "react";
 import { ErrorNote, Field } from "../components/ui";
-import { createOrganisation, slugify } from "../lib/data";
+import { createOrganisation, isPlatformAdmin, slugify } from "../lib/data";
 import { useSessionState } from "../lib/session";
+import { useQuery } from "../lib/useQuery";
 
-/** First run: the signed-in user creates their organisation and becomes its admin. */
+/**
+ * A signed-in account with no organisation. TEBOS is invite-only: only
+ * TEBOS's platform admins create organisations (for a client once their plan
+ * starts). Everyone else is told how access works, and sees nothing else.
+ */
 export function CreateOrganisation() {
+  const { db, state } = useSessionState();
+  const userId = state.phase === "no_organisation" ? state.session.user.id : "";
+  const admin = useQuery(() => isPlatformAdmin(db, userId), [userId]);
+  if (admin.loading && admin.data === undefined) return null;
+  return admin.data ? <NewOrganisation /> : <NoAccess />;
+}
+
+function NoAccess() {
+  const { db, state } = useSessionState();
+  const email = state.phase === "no_organisation" ? state.session.user.email : "";
+  return (
+    <div className="auth">
+      <div className="auth-card">
+        <div>
+          <p className="eyebrow">Signed in as {email}</p>
+          <h1 className="page-title">Your account isn't linked to an organisation yet</h1>
+          <p className="muted" style={{ marginTop: 6 }}>
+            TEBOS sets up your organisation when your plan starts. If you're joining a team, open the invitation link your
+            admin sent you, while signed in with this address.
+          </p>
+        </div>
+        <div className="row">
+          <a className="btn btn-primary" href="/pricing">See the plans</a>
+          <button type="button" className="btn" onClick={() => db.auth.signOut()}>
+            Sign out
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** For TEBOS's platform admins: create an organisation and become its admin. */
+function NewOrganisation() {
   const { db, refresh, state } = useSessionState();
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");

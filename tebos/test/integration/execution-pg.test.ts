@@ -84,6 +84,7 @@ describe.skipIf(!enabled)("provider execution against the TEBOS schema", () => {
     worker = new ExecutionWorker(store, [resend], { workerId: "it", sleep: async () => {} });
     await pool.query("insert into auth.users (id, email, email_confirmed_at) values ($1, 'a@x.test', now()), ($2, 'o@x.test', now()), ($3, 'p@x.test', now())",
       [ADMIN, OPERATOR, APPROVER]);
+    await pool.query("insert into public.platform_admins (user_id) values ($1)", [ADMIN]); // organisations are created by platform admins
     org = (await asUser<pg.QueryResult>(ADMIN, "select public.create_organisation('Execution IT', 'execution-it') as id")).rows[0].id;
     await asUser(ADMIN, "insert into public.memberships (org_id, user_id, role) values ($1, $2, 'operator'), ($1, $3, 'approver')", [org, OPERATOR, APPROVER]);
     biz = (await asUser<pg.QueryResult>(OPERATOR, "insert into public.businesses (org_id, name) values ($1, 'Clay') returning id", [org])).rows[0].id;
