@@ -40,3 +40,11 @@ describe("company contract draft", () => {
     expect(DRAFT_COMPANY_AGREEMENT).toContain("## 3. Term and ending the agreement");
   });
 });
+
+describe("sitemap", () => {
+  it("lists every blog article", async () => {
+    const { POSTS } = await import("./blog");
+    const xml = readFileSync(join(__dirname, "../../public/sitemap.xml"), "utf8");
+    for (const p of POSTS) expect(xml).toContain(`/blog/${p.slug}</loc>`);
+  });
+});

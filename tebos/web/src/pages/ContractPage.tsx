@@ -12,8 +12,17 @@ import { useQuery } from "../lib/useQuery";
 
 /** A small, safe renderer for the agreement text: headings, lists, bold and paragraphs. No HTML is ever injected. */
 export function AgreementText({ text }: { text: string }) {
+  // **bold**, and [links](…) to this site or to https addresses only
   const inline = (s: string): ReactNode[] =>
-    s.split(/(\*\*[^*]+\*\*)/g).map((part, i) => (part.startsWith("**") && part.endsWith("**") ? <strong key={i}>{part.slice(2, -2)}</strong> : <Fragment key={i}>{part}</Fragment>));
+    s.split(/(\*\*[^*]+\*\*|\[[^\]]+\]\([^)\s]+\))/g).map((part, i) => {
+      if (part.startsWith("**") && part.endsWith("**")) return <strong key={i}>{part.slice(2, -2)}</strong>;
+      const link = /^\[([^\]]+)\]\(([^)\s]+)\)$/.exec(part);
+      if (link && /^(\/(?!\/)|https:\/\/)/.test(link[2]!)) {
+        const external = link[2]!.startsWith("https://");
+        return <a key={i} href={link[2]} {...(external ? { target: "_blank", rel: "noreferrer noopener" } : {})}>{link[1]}</a>;
+      }
+      return <Fragment key={i}>{part}</Fragment>;
+    });
   const blocks = text.replace(/\r\n/g, "\n").split(/\n{2,}/);
   return (
     <div className="agreement">

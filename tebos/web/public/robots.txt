@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /contract/
+Disallow: /invite/
+Disallow: /staff-invite/
+Sitemap: https://tebos-demo.vercel.app/sitemap.xml
