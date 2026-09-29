@@ -155,6 +155,24 @@ export const objectiveMachine = machine({
   },
 });
 
+// The client pipeline: from enquiry to onboarded client (migration client_pipeline).
+// Staff decide approved / declined / cancelled; the server records the rest on proof.
+export const opportunityMachine = machine({
+  initial: ["new"],
+  transitions: {
+    new: ["screened", "cancelled"],
+    screened: ["approved", "declined", "cancelled"],
+    approved: ["awaiting_payment", "cancelled"],
+    awaiting_payment: ["paid", "cancelled"],
+    paid: ["contract_sent"],
+    contract_sent: ["contracted", "cancelled"],
+    contracted: ["onboarded"],
+    onboarded: [],
+    declined: [],
+    cancelled: [],
+  },
+});
+
 export const MACHINES = {
   scan: scanMachine,
   scan_target: scanTargetMachine,
@@ -167,6 +185,7 @@ export const MACHINES = {
   invitation: invitationMachine,
   interview: interviewMachine,
   objective: objectiveMachine,
+  opportunity: opportunityMachine,
 } as const;
 
 export type MachineName = keyof typeof MACHINES;
@@ -182,6 +201,7 @@ export type AgentRunStatus = StatesOf<typeof agentRunMachine>;
 export type InvitationStatus = StatesOf<typeof invitationMachine>;
 export type InterviewStatus = StatesOf<typeof interviewMachine>;
 export type ObjectiveStatus = StatesOf<typeof objectiveMachine>;
+export type OpportunityStatus = StatesOf<typeof opportunityMachine>;
 
 export function canTransition<M extends MachineName>(
   name: M,

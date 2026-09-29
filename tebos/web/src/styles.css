@@ -633,3 +633,14 @@ table.table { width: 100%; border-collapse: collapse; }
 .cb-key-glass { background: rgba(188, 211, 255, 0.35); border: 1px dashed #7fb2ff; }
 .cb-key-amber { background: #ffb04a; box-shadow: 0 0 8px #ffb04a; }
 .cb-key-column { width: 8px; height: 14px; border-radius: 3px; background: linear-gradient(0deg, #7fb2ff 60%, rgba(127, 178, 255, 0.15) 60%); }
+
+/* The client's agreement (public) */
+.contract-wrap { max-width: 820px; margin: 0 auto; padding: 24px 20px 64px; }
+.contract-card { background: #fff; color: #10151d; border-radius: 18px; padding: 32px clamp(20px, 5vw, 48px); box-shadow: 0 30px 80px -30px rgba(0, 0, 0, 0.8); }
+.contract-card h1 { margin: 0 0 12px; font-size: 28px; }
+.contract-card .lp-kicker { color: #3a6fd0; }
+.agreement h2 { font-size: 26px; margin: 8px 0 12px; }
+.agreement h3 { font-size: 17px; margin: 22px 0 6px; }
+.agreement p, .agreement li { line-height: 1.6; color: #2a313c; }
+.agreement ul { padding-left: 20px; }
+.contract-accept { margin-top: 28px; padding-top: 20px; border-top: 1px solid #e3e7ee; }

@@ -164,6 +164,15 @@ function answerRpc(tables: FakeSupabase["tables"], name: string, args: Record<st
     tables.memberships!.push({ org_id: invite.org_id, user_id: USER_ID, role: invite.role, created_at: now });
     return invite.org_id;
   }
+  if (name === "contract_for_token") {
+    const c = (tables as Record<string, Array<Record<string, unknown>>>).contract_links?.find((x) => x.token === args.p_token);
+    return c ? [{ title: c.title, body: c.body, body_hash: c.body_hash, business: c.business, status: c.status, expires_at: c.expires_at, accepted_at: c.accepted_at ?? null, accepted_name: c.accepted_name ?? null }] : [];
+  }
+  if (name === "accept_contract") {
+    const c = (tables as Record<string, Array<Record<string, unknown>>>).contract_links?.find((x) => x.token === args.p_token);
+    if (c) Object.assign(c, { status: "accepted", accepted_at: now, accepted_name: args.p_name });
+    return now;
+  }
   if (name === "submit_interview_answers") {
     const session = tables.interview_sessions?.find((x) => x.id === args.p_session);
     const answers = (args.p_answers as unknown as Array<{ answer: string }>).filter((a) => a.answer.trim());

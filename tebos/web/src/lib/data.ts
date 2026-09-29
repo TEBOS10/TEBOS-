@@ -914,3 +914,99 @@ export async function updateStep(db: Db, stepId: string, patch: Partial<Pick<Boa
 export async function retireStep(db: Db, stepId: string) {
   return must(await db.from("board_steps").update({ retired_at: new Date().toISOString() }).eq("id", stepId).select().single());
 }
+
+// ---------------------------------------------------------------------------
+// The client pipeline (TEBOS's own staff). Row-level security shows it only
+// to platform admins and people with the sales role; maintainers see the
+// clients they look after. The server records payments, contracts and
+// onboarding; people decide.
+// ---------------------------------------------------------------------------
+
+export type OpportunityRow = Row<"opportunities">;
+export type PaymentRow = Row<"payments">;
+export type ContractRow = Row<"contracts">;
+export type ContractTemplate = Row<"contract_templates">;
+export type OutboxEmail = Row<"outbox_emails">;
+
+export interface StaffAccess {
+  admin: boolean;
+  sales: boolean;
+  maintainer: boolean;
+}
+
+export async function staffAccess(db: Db, userId: string): Promise<StaffAccess> {
+  const [admin, roles] = await Promise.all([
+    db.from("platform_admins").select("user_id").eq("user_id", userId).maybeSingle(),
+    db.from("platform_staff").select("role").eq("user_id", userId),
+  ]);
+  const r = new Set((roles.data ?? []).map((x) => x.role));
+  const isAdmin = !admin.error && !!admin.data;
+  return { admin: isAdmin, sales: isAdmin || r.has("sales"), maintainer: isAdmin || r.has("maintainer") };
+}
+
+export async function listOpportunities(db: Db) {
+  return must(await db.from("opportunities").select("*").order("created_at", { ascending: false }).limit(500));
+}
+
+export async function getOpportunity(db: Db, id: string) {
+  const opportunity = maybe(await db.from("opportunities").select("*").eq("id", id).maybeSingle());
+  if (!opportunity) return null;
+  const [payments, contracts, emails] = await Promise.all([
+    db.from("payments").select("id, opportunity_id, provider, reference, amount_cents, currency, status, paid_at, note, recorded_by, created_at").eq("opportunity_id", id).order("created_at"),
+    db.from("contracts").select("id, opportunity_id, template_key, template_version, title, body, body_hash, status, sent_at, expires_at, accepted_at, accepted_name, accepted_ip, accepted_agent, created_at").eq("opportunity_id", id),
+    db.from("outbox_emails").select("id, opportunity_id, kind, to_email, subject, created_at, attempts, last_try, sent_at, error").eq("opportunity_id", id).order("created_at"),
+  ]);
+  return {
+    opportunity,
+    payments: (payments.data ?? []) as PaymentRow[],
+    contract: ((contracts.data ?? [])[0] ?? null) as ContractRow | null,
+    emails: (emails.data ?? []) as OutboxEmail[],
+  };
+}
+
+export async function decideOpportunity(db: Db, id: string, status: "approved" | "declined" | "cancelled", note: string | null) {
+  return must(await db.from("opportunities").update({ status, decision_note: note?.trim() || null }).eq("id", id).select().single());
+}
+
+export async function assignMaintainer(db: Db, id: string, userId: string | null) {
+  return must(await db.from("opportunities").update({ maintainer_id: userId }).eq("id", id).select().single());
+}
+
+/** An EFT seen on the bank statement, recorded by a platform admin in their own name. */
+export async function recordEft(db: Db, opportunityId: string, reference: string, amountCents: number, paidAt: string, note: string) {
+  const { error } = await db.from("payments").insert({
+    opportunity_id: opportunityId, provider: "manual", reference: reference.trim(), amount_cents: amountCents, status: "success", paid_at: paidAt, note: note.trim(),
+  });
+  if (error) throw error;
+}
+
+export async function listStaff(db: Db) {
+  return must(await db.from("platform_staff").select("*").order("created_at"));
+}
+
+export async function listContractTemplates(db: Db) {
+  return must(await db.from("contract_templates").select("*").order("plan").order("version", { ascending: false }));
+}
+
+export async function saveTemplateDraft(db: Db, t: { key: string; version: number; plan: string; title: string; body: string }) {
+  return must(await db.from("contract_templates").insert(t).select().single());
+}
+
+export async function updateTemplateDraft(db: Db, key: string, version: number, patch: { title: string; body: string }) {
+  return must(await db.from("contract_templates").update(patch).eq("key", key).eq("version", version).select().single());
+}
+
+export async function setTemplateStatus(db: Db, key: string, version: number, status: "approved" | "retired", note: string | null) {
+  return must(await db.from("contract_templates").update(status === "approved" ? { status, approval_note: note } : { status }).eq("key", key).eq("version", version).select().single());
+}
+
+// The client's side: no account, just the link.
+export async function contractForToken(db: Db, token: string) {
+  const { data, error } = await db.rpc("contract_for_token", { p_token: token });
+  if (error) throw error;
+  return (data ?? [])[0] ?? null;
+}
+
+export async function acceptContract(db: Db, token: string, name: string, bodyHash: string) {
+  return must(await db.rpc("accept_contract", { p_token: token, p_name: name, p_body_hash: bodyHash }));
+}

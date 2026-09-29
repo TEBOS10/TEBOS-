@@ -161,6 +161,24 @@ Next:
 - **Next:** add approved actions on BAME (assign a lead, chase an
   overdue deliverable) as their own capabilities.
 
+## Client pipeline (built 29 Sep 2026)
+
+The pipeline takes a client from enquiry through screening, a decision, Paystack payment and a contract accepted
+online, to onboarding with a maintainer. See the README for the details.
+
+To go live:
+1. A lawyer reviews TEBOS's draft agreement. Approve it on Pipeline → Contract templates, noting who approved it.
+2. Paystack:
+   - set `PAYSTACK_SECRET_KEY` on the worker;
+   - set the webhook URL to `https://<worker domain>/webhooks/paystack`.
+3. Resend: set `RESEND_API_KEY` and a verified sender (`PIPELINE_EMAIL_FROM`).
+4. Add staff: `sales` for the sales team and `maintainer` for the people who look after clients (`platform_staff`).
+
+Next:
+- a sales role page with the sales playbook and scripts;
+- monthly billing after the first month;
+- the maintainer's queue, fed from each client's live readings and missed objectives.
+
 ## Go to market
 
 - **Public site:** home page with the narrated film (`/`), interactive demo (`/demo`), animated tour

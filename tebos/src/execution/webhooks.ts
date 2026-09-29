@@ -10,6 +10,7 @@
 
 import { createServer, type IncomingMessage, type Server } from "node:http";
 import { parseResendWebhook, verifyResendSignature } from "./resend";
+import { handlePaystackWebhook, type PaystackWebhookStore } from "../pipeline/paystack-webhook";
 import type { DeliveryResult } from "./provider";
 
 export interface WebhookStore {
@@ -81,8 +82,13 @@ function readBody(req: IncomingMessage): Promise<string | null> {
   });
 }
 
+export interface WebhookOptions {
+  /** Paystack payment confirmations (POST /webhooks/paystack), when a secret key is configured. */
+  paystack?: { secretKey: string; store: PaystackWebhookStore };
+}
+
 /** A minimal HTTP server: provider webhooks and a health check. Nothing else is exposed. */
-export function createWebhookServer(store: WebhookStore, log: (e: Record<string, unknown>) => void = () => {}): Server {
+export function createWebhookServer(store: WebhookStore, log: (e: Record<string, unknown>) => void = () => {}, options: WebhookOptions = {}): Server {
   return createServer(async (req, res) => {
     const send = (status: number, body: string) => {
       res.writeHead(status, { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" });
@@ -91,6 +97,16 @@ export function createWebhookServer(store: WebhookStore, log: (e: Record<string,
     try {
       const url = new URL(req.url ?? "/", "http://worker.local");
       if (req.method === "GET" && url.pathname === "/health") return send(200, "ok");
+      if (url.pathname === "/webhooks/paystack") {
+        if (!options.paystack) return send(404, "not found");
+        if (req.method !== "POST") return send(405, "method not allowed");
+        const body = await readBody(req);
+        if (body === null) return send(413, "too large");
+        const signature = (req.headers["x-paystack-signature"] as string | undefined) ?? null;
+        const out = await handlePaystackWebhook(options.paystack.store, options.paystack.secretKey, signature, body, log);
+        log({ event: "webhook.paystack", status: out.status, detail: out.body });
+        return send(out.status, out.body);
+      }
       const m = /^\/webhooks\/resend\/([^/]+)$/.exec(url.pathname);
       if (!m) return send(404, "not found");
       if (req.method !== "POST") return send(405, "method not allowed");
