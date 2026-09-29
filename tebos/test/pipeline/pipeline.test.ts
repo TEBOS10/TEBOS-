@@ -1,6 +1,6 @@
 import { createHmac } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import { formatRand, PLAN_TERMS } from "../../src/domain/plans";
+import { feeTerms, formatRand, PLAN_TERMS } from "../../src/domain/plans";
 import { renderContract, sha256 } from "../../src/pipeline/contract";
 import { parsePaystackEvent, PaystackGateway, verifyPaystackSignature } from "../../src/pipeline/paystack";
 import { handlePaystackWebhook, type PaystackWebhookStore } from "../../src/pipeline/paystack-webhook";
@@ -38,6 +38,17 @@ describe("plans", () => {
     expect(formatRand(PLAN_TERMS.starter.monthlyCents!)).toBe("R2,500");
     expect(formatRand(PLAN_TERMS.growth.monthlyCents!)).toBe("R7,500");
     expect(PLAN_TERMS.equity.monthlyCents).toBeNull();
+  });
+
+  it("takes the first month from small businesses, and a one-off Company Diagnostic from companies", () => {
+    expect(PLAN_TERMS.starter.firstPaymentCents).toBe(PLAN_TERMS.starter.monthlyCents);
+    expect(PLAN_TERMS.growth.firstPaymentCents).toBe(PLAN_TERMS.growth.monthlyCents);
+    expect(formatRand(PLAN_TERMS.company.firstPaymentCents!)).toBe("R15,000");
+    expect(PLAN_TERMS.company.monthlyCents).toBeNull(); // scoped in a proposal
+    expect(PLAN_TERMS.equity.firstPaymentCents).toBeNull();
+    expect(feeTerms("starter")).toBe("R2,500 per month, excluding VAT");
+    expect(feeTerms("company")).toBe("R15,000 once, excluding VAT, for the Company Diagnostic; the monthly fee after it (from R25,000 per month) is agreed in a written proposal");
+    expect(feeTerms("equity")).toBe("no fees");
   });
 });
 

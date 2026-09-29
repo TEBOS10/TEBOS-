@@ -316,6 +316,13 @@ Worker settings:
 | `PIPELINE_EMAIL_FROM` | The sender, e.g. `TEBOS <hello@yourdomain.com>`. It defaults to `ENQUIRY_ALERT_FROM`. |
 | `TEBOS_SITE_URL` | The public site used in links. The default is `https://tebos-demo.vercel.app`. |
 
+Plans (`src/domain/plans.ts`, one source for the pricing page, the payment and the contract):
+- small businesses: Diagnostic (R2,500/month) and Architecture & Operations (R7,500/month), first month paid
+  upfront;
+- established companies (about 20–200 people): Company Operating Architecture, a one-off R15,000 Company
+  Diagnostic paid upfront, then a monthly fee (from R25,000) agreed in a written proposal;
+- equity partnership: no fees.
+
 Staff roles: platform admins are in `platform_admins`, and `sales` and `maintainer` roles are in `platform_staff`.
 
 ### The sales team (migrations `sales_team`, `sales_playbook`)

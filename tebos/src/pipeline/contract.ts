@@ -3,7 +3,7 @@
 // sent.
 
 import { createHash, randomBytes } from "node:crypto";
-import { formatRand, PLAN_TERMS, type PlanKey } from "../domain/plans";
+import { feeTerms, PLAN_TERMS, type PlanKey } from "../domain/plans";
 
 export const PLACEHOLDERS = ["business", "contact_name", "email", "plan_name", "monthly_fee", "deliverables", "date", "reference"] as const;
 export type Placeholder = (typeof PLACEHOLDERS)[number];
@@ -26,7 +26,7 @@ export function renderContract(template: string, f: ContractFacts): Rendered {
     contact_name: f.contactName,
     email: f.email,
     plan_name: terms.name,
-    monthly_fee: terms.monthlyCents === null ? "no monthly fee" : `${formatRand(terms.monthlyCents)} per month, excluding VAT`,
+    monthly_fee: feeTerms(f.plan),
     deliverables: terms.deliverables.map((d) => `- ${d}`).join("\n"),
     date: f.date.toISOString().slice(0, 10),
     reference: f.reference,

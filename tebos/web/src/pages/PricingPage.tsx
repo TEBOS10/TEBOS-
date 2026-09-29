@@ -61,7 +61,7 @@ export function PricingPage() {
       <section className="pr-head">
         <p className="lp-kicker">Pricing</p>
         <h1 className="lp-title">Pay monthly, or grow together.</h1>
-        <p className="lp-sub">Start with a diagnostic of how the business runs. Move to architecture and operations when you're ready. Or, if you can't pay upfront yet, grow together through an equity partnership.</p>
+        <p className="lp-sub">Small businesses start with a diagnostic of how the business runs, and move to architecture and operations when they're ready. Established companies start with a Company Diagnostic and a proposal scoped to them. Or, if you can't pay upfront yet, grow together through an equity partnership.</p>
       </section>
 
       <section className="pr-plans" aria-label="Plans">
@@ -78,6 +78,9 @@ export function PricingPage() {
           </article>
         ))}
       </section>
+      <p className="pr-small" data-testid="international">
+        Outside South Africa? Every plan is available. You pay by card on a secure Paystack page, in Rand; Company proposals can be quoted in US dollars, euros or pounds.
+      </p>
       <p className="pr-small">Prices exclude VAT. The equity partnership is subject to a fit assessment, a valuation and a signed shareholder agreement; nothing on this page is an offer or a commitment by either side.</p>
 
       <section className="pr-form-wrap" id="start">

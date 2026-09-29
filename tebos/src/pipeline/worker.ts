@@ -128,7 +128,7 @@ export class PipelineWorker {
     if (!this.gateway) return null;
     const o = await this.store.nextAwaitingLink();
     if (!o) return null;
-    const cents = PLAN_TERMS[o.plan].monthlyCents;
+    const cents = PLAN_TERMS[o.plan].firstPaymentCents;
     if (cents === null) return null; // equity applications stop at approved
     const reference = `tebos-${o.id}`;
     const link = await this.gateway.createPaymentPage({
@@ -145,7 +145,7 @@ export class PipelineWorker {
     await this.store.recordPaymentLink(o.id, cents, link.url, link.reference, message(o, "payment_link", `Your TEBOS ${PLAN_TERMS[o.plan].name}: payment link`, [
       `Hi ${o.contactName},`,
       ``,
-      `Thank you for choosing TEBOS. To start your ${PLAN_TERMS[o.plan].name} for ${o.business}, please pay the first month here:`,
+      `Thank you for choosing TEBOS. To start your ${PLAN_TERMS[o.plan].name} for ${o.business}, please pay ${PLAN_TERMS[o.plan].firstPaymentFor} here:`,
       link.url,
       ``,
       `The payment is taken by Paystack; TEBOS never sees your card details. As soon as it goes through we'll email your agreement to read and accept.`,
