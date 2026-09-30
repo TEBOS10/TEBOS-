@@ -688,3 +688,12 @@ table.table { width: 100%; border-collapse: collapse; }
 .sc-talk { display: grid; gap: 12px; margin-top: 32px; padding: 24px; border-radius: 16px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.1); }
 .blog-wrap .pr-small { padding: 0; margin: 4px 0 10px; text-align: left; }
 .blog-wrap .pr-small a, .sc-fixes a, .sc-talk a, .sc-form a { color: var(--lime); }
+
+/* Public navigation on phones: brand on its own line, links wrap beneath */
+@media (max-width: 640px) {
+  .lp-nav { flex-wrap: wrap; gap: 12px; padding: 16px; }
+  .lp-links { flex-wrap: wrap; gap: 8px 14px; font-size: 14px; }
+  .lp-links .lp-signin { padding: 6px 10px; }
+  .blog-wrap { padding: 20px 16px 56px; }
+  .sc-card { padding: 22px; }
+}
