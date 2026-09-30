@@ -112,6 +112,16 @@ export function companyFacts(raw: unknown): ParsedSnapshot {
     });
   }
 
+  const m = obj(s.maintenance);
+  if (num(m.items_open) !== null) {
+    const open = n0(m.items_open);
+    add("maintenance.queue", open === 0
+      ? `Maintainers have nothing open on their clients (${n0(m.closed_30_days)} closed in the last 30 days).`
+      : `Maintainers have ${plural(open, "item")} open on their clients, ${n0(m.items_high)} high priority; the oldest was raised ${plural(n0(m.oldest_open_days), "day")} ago.`, {
+      open, high: n0(m.items_high), oldest_open_days: n0(m.oldest_open_days), closed_30_days: n0(m.closed_30_days),
+    });
+  }
+
   if (facts.length === 0) return { ok: false, reason: "The snapshot held no figures" };
   return { ok: true, takenAt: s.taken_at, hash: snapshotHash(s), facts };
 }

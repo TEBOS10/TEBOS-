@@ -25,7 +25,7 @@ export function Shell({ children }: { children: ReactNode }) {
   const { access } = useStaff();
   const nav = access?.sales || access?.maintainer
     ? [...NAV, { to: "/pipeline", label: "Pipeline", icon: Briefcase, exact: false }, { to: "/sales", label: "Sales playbook", icon: BookOpen, exact: false },
-       ...(access?.maintainer ? [{ to: "/pipeline/queue", label: "Delivery queue", icon: ListChecks, exact: true }] : []),
+       ...(access?.maintainer ? [{ to: "/pipeline/queue", label: "Maintainer queue", icon: ListChecks, exact: true }] : []),
        ...(access?.admin ? [{ to: "/pipeline/billing", label: "Billing", icon: Receipt, exact: true }] : [])]
     : NAV;
   return (

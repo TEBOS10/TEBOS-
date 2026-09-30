@@ -22,6 +22,9 @@
 //                   through Resend (when RESEND_API_KEY is set)
 //   billing       — each active client's monthly invoice on its date, its Paystack
 //                   payment link, and reminders when it's late (never charges a card)
+//   maintenance   — hourly per client, the maintainer's queue from their live records:
+//                   objectives slipping or unmeasured, connections broken, findings and
+//                   approvals waiting (raised, refreshed and resolved automatically)
 // When PORT is set (Railway sets it), an HTTP server also receives provider
 // webhooks at /webhooks/resend/<connection id> and /webhooks/paystack, and
 // answers /health.
@@ -58,6 +61,8 @@ import { PgPipelineStore } from "./pipeline/pg-store";
 import { PipelineWorker } from "./pipeline/worker";
 import { PgBillingStore } from "./billing/pg-store";
 import { BillingWorker } from "./billing/worker";
+import { PgMaintenanceStore } from "./maintenance/pg-store";
+import { MaintenanceWorker } from "./maintenance/worker";
 
 const url = process.env.TEBOS_DATABASE_URL;
 if (!url) {
@@ -128,6 +133,7 @@ const pipeline = new PipelineWorker(pipelineStore, paystackKey ? new PaystackGat
 const billing = new BillingWorker(new PgBillingStore(pool, `billing-worker:${workerId}`), paystackKey ? new PaystackGateway(paystackKey) : null, {
   siteUrl: (process.env.TEBOS_SITE_URL || "https://tebos-demo.vercel.app").replace(/\/+$/, ""),
 }, log);
+const maintenance = new MaintenanceWorker(new PgMaintenanceStore(pool, `maintenance-worker:${workerId}`), log);
 
 const port = process.env.PORT ? Number(process.env.PORT) : null;
 const server = port ? createWebhookServer(executionStore, log, paystackKey ? { paystack: { secretKey: paystackKey, store: pipelineStore } } : {}) : null;
@@ -167,7 +173,8 @@ while (!stopping) {
   const alerted = alerts && !stopping ? await step("alerts", () => alerts.runOnce()) : false;
   const piped = !stopping ? await step("pipeline", () => pipeline.runOnce()) : false;
   const billed = !stopping ? await step("billing", () => billing.runOnce()) : false;
-  if (!acquired && !analysed && !executed && !interviewed && !monitored && !alerted && !piped && !billed && !stopping) await new Promise((r) => setTimeout(r, pollMs));
+  const maintained = !stopping ? await step("maintenance", () => maintenance.runOnce()) : false;
+  if (!acquired && !analysed && !executed && !interviewed && !monitored && !alerted && !piped && !billed && !maintained && !stopping) await new Promise((r) => setTimeout(r, pollMs));
 }
 await new Promise<void>((r) => (server ? server.close(() => r()) : r()));
 await pool.end();
