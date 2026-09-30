@@ -40,6 +40,7 @@ const MESSAGES: Record<RuleCode, string> = {
   TEBOS_PAYMENT_UNPROVEN: "A payment counts only once the payment provider confirms it (or an EFT is recorded with its reference by a TEBOS admin).",
   TEBOS_CONTRACT_UNSIGNED: "The contract hasn't been sent or accepted yet.",
   TEBOS_CONTRACT_UNAPPROVED: "Contracts can only be sent from a template a lawyer has approved. Approve the template first.",
+  TEBOS_RATE_LIMITED: "Too many submissions from here in the last hour. Please try again later.",
   TEBOS_EVIDENCE_REQUIRED: "To mark this as observed, link evidence that was actually obtained. Otherwise record it as stated.",
 };
 
