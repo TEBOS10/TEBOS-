@@ -104,3 +104,12 @@ describe("invitation links", () => {
     expect(matchPath("/invite/:token", "/invite/abc%2Bdef%2F1")).toEqual({ token: "abc+def/1" });
   });
 });
+
+describe("billing dates", () => {
+  it("shows a calendar day with no time", async () => {
+    const { day } = await import("./format");
+    expect(day("2026-10-15")).toBe("15 Oct 2026");
+    expect(day("2026-10-15T23:30:00Z")).toBe("15 Oct 2026");
+    expect(day(null)).toBe("—");
+  });
+});

@@ -19,6 +19,12 @@ export function when(iso: string | null | undefined): string {
   return new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
 }
 
+/** A calendar date ("2026-10-15") as "15 Oct 2026", with no time: billing dates are days, not moments. */
+export function day(isoDate: string | null | undefined): string {
+  if (!isoDate) return "—";
+  return new Date(`${isoDate.slice(0, 10)}T00:00:00Z`).toLocaleDateString("en-ZA", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+}
+
 export function ago(iso: string | null | undefined, now = Date.now()): string {
   if (!iso) return "never";
   const s = Math.round((now - new Date(iso).getTime()) / 1000);
