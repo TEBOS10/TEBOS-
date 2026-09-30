@@ -5,7 +5,7 @@ import { Card, Empty, ErrorNote, Loading } from "../components/ui";
 import { DeliveryStep } from "../components/DeliveryPlan";
 import { deliveryFor, homeSummary, orgInvoices, requestScan } from "../lib/data";
 import { formatRand } from "@core/plans";
-import { ago, normaliseWebsite } from "../lib/format";
+import { ago, day, normaliseWebsite } from "../lib/format";
 import { Link, navigate } from "../lib/router";
 import { useOrg } from "../lib/session";
 import { useQuery } from "../lib/useQuery";
@@ -58,7 +58,7 @@ function ClientInvoices() {
           <li key={i.id}>
             <div className="list-main">
               <span className="list-title">{i.number} · {formatRand(i.amount_cents)} <span className="faint">excl. VAT</span></span>
-              <span className="list-meta">For {i.period_start} to {i.period_end} · due {i.due_on}{i.paid_at ? ` · paid ${ago(i.paid_at)}` : ""}</span>
+              <span className="list-meta">For {day(i.period_start)} to {day(i.period_end)} · due {day(i.due_on)}{i.paid_at ? ` · paid ${ago(i.paid_at)}` : ""}</span>
             </div>
             {i.status === "open" && i.payment_url
               ? <a className="btn btn-sm btn-primary" href={i.payment_url} target="_blank" rel="noreferrer noopener">Pay now</a>

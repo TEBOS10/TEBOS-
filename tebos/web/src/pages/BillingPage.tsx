@@ -17,7 +17,7 @@ import {
   type BillingAccount,
   type Invoice,
 } from "../lib/data";
-import { when } from "../lib/format";
+import { day } from "../lib/format";
 import { Link } from "../lib/router";
 import { useSignedIn } from "../lib/session";
 import { useQuery } from "../lib/useQuery";
@@ -99,7 +99,7 @@ function AccountRow({ account: a, client, onChanged }: { account: BillingAccount
           <span className="list-title">{client}</span>
           <span className="list-meta">
             {planName(a.plan)} · {a.monthly_cents ? `${formatRand(a.monthly_cents)} a month` : "fee not set"}
-            {a.status === "active" && a.next_invoice_on ? ` · next invoice ${when(a.next_invoice_on)}` : ""}
+            {a.status === "active" && a.next_invoice_on ? ` · next invoice ${day(a.next_invoice_on)}` : ""}
             {a.status_note ? ` · ${a.status_note}` : ""}
           </span>
         </div>
@@ -165,7 +165,7 @@ function InvoiceRow({ invoice: i, client, onChanged }: { invoice: Invoice; clien
         <div className="list-main">
           <span className="list-title">{i.number} · {client} · {formatRand(i.amount_cents)}</span>
           <span className="list-meta">
-            {when(i.period_start)} to {when(i.period_end)} · due {when(i.due_on)}
+            {day(i.period_start)} to {day(i.period_end)} · due {day(i.due_on)}
             {i.status === "open" && !i.payment_url ? " · payment link waits for the Paystack key" : ""}
             {i.void_reason ? ` · void: ${i.void_reason}` : ""}
           </span>
