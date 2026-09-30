@@ -8,6 +8,7 @@ Update this list every run; strike items when they're done.
 
 | # | Decision | What it unblocks |
 |---|---|---|
+| 0 | **Set BAME's 2–3 objectives, each with an owner and a date** (or tell the loop to build ahead of this gate) | **The product.** The roadmap's first gate ("map one real business") waits only on this. After it come findings linked to flows, TEBOS proposing rules and owners for founder-only steps, and generated operating systems |
 | 1 | Paystack secret key on the worker, and the webhook `https://tebos-worker-production.up.railway.app/webhooks/paystack` | Taking the first payment, and monthly invoices |
 | 2 | Resend key and a verified sending domain | Every client email: payment links, contracts, invoices, reminders |
 | 3 | A lawyer approves the contract templates (standard and company) and advises on POPIA | Signing clients |
