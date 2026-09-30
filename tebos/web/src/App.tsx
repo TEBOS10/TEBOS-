@@ -40,6 +40,7 @@ import { BlogIndex, BlogPost } from "./pages/BlogPage";
 import { LegalPage } from "./pages/LegalPage";
 import { SelfCheckPage, SelfCheckShared } from "./pages/SelfCheckPage";
 import { DeliveryQueuePage } from "./pages/DeliveryPage";
+import { BillingPage } from "./pages/BillingPage";
 import { StaffProvider, useStaff } from "./lib/staff";
 import { TeamPage } from "./pages/TeamPage";
 
@@ -72,6 +73,7 @@ function staffRoutes(): Array<[string, (p: Record<string, string>) => ReactNode]
     ["/pipeline/contracts", () => <ContractTemplatesPage />],
     ["/pipeline/team", () => <StaffTeamPage />],
     ["/pipeline/queue", () => <DeliveryQueuePage />],
+    ["/pipeline/billing", () => <BillingPage />],
     ["/pipeline/:id", (p) => <OpportunityPage id={p.id!} />],
     ["/sales", () => <SalesPlaybookPage />],
   ];

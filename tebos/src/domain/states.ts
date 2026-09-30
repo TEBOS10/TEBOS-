@@ -173,6 +173,28 @@ export const opportunityMachine = machine({
   },
 });
 
+// Monthly billing (migration monthly_billing). A Company-plan account waits for
+// its fee from the agreed proposal; a person pauses, resumes or ends billing.
+export const billingMachine = machine({
+  initial: ["awaiting_fee", "active"],
+  transitions: {
+    awaiting_fee: ["active", "ended"],
+    active: ["paused", "ended"],
+    paused: ["active", "ended"],
+    ended: [],
+  },
+});
+
+// An invoice is open until a confirmed payment of its amount marks it paid, or a person voids it with a reason.
+export const invoiceMachine = machine({
+  initial: ["open"],
+  transitions: {
+    open: ["paid", "void"],
+    paid: [],
+    void: [],
+  },
+});
+
 export const MACHINES = {
   scan: scanMachine,
   scan_target: scanTargetMachine,
@@ -186,6 +208,8 @@ export const MACHINES = {
   interview: interviewMachine,
   objective: objectiveMachine,
   opportunity: opportunityMachine,
+  billing: billingMachine,
+  invoice: invoiceMachine,
 } as const;
 
 export type MachineName = keyof typeof MACHINES;

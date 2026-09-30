@@ -1134,3 +1134,59 @@ export async function submitSelfCheck(db: Db, answers: number[], size: string | 
   if (error) throw error;
   return data as number;
 }
+
+// ---------------------------------------------------------------------------
+// Monthly billing. TEBOS issues invoices and payment links; people set a
+// Company fee, pause or end billing, void an invoice or record an EFT, each
+// with a reason. The client's team sees their own invoices.
+// ---------------------------------------------------------------------------
+
+export type BillingAccount = Row<"billing_accounts">;
+export type Invoice = Row<"invoices">;
+
+export async function billingOverview(db: Db) {
+  const [accounts, invoices] = await Promise.all([
+    db.from("billing_accounts").select("*").order("created_at"),
+    db.from("invoices").select("*").order("issued_on", { ascending: false }).limit(500),
+  ]);
+  const acc = must(accounts) as BillingAccount[];
+  const ids = [...new Set(acc.map((a) => a.opportunity_id))];
+  const clients = ids.length ? must(await db.from("opportunities").select("id, business, plan, email").in("id", ids)) : [];
+  return { accounts: acc, invoices: must(invoices) as Invoice[], clients };
+}
+
+export async function orgInvoices(db: Db, orgId: string) {
+  return must(await db.from("invoices").select("*").eq("org_id", orgId).order("issued_on", { ascending: false }).limit(24)) as Invoice[];
+}
+
+/** A Company-plan fee from the agreed proposal, and the first invoice date: billing starts. */
+export async function startBilling(db: Db, id: string, monthlyCents: number, firstInvoiceOn: string, note: string) {
+  const { error } = await db.from("billing_accounts").update({
+    monthly_cents: monthlyCents, fee_note: note.trim(), next_invoice_on: firstInvoiceOn, status: "active", status_note: note.trim(),
+  }).eq("id", id);
+  if (error) throw error;
+}
+
+export async function setBillingStatus(db: Db, id: string, status: "active" | "paused" | "ended", note: string) {
+  const { error } = await db.from("billing_accounts").update({ status, status_note: note.trim() }).eq("id", id);
+  if (error) throw error;
+}
+
+export async function changeFee(db: Db, id: string, monthlyCents: number, note: string) {
+  const { error } = await db.from("billing_accounts").update({ monthly_cents: monthlyCents, fee_note: note.trim() }).eq("id", id);
+  if (error) throw error;
+}
+
+export async function voidInvoice(db: Db, id: string, reason: string) {
+  const { error } = await db.from("invoices").update({ status: "void", void_reason: reason.trim() }).eq("id", id);
+  if (error) throw error;
+}
+
+/** An EFT seen on the bank statement, against an invoice; the database marks the invoice paid if it covers it. */
+export async function recordInvoiceEft(db: Db, inv: Invoice, reference: string, amountCents: number, paidAt: string, note: string) {
+  const { error } = await db.from("payments").insert({
+    opportunity_id: inv.opportunity_id, invoice_id: inv.id, provider: "manual", reference: reference.trim(), amount_cents: amountCents,
+    status: "success", paid_at: paidAt, note: note.trim(),
+  });
+  if (error) throw error;
+}

@@ -3,7 +3,8 @@ import { useState, type FormEvent } from "react";
 import { ScanRow } from "../components/ScanRow";
 import { Card, Empty, ErrorNote, Loading } from "../components/ui";
 import { DeliveryStep } from "../components/DeliveryPlan";
-import { deliveryFor, homeSummary, requestScan } from "../lib/data";
+import { deliveryFor, homeSummary, orgInvoices, requestScan } from "../lib/data";
+import { formatRand } from "@core/plans";
 import { ago, normaliseWebsite } from "../lib/format";
 import { Link, navigate } from "../lib/router";
 import { useOrg } from "../lib/session";
@@ -23,6 +24,7 @@ export function HomePage() {
       {summary.loading && !summary.data && <Loading />}
       <ErrorNote error={summary.error} title="Couldn't load the command centre" />
       <ClientDelivery />
+      <ClientInvoices />
       {summary.data && <Overview data={summary.data} />}
     </div>
   );
@@ -38,6 +40,31 @@ function ClientDelivery() {
     <Card title="Your TEBOS delivery plan" subtitle={`${done} of ${q.data.length} steps done. Your maintainer closes each step with a note of what was done.`}>
       <ul className="list" data-testid="client-delivery">
         {q.data.map((t) => <DeliveryStep key={t.id} task={t} canClose={false} />)}
+      </ul>
+    </Card>
+  );
+}
+
+/** For TEBOS's clients: their invoices, with a pay link for open ones. Shown only when there are any. */
+function ClientInvoices() {
+  const { db, organisation } = useOrg();
+  const q = useQuery(() => orgInvoices(db, organisation.id), [organisation.id]);
+  if (!q.data || q.data.length === 0) return null;
+  const open = q.data.filter((i) => i.status === "open");
+  return (
+    <Card title="Your TEBOS invoices" subtitle={open.length ? `${open.length} to pay. Pay securely through Paystack; TEBOS never sees your card.` : "All paid. Thank you."}>
+      <ul className="list" data-testid="client-invoices">
+        {q.data.map((i) => (
+          <li key={i.id}>
+            <div className="list-main">
+              <span className="list-title">{i.number} · {formatRand(i.amount_cents)} <span className="faint">excl. VAT</span></span>
+              <span className="list-meta">For {i.period_start} to {i.period_end} · due {i.due_on}{i.paid_at ? ` · paid ${ago(i.paid_at)}` : ""}</span>
+            </div>
+            {i.status === "open" && i.payment_url
+              ? <a className="btn btn-sm btn-primary" href={i.payment_url} target="_blank" rel="noreferrer noopener">Pay now</a>
+              : <span className="list-meta">{i.status === "paid" ? "Paid" : i.status === "void" ? "Cancelled" : "Payment link on its way"}</span>}
+          </li>
+        ))}
       </ul>
     </Card>
   );

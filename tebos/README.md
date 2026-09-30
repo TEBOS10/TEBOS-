@@ -370,6 +370,25 @@ says what "done" means.
 - The client's team sees their plan, read-only, on their home page.
 - TEBOS's own board counts open and overdue steps and on-time completion (`delivery.steps`).
 
+## Monthly billing (migration `monthly_billing`)
+
+After the first payment, TEBOS bills each client monthly (`src/domain/billing.ts`, `src/billing/`):
+
+- **Accounts.** Onboarding opens a billing account. Small-business plans are active immediately, billed on the
+  same day each month as the first payment. A Company-plan account waits until a platform admin sets the fee
+  from the agreed proposal, with a note saying which.
+- **Invoices.** On the date, the worker issues the invoice (numbered `TEBOS-YYYY-NNNN`, due in 7 days), creates
+  a Paystack payment page and emails it; reminders go out at 3 and 10 days late. An issued invoice never
+  changes; a confirmed payment of its full amount (Paystack's signed webhook, or an EFT a platform admin
+  records) marks it paid.
+- **People decide:** TEBOS never charges a card (money is tier 3). Pausing a client more than 14 days late,
+  ending billing, voiding an invoice and recording an EFT are a platform admin's decisions, each with a reason
+  (Pipeline → Billing).
+- Clients see their invoices, with a pay link, on their home page. TEBOS's own board counts monthly recurring
+  revenue and what's overdue (`billing.recurring`).
+- Amounts exclude VAT. Once TEBOS is VAT-registered, invoices need its VAT number and VAT added to be tax
+  invoices.
+
 ## Enquiry alerts
 
 Pricing-page enquiries (`public.enquiries`) are emailed to the team once, by the worker's `alerts` stage

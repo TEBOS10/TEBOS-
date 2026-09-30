@@ -1879,6 +1879,7 @@ export type Database = {
         Row: {
           id: string
           opportunity_id: string
+          invoice_id: string | null
           provider: string
           reference: string
           amount_cents: number
@@ -1890,6 +1891,7 @@ export type Database = {
           created_at: string
         }
         Insert: {
+          invoice_id?: string | null
           id?: string
           opportunity_id: string
           provider: string
@@ -1950,6 +1952,74 @@ export type Database = {
           role?: string
           added_by?: string | null
           created_at?: string
+        }
+        Relationships: []
+      }
+      billing_accounts: {
+        Row: {
+          id: string
+          opportunity_id: string
+          org_id: string
+          plan: string
+          monthly_cents: number | null
+          currency: string
+          anchor_day: number | null
+          next_invoice_on: string | null
+          status: string
+          fee_note: string | null
+          status_note: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          opportunity_id: string
+          org_id: string
+          plan: string
+          status: string
+        }
+        Update: {
+          monthly_cents?: number | null
+          next_invoice_on?: string | null
+          status?: string
+          fee_note?: string | null
+          status_note?: string | null
+        }
+        Relationships: []
+      }
+      invoices: {
+        Row: {
+          id: string
+          number: string
+          billing_account_id: string
+          opportunity_id: string
+          org_id: string
+          period_start: string
+          period_end: string
+          amount_cents: number
+          currency: string
+          status: string
+          issued_on: string
+          due_on: string
+          paid_at: string | null
+          payment_url: string | null
+          payment_reference: string | null
+          void_reason: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          billing_account_id: string
+          opportunity_id: string
+          org_id: string
+          period_start: string
+          period_end: string
+          amount_cents: number
+          due_on: string
+        }
+        Update: {
+          status?: string
+          void_reason?: string | null
         }
         Relationships: []
       }

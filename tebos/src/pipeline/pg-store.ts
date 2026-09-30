@@ -5,7 +5,7 @@
 
 import pg from "pg";
 import { DELIVERY_PLANS } from "../domain/delivery";
-import type { PlanKey } from "../domain/plans";
+import { PLAN_TERMS, type PlanKey } from "../domain/plans";
 import type { PaystackWebhookStore } from "./paystack-webhook";
 import type { Screening, ScreeningHistory } from "./screening";
 import { MAX_EMAIL_ATTEMPTS, type NewEnquiry, type Opportunity, type OutboxEmail, type PendingEmail, type PipelineStore, type Template } from "./worker";
@@ -38,7 +38,7 @@ export class PgPipelineStore implements PipelineStore, PaystackWebhookStore {
   private async outbox(c: pg.PoolClient, opportunityId: string, m: OutboxEmail) {
     await c.query(
       `insert into public.outbox_emails (opportunity_id, kind, to_email, subject, body) values ($1, $2, $3, $4, $5)
-       on conflict (opportunity_id, kind) do nothing`,
+       on conflict (opportunity_id, kind) where invoice_id is null do nothing`,
       [opportunityId, m.kind, m.to, m.subject, m.body],
     );
   }
@@ -151,6 +151,19 @@ export class PgPipelineStore implements PipelineStore, PaystackWebhookStore {
         await c.query("insert into public.memberships (org_id, user_id, role) values ($1, $2, 'operator') on conflict do nothing", [orgId, o.maintainer_id]);
       }
       await c.query("update public.opportunities set org_id = $2, status = 'onboarded' where id = $1", [id, orgId]);
+      // billing from here on: small-business plans monthly from the first payment's date; a
+      // Company-plan fee waits for the agreed proposal (a platform admin sets it)
+      const monthly = PLAN_TERMS[o.plan as PlanKey]?.monthlyCents ?? null;
+      await c.query(
+        `insert into public.billing_accounts (opportunity_id, org_id, plan, monthly_cents, anchor_day, next_invoice_on, status)
+         select $1, $2, $3, $4::int,
+                case when $4::int is null then null else extract(day from first.paid_at)::int end,
+                case when $4::int is null then null else (first.paid_at::date + interval '1 month')::date end,
+                case when $4::int is null then 'awaiting_fee' else 'active' end
+           from (select coalesce(min(paid_at), now()) as paid_at from public.payments where opportunity_id = $1 and status = 'success') first
+         on conflict (opportunity_id) do nothing`,
+        [id, orgId, o.plan, monthly],
+      );
       // the delivery plan TEBOS now owes the client, dated from today
       const steps = DELIVERY_PLANS[o.plan as PlanKey] ?? DELIVERY_PLANS.starter;
       for (const [i, step] of steps.entries()) {
@@ -210,6 +223,22 @@ export class PgPipelineStore implements PipelineStore, PaystackWebhookStore {
   async markPaid(opportunityId: string): Promise<boolean> {
     return this.tx(async (c) => {
       const { rowCount } = await c.query("update public.opportunities set status = 'paid' where id = $1 and status = 'awaiting_payment'", [opportunityId]);
+      return (rowCount ?? 0) > 0;
+    });
+  }
+
+  async invoiceForReference(reference: string) {
+    const r = (await this.pool.query("select id, opportunity_id, amount_cents, status from public.invoices where payment_reference = $1", [reference])).rows[0];
+    return r ? { id: r.id as string, opportunityId: r.opportunity_id as string, amountCents: r.amount_cents as number, status: r.status as string } : null;
+  }
+
+  async recordInvoicePayment(inv: { id: string; opportunityId: string }, p: { reference: string; amountCents: number; paidAt: string; raw: unknown }): Promise<boolean> {
+    return this.tx(async (c) => {
+      const { rowCount } = await c.query(
+        `insert into public.payments (opportunity_id, invoice_id, provider, reference, amount_cents, status, paid_at, raw)
+         values ($1, $2, 'paystack', $3, $4, 'success', $5, $6) on conflict do nothing`,
+        [inv.opportunityId, inv.id, p.reference, p.amountCents, p.paidAt, JSON.stringify(p.raw)],
+      );
       return (rowCount ?? 0) > 0;
     });
   }

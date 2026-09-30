@@ -15,7 +15,14 @@ export interface PaystackWebhookStore {
   recordProviderPayment(opportunityId: string, p: { reference: string; amountCents: number; paidAt: string; raw: unknown }): Promise<boolean>;
   /** Moves an opportunity awaiting payment to paid (the database checks the payment covers it). */
   markPaid(opportunityId: string): Promise<boolean>;
+  /** A monthly invoice by its payment reference. */
+  invoiceForReference(reference: string): Promise<{ id: string; opportunityId: string; amountCents: number; status: string } | null>;
+  /** Records a confirmed payment against an invoice; the database marks it paid when it covers the amount. False when already recorded. */
+  recordInvoicePayment(invoice: { id: string; opportunityId: string }, p: { reference: string; amountCents: number; paidAt: string; raw: unknown }): Promise<boolean>;
 }
+
+/** Monthly invoices are paid with references of this form; first payments use tebos-<opportunity id>. */
+export const INVOICE_REFERENCE_PREFIX = "tebos-inv-";
 
 export async function handlePaystackWebhook(
   store: PaystackWebhookStore,
@@ -28,6 +35,24 @@ export async function handlePaystackWebhook(
   const charge = parsePaystackEvent(rawBody);
   if (!charge) return { status: 400, body: "unreadable event" };
   if (charge.event !== "charge.success" || charge.status !== "success") return { status: 200, body: "ignored" };
+
+  if (charge.reference.startsWith(INVOICE_REFERENCE_PREFIX)) {
+    const inv = await store.invoiceForReference(charge.reference);
+    if (!inv) {
+      log({ event: "paystack.unknown_reference", reference: charge.reference });
+      return { status: 200, body: "unknown reference" };
+    }
+    if (charge.currency !== "ZAR") {
+      log({ event: "paystack.wrong_currency", invoiceId: inv.id, currency: charge.currency });
+      return { status: 200, body: "not recorded: not in ZAR" };
+    }
+    const fresh = await store.recordInvoicePayment(inv, {
+      reference: charge.reference, amountCents: charge.amountCents, paidAt: charge.paidAt ?? new Date().toISOString(), raw: JSON.parse(rawBody),
+    });
+    const full = charge.amountCents >= inv.amountCents;
+    log({ event: "paystack.invoice_payment", invoiceId: inv.id, fresh, full });
+    return { status: 200, body: fresh ? (full ? "invoice paid" : "recorded: less than the invoice") : "already recorded" };
+  }
 
   const o = await store.opportunityForReference(charge.reference);
   if (!o) {

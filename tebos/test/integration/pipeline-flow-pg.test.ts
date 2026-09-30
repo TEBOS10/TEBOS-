@@ -11,6 +11,8 @@ import { PgPipelineStore } from "../../src/pipeline/pg-store";
 import type { PaymentGateway, PaymentPageRequest } from "../../src/pipeline/paystack";
 import { handlePaystackWebhook } from "../../src/pipeline/paystack-webhook";
 import { PipelineWorker } from "../../src/pipeline/worker";
+import { PgBillingStore } from "../../src/billing/pg-store";
+import { BillingWorker } from "../../src/billing/worker";
 import { sha256 } from "../../src/pipeline/contract";
 
 const enabled = process.env.TEBOS_TEST_DB === "1";
@@ -190,5 +192,47 @@ describe.skipIf(!enabled)("client pipeline against the TEBOS schema", () => {
     expect(gateway.requests.at(-1)).toMatchObject({ amountCents: 1500000, reference: `tebos-${id}` });
     expect(await worker.runOnce()).toMatchObject({ step: "email", outcome: "sent" });
     expect(email.sends.at(-1)!.input.text).toContain("please pay the Company Diagnostic here:");
+  });
+
+  it("bills an onboarded client monthly: invoice on its date, a payment link, reminders, and paid only on Paystack's confirmation", async () => {
+    const onboarded = (await pool.query("select id from public.opportunities where status = 'onboarded' order by updated_at limit 1")).rows[0].id as string;
+    const acct = (await pool.query("select id, status, monthly_cents, next_invoice_on::text as next, anchor_day from public.billing_accounts where opportunity_id = $1", [onboarded])).rows[0];
+    // opened at onboarding: active, R2,500, a month after the first payment
+    expect(acct).toMatchObject({ status: "active", monthly_cents: 250000 });
+    const paid = (await pool.query("select (min(paid_at)::date + interval '1 month')::date::text as next from public.payments where opportunity_id = $1", [onboarded])).rows[0].next;
+    expect(acct.next).toBe(paid);
+
+    // the date comes round
+    await pool.query("update public.billing_accounts set next_invoice_on = current_date where id = $1", [acct.id]);
+    const billing = new BillingWorker(new PgBillingStore(pool, "billing-worker:it"), gateway, { siteUrl: "https://tebos.test" });
+    expect(await billing.runOnce()).toMatchObject({ step: "issue" });
+    const inv = (await pool.query("select id, number, status, amount_cents from public.invoices where billing_account_id = $1", [acct.id])).rows[0];
+    expect(inv).toMatchObject({ status: "open", amount_cents: 250000 });
+    expect(await billing.runOnce()).toMatchObject({ step: "link", outcome: "linked" });
+    expect(gateway.requests.at(-1)).toMatchObject({ amountCents: 250000, reference: `tebos-inv-${inv.id}` });
+    expect(await billing.runOnce()).toBeNull(); // nothing more today: not late, next month not due
+    // the invoice email goes out through the same outbox
+    expect(await worker.runOnce()).toMatchObject({ step: "email", outcome: "sent" });
+    expect(email.sends.at(-1)!.input.subject).toContain(`TEBOS invoice ${inv.number}`);
+
+    // late: one reminder at 3 days, then the second at 10, never twice
+    await pool.query("update public.invoices set due_on = due_on where id = $1", [inv.id]); // unchanged: the due date is fixed
+    const late = (days: number) => new BillingWorker(new PgBillingStore(pool, "billing-worker:it"), gateway, { siteUrl: "https://tebos.test" }, () => {},
+      () => new Date(Date.now() + (7 + days) * 86_400_000));
+    expect(await late(4).runOnce()).toMatchObject({ step: "remind", kind: "invoice_reminder_1" });
+    expect(await late(4).runOnce()).toBeNull();
+    expect(await late(11).runOnce()).toMatchObject({ step: "remind", kind: "invoice_reminder_2" });
+    expect(await late(11).runOnce()).toBeNull();
+
+    // Paystack confirms: paid, once
+    const body = JSON.stringify({ event: "charge.success", data: { id: 7, reference: `tebos-inv-${inv.id}`, status: "success", amount: 250000, currency: "ZAR", paid_at: new Date().toISOString() } });
+    const sig = createHmac("sha512", SECRET).update(body).digest("hex");
+    expect(await handlePaystackWebhook(store, SECRET, sig, body)).toEqual({ status: 200, body: "invoice paid" });
+    expect(await handlePaystackWebhook(store, SECRET, sig, body)).toEqual({ status: 200, body: "already recorded" });
+    expect((await pool.query("select status from public.invoices where id = $1", [inv.id])).rows[0].status).toBe("paid");
+    // a month on, the next invoice is issued, and the paid one gets no more reminders
+    expect(await late(30).runOnce()).toMatchObject({ step: "issue" });
+    const reminders = (await pool.query("select count(*)::int as n from public.outbox_emails where invoice_id = $1 and kind like 'invoice_reminder%'", [inv.id])).rows[0].n;
+    expect(reminders).toBe(2);
   });
 });
