@@ -14,7 +14,7 @@ export function StaffShell({ children }: { children: ReactNode }) {
   const nav = [
     { to: "/pipeline", label: "Pipeline", icon: Briefcase },
     { to: "/sales", label: "Sales playbook", icon: BookOpen },
-    ...(access?.maintainer ? [{ to: "/pipeline/queue", label: "Delivery queue", icon: ListChecks }] : []),
+    ...(access?.maintainer ? [{ to: "/pipeline/queue", label: "Maintainer queue", icon: ListChecks }] : []),
     ...(access?.admin ? [{ to: "/pipeline/billing", label: "Billing", icon: Receipt }, { to: "/pipeline/team", label: "Staff", icon: Users }] : []),
   ];
   const roles = [access?.admin && "admin", access?.sales && "sales", access?.maintainer && "maintainer"].filter(Boolean);

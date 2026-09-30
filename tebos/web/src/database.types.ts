@@ -2023,6 +2023,39 @@ export type Database = {
         }
         Relationships: []
       }
+      maintainer_items: {
+        Row: {
+          id: string
+          org_id: string
+          opportunity_id: string | null
+          kind: string
+          subject_id: string | null
+          severity: string
+          title: string
+          detail: string
+          status: string
+          note: string | null
+          raised_at: string
+          last_seen_at: string
+          closed_by: string | null
+          closed_at: string | null
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          opportunity_id?: string | null
+          kind: string
+          subject_id?: string | null
+          severity: string
+          title: string
+          detail: string
+        }
+        Update: {
+          status?: string
+          note?: string | null
+        }
+        Relationships: []
+      }
       delivery_tasks: {
         Row: {
           id: string

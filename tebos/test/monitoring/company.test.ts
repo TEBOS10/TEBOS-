@@ -13,6 +13,7 @@ const snapshot = {
   team: { sales: 2, maintainers: 1 },
   billing: { monthly_recurring_zar: 32500, accounts_active: 3, accounts_awaiting_fee: 1, accounts_paused: 0, invoices_open: 2, invoices_overdue: 1, overdue_zar: 2500, oldest_overdue_days: 5 },
   attention: { self_checks_7_days: 12, self_checks_30_days: 40, average_score_30_days: 58 },
+  maintenance: { items_open: 4, items_high: 1, oldest_open_days: 2, closed_30_days: 9 },
   delivery: { client_emails_failed: 0, client_emails_waiting: 1, steps_open: 6, steps_overdue: 2, oldest_overdue_days: 3, steps_done_30_days: 4, steps_done_on_time_30_days: 3 },
 };
 
@@ -32,6 +33,7 @@ describe("TEBOS company snapshot", () => {
     expect(byKey["delivery.steps"]!.value).toMatchObject({ overdue: 2, on_time_pct_30_days: 75 });
     expect(byKey["attention.self_checks"]!.fact).toBe("12 people took TEBOS's free self-check in the last 7 days, 40 in the last 30; their average score was 58%.");
     expect(byKey["billing.recurring"]!.fact).toBe("TEBOS bills R32,500 a month across 3 active clients (1 waiting for an agreed fee); 1 invoice is overdue, R2,500 in total, the oldest by 5 days.");
+    expect(byKey["maintenance.queue"]!.fact).toBe("Maintainers have 4 items open on their clients, 1 high priority; the oldest was raised 2 days ago.");
     // numbers objectives can measure
     expect(byKey["revenue.cash"]!.value.this_month_zar).toBe(2500);
     expect(byKey["pipeline.decisions"]!.value.oldest_undecided_days).toBe(3);

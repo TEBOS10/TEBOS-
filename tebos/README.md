@@ -370,6 +370,23 @@ says what "done" means.
 - The client's team sees their plan, read-only, on their home page.
 - TEBOS's own board counts open and overdue steps and on-time completion (`delivery.steps`).
 
+## The maintainer's queue (migration `maintainer_signals`)
+
+Every hour, the worker reads each onboarded client's records (and TEBOS's own) and raises what their maintainer
+should look at (`src/domain/maintenance.ts`):
+
+- an objective past its due date (mark it achieved or missed);
+- an objective at risk: within 14 days of its date and not meeting its target (high in the last week);
+- an objective nobody is measuring (no measured value in 35 days);
+- a connection that is disconnected or degraded;
+- findings waiting for review, and approvals waiting on the client, for 3 days or more.
+
+Each signal is one queue item per client, refreshed while it holds and resolved automatically when it clears. The
+maintainer closes an item as done or dismissed with a note (a dismissed signal isn't raised again for 14 days).
+Items are TEBOS's working list: the client's maintainer and platform admins see them, the client doesn't. The
+queue is Pipeline → Maintainer queue, above each client's delivery steps; TEBOS's board counts what's open
+(`maintenance.queue`).
+
 ## Monthly billing (migration `monthly_billing`)
 
 After the first payment, TEBOS bills each client monthly (`src/domain/billing.ts`, `src/billing/`):

@@ -22,9 +22,9 @@ test("a maintainer sees overdue steps first and closes one with a note of what w
     step("kickoff", { title: "Kick-off call", due_at: iso(2) }),
   ];
   await page.goto("/");
-  await page.getByRole("link", { name: "Delivery queue" }).click();
-  await expect(page.getByRole("heading", { name: "Delivery queue" })).toBeVisible();
-  const overdue = page.locator("section", { has: page.getByRole("heading", { name: /^Overdue/ }) });
+  await page.getByRole("link", { name: "Maintainer queue" }).click();
+  await expect(page.getByRole("heading", { name: "Maintainer queue" })).toBeVisible();
+  const overdue = page.locator("section", { has: page.getByRole("heading", { name: /^Delivery overdue/ }) });
   await expect(overdue).toContainText("Northwind Studio · Operating board mapped");
   await expect(overdue).toContainText("overdue");
 
@@ -35,6 +35,37 @@ test("a maintainer sees overdue steps first and closes one with a note of what w
   await overdue.getByRole("button", { name: "Mark done" }).click();
   await expect.poll(() => fake.writes.find((w) => w.table === "delivery_tasks" && w.method === "PATCH")?.body)
     .toEqual({ status: "done", note: "Mapped sales and delivery flows with Thandi" });
+});
+
+test("the queue shows what TEBOS noticed on each client, high first, and closing one needs a note", async ({ page }) => {
+  const fake = await installFakeSupabase(page);
+  const t = fake.tables as Record<string, unknown[]>;
+  t.memberships = [];
+  t.platform_admins = [];
+  t.platform_staff = [{ user_id: USER_ID, role: "maintainer", added_by: null, created_at: iso(-10) }];
+  t.organisations = [{ id: ORG, name: "Northwind Studio", slug: "northwind", created_at: iso(-30) }];
+  const item = (id: string, over: Record<string, unknown>) => ({
+    id, org_id: ORG, opportunity_id: "o1", kind: "findings_waiting", subject_id: null, severity: "medium", title: "2 findings waiting for review",
+    detail: "The oldest has waited 4 days.", status: "open", note: null, raised_at: iso(-1), last_seen_at: iso(0), closed_by: null, closed_at: null, ...over,
+  });
+  t.maintainer_items = [
+    item("m1", {}),
+    item("m2", { kind: "connection_broken", subject_id: "c1", severity: "high", title: "CRM is disconnected", detail: "Status: authentication required.", raised_at: iso(-0.5) }),
+  ];
+  await page.goto("/pipeline/queue");
+  const signals = page.getByTestId("signal");
+  await expect(signals).toHaveCount(2);
+  await expect(signals.first()).toContainText("Northwind Studio · CRM is disconnected");
+  await expect(signals.first()).toContainText("high");
+
+  const crm = signals.first();
+  await crm.getByRole("button", { name: "Close" }).click();
+  await crm.getByRole("button", { name: "Done" }).click();
+  await expect(crm.getByText("Say what you did")).toBeVisible();
+  await crm.getByLabel("What you did, or why it doesn't need action").fill("Reconnected the CRM with the client on a call");
+  await crm.getByRole("button", { name: "Done" }).click();
+  await expect.poll(() => fake.writes.find((w) => w.table === "maintainer_items" && w.method === "PATCH")?.body)
+    .toEqual({ status: "done", note: "Reconnected the CRM with the client on a call" });
 });
 
 test("a client sees the plan TEBOS owes them, read-only, on their home page", async ({ page }) => {

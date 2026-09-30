@@ -1123,6 +1123,22 @@ export async function deliveryFor(db: Db, filter: { opportunityId?: string; orgI
   return must(await q) as DeliveryTask[];
 }
 
+/** A signal TEBOS raised from a client's records for their maintainer (migration maintainer_signals). */
+export type MaintainerItem = Row<"maintainer_items">;
+
+/** Open signals for the clients the caller maintains (all, for admins), with each organisation's name. */
+export async function maintainerSignals(db: Db) {
+  const items = must(await db.from("maintainer_items").select("*").eq("status", "open").order("raised_at").limit(500)) as MaintainerItem[];
+  const orgIds = [...new Set(items.map((i) => i.org_id))];
+  const orgs = orgIds.length ? must(await db.from("organisations").select("id, name").in("id", orgIds)) : [];
+  return { items, orgs };
+}
+
+export async function closeSignal(db: Db, id: string, status: "done" | "dismissed", note: string) {
+  const { error } = await db.from("maintainer_items").update({ status, note: note.trim() }).eq("id", id);
+  if (error) throw error;
+}
+
 export async function closeDeliveryStep(db: Db, id: string, status: "done" | "skipped", note: string) {
   const { error } = await db.from("delivery_tasks").update({ status, note: note.trim() }).eq("id", id);
   if (error) throw error;
