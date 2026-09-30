@@ -1,7 +1,7 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { RULE_CODES, transitionTable } from "../src";
+import { PUBLIC_LIMITS, RULE_CODES, transitionTable } from "../src";
 
 const migrationsDir = join(__dirname, "..", "supabase", "migrations");
 const sql = readdirSync(migrationsDir)
@@ -36,5 +36,12 @@ describe("domain mirrors the database", () => {
 
   it("no table stores raw secrets", () => {
     expect(sql).not.toMatch(/\b(api_key|secret|password|access_token|refresh_token)\s+text/i);
+  });
+
+  it("public submission limits match the database's throttle", () => {
+    const fromSql = Object.fromEntries(
+      [...sql.matchAll(/tebos_private\.throttle\('([a-z_]+)', (\d+), (\d+)\)/g)].map((m) => [m[1], { perSource: Number(m[2]), total: Number(m[3]) }]),
+    );
+    expect(fromSql).toEqual(PUBLIC_LIMITS);
   });
 });

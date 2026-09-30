@@ -24,6 +24,12 @@ describe("explaining database refusals", () => {
     expect(explainError(new Error("network down")).message).toBe("network down");
     expect(explainError(undefined).message).toMatch(/Nothing was changed/);
   });
+
+  it("tells someone who submitted too often to try again later", () => {
+    const e = explainError({ message: "too many submissions; try again later", code: "P0001", hint: "TEBOS_RATE_LIMITED" });
+    expect(e.code).toBe("TEBOS_RATE_LIMITED");
+    expect(e.message).toMatch(/try again later/);
+  });
 });
 
 describe("website input", () => {

@@ -41,6 +41,7 @@ export const RULE_CODES = [
   "TEBOS_PAYMENT_UNPROVEN",
   "TEBOS_CONTRACT_UNSIGNED",
   "TEBOS_CONTRACT_UNAPPROVED",
+  "TEBOS_RATE_LIMITED",
 ] as const;
 export type RuleCode = (typeof RULE_CODES)[number];
 
