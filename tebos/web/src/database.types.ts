@@ -2305,6 +2305,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      submit_self_check: {
+        Args: { p_answers: number[]; p_size?: string | null; p_region?: string | null }
+        Returns: number
+      }
       create_staff_invitation: {
         Args: { p_email: string; p_role: string }
         Returns: string

@@ -668,3 +668,23 @@ table.table { width: 100%; border-collapse: collapse; }
 .blog-post .lp-kicker a { color: inherit; }
 .blog-post .agreement a { color: #2a5fc0; }
 .blog-cta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px; padding-top: 20px; border-top: 1px solid rgba(0, 0, 0, 0.08); }
+
+/* Self-check */
+.sc-form { display: grid; gap: 14px; margin-top: 24px; }
+.sc-q { margin: 0; padding: 18px 20px; border-radius: 16px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.1); }
+.sc-q legend { float: left; width: 100%; margin-bottom: 12px; color: #fff; font-size: 17px; line-height: 1.4; }
+.sc-num { display: inline-grid; place-items: center; width: 26px; height: 26px; margin-right: 8px; border-radius: 50%; background: rgba(127, 178, 255, 0.15); color: var(--lime); font-size: 13px; font-weight: 700; }
+.sc-options { clear: both; display: flex; flex-wrap: wrap; gap: 8px; }
+.sc-card { margin: 12px 0 24px; padding: 32px; border-radius: 20px; background: linear-gradient(135deg, #0b111b, #13233a); border: 1px solid rgba(127, 178, 255, 0.35); color: #fff; }
+.sc-card-label { color: var(--lime); font-weight: 600; }
+.sc-score { display: block; font-size: clamp(72px, 14vw, 128px); line-height: 1; margin: 8px 0; }
+.sc-band { display: block; font-size: 24px; font-weight: 700; }
+.sc-card p { color: #c7cdd6; max-width: 560px; line-height: 1.5; }
+.sc-fixes { padding: 22px 24px; border-radius: 16px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.1); color: #dfe3ea; }
+.sc-fixes h2, .sc-h2, .sc-talk h2 { color: #fff; font-size: 20px; margin: 0 0 10px; }
+.sc-h2 { margin-top: 28px; }
+.sc-fixes li { margin-bottom: 8px; line-height: 1.5; }
+.sc-share { display: flex; flex-wrap: wrap; gap: 8px; }
+.sc-talk { display: grid; gap: 12px; margin-top: 32px; padding: 24px; border-radius: 16px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.1); }
+.blog-wrap .pr-small { padding: 0; margin: 4px 0 10px; text-align: left; }
+.blog-wrap .pr-small a, .sc-fixes a, .sc-talk a, .sc-form a { color: var(--lime); }

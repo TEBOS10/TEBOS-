@@ -1127,3 +1127,10 @@ export async function closeDeliveryStep(db: Db, id: string, status: "done" | "sk
   const { error } = await db.from("delivery_tasks").update({ status, note: note.trim() }).eq("id", id);
   if (error) throw error;
 }
+
+/** The free self-check: anonymous answers in, the database's score out. */
+export async function submitSelfCheck(db: Db, answers: number[], size: string | null, region: string | null) {
+  const { data, error } = await db.rpc("submit_self_check", { p_answers: answers, p_size: size, p_region: region });
+  if (error) throw error;
+  return data as number;
+}

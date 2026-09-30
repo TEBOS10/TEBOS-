@@ -38,6 +38,7 @@ import { SalesPlaybookPage, StaffInvitePage, StaffTeamPage } from "./pages/Sales
 import { StaffShell } from "./components/StaffShell";
 import { BlogIndex, BlogPost } from "./pages/BlogPage";
 import { LegalPage } from "./pages/LegalPage";
+import { SelfCheckPage, SelfCheckShared } from "./pages/SelfCheckPage";
 import { DeliveryQueuePage } from "./pages/DeliveryPage";
 import { StaffProvider, useStaff } from "./lib/staff";
 import { TeamPage } from "./pages/TeamPage";
@@ -99,6 +100,8 @@ function Gate() {
   if (path === "/film") return <FilmPage />;
   if (path === "/pricing") return <PricingPage />;
   if (path === "/blog") return <BlogIndex />;
+  if (path === "/self-check") return <SelfCheckPage />;
+  if (path === "/self-check/result") return <SelfCheckShared />;
   if (path === "/privacy") return <LegalPage which="privacy" />;
   if (path === "/terms") return <LegalPage which="terms" />;
   const blogPost = matchPath("/blog/:slug", path);

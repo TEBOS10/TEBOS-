@@ -31,6 +31,7 @@ function Hero({ onWatch }: { onWatch: () => void }) {
       </p>
       <div className="lp-ctas">
         <a className="btn btn-lime lp-cta" href="/demo">Try the demo</a>
+        <a className="lp-watch" href="/self-check">Take the free self-check · 2 min</a>
         <button className="lp-watch" onClick={onWatch}><Play size={16} aria-hidden /> Watch the film · 1 min</button>
       </div>
     </>
@@ -62,6 +63,7 @@ export function LandingPage() {
         </a>
         <nav className="lp-links" aria-label="Site">
           <a href="/demo">Demo</a>
+          <a href="/self-check">Self-check</a>
           <a href="/blog">Blog</a>
           <a href="/pricing">Pricing</a>
           <a className="lp-signin" href="/sign-in">Sign in</a>
