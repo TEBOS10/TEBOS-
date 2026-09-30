@@ -50,7 +50,7 @@ export interface Template {
 }
 
 export interface OutboxEmail {
-  kind: "payment_link" | "contract" | "invitation";
+  kind: "payment_link" | "contract" | "invitation" | "invoice" | "invoice_reminder_1" | "invoice_reminder_2";
   to: string;
   subject: string;
   body: string;

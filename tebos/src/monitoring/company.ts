@@ -100,6 +100,18 @@ export function companyFacts(raw: unknown): ParsedSnapshot {
     });
   }
 
+  const b = obj(s.billing);
+  if (num(b.monthly_recurring_zar) !== null) {
+    const overdue = n0(b.invoices_overdue);
+    add("billing.recurring", `TEBOS bills ${rand(n0(b.monthly_recurring_zar))} a month across ${plural(n0(b.accounts_active), "active client")}${n0(b.accounts_awaiting_fee) ? ` (${n0(b.accounts_awaiting_fee)} waiting for an agreed fee)` : ""}; ${overdue === 0
+      ? `no invoice is overdue (${plural(n0(b.invoices_open), "invoice")} open).`
+      : `${plural(overdue, "invoice")} ${overdue === 1 ? "is" : "are"} overdue, ${rand(n0(b.overdue_zar))} in total, the oldest by ${plural(n0(b.oldest_overdue_days), "day")}.`}`, {
+      monthly_recurring_zar: n0(b.monthly_recurring_zar), accounts_active: n0(b.accounts_active), accounts_awaiting_fee: n0(b.accounts_awaiting_fee),
+      accounts_paused: n0(b.accounts_paused), invoices_open: n0(b.invoices_open), invoices_overdue: overdue, overdue_zar: n0(b.overdue_zar),
+      oldest_overdue_days: n0(b.oldest_overdue_days),
+    });
+  }
+
   if (facts.length === 0) return { ok: false, reason: "The snapshot held no figures" };
   return { ok: true, takenAt: s.taken_at, hash: snapshotHash(s), facts };
 }

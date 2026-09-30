@@ -76,6 +76,7 @@ export function PipelinePage() {
               <div className="row" style={{ gap: 8 }}>
                 {a.sales && <button className="btn btn-primary" onClick={() => setAdding(true)}>Add a lead</button>}
                 <Link to="/sales" className="btn">Sales playbook</Link>
+                {a.admin && <Link to="/pipeline/billing" className="btn">Billing</Link>}
                 {a.admin && <Link to="/pipeline/team" className="btn">Staff</Link>}
                 {a.admin && <Link to="/pipeline/contracts" className="btn">Contract templates</Link>}
               </div>

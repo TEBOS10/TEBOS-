@@ -116,9 +116,26 @@ describe("Paystack", () => {
         opportunityForReference: async () => (o ? { id: "o1", ...o } : null),
         recordProviderPayment: async (_id, p) => { const fresh = !s.payments.some((x) => (x as { reference: string }).reference === p.reference); if (fresh) s.payments.push(p); return fresh; },
         markPaid: async (id) => { s.paid.push(id); return true; },
+        invoiceForReference: async (ref) => (ref === "tebos-inv-i1" ? { id: "i1", opportunityId: "o1", amountCents: 250000, status: "open" } : null),
+        recordInvoicePayment: async (inv, p) => { const fresh = !s.payments.some((x) => (x as { reference: string }).reference === p.reference); if (fresh) s.payments.push({ ...p, invoiceId: inv.id }); return fresh; },
       };
       return { impl, s };
     };
+
+    it("records a monthly invoice payment against the invoice, once, and never touches the opportunity", async () => {
+      const { impl, s } = store({ amountCents: 250000, status: "onboarded" });
+      const body = charge({ reference: "tebos-inv-i1" });
+      expect(await handlePaystackWebhook(impl, secret, sign(body), body)).toEqual({ status: 200, body: "invoice paid" });
+      expect(await handlePaystackWebhook(impl, secret, sign(body), body)).toEqual({ status: 200, body: "already recorded" });
+      expect(s.payments).toHaveLength(1);
+      expect(s.payments[0]).toMatchObject({ invoiceId: "i1", amountCents: 250000 });
+      expect(s.paid).toEqual([]);
+      const short = charge({ reference: "tebos-inv-i1", id: 100, amount: 100000 });
+      const { impl: impl2 } = store(null);
+      expect((await handlePaystackWebhook(impl2, secret, sign(short), short)).body).toBe("recorded: less than the invoice");
+      const unknown = charge({ reference: "tebos-inv-nope" });
+      expect((await handlePaystackWebhook(impl, secret, sign(unknown), unknown)).body).toBe("unknown reference");
+    });
 
     it("refuses an unsigned or forged event", async () => {
       const { impl, s } = store({ amountCents: 250000, status: "awaiting_payment" });

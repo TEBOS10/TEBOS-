@@ -1,4 +1,4 @@
-import { BookOpen, Briefcase, Building2, ListChecks, CheckSquare, Gauge, Home, LogOut, Plug, ScanSearch, ShieldCheck, Sparkles, Stamp, Users } from "lucide-react";
+import { BookOpen, Briefcase, Building2, ListChecks, Receipt, CheckSquare, Gauge, Home, LogOut, Plug, ScanSearch, ShieldCheck, Sparkles, Stamp, Users } from "lucide-react";
 import type { ReactNode } from "react";
 import { DEMO_BUSINESS } from "../demo/data";
 import { exitDemo, isDemo } from "../demo/mode";
@@ -25,7 +25,8 @@ export function Shell({ children }: { children: ReactNode }) {
   const { access } = useStaff();
   const nav = access?.sales || access?.maintainer
     ? [...NAV, { to: "/pipeline", label: "Pipeline", icon: Briefcase, exact: false }, { to: "/sales", label: "Sales playbook", icon: BookOpen, exact: false },
-       ...(access?.maintainer ? [{ to: "/pipeline/queue", label: "Delivery queue", icon: ListChecks, exact: true }] : [])]
+       ...(access?.maintainer ? [{ to: "/pipeline/queue", label: "Delivery queue", icon: ListChecks, exact: true }] : []),
+       ...(access?.admin ? [{ to: "/pipeline/billing", label: "Billing", icon: Receipt, exact: true }] : [])]
     : NAV;
   return (
     <div className="shell">

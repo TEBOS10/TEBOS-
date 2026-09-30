@@ -9,12 +9,15 @@ test.use({
     args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"],
   },
 });
+// Two software-rendered 3D scenes at once starve each other's CPU; run this file's tests one after the other.
+test.describe.configure({ mode: "serial" });
 
 test("the home page tells the seven stages on a live 3D board, and as plain cards with reduced motion", async ({ page, browser }) => {
   test.setTimeout(60_000);
   await installFakeSupabase(page, { signedIn: false });
   await page.goto("/?force3d");
-  await expect(page.locator(".bw-canvas canvas")).toHaveCount(1);
+  // the 3D scene is a lazily loaded chunk: under a busy test run it can take longer than the default 5s to appear
+  await expect(page.locator(".bw-canvas canvas")).toHaveCount(1, { timeout: 30_000 });
   await expect(page.getByText("Illustrative board · fictional business")).toBeAttached();
   for (const stage of ["Assess", "Map", "Architect", "Integrate", "Automate", "Govern", "Optimise"]) {
     await expect(page.getByTestId(`stage-${stage}`).getByRole("heading", { name: stage })).toBeAttached();
