@@ -49,3 +49,14 @@ test("a shared result shows the score and invites others to take the check", asy
   await page.goto("/self-check/result?s=abc");
   await expect(page.getByTestId("sc-card")).toHaveCount(0);
 });
+
+test("public pages fit a phone screen without scrolling sideways", async ({ page }) => {
+  await installFakeSupabase(page, { signedIn: false });
+  await page.setViewportSize({ width: 390, height: 844 });
+  for (const path of ["/self-check", "/self-check/result?s=60", "/pricing", "/blog", "/blog/the-founder-is-the-middleware", "/privacy"]) {
+    await page.goto(path);
+    await page.waitForLoadState("networkidle");
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    expect(overflow, `${path} is ${overflow}px wider than the screen`).toBeLessThanOrEqual(0);
+  }
+});
