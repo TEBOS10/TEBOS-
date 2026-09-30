@@ -1098,3 +1098,39 @@ export async function listPlaybook(db: Db) {
 export async function savePlaybookSection(db: Db, id: string, patch: { title: string; body: string }) {
   return must(await db.from("sales_playbook").update(patch).eq("id", id).select().single());
 }
+
+// ---------------------------------------------------------------------------
+// Client delivery: the dated plan TEBOS owes each onboarded client. The
+// maintainer (or an admin) closes each step with a note; the client's team
+// can read their own plan.
+// ---------------------------------------------------------------------------
+
+export type DeliveryTask = Row<"delivery_tasks">;
+const DELIVERY_COLUMNS = "id, opportunity_id, org_id, key, position, title, done_means, due_at, status, note, closed_by, closed_at, created_at";
+
+/** Every step the caller maintains (all of them, for admins), with the client's name. */
+export async function deliveryQueue(db: Db) {
+  const tasks = must(await db.from("delivery_tasks").select(DELIVERY_COLUMNS).order("due_at").limit(1000)) as DeliveryTask[];
+  const ids = [...new Set(tasks.map((t) => t.opportunity_id))];
+  const clients = ids.length ? must(await db.from("opportunities").select("id, business, plan, maintainer_id").in("id", ids)) : [];
+  return { tasks, clients };
+}
+
+export async function deliveryFor(db: Db, filter: { opportunityId?: string; orgId?: string }) {
+  let q = db.from("delivery_tasks").select(DELIVERY_COLUMNS).order("position");
+  if (filter.opportunityId) q = q.eq("opportunity_id", filter.opportunityId);
+  if (filter.orgId) q = q.eq("org_id", filter.orgId);
+  return must(await q) as DeliveryTask[];
+}
+
+export async function closeDeliveryStep(db: Db, id: string, status: "done" | "skipped", note: string) {
+  const { error } = await db.from("delivery_tasks").update({ status, note: note.trim() }).eq("id", id);
+  if (error) throw error;
+}
+
+/** The free self-check: anonymous answers in, the database's score out. */
+export async function submitSelfCheck(db: Db, answers: number[], size: string | null, region: string | null) {
+  const { data, error } = await db.rpc("submit_self_check", { p_answers: answers, p_size: size, p_region: region });
+  if (error) throw error;
+  return data as number;
+}

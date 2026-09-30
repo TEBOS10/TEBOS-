@@ -4,6 +4,7 @@
 // allowed.
 
 import pg from "pg";
+import { DELIVERY_PLANS } from "../domain/delivery";
 import type { PlanKey } from "../domain/plans";
 import type { PaystackWebhookStore } from "./paystack-webhook";
 import type { Screening, ScreeningHistory } from "./screening";
@@ -137,7 +138,7 @@ export class PgPipelineStore implements PipelineStore, PaystackWebhookStore {
 
   async onboard(id: string, orgName: string, slug: string, inviteTokenHash: string, email: OutboxEmail): Promise<string> {
     return this.tx(async (c) => {
-      const o = (await c.query("select email, maintainer_id from public.opportunities where id = $1 and status = 'contracted' for update", [id])).rows[0];
+      const o = (await c.query("select email, plan, maintainer_id from public.opportunities where id = $1 and status = 'contracted' for update", [id])).rows[0];
       if (!o) throw new Error(`opportunity ${id} is not waiting for onboarding`);
       const orgId: string = (await c.query("insert into public.organisations (name, slug) values ($1, $2) returning id", [orgName, slug])).rows[0].id;
       // the client's own admin joins through the invitation, bound to the contracted email address
@@ -150,6 +151,15 @@ export class PgPipelineStore implements PipelineStore, PaystackWebhookStore {
         await c.query("insert into public.memberships (org_id, user_id, role) values ($1, $2, 'operator') on conflict do nothing", [orgId, o.maintainer_id]);
       }
       await c.query("update public.opportunities set org_id = $2, status = 'onboarded' where id = $1", [id, orgId]);
+      // the delivery plan TEBOS now owes the client, dated from today
+      const steps = DELIVERY_PLANS[o.plan as PlanKey] ?? DELIVERY_PLANS.starter;
+      for (const [i, step] of steps.entries()) {
+        await c.query(
+          `insert into public.delivery_tasks (opportunity_id, org_id, key, position, title, done_means, due_at)
+           values ($1, $2, $3, $4, $5, $6, now() + make_interval(days => $7)) on conflict (opportunity_id, key) do nothing`,
+          [id, orgId, step.key, i + 1, step.title, step.done, step.dueDays],
+        );
+      }
       await this.outbox(c, id, email);
       return orgId;
     });

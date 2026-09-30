@@ -37,6 +37,9 @@ import { ContractTemplatesPage, OpportunityPage, PipelinePage } from "./pages/Pi
 import { SalesPlaybookPage, StaffInvitePage, StaffTeamPage } from "./pages/SalesPages";
 import { StaffShell } from "./components/StaffShell";
 import { BlogIndex, BlogPost } from "./pages/BlogPage";
+import { LegalPage } from "./pages/LegalPage";
+import { SelfCheckPage, SelfCheckShared } from "./pages/SelfCheckPage";
+import { DeliveryQueuePage } from "./pages/DeliveryPage";
 import { StaffProvider, useStaff } from "./lib/staff";
 import { TeamPage } from "./pages/TeamPage";
 
@@ -68,6 +71,7 @@ function staffRoutes(): Array<[string, (p: Record<string, string>) => ReactNode]
     ["/pipeline", () => <PipelinePage />],
     ["/pipeline/contracts", () => <ContractTemplatesPage />],
     ["/pipeline/team", () => <StaffTeamPage />],
+    ["/pipeline/queue", () => <DeliveryQueuePage />],
     ["/pipeline/:id", (p) => <OpportunityPage id={p.id!} />],
     ["/sales", () => <SalesPlaybookPage />],
   ];
@@ -96,6 +100,10 @@ function Gate() {
   if (path === "/film") return <FilmPage />;
   if (path === "/pricing") return <PricingPage />;
   if (path === "/blog") return <BlogIndex />;
+  if (path === "/self-check") return <SelfCheckPage />;
+  if (path === "/self-check/result") return <SelfCheckShared />;
+  if (path === "/privacy") return <LegalPage which="privacy" />;
+  if (path === "/terms") return <LegalPage which="terms" />;
   const blogPost = matchPath("/blog/:slug", path);
   if (blogPost) return <BlogPost slug={blogPost.slug!} />;
   // The client's contract and payment return pages: no account needed, the link is the key.

@@ -204,6 +204,10 @@ function answerRpc(tables: FakeSupabase["tables"], name: string, args: Record<st
     (t.platform_staff ??= []).push({ user_id: USER_ID, role: i.role, added_by: null, created_at: now });
     return i.role;
   }
+  if (name === "submit_self_check") {
+    const answers = args.p_answers as unknown as number[];
+    return (answers.reduce((a, b) => a + b, 0) * 100) / 20;
+  }
   if (name === "submit_interview_answers") {
     const session = tables.interview_sessions?.find((x) => x.id === args.p_session);
     const answers = (args.p_answers as unknown as Array<{ answer: string }>).filter((a) => a.answer.trim());

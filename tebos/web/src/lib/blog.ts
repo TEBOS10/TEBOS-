@@ -25,7 +25,7 @@ When that structure is missing, something else fills the gap. Usually it's the f
 
 ## Ten questions to find out
 
-Answer each one honestly. A "yes" means that part of the business runs through you.
+Answer each one honestly. A "yes" means that part of the business runs through you. (Prefer to be scored? Take the [free 2-minute self-check](/self-check).)
 
 - **1.** Does a new lead wait for you before anyone replies or quotes?
 - **2.** Are prices, discounts or scope decided case by case, by you?

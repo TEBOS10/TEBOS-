@@ -358,6 +358,18 @@ is counted on the board.
   evidence. Once an objective is active, what it's measured by can't change. Tick "Measure this automatically
   from now on" when measuring an objective from a connected system; it works for any client's platform too.
 
+## Client delivery (migration `client_delivery`)
+
+When TEBOS onboards a client, it creates their delivery plan (`src/domain/delivery.ts`): dated steps from
+kick-off to the first monthly review (small businesses) or the architecture proposal (Company plan). Each step
+says what "done" means.
+
+- The assigned maintainer (or a platform admin) closes each step once, as done or skipped, with a note. The
+  database records who and when; titles and due dates are fixed.
+- Maintainers work from Pipeline → Delivery queue: overdue steps first.
+- The client's team sees their plan, read-only, on their home page.
+- TEBOS's own board counts open and overdue steps and on-time completion (`delivery.steps`).
+
 ## Enquiry alerts
 
 Pricing-page enquiries (`public.enquiries`) are emailed to the team once, by the worker's `alerts` stage

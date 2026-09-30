@@ -11,6 +11,7 @@ import {
   addLead,
   assignMaintainer,
   decideOpportunity,
+  deliveryFor,
   getOpportunity,
   listContractTemplates,
   listOpportunities,
@@ -25,6 +26,7 @@ import {
   type StaffAccess,
 } from "../lib/data";
 import { ago, statusLabel, when } from "../lib/format";
+import { DeliveryStep } from "../components/DeliveryPlan";
 import { Link } from "../lib/router";
 import { useSignedIn } from "../lib/session";
 import { useStaff } from "../lib/staff";
@@ -290,6 +292,7 @@ export function OpportunityPage({ id }: { id: string }) {
                 </Card>
                 <Owner opportunity={o} admin={a.admin} sales={a.sales} onDone={q.reload} />
                 <Maintainer opportunity={o} admin={a.admin} onDone={q.reload} />
+                {o.status === "onboarded" && <DeliveryCard opportunityId={o.id} canClose={a.admin || o.maintainer_id === org.userId} />}
                 {o.org_id && <Card title="Client organisation"><p className="list-meta">Set up and invited. Their maintainer is a member of it.</p></Card>}
               </div>
             </div>
@@ -297,6 +300,20 @@ export function OpportunityPage({ id }: { id: string }) {
         );
       }}
     </StaffOnly>
+  );
+}
+
+function DeliveryCard({ opportunityId, canClose }: { opportunityId: string; canClose: boolean }) {
+  const org = useSignedIn();
+  const q = useQuery(() => deliveryFor(org.db, { opportunityId }), [opportunityId]);
+  return (
+    <Card title="Delivery plan" subtitle="What TEBOS owes this client, and by when.">
+      {q.error ? <ErrorNote error={q.error} title="Couldn't load the plan" /> : !q.data ? <Loading /> : q.data.length === 0 ? <p className="muted">No steps yet.</p> : (
+        <ul className="list" data-testid="delivery-plan">
+          {q.data.map((t) => <DeliveryStep key={t.id} task={t} db={org.db} canClose={canClose} onChanged={q.reload} />)}
+        </ul>
+      )}
+    </Card>
   );
 }
 

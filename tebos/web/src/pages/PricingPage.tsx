@@ -53,6 +53,7 @@ export function PricingPage() {
         <a className="lp-brand" href="/"><span className="brand-mark" aria-hidden><ShieldCheck size={18} /></span> TEBOS</a>
         <nav className="lp-links" aria-label="Site">
           <a href="/demo">Demo</a>
+          <a href="/self-check">Self-check</a>
           <a href="/blog">Blog</a>
           <a href="/pricing" aria-current="page">Pricing</a>
           <a className="lp-signin" href="/sign-in">Sign in</a>
@@ -111,6 +112,9 @@ export function PricingPage() {
             {problems.length > 0 && <div className="note note-warn" role="alert">Please add {problems.join(", ")}.</div>}
             {!supabase && <div className="note note-warn">Enquiries can't be sent from this build.</div>}
             <ErrorNote error={error} title="Couldn't send your enquiry" />
+            <p className="pr-small" style={{ margin: 0 }}>
+              We use your details only to reply about TEBOS. See our <a href="/privacy">privacy policy</a>.
+            </p>
             <button className="btn btn-lime lp-cta" disabled={busy || !supabase}>{busy ? "Sending…" : plan === "equity" ? "Send application" : "Send"}</button>
           </form>
         )}
@@ -119,6 +123,8 @@ export function PricingPage() {
       <footer className="lp-foot">
         <span>TEBOS · Evidence before assertion</span>
         <a href="/" className="tour-link">Home</a>
+        <a href="/privacy" className="tour-link">Privacy</a>
+        <a href="/terms" className="tour-link">Terms</a>
       </footer>
     </div>
   );
