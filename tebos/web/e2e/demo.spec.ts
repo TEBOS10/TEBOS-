@@ -125,3 +125,18 @@ test("the tour plays without an account, can be paused and jumped, and leads to 
   await expect(page.getByRole("note", { name: "Demo" })).toBeVisible();
   expect(errors).toEqual([]);
 });
+
+test("the demo never takes over the front door: opening the main address shows the home page again", async ({ page }) => {
+  await page.goto("/demo");
+  await expect(page.getByRole("note", { name: "Demo" })).toBeVisible();
+  // inside the demo, its Home link stays in the demo
+  await page.getByRole("link", { name: "See what TEBOS knows about the agency" }).click();
+  await page.getByRole("link", { name: "Home", exact: true }).click();
+  await expect(page.getByRole("note", { name: "Demo" })).toBeVisible();
+  // a fresh visit to the main address is the home page, with the way back into the demo
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "A business that runs on structure, not on you." })).toBeVisible();
+  await expect(page.getByRole("note", { name: "Demo" })).toHaveCount(0);
+  await page.getByRole("link", { name: "Try the demo" }).click();
+  await expect(page.getByRole("note", { name: "Demo" })).toBeVisible();
+});

@@ -13,6 +13,13 @@ function read(): boolean {
       window.history.replaceState(null, "", "/");
       return true;
     }
+    // Opening the main address always shows the home page, even in a tab that
+    // was in the demo: the demo never takes over the site's front door.
+    // (Inside the demo, its Home link navigates without a reload and stays.)
+    if (window.location.pathname === "/") {
+      sessionStorage.removeItem(KEY);
+      return false;
+    }
     return sessionStorage.getItem(KEY) === "1";
   } catch {
     return window.location.pathname === "/demo";
