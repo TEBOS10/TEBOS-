@@ -88,6 +88,9 @@ describe.skipIf(!enabled)("client pipeline against the TEBOS schema", () => {
     await pool?.end();
   });
 
+  // the client this file onboards; other files' clients share the database
+  let onboardedId = "";
+
   it("takes one client from enquiry to onboarded, never skipping a step", async () => {
     await as(null, "insert into public.enquiries (plan, name, business, email, website, message) values ('starter', 'Thandi Mokoena', 'Northwind Studio', 'Thandi@Northwind.co.za', 'northwind.co.za', 'We need structure')");
 
@@ -140,6 +143,7 @@ describe.skipIf(!enabled)("client pipeline against the TEBOS schema", () => {
     expect(onboarded).toMatchObject({ step: "onboard" });
     const orgId = (onboarded as { orgId: string }).orgId;
     expect(await status(id)).toBe("onboarded");
+    onboardedId = id;
     const inv = (await pool.query("select email, role, status from public.invitations where org_id = $1", [orgId])).rows;
     expect(inv).toEqual([{ email: "thandi@northwind.co.za", role: "org_admin", status: "pending" }]);
     expect((await pool.query("select role from public.memberships where org_id = $1 and user_id = $2", [orgId, MAINT])).rows).toEqual([{ role: "operator" }]);
@@ -195,7 +199,8 @@ describe.skipIf(!enabled)("client pipeline against the TEBOS schema", () => {
   });
 
   it("bills an onboarded client monthly: invoice on its date, a payment link, reminders, and paid only on Paystack's confirmation", async () => {
-    const onboarded = (await pool.query("select id from public.opportunities where status = 'onboarded' order by updated_at limit 1")).rows[0].id as string;
+    const onboarded = onboardedId;
+    expect(onboarded).not.toBe("");
     const acct = (await pool.query("select id, status, monthly_cents, next_invoice_on::text as next, anchor_day from public.billing_accounts where opportunity_id = $1", [onboarded])).rows[0];
     // opened at onboarding: active, R2,500, a month after the first payment
     expect(acct).toMatchObject({ status: "active", monthly_cents: 250000 });

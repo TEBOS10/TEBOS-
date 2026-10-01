@@ -8,6 +8,8 @@ export default defineConfig({
   use: {
     baseURL: "http://localhost:5174",
     viewport: { width: 1440, height: 1000 },
+    // a failing test keeps its trace (test-results/), so an intermittent failure leaves its cause behind
+    trace: "retain-on-failure",
     launchOptions: process.env.PLAYWRIGHT_CHROMIUM ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM } : {},
   },
   webServer: {

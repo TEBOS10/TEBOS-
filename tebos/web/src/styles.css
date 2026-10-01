@@ -663,6 +663,7 @@ table.table { width: 100%; border-collapse: collapse; }
 .blog-list a:hover { border-color: rgba(127, 178, 255, 0.5); }
 .blog-list h2 { margin: 0 0 6px; color: #fff; font-size: 20px; }
 .blog-list p { margin: 0 0 10px; color: #c7cdd6; line-height: 1.5; }
+.blog-list .system-card { padding: 22px 24px; border-radius: 16px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.1); }
 .blog-meta { color: #8f98a6; font-size: 13px; }
 .blog-post h1 { font-size: clamp(26px, 4vw, 34px); line-height: 1.2; }
 .blog-post .lp-kicker a { color: inherit; }

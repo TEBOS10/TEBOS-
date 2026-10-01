@@ -25,6 +25,7 @@ export function SiteFrame({ current, children }: { current?: "blog" | "pricing";
         <a className="lp-brand" href="/"><span className="brand-mark" aria-hidden><ShieldCheck size={18} /></span> TEBOS</a>
         <nav className="lp-links" aria-label="Site">
           <a href="/demo">Demo</a>
+          <a href="/systems">Systems</a>
           <a href="/self-check">Self-check</a>
           <a href="/blog" aria-current={current === "blog" ? "page" : undefined}>Blog</a>
           <a href="/pricing" aria-current={current === "pricing" ? "page" : undefined}>Pricing</a>

@@ -63,6 +63,7 @@ export function LandingPage() {
         </a>
         <nav className="lp-links" aria-label="Site">
           <a href="/demo">Demo</a>
+          <a href="/systems">Systems</a>
           <a href="/self-check">Self-check</a>
           <a href="/blog">Blog</a>
           <a href="/pricing">Pricing</a>

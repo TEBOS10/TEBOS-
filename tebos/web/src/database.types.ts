@@ -479,6 +479,7 @@ export type Database = {
       }
       board_components: {
         Row: {
+          from_blueprint: string | null
           basis: string
           business_id: string
           connection_id: string | null
@@ -496,6 +497,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          from_blueprint?: string | null
           basis?: string
           business_id: string
           connection_id?: string | null
@@ -513,6 +515,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          from_blueprint?: string | null
           basis?: string
           business_id?: string
           connection_id?: string | null
@@ -533,6 +536,8 @@ export type Database = {
       }
       board_flows: {
         Row: {
+          basis: string
+          from_blueprint: string | null
           business_id: string
           created_at: string
           created_by: string | null
@@ -547,6 +552,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          basis?: string
+          from_blueprint?: string | null
           business_id: string
           created_at?: string
           created_by?: string | null
@@ -561,6 +568,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          basis?: string
+          from_blueprint?: string | null
           business_id?: string
           created_at?: string
           created_by?: string | null
@@ -578,6 +587,7 @@ export type Database = {
       }
       board_steps: {
         Row: {
+          from_blueprint: string | null
           basis: string
           business_id: string
           component_id: string | null
@@ -596,6 +606,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          from_blueprint?: string | null
           basis?: string
           business_id: string
           component_id?: string | null
@@ -614,6 +625,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          from_blueprint?: string | null
           basis?: string
           business_id?: string
           component_id?: string | null
@@ -2408,6 +2420,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      apply_blueprint: {
+        Args: { p_business: string; p_blueprint: Json }
+        Returns: Json
+      }
       submit_self_check: {
         Args: { p_answers: number[]; p_size?: string | null; p_region?: string | null }
         Returns: number
