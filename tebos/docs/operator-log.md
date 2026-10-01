@@ -8,7 +8,7 @@ Update this list every run; strike items when they're done.
 
 | # | Decision | What it unblocks |
 |---|---|---|
-| 0 | **Set BAME's 2–3 objectives, each with an owner and a date** (or tell the loop to build ahead of this gate) | **The product.** The roadmap's first gate ("map one real business") waits only on this. After it come findings linked to flows, TEBOS proposing rules and owners for founder-only steps, and generated operating systems |
+| 0 | **Run the first real operating systems.** Pick real businesses (BAME first, then pilots) and let TEBOS lay down their blueprint | Real proof. The ten blueprints are templates, not client work; only real clients make a portfolio |
 | 1 | Paystack secret key on the worker, and the webhook `https://tebos-worker-production.up.railway.app/webhooks/paystack` | Taking the first payment, and monthly invoices |
 | 2 | Resend key and a verified sending domain | Every client email: payment links, contracts, invoices, reminders |
 | 3 | A lawyer approves the contract templates (standard and company) and advises on POPIA | Signing clients |
@@ -17,6 +17,43 @@ Update this list every run; strike items when they're done.
 | 6 | Social accounts created | Publishing the social pack |
 | 7 | Company registration and VAT number | Invoices that are legally complete |
 | 8 | Make the repo private, rotate database passwords, turn on leaked-password protection | Protecting the platform from copying |
+
+## 1 Oct 2026: operating-system blueprints
+
+- **Read:**
+  - Main was green, and the worker was live.
+  - The company snapshot is all zeros, with no clients yet.
+  - BAME already has three active objectives, each with an owner and a date and measured from its live platform.
+    So the roadmap's first gate ("map one real business") was already met; the roadmap said otherwise and is now
+    corrected. That unblocked the product.
+- **Chosen (rule 3, the product):** "Architecture proposals", first slice. This also serves the founder's
+  target that a client's operating system takes 1–3 days, not weeks.
+- **Built:**
+  - Ten operating-system blueprints in `src/domain/blueprints.ts`: marketing agency, trades, sports agency,
+    medical practice, restaurant, real estate, online retail, accounting firm, logistics, and education centre.
+    Each has its pieces, 2–3 flows, an owner and a written rule for each step, and suggested objectives.
+  - Migration `operating_system_blueprints`: a new *proposed* basis for board pieces, flows and steps.
+    - The `apply_blueprint` function lays a blueprint down in one transaction, as the caller and under their
+      permissions.
+    - It never overwrites what the business stated.
+    - A proposal is confirmed forward (proposed → stated → observed) and never goes back.
+    - Where a piece came from is frozen.
+  - On the board page: "Start from an operating-system blueprint", proposed badges, and Confirm buttons.
+  - A public `/systems` page shows each blueprint's outline. It is labelled "blueprints, not client case studies",
+    and the written rules stay inside TEBOS.
+- **Fixed (root cause found):** the billing integration test that failed intermittently picked "the first
+  onboarded opportunity". The maintenance test, added on 30 Sep, onboards one of its own without a billing
+  account, and the test files run in no fixed order. On a fresh database with the maintenance test first, the
+  old test fails and the new one passes. The billing test now uses the client it onboarded itself.
+- **Proved:**
+  - core: typecheck and 228 unit tests pass, including the new blueprint tests. Those tests caught 19 steps with no
+    written rule, and every one now has a rule.
+  - `test:db`: every SQL file passes, including the new `99u_blueprints.sql`, and all 42 integration tests pass,
+    three runs in a row.
+  - web: typecheck, 23 unit tests and 59 e2e tests pass. Playwright now keeps a trace whenever a test fails, so
+    an intermittent failure leaves its cause behind.
+- **Next by the rules:** a delivery plan that gets a client's draft operating system ready in 1–3 days (blueprint
+  on day 1, confirmed with the owner by day 3), then findings linked to flows.
 
 ## 30 Sep 2026 (evening): public submissions throttled
 

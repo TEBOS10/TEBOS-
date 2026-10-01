@@ -6,7 +6,8 @@
 // explicit queries (the schema's composite keys make implicit embedding
 // ambiguous) and joined in memory.
 
-import type { Database } from "../database.types";
+import { blueprintPayload, type Blueprint } from "@core/blueprints";
+import type { Database, Json } from "../database.types";
 import { domainOf } from "./format";
 import type { Db } from "./supabase";
 
@@ -922,6 +923,22 @@ export async function updateStep(db: Db, stepId: string, patch: Partial<Pick<Boa
 
 export async function retireStep(db: Db, stepId: string) {
   return must(await db.from("board_steps").update({ retired_at: new Date().toISOString() }).eq("id", stepId).select().single());
+}
+
+/** Lays an operating-system blueprint onto a business's board, as proposals the owner then confirms. */
+export async function applyBlueprint(db: Db, businessId: string, blueprint: Blueprint) {
+  return must(await db.rpc("apply_blueprint", { p_business: businessId, p_blueprint: blueprintPayload(blueprint) as unknown as Json })) as
+    { blueprint: string; pieces: number; flows: number; steps: number };
+}
+
+/** The owner confirms a proposed flow: the flow and its proposed steps become what the business stated. */
+export async function confirmFlow(db: Db, flowId: string) {
+  must(await db.from("board_steps").update({ basis: "stated" }).eq("flow_id", flowId).eq("basis", "proposed").select());
+  return must(await db.from("board_flows").update({ basis: "stated" }).eq("id", flowId).select().single());
+}
+
+export async function confirmComponent(db: Db, componentId: string) {
+  return must(await db.from("board_components").update({ basis: "stated" }).eq("id", componentId).select().single());
 }
 
 // ---------------------------------------------------------------------------

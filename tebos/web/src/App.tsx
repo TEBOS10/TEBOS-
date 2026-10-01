@@ -37,6 +37,7 @@ import { ContractTemplatesPage, OpportunityPage, PipelinePage } from "./pages/Pi
 import { SalesPlaybookPage, StaffInvitePage, StaffTeamPage } from "./pages/SalesPages";
 import { StaffShell } from "./components/StaffShell";
 import { BlogIndex, BlogPost } from "./pages/BlogPage";
+import { SystemsPage } from "./pages/SystemsPage";
 import { LegalPage } from "./pages/LegalPage";
 import { SelfCheckPage, SelfCheckShared } from "./pages/SelfCheckPage";
 import { DeliveryQueuePage } from "./pages/DeliveryPage";
@@ -102,6 +103,7 @@ function Gate() {
   if (path === "/film") return <FilmPage />;
   if (path === "/pricing") return <PricingPage />;
   if (path === "/blog") return <BlogIndex />;
+  if (path === "/systems") return <SystemsPage />;
   if (path === "/self-check") return <SelfCheckPage />;
   if (path === "/self-check/result") return <SelfCheckShared />;
   if (path === "/privacy") return <LegalPage which="privacy" />;

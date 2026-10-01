@@ -6,7 +6,7 @@
 // told to refuse a write the way the database would, so the interface's
 // handling of refusals can be checked.
 import type { Page, Route } from "@playwright/test";
-import { fixtureTables, USER_ID } from "./fixtures";
+import { fixtureTables, ORG, USER_ID } from "./fixtures";
 
 export const FAKE_URL = "https://fixture.supabase.test";
 
@@ -181,6 +181,25 @@ function answerRpc(tables: FakeSupabase["tables"], name: string, args: Record<st
     return now;
   }
   const t = tables as Record<string, Array<Record<string, unknown>>>;
+  if (name === "apply_blueprint") {
+    // lays the blueprint down as proposals, as the database function does
+    const bp = args.p_blueprint as unknown as { key: string; version: number; pieces: Array<Record<string, unknown>>; flows: Array<Record<string, unknown> & { steps: Array<Record<string, unknown>> }> };
+    const tag = `${bp.key}@${bp.version}`;
+    const base = { org_id: ORG, business_id: args.p_business, basis: "proposed", from_blueprint: tag, created_at: now, updated_at: now, retired_at: null };
+    const pieces = bp.pieces.map((p) => ({ id: crypto.randomUUID(), ...base, name: p.name, kind: p.kind, description: p.description, owner_role: p.owner_role, supplier: null, connection_id: null, evidence_id: null }));
+    (t.board_components ??= []).push(...pieces);
+    let steps = 0;
+    for (const f of bp.flows) {
+      const flowId = crypto.randomUUID();
+      (t.board_flows ??= []).push({ id: flowId, ...base, name: f.name, starts_when: f.starts_when, done_when: f.done_when, owner_role: f.owner_role, objective_id: null });
+      for (const s of f.steps) {
+        (t.board_steps ??= []).push({ id: crypto.randomUUID(), ...base, flow_id: flowId, position: s.position, name: s.name, performer: s.performer, performer_role: s.performer_role,
+          component_id: pieces.find((p) => p.name === s.piece)?.id ?? null, decision_rule: s.decision_rule, documented: false, evidence_id: null });
+        steps++;
+      }
+    }
+    return { blueprint: tag, pieces: pieces.length, flows: bp.flows.length, steps };
+  }
   if (name === "staff_directory") {
     const roles = new Map<string, string[]>();
     for (const a of t.platform_admins ?? []) roles.set(String(a.user_id), ["admin"]);

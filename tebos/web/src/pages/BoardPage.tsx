@@ -18,6 +18,7 @@ import {
   type ObjectiveMetric,
   type Performer,
 } from "@core/board";
+import { BLUEPRINTS, blueprintCoverage } from "@core/blueprints";
 import type { ObjectiveStatus } from "@core/states";
 import { lazy, Suspense, useMemo, useState, type FormEvent } from "react";
 import { layoutBoard } from "../world/layout";
@@ -29,7 +30,10 @@ import {
   addComponent,
   addFlow,
   addStep,
+  applyBlueprint,
   closeObjective,
+  confirmComponent,
+  confirmFlow,
   createObjective,
   measureAutomatically,
   getBoard,
@@ -54,6 +58,11 @@ import { useQuery } from "../lib/useQuery";
 const ClientBoardView = lazy(() => import("../world/ClientBoardView"));
 
 const UNIT_LABEL: Record<string, string> = { ZAR: "R", percent: "%", hours_per_week: "h/week", hours: "hours", days: "days", count: "" };
+const BASIS_TITLE: Record<string, string> = {
+  observed: "Confirmed by evidence",
+  stated: "What the business told TEBOS",
+  proposed: "Proposed from an operating-system blueprint; confirm it with the owner, change it, or remove it",
+};
 const PERFORMER_LABEL: Record<Performer, string> = { founder: "Founder", staff: "Team", automation: "Automation", provider: "Provider", client: "Client" };
 
 export function formatValue(value: number | string, unit: string): string {
@@ -111,6 +120,8 @@ export function BoardPage({ id }: { id: string }) {
         )}
         {canEdit && <NewObjective businessId={business.id} onCreated={q.reload} />}
       </Card>
+
+      {canEdit && flows.length === 0 && <BlueprintCard businessId={business.id} onApplied={q.reload} />}
 
       <div className="grid grid-main">
         <div className="stack">
@@ -428,7 +439,12 @@ function PiecesCard({ businessId, components, canEdit, onChanged }: { businessId
                   {statusLabel(c.kind)}{c.supplier ? ` · by ${c.supplier}` : ""}{c.owner_role ? ` · owned by ${c.owner_role}` : ""}
                 </span>
               </div>
-              <Badge tone={c.basis === "observed" ? "good" : "neutral"} title={c.basis === "observed" ? "Confirmed by evidence" : "What the business told TEBOS"}>{c.basis}</Badge>
+              <div className="row" style={{ gap: 6 }}>
+                <Badge tone={c.basis === "observed" ? "good" : c.basis === "proposed" ? "warn" : "neutral"} title={BASIS_TITLE[c.basis] ?? c.basis}>{c.basis}</Badge>
+                {canEdit && c.basis === "proposed" && (
+                  <button className="btn btn-sm" onClick={() => confirmComponent(org.db, c.id).then(onChanged, setError)}>Confirm</button>
+                )}
+              </div>
             </li>
           ))}
         </ul>
@@ -477,7 +493,10 @@ function FlowCard({ flow, steps, components, objective, canEdit, onChanged }: {
 
   return (
     <Card
-      title={flow.name}
+      title={<>{flow.name}{flow.basis === "proposed" && <> <Badge tone="warn" title={BASIS_TITLE.proposed}>proposed</Badge></>}</>}
+      actions={canEdit && flow.basis === "proposed" ? (
+        <button className="btn btn-sm" onClick={() => run(() => confirmFlow(org.db, flow.id))} title="The owner confirms this is how the work moves">Confirm flow</button>
+      ) : undefined}
       subtitle={<>Starts when {flow.starts_when.replace(/^./, (c) => c.toLowerCase())} · done when {flow.done_when.replace(/^./, (c) => c.toLowerCase())}{objective ? <> · serves “{objective.title}”</> : null}</>}
     >
       {steps.length === 0 ? (
@@ -610,6 +629,52 @@ function NewFlow({ businessId, objectives, onCreated }: { businessId: string; ob
           <button type="button" className="btn" onClick={() => setOpen(false)}>Cancel</button>
         </div>
       </form>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Operating-system blueprints: a whole draft operating system in one step
+// ---------------------------------------------------------------------------
+
+function BlueprintCard({ businessId, onApplied }: { businessId: string; onApplied: () => void }) {
+  const org = useOrg();
+  const [key, setKey] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<unknown>(null);
+  const chosen = BLUEPRINTS.find((b) => b.key === key);
+
+  async function apply() {
+    if (!chosen) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await applyBlueprint(org.db, businessId, chosen);
+      onApplied();
+    } catch (e) {
+      setError(e);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card title="Start from an operating-system blueprint" subtitle="Lay down a complete draft operating system for this kind of business in one step: its pieces, its flows, and who does each step under what rule. Everything arrives as proposed; confirm, change or remove each piece with the owner.">
+      <div className="form">
+        <Field label="Kind of business">
+          <select className="input" value={key} onChange={(e) => setKey(e.target.value)} aria-label="Blueprint">
+            <option value="">Choose…</option>
+            {BLUEPRINTS.map((b) => <option key={b.key} value={b.key}>{b.industry}</option>)}
+          </select>
+        </Field>
+        {chosen && (
+          <p className="list-meta" data-testid="blueprint-preview">
+            {chosen.promise} {chosen.pieces.length} pieces · {chosen.flows.length} flows · {blueprintCoverage(chosen).steps} steps, {blueprintCoverage(chosen).stepsWithRules} with a written rule.
+          </p>
+        )}
+        <ErrorNote error={error} title="Blueprint not applied" />
+        <div><button className="btn btn-primary" disabled={!chosen || busy} onClick={apply}>{busy ? "Laying it down…" : "Apply blueprint"}</button></div>
+      </div>
     </Card>
   );
 }

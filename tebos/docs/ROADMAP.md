@@ -50,14 +50,19 @@ against building "a platform that does everything".
        and 8 steps.
      - Open steps: routing to a department has no written rule, and deliverables have checklists for PR and
        Technology only.
-   - Still open: the objectives, which only the owner can set. The live platform already reports numbers that
-     can measure them (e.g. unassigned cases, open notifications, ledger entries, roster size). Also still
-     open: who does which step, where that isn't visible in the system (for example, whether the admin is the
-     founder).
+   - Done (28 Sep 2026): three objectives are active, each with an owner and a date, and each is measured from BAME's
+     live platform (cases routed, delivery checklists, ledger fees). **The gate is met.** Still open: who does which
+     step, where that isn't visible in the system (for example, whether the admin is the founder).
 2. Findings that name their flow and objective, in the business review. The model proposes the link, and TEBOS
    validates that the flow belongs to the business.
 3. Observed pieces: link board pieces to the connections and evidence that confirm them.
 4. Architecture proposals: suggested rules and owners for founder-only steps, each one an approvable action.
+   - First slice built (1 Oct 2026): **operating-system blueprints** (`src/domain/blueprints.ts`, migration
+     `operating_system_blueprints`). There are ten, one per kind of business. Each sets out the pieces, the flows, and
+     a written rule and an owner for each step. A blueprint is laid onto a client's board in one step as *proposed*;
+     the owner confirms each piece (proposed → stated), and evidence makes it observed. A proposal never overwrites
+     what the business stated. The public `/systems` page shows each blueprint's outline, never its rules.
+     Next: shorten the delivery plan so that a client's draft operating system is ready in 1–3 days, not 12.
 5. Only then: automation of steps that have a written rule and a connected tool.
 
 | Stage | Delivers | Gate (proof) | Status |
