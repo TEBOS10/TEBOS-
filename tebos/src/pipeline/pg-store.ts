@@ -8,6 +8,7 @@ import { DELIVERY_PLANS } from "../domain/delivery";
 import { PLAN_TERMS, type PlanKey } from "../domain/plans";
 import type { PaystackWebhookStore } from "./paystack-webhook";
 import type { Screening, ScreeningHistory } from "./screening";
+import { blueprintByKey, blueprintPayload } from "../domain/blueprints";
 import { MAX_EMAIL_ATTEMPTS, type NewEnquiry, type Opportunity, type OutboxEmail, type PendingEmail, type PipelineStore, type Template } from "./worker";
 
 const RETRY_AFTER = "5 minutes";
@@ -45,7 +46,7 @@ export class PgPipelineStore implements PipelineStore, PaystackWebhookStore {
 
   async nextNewEnquiry(): Promise<{ enquiry: NewEnquiry; history: ScreeningHistory } | null> {
     const { rows } = await this.pool.query(
-      `select e.id, e.plan, e.name, e.business, e.email, e.phone, e.website, e.message, e.source, e.added_by,
+      `select e.id, e.plan, e.name, e.business, e.email, e.phone, e.website, e.message, e.source, e.added_by, e.kind, e.industry,
               (select count(*)::int from public.enquiries p where p.created_at < e.created_at and lower(p.email) = lower(e.email)) as same_email,
               (select count(*)::int from public.enquiries p where p.created_at < e.created_at
                   and split_part(lower(p.email), '@', 2) = split_part(lower(e.email), '@', 2)) as same_domain
@@ -57,7 +58,7 @@ export class PgPipelineStore implements PipelineStore, PaystackWebhookStore {
     if (!r) return null;
     return {
       enquiry: { id: r.id, plan: r.plan, name: r.name, business: r.business, email: r.email, phone: r.phone, website: r.website, message: r.message,
-                 source: r.source, addedBy: r.added_by },
+                 source: r.source, addedBy: r.added_by, waitlist: r.kind === "waitlist", industry: r.industry },
       history: { sameEmail: r.same_email, sameDomain: r.same_domain },
     };
   }
@@ -66,9 +67,10 @@ export class PgPipelineStore implements PipelineStore, PaystackWebhookStore {
     return this.tx(async (c) => {
       const ins = await c.query(
         // a lead from sales stays with the salesperson who added it
-        `insert into public.opportunities (enquiry_id, plan, contact_name, business, email, phone, website, message, source, owner_id)
-         values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) on conflict (enquiry_id) do nothing returning id`,
-        [e.id, e.plan, e.name, e.business, e.email.trim().toLowerCase(), e.phone, e.website, e.message, e.source ?? "website", e.addedBy ?? null],
+        `insert into public.opportunities (enquiry_id, plan, contact_name, business, email, phone, website, message, source, owner_id, from_waitlist, industry)
+         values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) on conflict (enquiry_id) do nothing returning id`,
+        [e.id, e.plan, e.name, e.business, e.email.trim().toLowerCase(), e.phone, e.website, e.message, e.source ?? "website", e.addedBy ?? null,
+         e.waitlist ?? false, e.industry ?? null],
       );
       const id: string = ins.rows[0]?.id ?? (await c.query("select id from public.opportunities where enquiry_id = $1", [e.id])).rows[0].id;
       await c.query(
@@ -138,7 +140,7 @@ export class PgPipelineStore implements PipelineStore, PaystackWebhookStore {
 
   async onboard(id: string, orgName: string, slug: string, inviteTokenHash: string, email: OutboxEmail): Promise<string> {
     return this.tx(async (c) => {
-      const o = (await c.query("select email, plan, maintainer_id from public.opportunities where id = $1 and status = 'contracted' for update", [id])).rows[0];
+      const o = (await c.query("select email, plan, maintainer_id, business, website, industry from public.opportunities where id = $1 and status = 'contracted' for update", [id])).rows[0];
       if (!o) throw new Error(`opportunity ${id} is not waiting for onboarding`);
       const orgId: string = (await c.query("insert into public.organisations (name, slug) values ($1, $2) returning id", [orgName, slug])).rows[0].id;
       // the client's own admin joins through the invitation, bound to the contracted email address
@@ -171,6 +173,22 @@ export class PgPipelineStore implements PipelineStore, PaystackWebhookStore {
           `insert into public.delivery_tasks (opportunity_id, org_id, key, position, title, done_means, due_at)
            values ($1, $2, $3, $4, $5, $6, now() + make_interval(days => $7)) on conflict (opportunity_id, key) do nothing`,
           [id, orgId, step.key, i + 1, step.title, step.done, step.dueDays],
+        );
+      }
+      // their business on TEBOS, and (day 1 of the plan) their draft operating system: the blueprint
+      // for their kind of business laid onto its board as proposals, without anyone being asked
+      const businessId: string = (await c.query(
+        "insert into public.businesses (org_id, name, website, industry) values ($1, $2, $3, $4) returning id",
+        [orgId, o.business, o.website, o.industry],
+      )).rows[0].id;
+      await c.query("update public.opportunities set business_id = $2 where id = $1", [id, businessId]);
+      const blueprint = o.industry ? blueprintByKey(o.industry) : undefined;
+      if (blueprint) {
+        const laid = (await c.query("select public.apply_blueprint($1, $2::jsonb) as r", [businessId, JSON.stringify(blueprintPayload(blueprint))])).rows[0].r;
+        await c.query(
+          `update public.delivery_tasks set status = 'done', note = $2
+            where opportunity_id = $1 and title = 'Draft operating system on the board' and status = 'open'`,
+          [id, `TEBOS laid the ${blueprint.industry} blueprint onto the board at onboarding: ${laid.pieces} pieces, ${laid.flows} flows and ${laid.steps} steps, all proposed for the owner to confirm.`],
         );
       }
       await this.outbox(c, id, email);

@@ -32,6 +32,10 @@ export interface NewEnquiry {
   /** Where it came from: the public website, or a salesperson who added it (and owns it). */
   source?: "website" | "sales";
   addedBy?: string | null;
+  /** Joined from the waiting list rather than enquiring about a plan. */
+  waitlist?: boolean;
+  /** Their kind of business, as an operating-system blueprint key, when they gave one. */
+  industry?: string | null;
 }
 
 export interface Opportunity {
@@ -192,7 +196,7 @@ export class PipelineWorker {
       `${o.business} is set up on TEBOS. Create your account with this email address (${o.email}) here:`,
       `${this.config.siteUrl}/invite/${token}`,
       ``,
-      `You'll be your organisation's admin, and can invite your team from there. Your TEBOS maintainer will be in touch to book your diagnostic.`,
+      `You'll be your organisation's admin, and can invite your team from there. Your draft operating system is already on your board, and your TEBOS maintainer will be in touch to confirm it with you.`,
     ]));
     this.log({ event: "pipeline.onboarded", opportunityId: o.id, orgId });
     return { step: "onboard", id: o.id, orgId };

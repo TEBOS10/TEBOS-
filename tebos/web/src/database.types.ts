@@ -1085,6 +1085,8 @@ export type Database = {
       }
       enquiries: {
         Row: {
+          kind: string
+          industry: string | null
           business: string
           created_at: string
           email: string
@@ -1099,6 +1101,8 @@ export type Database = {
           added_by: string | null
         }
         Insert: {
+          kind?: string
+          industry?: string | null
           business: string
           created_at?: string
           email: string
@@ -1113,6 +1117,8 @@ export type Database = {
           added_by?: string | null
         }
         Update: {
+          kind?: string
+          industry?: string | null
           business?: string
           created_at?: string
           email?: string
@@ -1679,6 +1685,9 @@ export type Database = {
       }
       opportunities: {
         Row: {
+          from_waitlist: boolean
+          industry: string | null
+          business_id: string | null
           id: string
           enquiry_id: string
           plan: string
@@ -1706,6 +1715,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          from_waitlist?: boolean
+          industry?: string | null
+          business_id?: string | null
           id?: string
           enquiry_id: string
           plan: string
@@ -1733,6 +1745,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          from_waitlist?: boolean
+          industry?: string | null
+          business_id?: string | null
           id?: string
           enquiry_id?: string
           plan?: string
