@@ -19,6 +19,24 @@ Update this list every run; strike items when they're done.
 | 7 | Company registration and VAT number | Invoices that are legally complete |
 | 8 | Make the repo private, rotate database passwords, turn on leaked-password protection | Protecting the platform from copying |
 
+## 2 Oct 2026 (later): BAME is the first real operating system
+
+- **At the founder's request**, BAME's operating system started on the new 1–3 day plan.
+- **Day 1, done:** the sports-agency blueprint, fitted to BAME, was laid onto BAME's board as proposals.
+  - It is fitted to BAME's own tools: the roster lives in the staff operating system, commission goes to the capital
+    ledger, and enquiries come in through the diagnostic intake.
+  - It is fitted to BAME's own teams: Sales, PR, Administration and Finance.
+  - It adds an "Athlete outreach to diagnostic" flow for the sales push.
+  - The result is 3 tools, 3 flows and 12 steps, each with a written rule. BAME's existing observed board was
+    left untouched.
+- **Objectives added as drafts, owned by the founder:**
+  - "Every enquiry answered within 24 hours" (by 31 Oct). It can't be measured yet: BAME's live snapshot reports how
+    many leads arrive, not how fast they're answered.
+  - "New leads from events, athletes and opportunities each month" (20 a month), bound to BAME's live lead count.
+    The target of 20 is a proposal for the founder to confirm.
+- **Day 2:** the founder answers the diagnostic interview.
+- **Day 3:** the founder confirms, changes or removes each proposed piece on BAME's board, and activates the objectives.
+
 ## 2 Oct 2026: an operating system in 1 to 3 days
 
 - **Read:**
