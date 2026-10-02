@@ -11,6 +11,9 @@
 //   interviews    — place booked diagnostic calls (when ELEVENLABS_API_KEY, ELEVENLABS_AGENT_ID
 //                   and ELEVENLABS_PHONE_NUMBER_ID are set), follow them, and turn transcripts
 //                   into evidence (extraction needs ANTHROPIC_API_KEY)
+//   intake        — ring a prospect the moment staff start an intake call in a meeting (when
+//                   ELEVENLABS_API_KEY, ELEVENLABS_INTAKE_AGENT_ID and ELEVENLABS_PHONE_NUMBER_ID
+//                   are set), follow the call, and queue the next-day outline email
 //   monitoring    — read connected platforms' operational snapshots (read-only logins,
 //                   aggregates only) and record them as connected-system evidence
 //   alerts        — email each new pricing-page enquiry to the team once (when
@@ -54,6 +57,8 @@ import { ExecutionWorker } from "./execution/worker";
 import { PgInterviewStore } from "./interviews/pg-store";
 import { ElevenLabsVoice } from "./interviews/voice";
 import { InterviewWorker } from "./interviews/worker";
+import { PgIntakeStore } from "./intake/pg-store";
+import { IntakeWorker } from "./intake/worker";
 import { CompanySnapshotReader, PgMonitorStore, PgSnapshotReader } from "./monitoring/pg-store";
 import { MonitorWorker } from "./monitoring/worker";
 import { PaystackGateway } from "./pipeline/paystack";
@@ -99,6 +104,21 @@ const voice = voiceEnabled
     })
   : null;
 const interviews = new InterviewWorker(new PgInterviewStore(pool, workerId), voice, provider, { log });
+
+// Intake calls use their own voice agent: a short call, not the diagnostic.
+const intakeVoiceEnabled = Boolean(process.env.ELEVENLABS_API_KEY && process.env.ELEVENLABS_INTAKE_AGENT_ID && process.env.ELEVENLABS_PHONE_NUMBER_ID);
+const intakeVoice = intakeVoiceEnabled
+  ? new ElevenLabsVoice({
+      apiKey: process.env.ELEVENLABS_API_KEY!,
+      agentId: process.env.ELEVENLABS_INTAKE_AGENT_ID!,
+      phoneNumberId: process.env.ELEVENLABS_PHONE_NUMBER_ID!,
+      telephony: process.env.ELEVENLABS_TELEPHONY === "sip_trunk" ? "sip_trunk" : "twilio",
+    })
+  : null;
+const intake = new IntakeWorker(new PgIntakeStore(pool, workerId), intakeVoice, {
+  waitlistUrl: `${(process.env.TEBOS_SITE_URL || "https://tebos-demo.vercel.app").replace(/\/+$/, "")}/waitlist`,
+  log,
+});
 
 const monitor = new MonitorWorker(new PgMonitorStore(pool, workerId), new PgSnapshotReader(), {
   log,
@@ -150,7 +170,7 @@ for (const signal of ["SIGINT", "SIGTERM"] as const) {
 log({
   event: "worker.started",
   pollMs,
-  stages: { acquisition: true, intelligence: intelligenceEnabled, execution: executionEnabled, webhooks: Boolean(server), voiceInterviews: voiceEnabled, enquiryAlerts: alertsEnabled,
+  stages: { acquisition: true, intelligence: intelligenceEnabled, execution: executionEnabled, webhooks: Boolean(server), voiceInterviews: voiceEnabled, intakeCalls: intakeVoiceEnabled, enquiryAlerts: alertsEnabled,
     pipeline: { payments: Boolean(paystackKey), clientEmails: Boolean(process.env.RESEND_API_KEY) } },
   ...(intelligenceEnabled ? {} : { note: "Findings are not generated: set ANTHROPIC_API_KEY to enable the intelligence stage" }),
 });
@@ -169,12 +189,13 @@ while (!stopping) {
   const analysed = intelligence && !stopping ? await step("intelligence", () => intelligence.runOnce()) : false;
   const executed = execution && !stopping ? await step("execution", () => execution.runOnce()) : false;
   const interviewed = !stopping ? await step("interviews", () => interviews.runOnce()) : false;
+  const intook = !stopping ? await step("intake", () => intake.runOnce()) : false;
   const monitored = !stopping ? await step("monitoring", () => monitor.runOnce()) : false;
   const alerted = alerts && !stopping ? await step("alerts", () => alerts.runOnce()) : false;
   const piped = !stopping ? await step("pipeline", () => pipeline.runOnce()) : false;
   const billed = !stopping ? await step("billing", () => billing.runOnce()) : false;
   const maintained = !stopping ? await step("maintenance", () => maintenance.runOnce()) : false;
-  if (!acquired && !analysed && !executed && !interviewed && !monitored && !alerted && !piped && !billed && !maintained && !stopping) await new Promise((r) => setTimeout(r, pollMs));
+  if (!acquired && !analysed && !executed && !interviewed && !intook && !monitored && !alerted && !piped && !billed && !maintained && !stopping) await new Promise((r) => setTimeout(r, pollMs));
 }
 await new Promise<void>((r) => (server ? server.close(() => r()) : r()));
 await pool.end();

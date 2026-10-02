@@ -11,13 +11,40 @@ Update this list every run; strike items when they're done.
 | 0 | **Run the first real operating systems.** Pick real businesses (BAME first, then pilots) and let TEBOS lay down their blueprint | Real proof. The ten blueprints are templates, not client work; only real clients make a portfolio |
 | 1 | Paystack secret key on the worker, and the webhook `https://tebos-worker-production.up.railway.app/webhooks/paystack` | Taking the first payment, and monthly invoices |
 | 2b | Claude API key (`ANTHROPIC_API_KEY`) on the worker | Findings from scans and interviews: the next product step |
-| 2 | Resend key and a verified sending domain | Every client email: payment links, contracts, invoices, reminders |
+| 2 | Resend key and a verified sending domain | Every client email: payment links, contracts, invoices, reminders, the next-day outline after an intake call |
+| 2c | A phone number on the voice provider, and the intake agent (`ELEVENLABS_INTAKE_AGENT_ID`, set-up in the README) | TEBOS ringing prospects from meetings |
 | 3 | A lawyer approves the contract templates (standard and company) and advises on POPIA | Signing clients |
 | 4 | Activate the 9 draft objectives on TEBOS's board | The company measuring itself, and the maintainer queue watching TEBOS |
 | 5 | Founder name and title for outreach and the site | Sending the outreach drafts |
 | 6 | Social accounts created | Publishing the social pack |
 | 7 | Company registration and VAT number | Invoices that are legally complete |
 | 8 | Make the repo private, rotate database passwords, turn on leaked-password protection | Protecting the platform from copying |
+
+## 2 Oct 2026 (night): meeting mode, and intake calls that start on the spot
+
+- **At the founder's request:** in meetings, show TEBOS instead of talking about it. After the film, the prospect
+  types their number and TEBOS rings them straight away; the next day they get an outline and are on the waiting
+  list; a "yes" reaches the founder to close.
+- **The founder's decisions:** a short intake call before payment, not the diagnostic (it stays paid); and only staff,
+  in the meeting, can start a call (no public "call me" button).
+- **Built:**
+  - Migration `meeting_intake_calls` and `start_meeting_call`: staff only, consent word for word, 20 calls an hour,
+    forward-only states, never completed without words, the answer never overwritten.
+  - The intake worker (`src/intake/`): rings at once through its own voice agent, follows the call, reads the
+    agent's yes or no strictly, and queues the next-morning outline email (blueprint pieces and flows by name only).
+  - Meeting mode (`/meet`): full screen, no staff navigation. Scenario films (a gym, a sports agency) built from real
+    blueprint steps and labelled as illustrations, and the TEBOS film. Then the call form, then the call's progress live.
+  - The pipeline shows each intake call's outcome; the opportunity page shows what was said, and staff can record an
+    answer the call didn't settle.
+  - An 11th blueprint: gym or fitness studio (access control at the door, a morning attendance report, member
+    messages answered from the FAQ, failed debit orders recovered), from the gym owner's own pains.
+  - The outbound call script is written for the playbook (migration `outbound_call_script`), held back until the
+    founder approves applying it to the live database.
+- **Proved:** core typecheck and 234 unit tests; `test:db` with every SQL file (new `99v_intake_calls.sql`) and 47
+  integration tests (new `intake-pg`); web typecheck, 26 unit tests (new scenario check) and 64 e2e tests (new `meet.spec.ts`).
+- **To run live, the founder needs:** a phone number connected to the voice provider, and a second voice agent for
+  intake (set-up text in the README) with `ELEVENLABS_INTAKE_AGENT_ID` on the worker; the client email key for the
+  next-day outline.
 
 ## 2 Oct 2026 (evening): the waiting list, and operating systems that start by themselves
 

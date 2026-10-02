@@ -350,6 +350,47 @@ export const BLUEPRINTS: Blueprint[] = [
       { title: "Fees collected within 30 days", metric: "custom", target: 30, why: "Cash flow keeps the doors open." },
     ],
   },
+  {
+    key: "gym-fitness", version: 1, industry: "Gym or fitness studio", name: "Gym operating system",
+    promise: "The door knows who is a paid-up member, messages answer themselves, and the owner stops walking the floor to check.",
+    pieces: [
+      { name: "Membership system", kind: "software", ownerRole: "Front desk", description: "Members, plans, class bookings and payment status." },
+      { name: "Access control", kind: "software", ownerRole: "Front desk", description: "Card, QR code or fingerprint at the door, linked to the membership system, from an access-control supplier." },
+      { name: "Debit order provider", kind: "provider", ownerRole: "Owner", description: "Monthly membership collections and failed-payment notices." },
+      { name: "WhatsApp business line", kind: "channel", ownerRole: "Front desk", description: "Where members and enquiries message the gym." },
+      { name: "House rules and FAQ", kind: "document", ownerRole: "Owner", description: "Hours, prices, classes, freezes and cancellations, written down once." },
+      { name: "Front desk", kind: "role", ownerRole: "Owner", description: "Welcomes members and guests, handles exceptions." },
+    ],
+    flows: [
+      { name: "Member at the door to checked in", startsWhen: "Someone arrives at the door", doneWhen: "Their entry is logged, or they are turned away with the reason", ownerRole: "Front desk", steps: [
+        s("automation", "Access control", "Check the card, QR code or fingerprint against the membership", "Only active, paid-up members open the door; every entry is logged with the time.", "Access control"),
+        s("automation", "Membership system", "Stop expired or unpaid members at the door", "An expired or unpaid member is not let in and is sent the payment link on the spot.", "Membership system"),
+        s("staff", "Front desk", "Sign in guests and handle exceptions", "Guests sign in with ID and pay the day fee; any exception is logged with a reason.", "Front desk"),
+        s("automation", "Membership system", "Send the morning attendance report", "Every morning: yesterday's entries, who trained, and anyone let in without a valid membership.", "Membership system"),
+      ] },
+      { name: "Enquiry to paying member", startsWhen: "Someone asks about joining", doneWhen: "They are a paying member with access switched on", ownerRole: "Front desk", steps: [
+        s("automation", "WhatsApp business line", "Answer with prices and a free trial slot", "Every enquiry gets the price list and a trial booking link within five minutes.", "WhatsApp business line"),
+        s("staff", "Front desk", "Welcome the trial and show them around", "Every trial is met by name and shown the floor, the classes and the plans."),
+        s("staff", "Front desk", "Sign them up on a debit order", "Sign-up only with a signed debit order mandate, on a plan from the price list.", "Debit order provider"),
+        s("automation", "Access control", "Switch on access when the first payment clears", "Access is switched on only once the first payment has cleared.", "Access control"),
+      ] },
+      { name: "Member message to answered", startsWhen: "A member sends a message", doneWhen: "The member has an answer, or the owner has the issue", ownerRole: "Front desk", steps: [
+        s("automation", "WhatsApp business line", "Answer common questions from the FAQ", "Hours, prices, class times and freezes are answered from the house rules and FAQ; anything else goes to the front desk.", "WhatsApp business line"),
+        s("staff", "Front desk", "Answer the rest within two hours", "Answer from the house rules within two hours during opening times.", "House rules and FAQ"),
+        s("founder", "Owner", "Decide refunds and complaints", "Only refunds above the set amount and formal complaints go to the owner."),
+      ] },
+      { name: "Failed debit order to recovered", startsWhen: "A membership payment fails", doneWhen: "The member has paid, or the membership is paused", ownerRole: "Front desk", steps: [
+        s("automation", "Debit order provider", "Flag the failed payment", "Every failed collection is flagged to the membership system the same day.", "Debit order provider"),
+        s("automation", "Membership system", "Send the member a payment link", "Send the payment link on day 1 and day 4.", "Membership system"),
+        s("automation", "Access control", "Pause access after seven days unpaid", "Access pauses on day 7 unpaid and reopens the moment they pay.", "Access control"),
+      ] },
+    ],
+    objectives: [
+      { title: "Owner hours checking the floor below 2 a week", metric: "founder_hours", target: 2, why: "The door and the morning report do the checking." },
+      { title: "Every enquiry answered within an hour", metric: "lead_response_time", target: 1, why: "People join the gym that answers first." },
+      { title: "Members kept month to month", metric: "client_retention", target: 90, why: "Retention is the gym's real growth." },
+    ],
+  },
 ];
 
 export const blueprintByKey = (key: string): Blueprint | undefined => BLUEPRINTS.find((b) => b.key === key);

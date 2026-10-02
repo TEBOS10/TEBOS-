@@ -33,11 +33,11 @@ test("an empty board starts from a blueprint, and the owner confirms what's righ
   await expect(flow.getByRole("button", { name: "Confirm flow" })).toHaveCount(0);
 });
 
-test("the public page shows ten operating systems as blueprints, with outlines but not the rules", async ({ page }) => {
+test("the public page shows eleven operating systems as blueprints, with outlines but not the rules", async ({ page }) => {
   await installFakeSupabase(page);
   await page.goto("/systems");
   await expect(page.getByRole("heading", { name: "An operating system for your kind of business" })).toBeVisible();
-  await expect(page.getByTestId("system")).toHaveCount(10);
+  await expect(page.getByTestId("system")).toHaveCount(11);
   await expect(page.getByText("These are blueprints, not client case studies.")).toBeVisible();
   const sports = page.getByTestId("system").filter({ hasText: "Sports agency" });
   await expect(sports).toContainText("Opportunity to signed deal · Media request to appearance");

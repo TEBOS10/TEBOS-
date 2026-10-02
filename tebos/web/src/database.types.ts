@@ -1412,6 +1412,63 @@ export type Database = {
           },
         ]
       }
+      intake_calls: {
+        Row: {
+          created_at: string
+          duration_secs: number | null
+          ended_at: string | null
+          enquiry_id: string
+          failure_detail: string | null
+          follow_up_due_at: string | null
+          follow_up_queued_at: string | null
+          id: string
+          outcome_note: string | null
+          outcome_source: string | null
+          phone_number: string
+          requested_by: string
+          started_at: string | null
+          status: string
+          transcript: Json | null
+          wants_to_proceed: boolean | null
+        }
+        Insert: {
+          created_at?: string
+          duration_secs?: number | null
+          ended_at?: string | null
+          enquiry_id?: string
+          failure_detail?: string | null
+          follow_up_due_at?: string | null
+          follow_up_queued_at?: string | null
+          id?: string
+          outcome_note?: string | null
+          outcome_source?: string | null
+          phone_number?: string
+          requested_by?: string
+          started_at?: string | null
+          status?: string
+          transcript?: Json | null
+          wants_to_proceed?: boolean | null
+        }
+        Update: {
+          created_at?: string
+          duration_secs?: number | null
+          ended_at?: string | null
+          enquiry_id?: string
+          failure_detail?: string | null
+          follow_up_due_at?: string | null
+          follow_up_queued_at?: string | null
+          id?: string
+          outcome_note?: string | null
+          outcome_source?: string | null
+          phone_number?: string
+          requested_by?: string
+          started_at?: string | null
+          status?: string
+          transcript?: Json | null
+          wants_to_proceed?: boolean | null
+        }
+        Relationships: []
+      }
       interview_sessions: {
         Row: {
           business_id: string
@@ -2435,6 +2492,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      start_meeting_call: {
+        Args: { p_name: string; p_business: string; p_email: string; p_phone: string; p_industry: string | null; p_size: string; p_consent: string }
+        Returns: string
+      }
       apply_blueprint: {
         Args: { p_business: string; p_blueprint: Json }
         Returns: Json

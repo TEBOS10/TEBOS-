@@ -2,10 +2,10 @@ import { describe, expect, it } from "vitest";
 import { BLUEPRINTS, blueprintByKey, blueprintCoverage, blueprintPayload, checkBlueprint, type Blueprint } from "../src";
 
 describe("operating-system blueprints", () => {
-  it("covers ten different kinds of business, each with a unique key", () => {
-    expect(BLUEPRINTS).toHaveLength(10);
-    expect(new Set(BLUEPRINTS.map((b) => b.key)).size).toBe(10);
-    expect(new Set(BLUEPRINTS.map((b) => b.industry)).size).toBe(10);
+  it("covers eleven different kinds of business, each with a unique key", () => {
+    expect(BLUEPRINTS).toHaveLength(11);
+    expect(new Set(BLUEPRINTS.map((b) => b.key)).size).toBe(11);
+    expect(new Set(BLUEPRINTS.map((b) => b.industry)).size).toBe(11);
   });
 
   it.each(BLUEPRINTS.map((b) => [b.key, b] as const))("%s fits the board's rules", (_, b) => {

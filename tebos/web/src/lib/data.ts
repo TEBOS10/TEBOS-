@@ -975,19 +975,62 @@ export async function staffAccess(db: Db, userId: string): Promise<StaffAccess> 
 }
 
 export async function listOpportunities(db: Db) {
-  return must(await db.from("opportunities").select("*").order("created_at", { ascending: false }).limit(500));
+  const [opps, calls] = await Promise.all([
+    db.from("opportunities").select("*").order("created_at", { ascending: false }).limit(500),
+    db.from("intake_calls").select("enquiry_id, status, wants_to_proceed").limit(1000),
+  ]);
+  const byEnquiry = new Map((calls.data ?? []).map((c) => [c.enquiry_id, c]));
+  return must(opps).map((o) => ({ ...o, intake: byEnquiry.get(o.enquiry_id) ?? null }));
+}
+
+// ---------------------------------------------------------------------------
+// Intake calls from meetings
+// ---------------------------------------------------------------------------
+export const INTAKE_COLUMNS =
+  "id, enquiry_id, requested_by, phone_number, status, started_at, ended_at, transcript, duration_secs, wants_to_proceed, outcome_source, outcome_note, failure_detail, follow_up_due_at, follow_up_queued_at, created_at";
+export type IntakeCall = Row<"intake_calls">;
+
+export interface MeetingCallDraft {
+  name: string;
+  business: string;
+  email: string;
+  phone: string;
+  industry: string;
+  size: string;
+  consent: string;
+}
+
+/** Starts the intake call: the database checks staff, consent and the number, and records the waiting-list lead. */
+export async function startMeetingCall(db: Db, d: MeetingCallDraft): Promise<string> {
+  const { data, error } = await db.rpc("start_meeting_call", {
+    p_name: d.name.trim(), p_business: d.business.trim(), p_email: d.email.trim(), p_phone: d.phone.trim(),
+    p_industry: d.industry || null, p_size: d.size, p_consent: d.consent,
+  });
+  if (error) throw error;
+  return data as string;
+}
+
+export async function getIntakeCall(db: Db, id: string): Promise<IntakeCall | null> {
+  return maybe(await db.from("intake_calls").select(INTAKE_COLUMNS).eq("id", id).maybeSingle()) as IntakeCall | null;
+}
+
+/** Staff record the prospect's yes or no when the call didn't capture it. */
+export async function recordIntakeAnswer(db: Db, id: string, wantsToProceed: boolean, note: string) {
+  return must(await db.from("intake_calls").update({ wants_to_proceed: wantsToProceed, outcome_note: note.trim() || null }).eq("id", id).select(INTAKE_COLUMNS).single());
 }
 
 export async function getOpportunity(db: Db, id: string) {
   const opportunity = maybe(await db.from("opportunities").select("*").eq("id", id).maybeSingle());
   if (!opportunity) return null;
-  const [payments, contracts, emails] = await Promise.all([
+  const [payments, contracts, emails, intake] = await Promise.all([
     db.from("payments").select("id, opportunity_id, provider, reference, amount_cents, currency, status, paid_at, note, recorded_by, created_at").eq("opportunity_id", id).order("created_at"),
     db.from("contracts").select("id, opportunity_id, template_key, template_version, title, body, body_hash, status, sent_at, expires_at, accepted_at, accepted_name, accepted_ip, accepted_agent, created_at").eq("opportunity_id", id),
     db.from("outbox_emails").select("id, opportunity_id, kind, to_email, subject, created_at, attempts, last_try, sent_at, error").eq("opportunity_id", id).order("created_at"),
+    db.from("intake_calls").select(INTAKE_COLUMNS).eq("enquiry_id", opportunity.enquiry_id).maybeSingle(),
   ]);
   return {
     opportunity,
+    intake: (intake.data ?? null) as IntakeCall | null,
     payments: (payments.data ?? []) as PaymentRow[],
     contract: ((contracts.data ?? [])[0] ?? null) as ContractRow | null,
     emails: (emails.data ?? []) as OutboxEmail[],

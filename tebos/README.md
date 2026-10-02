@@ -229,6 +229,38 @@ Worker settings: `ELEVENLABS_API_KEY`, `ELEVENLABS_AGENT_ID` (the TEBOS diagnost
 `ELEVENLABS_TELEPHONY=sip_trunk` for SIP). Without all three the worker places no calls: bookings stay
 booked, and the interface says so once the time has passed.
 
+## Intake calls from meetings
+
+In a meeting, staff open **meeting mode** (`/meet`, staff only, full screen with no other client in sight). It plays
+a scenario film (a day in a gym or a sports agency on its TEBOS operating system, each moment a real blueprint
+step, labelled as an illustration) or the TEBOS film. Then the prospect types their number and ticks the consent,
+and TEBOS rings them on the spot (migration `meeting_intake_calls`, `src/intake/`).
+
+- **A short intake call, not the diagnostic** (that stays paid): what takes their time, and whether they want
+  to go ahead.
+- `start_meeting_call` is the only way in: staff only, consent word for word, a full number, 20 calls an hour per
+  person. The prospect becomes a waiting-list lead owned by whoever met them.
+- A call moves forward only, is completed only with what was said, and records their yes or no only from the
+  call (the agent's `wants_to_proceed` data-collection result) or from staff, never overwritten.
+- The next morning (09:00 Johannesburg) TEBOS queues an outline email: the blueprint's pieces and flows by name
+  (no rules, no diagnosis), and their place on the waiting list. It's sent when the client email key is set.
+
+Worker settings: `ELEVENLABS_API_KEY`, `ELEVENLABS_PHONE_NUMBER_ID`, and `ELEVENLABS_INTAKE_AGENT_ID`: a second
+agent whose prompt runs the intake (below). Without them, calls stay "requested" and meeting mode says so after a
+minute.
+
+The intake agent's set-up:
+- First message: "Hi {{prospect_name}}, this is TEBOS, an AI assistant, calling as you asked. This call is recorded
+  so we can follow up. Is now still a good time for five minutes?"
+- Prompt: "You are TEBOS's intake caller. You speak with {{prospect_name}} from {{business_name}}
+  ({{kind_of_business}}), who just watched TEBOS in a meeting and asked for this call. In about five minutes: ask
+  what takes most of their time each week; what still has to go through them personally; and where that lives
+  today. Listen and reflect back briefly. Do not diagnose, recommend fixes, quote prices or promise results.
+  Close by asking: would they like TEBOS to go ahead with building their operating system? Either answer is fine.
+  Tell them they'll get an outline by email tomorrow morning and that they're on the waiting list."
+- Data collection: a boolean `wants_to_proceed`: "True only if the person clearly said yes to going ahead; false
+  only if they clearly said no; leave empty otherwise."
+
 ## Platform monitoring (read-only)
 
 TEBOS watches the platforms it runs for, without being able to change them or read personal data.
