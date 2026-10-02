@@ -17,6 +17,8 @@ export interface ConversationSnapshot {
   transcript: TranscriptTurn[];
   durationSecs: number | null;
   endReason: string | null;
+  /** What the agent was asked to collect on the call, by key (absent when nothing was collected). */
+  collected?: Record<string, unknown>;
 }
 
 export type PlaceCallResult =
@@ -94,6 +96,7 @@ export class ElevenLabsVoice implements VoiceProvider {
       status?: string;
       transcript?: Array<{ role?: string; message?: string | null; time_in_call_secs?: number }>;
       metadata?: { call_duration_secs?: number; termination_reason?: string };
+      analysis?: { data_collection_results?: Record<string, { value?: unknown } | null> };
     };
     const state: CallState =
       j.status === "done" ? "done" : j.status === "failed" ? "failed" : j.status === "processing" ? "processing" : j.status === "in-progress" ? "in_progress" : "ringing";
@@ -105,6 +108,9 @@ export class ElevenLabsVoice implements VoiceProvider {
       transcript,
       durationSecs: typeof j.metadata?.call_duration_secs === "number" ? j.metadata.call_duration_secs : null,
       endReason: j.metadata?.termination_reason ?? null,
+      ...(j.analysis?.data_collection_results
+        ? { collected: Object.fromEntries(Object.entries(j.analysis.data_collection_results).map(([k, r]) => [k, r?.value ?? null])) }
+        : {}),
     };
   }
 }
