@@ -153,6 +153,15 @@ select t9.ok((select count(*) >= 2 from public.audit_events where entity_type = 
 -- ---------------------------------------------------------------------------
 select t9.ok((select count(*) >= 8 from public.sales_playbook), 'the playbook is seeded');
 select t9.ok(not exists (select 1 from public.sales_playbook where body ~ 'R[0-9]'), 'prices are never typed into the playbook');
+select t9.ok((select title = 'Outbound call script' and body like '%waiting list%' and body like '%POPIA%' from public.sales_playbook where key = 'calls'),
+  'the call script is the outbound one, with the waiting list and the POPIA rules');
+select t9.ok((select count(*) = 1 from regexp_matches((select body from public.sales_playbook where key = 'objections'), '"Not interested\."', 'g')),
+  'the extra objection answers are added once');
+select t9.ok(not exists (
+  select 1 from public.sales_playbook, regexp_matches(body, '\{\{([a-z_]+)\}\}', 'g') m
+  where m[1] not in ('starter_name','starter_fee','starter_deliverables','growth_name','growth_fee','growth_deliverables',
+                     'company_name','company_diagnostic_fee','company_from','company_deliverables','equity_name','equity_share','equity_deliverables')),
+  'every placeholder in the playbook is one the app fills');
 set role anon;
 select t9.expect_error('select * from public.sales_playbook', '42501');
 set role authenticated;
