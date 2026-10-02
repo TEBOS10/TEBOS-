@@ -15,6 +15,19 @@ test("meeting mode shows the film, then TEBOS rings the prospect on the spot, fu
   await page.goto("/");
   await page.getByRole("link", { name: "Meeting mode" }).click();
   await expect(page.getByRole("heading", { name: "This is what TEBOS does for a business." })).toBeVisible();
+  // a day in the life of a gym on TEBOS, each moment a real step of its operating system
+  const film = page.getByTestId("scenario");
+  await expect(film).toContainText("A gym");
+  await page.getByRole("button", { name: "Next" }).click();
+  await expect(film).toContainText("The owner drives in after hours");
+  await page.getByRole("button", { name: "Next" }).click();
+  await expect(film).toContainText("05:58");
+  await expect(film).toContainText("Member at the door to checked in");
+  await expect(film).toContainText("Automatic · runs on Access control");
+  await expect(film).toContainText("Illustration · example names and numbers");
+  await page.getByRole("button", { name: "A sports agency" }).click();
+  await expect(film).toContainText("An illustrative sports agency");
+  await page.getByRole("button", { name: "The TEBOS film" }).click();
   await expect(page.locator("video")).toBeVisible();
   // full screen: no staff navigation, no other client in sight
   await expect(page.getByRole("link", { name: "Pipeline" })).toHaveCount(0);

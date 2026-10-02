@@ -9,9 +9,11 @@ import { INTAKE_CONSENT_TEXT } from "@core/intake";
 import { SIZE_BANDS } from "@core/selfcheck";
 import { Phone, PhoneCall, ShieldCheck } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
+import { ScenarioFilm } from "../components/ScenarioFilm";
 import { ErrorNote, Field, Loading } from "../components/ui";
 import { getIntakeCall, startMeetingCall, type IntakeCall } from "../lib/data";
 import { useSignedIn } from "../lib/session";
+import { scenarioByKey, SCENARIOS } from "../scenarios";
 import { useStaff } from "../lib/staff";
 
 const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
@@ -47,17 +49,30 @@ export function MeetPage() {
 }
 
 function Show({ onNext }: { onNext: () => void }) {
+  const [which, setWhich] = useState<string>(SCENARIOS[0]!.key);
   const [ended, setEnded] = useState(false);
+  const scenario = scenarioByKey(which);
+  const pick = (k: string) => { setWhich(k); setEnded(false); };
   return (
     <>
       <p className="lp-kicker">See it, don't hear about it</p>
       <h1 className="lp-title">This is what TEBOS does for a business.</h1>
-      <div className="lp-video-wrap" style={{ marginTop: 20 }}>
-        <video className="lp-video" src="/tebos-film.mp4" poster="/tebos-film.jpg" controls playsInline onEnded={() => setEnded(true)}
-          aria-label="A one-minute film: how TEBOS helps a business" />
+      <div className="meet-tabs" role="group" aria-label="Show">
+        {SCENARIOS.map((sc) => (
+          <button key={sc.key} className={`btn btn-sm ${which === sc.key ? "btn-lime" : ""}`} aria-pressed={which === sc.key} onClick={() => pick(sc.key)}>{sc.label}</button>
+        ))}
+        <button className={`btn btn-sm ${which === "film" ? "btn-lime" : ""}`} aria-pressed={which === "film"} onClick={() => pick("film")}>The TEBOS film</button>
       </div>
+      {scenario ? (
+        <ScenarioFilm scenario={scenario} onEnded={() => setEnded(true)} />
+      ) : (
+        <div className="lp-video-wrap">
+          <video className="lp-video" src="/tebos-film.mp4" poster="/tebos-film.jpg" controls playsInline onEnded={() => setEnded(true)}
+            aria-label="A one-minute film: how TEBOS helps a business" />
+        </div>
+      )}
       <div className="lp-ctas" style={{ marginTop: 20 }}>
-        <button className={`btn ${ended ? "btn-lime" : "btn-primary"} lp-cta`} onClick={onNext}>
+        <button className={`btn btn-lime lp-cta ${ended ? "meet-pulse" : ""}`} onClick={onNext}>
           <PhoneCall size={18} aria-hidden /> Talk to TEBOS now
         </button>
         <span className="muted">TEBOS calls you on the spot: about five minutes, about your business.</span>
