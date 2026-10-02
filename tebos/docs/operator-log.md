@@ -10,6 +10,7 @@ Update this list every run; strike items when they're done.
 |---|---|---|
 | 0 | **Run the first real operating systems.** Pick real businesses (BAME first, then pilots) and let TEBOS lay down their blueprint | Real proof. The ten blueprints are templates, not client work; only real clients make a portfolio |
 | 1 | Paystack secret key on the worker, and the webhook `https://tebos-worker-production.up.railway.app/webhooks/paystack` | Taking the first payment, and monthly invoices |
+| 2b | Claude API key (`ANTHROPIC_API_KEY`) on the worker | Findings from scans and interviews: the next product step |
 | 2 | Resend key and a verified sending domain | Every client email: payment links, contracts, invoices, reminders |
 | 3 | A lawyer approves the contract templates (standard and company) and advises on POPIA | Signing clients |
 | 4 | Activate the 9 draft objectives on TEBOS's board | The company measuring itself, and the maintainer queue watching TEBOS |
@@ -17,6 +18,41 @@ Update this list every run; strike items when they're done.
 | 6 | Social accounts created | Publishing the social pack |
 | 7 | Company registration and VAT number | Invoices that are legally complete |
 | 8 | Make the repo private, rotate database passwords, turn on leaked-password protection | Protecting the platform from copying |
+
+## 2 Oct 2026: an operating system in 1 to 3 days
+
+- **Read:**
+  - Main was green, the worker was live, and the live site was up to date.
+  - The company snapshot is still all zeros, with no clients yet.
+- **Chosen (rule 3, the product):** yesterday's named next step, which is also the founder's target: "every
+  operating system takes 1 to 3 days".
+- **Built:** the delivery plan a client gets at onboarding (`src/domain/delivery.ts`).
+  - **Small businesses:**
+    - day 1: the kick-off (the blueprint is chosen) and the draft operating system on their board;
+    - day 2: the diagnostic interview;
+    - day 3: the operating system confirmed with the owner and objectives set;
+    - day 30: the first monthly review.
+
+    Before this change the board was due by day 12 and the objectives by day 14.
+  - **Companies:**
+    - day 1: the kick-off;
+    - day 3: the draft operating system per department;
+    - day 10: the interviews that correct the draft;
+    - day 21: the board confirmed;
+    - day 30: the proposal.
+  - New unit test: every plan puts a draft operating system on the board within 3 days, and a small business's
+    operating system is confirmed by day 3.
+  - The onboarding slides now say the same thing ("Your operating system in 3 days").
+- **Also live since yesterday's run:**
+  - PR #25: the demo no longer takes over the main address. A fresh visit to `/` always shows the home page with
+    the 3D board.
+- **Proved:**
+  - core: typecheck and 228 unit tests pass.
+  - `test:db`: every SQL file and all 42 integration tests pass.
+  - web: typecheck, 23 unit tests and 60 e2e tests pass.
+- **Next by the rules:** findings that name their flow and objective. That needs the Claude API key on the
+  worker (decision 2b), so until then, the first observed pieces: linking board pieces to the evidence that
+  confirms them.
 
 ## 1 Oct 2026: operating-system blueprints
 

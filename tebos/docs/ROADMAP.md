@@ -62,7 +62,8 @@ against building "a platform that does everything".
      a written rule and an owner for each step. A blueprint is laid onto a client's board in one step as *proposed*;
      the owner confirms each piece (proposed → stated), and evidence makes it observed. A proposal never overwrites
      what the business stated. The public `/systems` page shows each blueprint's outline, never its rules.
-     Next: shorten the delivery plan so that a client's draft operating system is ready in 1–3 days, not 12.
+     Done (2 Oct 2026): the delivery plan puts a client's draft operating system on their board by day 1, and it is
+     confirmed with the owner by day 3 (companies: a draft by day 3, confirmed by day 21).
 5. Only then: automation of steps that have a written rule and a connected tool.
 
 | Stage | Delivers | Gate (proof) | Status |

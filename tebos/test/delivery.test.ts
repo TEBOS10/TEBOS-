@@ -14,6 +14,13 @@ describe("client delivery plans", () => {
     // the first contact is within two days, whatever the plan
     for (const plan of Object.keys(PLAN_TERMS) as PlanKey[]) expect(DELIVERY_PLANS[plan][0]!.dueDays).toBeLessThanOrEqual(2);
     expect(DELIVERY_PLANS.company.at(-1)!.key).toBe("proposal");
+    // every client has a draft operating system on their board within 3 days
+    for (const plan of Object.keys(PLAN_TERMS) as PlanKey[]) {
+      const draft = DELIVERY_PLANS[plan].find((s) => s.title === "Draft operating system on the board");
+      expect(draft?.dueDays).toBeLessThanOrEqual(3);
+    }
+    // and a small business's operating system is confirmed with the owner by day 3
+    expect(DELIVERY_PLANS.starter.find((s) => s.key === "objectives")!.dueDays).toBeLessThanOrEqual(3);
   });
 
   it("closes a step only with a note, and knows when it's overdue", () => {

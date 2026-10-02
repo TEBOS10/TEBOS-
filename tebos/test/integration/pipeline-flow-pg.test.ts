@@ -156,7 +156,7 @@ describe.skipIf(!enabled)("client pipeline against the TEBOS schema", () => {
 
     // TEBOS now owes the client a dated delivery plan, and the maintainer can see it
     const steps = (await pool.query("select key, status, due_at > now() as future from public.delivery_tasks where opportunity_id = $1 order by position", [id])).rows;
-    expect(steps.map((x) => x.key)).toEqual(["kickoff", "diagnostic", "board", "objectives", "review"]);
+    expect(steps.map((x) => x.key)).toEqual(["kickoff", "board", "diagnostic", "objectives", "review"]);
     expect(steps.every((x) => x.status === "open" && x.future)).toBe(true);
     expect((await as<pg.QueryResult>(MAINT, "select count(*)::int as n from public.delivery_tasks where opportunity_id = $1", [id])).rows[0].n).toBe(5);
 
