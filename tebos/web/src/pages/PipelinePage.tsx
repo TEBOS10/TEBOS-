@@ -16,12 +16,14 @@ import {
   listContractTemplates,
   listOpportunities,
   recordEft,
+  recordIntakeAnswer,
   saveTemplateDraft,
   setLeadOwner,
   setTemplateStatus,
   updateTemplateDraft,
   type NewLead,
   type ContractTemplate,
+  type IntakeCall,
   type OpportunityRow,
   type StaffAccess,
 } from "../lib/data";
@@ -119,6 +121,7 @@ export function PipelinePage() {
                           </div>
                           <div className="row" style={{ gap: 6 }}>
                             <Badge tone={o.source === "sales" ? "info" : "neutral"}>{o.source === "sales" ? "sales lead" : "website"}</Badge>
+                            {o.intake && <IntakeBadge status={o.intake.status} wants={o.intake.wants_to_proceed} />}
                             {flagsOf(o).length > 0 ? <Badge tone="warn">{flagsOf(o).length} flag{flagsOf(o).length === 1 ? "" : "s"}</Badge> : <Badge tone="good">clear</Badge>}
                           </div>
                         </li>
@@ -211,7 +214,7 @@ export function OpportunityPage({ id }: { id: string }) {
         if (q.loading && !q.data) return <Loading />;
         if (q.error) return <ErrorNote error={q.error} title="Couldn't load this opportunity" />;
         if (!q.data) return <PageHeader title="Not found">It doesn't exist, or you can't see it.</PageHeader>;
-        const { opportunity: o, payments, contract, emails } = q.data;
+        const { opportunity: o, payments, contract, emails, intake } = q.data;
         const flags = flagsOf(o);
         const stage = STAGES.find((s) => s.status === o.status);
         return (
@@ -228,6 +231,7 @@ export function OpportunityPage({ id }: { id: string }) {
                     ))}
                   </dl>
                 </Card>
+                {intake && <IntakeCard call={intake} canAnswer={a.sales} onDone={q.reload} />}
                 <Card title="Screening" subtitle="Checked automatically on arrival. A flag is a reason to look closer, not a verdict.">
                   {flags.length === 0 ? <p className="muted">Nothing flagged.</p> : (
                     <ul className="list" data-testid="flags">
@@ -539,6 +543,73 @@ function TemplateEditor({ template, existing, onDone }: { template: ContractTemp
           <div><button className="btn btn-primary" disabled={!approval.trim()} onClick={approve}>Approve for sending</button></div>
         </div>
       )}
+    </Card>
+  );
+}
+
+/** What an intake call from a meeting came to, at a glance. */
+function IntakeBadge({ status, wants }: { status: string; wants: boolean | null }) {
+  if (wants === true) return <Badge tone="good">wants to go ahead</Badge>;
+  if (wants === false) return <Badge tone="neutral">said not now</Badge>;
+  if (status === "no_answer" || status === "failed") return <Badge tone="warn">call {statusLabel(status)}</Badge>;
+  return <Badge tone="info">{status === "completed" ? "call done: answer open" : `call ${statusLabel(status)}`}</Badge>;
+}
+
+function IntakeCard({ call, canAnswer, onDone }: { call: IntakeCall; canAnswer: boolean; onDone: () => void }) {
+  const org = useSignedIn();
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<unknown>(null);
+  const turns = (Array.isArray(call.transcript) ? call.transcript : []) as Array<{ role: string; message: string }>;
+  async function answer(wants: boolean) {
+    setBusy(true);
+    setError(null);
+    try {
+      await recordIntakeAnswer(org.db, call.id, wants, note);
+      onDone();
+    } catch (err) {
+      setError(err);
+    } finally {
+      setBusy(false);
+    }
+  }
+  const answerText = call.wants_to_proceed === null ? "Not settled on the call"
+    : `${call.wants_to_proceed ? "Wants to go ahead" : "Said not now"} (${call.outcome_source === "call" ? "said on the call" : "recorded by staff"})`;
+  return (
+    <Card title="Intake call" subtitle={`From a meeting · ${call.phone_number} · ${when(call.created_at)}`}>
+      <div className="stack" data-testid="intake">
+        <div className="row" style={{ gap: 8 }}>
+          <IntakeBadge status={call.status} wants={call.wants_to_proceed} />
+          {call.duration_secs !== null && <span className="list-meta">{Math.round(call.duration_secs / 60)} min</span>}
+        </div>
+        {call.failure_detail && <p className="muted" style={{ margin: 0 }}>{call.failure_detail}</p>}
+        {call.status === "completed" && <p style={{ margin: 0 }}><strong>Go ahead?</strong> {answerText}{call.outcome_note ? ` · ${call.outcome_note}` : ""}</p>}
+        {call.follow_up_due_at && (
+          <p className="list-meta" style={{ margin: 0 }}>
+            Next-day outline: {call.follow_up_queued_at ? `queued ${when(call.follow_up_queued_at)}` : `due ${when(call.follow_up_due_at)}`}
+          </p>
+        )}
+        {turns.length > 0 && (
+          <details>
+            <summary>What was said ({turns.length} turns)</summary>
+            <ul className="list" style={{ marginTop: 8 }}>
+              {turns.map((t, i) => (
+                <li key={i}><div className="list-main"><span className="list-meta">{t.role === "user" ? "Prospect" : "TEBOS"}</span><span>{t.message}</span></div></li>
+              ))}
+            </ul>
+          </details>
+        )}
+        {canAnswer && call.status === "completed" && call.outcome_source !== "call" && (
+          <div className="stack">
+            <Field label="How they answered (optional note)"><input className="input" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Said yes in the meeting" /></Field>
+            <div className="row" style={{ gap: 8 }}>
+              <button className="btn btn-primary" disabled={busy} onClick={() => answer(true)}>They want to go ahead</button>
+              <button className="btn" disabled={busy} onClick={() => answer(false)}>They said not now</button>
+            </div>
+          </div>
+        )}
+        <ErrorNote error={error} title="Not saved" />
+      </div>
     </Card>
   );
 }

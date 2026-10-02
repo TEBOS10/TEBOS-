@@ -7,6 +7,10 @@
 
 import { blueprintByKey } from "./blueprints";
 
+/** What the prospect agrees to, word for word, before TEBOS rings them. */
+export const INTAKE_CONSENT_TEXT =
+  "Yes, TEBOS may call me now on this number for a short intake call (about five minutes) about my business, and may record and transcribe it to follow up with me.";
+
 /** What the voice agent is asked to collect on the call. */
 export const INTAKE_ANSWER_KEY = "wants_to_proceed";
 

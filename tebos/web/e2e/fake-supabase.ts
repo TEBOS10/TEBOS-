@@ -181,6 +181,17 @@ function answerRpc(tables: FakeSupabase["tables"], name: string, args: Record<st
     return now;
   }
   const t = tables as Record<string, Array<Record<string, unknown>>>;
+  if (name === "start_meeting_call") {
+    // records the waiting-list lead and the requested call, as the database function does
+    const enquiry = crypto.randomUUID();
+    const id = crypto.randomUUID();
+    (t.intake_calls ??= []).push({
+      id, enquiry_id: enquiry, requested_by: USER_ID, phone_number: args.p_phone, status: "requested", started_at: null, ended_at: null,
+      transcript: null, duration_secs: null, wants_to_proceed: null, outcome_source: null, outcome_note: null, failure_detail: null,
+      follow_up_due_at: null, follow_up_queued_at: null, created_at: now,
+    });
+    return id;
+  }
   if (name === "apply_blueprint") {
     // lays the blueprint down as proposals, as the database function does
     const bp = args.p_blueprint as unknown as { key: string; version: number; pieces: Array<Record<string, unknown>>; flows: Array<Record<string, unknown> & { steps: Array<Record<string, unknown>> }> };

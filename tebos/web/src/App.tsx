@@ -39,6 +39,7 @@ import { StaffShell } from "./components/StaffShell";
 import { BlogIndex, BlogPost } from "./pages/BlogPage";
 import { SystemsPage } from "./pages/SystemsPage";
 import { WaitlistPage } from "./pages/WaitlistPage";
+import { MeetPage } from "./pages/MeetPage";
 import { LegalPage } from "./pages/LegalPage";
 import { SelfCheckPage, SelfCheckShared } from "./pages/SelfCheckPage";
 import { DeliveryQueuePage } from "./pages/DeliveryPage";
@@ -120,6 +121,14 @@ function Gate() {
   if (path === "/reset-password") {
     if (state.phase === "ready" || state.phase === "no_organisation") return <ResetPassword />;
     if (state.phase === "signed_out") return <SignIn notice="That reset link has expired or was already used. Use “Forgot password?” to get a new one." />;
+  }
+  // Meeting mode is full screen: the prospect sees nothing of any other client.
+  if (path === "/meet" && (state.phase === "ready" || state.phase === "no_organisation")) {
+    return (
+      <StaffProvider>
+        <MeetPage />
+      </StaffProvider>
+    );
   }
   switch (state.phase) {
     case "loading":
