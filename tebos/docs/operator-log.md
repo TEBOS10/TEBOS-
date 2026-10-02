@@ -19,6 +19,45 @@ Update this list every run; strike items when they're done.
 | 7 | Company registration and VAT number | Invoices that are legally complete |
 | 8 | Make the repo private, rotate database passwords, turn on leaked-password protection | Protecting the platform from copying |
 
+## 2 Oct 2026 (evening): the waiting list, and operating systems that start by themselves
+
+- **At the founder's request:** a waiting list, and once a business is accepted, TEBOS starts on it without being told.
+- **Built:**
+  - A public `/waitlist` page: name, business, email, kind of business (one of the ten blueprints, or something
+    else) and team size. It goes through the same throttled enquiry path as every other public form, and is linked
+    from the home page, the site menu and the sitemap.
+  - Migration `waiting_list`: enquiries carry `kind` (enquiry or waitlist) and `industry`; an opportunity remembers
+    both, and links to the client's business on TEBOS once it exists.
+  - At onboarding the worker now creates the client's business on TEBOS and lays the blueprint for their kind of
+    business onto its board as proposals, then marks "Draft operating system on the board" done with a note saying
+    exactly what it laid down. Nothing is marked stated or observed: the owner confirms each piece on day 3.
+  - Acceptance stays a person's decision. Everything after it (payment link, agreement, account, blueprint, the
+    3-day plan) already ran by itself; the blueprint is the new part.
+- **Proved:**
+  - core: typecheck and 228 unit tests pass.
+  - `test:db`: every SQL file and all 42 integration tests pass. The pipeline test now takes a client from the
+    waiting list to onboarded and checks the board holds 5 pieces, 3 flows and 13 steps, all proposed.
+  - web: typecheck, 23 unit tests and 61 e2e tests pass, including the new waiting-list test.
+- **Still needed to run live end to end:** decisions 1 and 2 (Paystack and Resend keys).
+
+## 2 Oct 2026 (later): BAME is the first real operating system
+
+- **At the founder's request**, BAME's operating system started on the new 1–3 day plan.
+- **Day 1, done:** the sports-agency blueprint, fitted to BAME, was laid onto BAME's board as proposals.
+  - It is fitted to BAME's own tools: the roster lives in the staff operating system, commission goes to the capital
+    ledger, and enquiries come in through the diagnostic intake.
+  - It is fitted to BAME's own teams: Sales, PR, Administration and Finance.
+  - It adds an "Athlete outreach to diagnostic" flow for the sales push.
+  - The result is 3 tools, 3 flows and 12 steps, each with a written rule. BAME's existing observed board was
+    left untouched.
+- **Objectives added as drafts, owned by the founder:**
+  - "Every enquiry answered within 24 hours" (by 31 Oct). It can't be measured yet: BAME's live snapshot reports how
+    many leads arrive, not how fast they're answered.
+  - "New leads from events, athletes and opportunities each month" (20 a month), bound to BAME's live lead count.
+    The target of 20 is a proposal for the founder to confirm.
+- **Day 2:** the founder answers the diagnostic interview.
+- **Day 3:** the founder confirms, changes or removes each proposed piece on BAME's board, and activates the objectives.
+
 ## 2 Oct 2026: an operating system in 1 to 3 days
 
 - **Read:**

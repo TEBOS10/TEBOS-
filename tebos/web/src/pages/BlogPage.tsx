@@ -26,6 +26,7 @@ export function SiteFrame({ current, children }: { current?: "blog" | "pricing";
         <nav className="lp-links" aria-label="Site">
           <a href="/demo">Demo</a>
           <a href="/systems">Systems</a>
+          <a href="/waitlist">Waiting list</a>
           <a href="/self-check">Self-check</a>
           <a href="/blog" aria-current={current === "blog" ? "page" : undefined}>Blog</a>
           <a href="/pricing" aria-current={current === "pricing" ? "page" : undefined}>Pricing</a>

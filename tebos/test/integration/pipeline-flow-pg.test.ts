@@ -91,8 +91,8 @@ describe.skipIf(!enabled)("client pipeline against the TEBOS schema", () => {
   // the client this file onboards; other files' clients share the database
   let onboardedId = "";
 
-  it("takes one client from enquiry to onboarded, never skipping a step", async () => {
-    await as(null, "insert into public.enquiries (plan, name, business, email, website, message) values ('starter', 'Thandi Mokoena', 'Northwind Studio', 'Thandi@Northwind.co.za', 'northwind.co.za', 'We need structure')");
+  it("takes one client from the waiting list to onboarded, never skipping a step, and starts their operating system by itself", async () => {
+    await as(null, "insert into public.enquiries (plan, name, business, email, website, message, kind, industry) values ('starter', 'Thandi Mokoena', 'Northwind Studio', 'Thandi@Northwind.co.za', 'northwind.co.za', 'We need structure', 'waitlist', 'marketing-agency')");
 
     // screened on arrival
     const opened = await worker.runOnce();
@@ -157,7 +157,22 @@ describe.skipIf(!enabled)("client pipeline against the TEBOS schema", () => {
     // TEBOS now owes the client a dated delivery plan, and the maintainer can see it
     const steps = (await pool.query("select key, status, due_at > now() as future from public.delivery_tasks where opportunity_id = $1 order by position", [id])).rows;
     expect(steps.map((x) => x.key)).toEqual(["kickoff", "board", "diagnostic", "objectives", "review"]);
-    expect(steps.every((x) => x.status === "open" && x.future)).toBe(true);
+    // day 1's draft operating system is already done, by TEBOS, without anyone asking
+    expect(steps.filter((x) => x.key !== "board").every((x) => x.status === "open" && x.future)).toBe(true);
+    const draft = (await pool.query("select status, note, closed_by from public.delivery_tasks where opportunity_id = $1 and key = 'board'", [id])).rows[0];
+    expect(draft).toMatchObject({ status: "done", closed_by: null });
+    expect(draft.note).toMatch(/^TEBOS laid the Marketing agency blueprint onto the board at onboarding: 5 pieces, 3 flows and 13 steps/);
+    // their business is on TEBOS, from the waiting list, with the blueprint's pieces and flows proposed for the owner to confirm
+    const opp = (await pool.query("select business_id, from_waitlist, industry from public.opportunities where id = $1", [id])).rows[0];
+    expect(opp).toMatchObject({ from_waitlist: true, industry: "marketing-agency" });
+    const biz = (await pool.query("select org_id, name, industry from public.businesses where id = $1", [opp.business_id])).rows[0];
+    expect(biz).toEqual({ org_id: orgId, name: "Northwind Studio", industry: "marketing-agency" });
+    const board = (await pool.query(
+      `select (select count(*)::int from public.board_components where business_id = $1 and basis = 'proposed') as pieces,
+              (select count(*)::int from public.board_flows where business_id = $1 and basis = 'proposed') as flows,
+              (select count(*)::int from public.board_steps where business_id = $1 and basis = 'proposed' and from_blueprint = 'marketing-agency@1') as steps`,
+      [opp.business_id])).rows[0];
+    expect(board).toEqual({ pieces: 5, flows: 3, steps: 13 });
     expect((await as<pg.QueryResult>(MAINT, "select count(*)::int as n from public.delivery_tasks where opportunity_id = $1", [id])).rows[0].n).toBe(5);
 
     // staff see the emails went out, but never the links in them

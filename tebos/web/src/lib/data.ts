@@ -755,6 +755,9 @@ export interface EnquiryDraft {
   phone?: string;
   website?: string;
   message?: string;
+  /** Joining the waiting list, with their kind of business (a blueprint key, or empty for "other"). */
+  waitlist?: boolean;
+  industry?: string;
 }
 
 export async function submitEnquiry(db: Db, e: EnquiryDraft): Promise<void> {
@@ -762,6 +765,7 @@ export async function submitEnquiry(db: Db, e: EnquiryDraft): Promise<void> {
   const { error } = await db.from("enquiries").insert({
     plan: e.plan, name: e.name.trim(), business: e.business.trim(), email: e.email.trim(),
     phone: clean(e.phone), website: clean(e.website), message: clean(e.message),
+    ...(e.waitlist ? { kind: "waitlist", industry: e.industry || null } : {}),
   });
   if (error) throw error;
 }

@@ -38,6 +38,7 @@ import { SalesPlaybookPage, StaffInvitePage, StaffTeamPage } from "./pages/Sales
 import { StaffShell } from "./components/StaffShell";
 import { BlogIndex, BlogPost } from "./pages/BlogPage";
 import { SystemsPage } from "./pages/SystemsPage";
+import { WaitlistPage } from "./pages/WaitlistPage";
 import { LegalPage } from "./pages/LegalPage";
 import { SelfCheckPage, SelfCheckShared } from "./pages/SelfCheckPage";
 import { DeliveryQueuePage } from "./pages/DeliveryPage";
@@ -104,6 +105,7 @@ function Gate() {
   if (path === "/pricing") return <PricingPage />;
   if (path === "/blog") return <BlogIndex />;
   if (path === "/systems") return <SystemsPage />;
+  if (path === "/waitlist") return <WaitlistPage />;
   if (path === "/self-check") return <SelfCheckPage />;
   if (path === "/self-check/result") return <SelfCheckShared />;
   if (path === "/privacy") return <LegalPage which="privacy" />;
