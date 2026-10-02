@@ -38,7 +38,8 @@ Update this list every run; strike items when they're done.
     answer the call didn't settle.
   - An 11th blueprint: gym or fitness studio (access control at the door, a morning attendance report, member
     messages answered from the FAQ, failed debit orders recovered), from the gym owner's own pains.
-  - The playbook's call script is now an outbound one (migration `outbound_call_script`).
+  - The outbound call script is written for the playbook (migration `outbound_call_script`), held back until the
+    founder approves applying it to the live database.
 - **Proved:** core typecheck and 234 unit tests; `test:db` with every SQL file (new `99v_intake_calls.sql`) and 47
   integration tests (new `intake-pg`); web typecheck, 26 unit tests (new scenario check) and 64 e2e tests (new `meet.spec.ts`).
 - **To run live, the founder needs:** a phone number connected to the voice provider, and a second voice agent for
