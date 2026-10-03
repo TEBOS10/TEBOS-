@@ -4,9 +4,17 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { DEPARTMENTS, DEPARTMENT_LABELS, type Department } from "@/lib/staff";
 
-export default function CaseAssign({ table, id }: { table: "leads" | "diagnostics"; id: string }) {
+export default function CaseAssign({
+  table,
+  id,
+  suggested,
+}: {
+  table: "leads" | "diagnostics";
+  id: string;
+  suggested?: Department | null;
+}) {
   const router = useRouter();
-  const [department, setDepartment] = useState<Department>("sales");
+  const [department, setDepartment] = useState<Department>(suggested || "sales");
   const [assigning, setAssigning] = useState(false);
 
   async function onAssign() {
@@ -29,6 +37,7 @@ export default function CaseAssign({ table, id }: { table: "leads" | "diagnostic
         {DEPARTMENTS.map((d) => (
           <option key={d} value={d}>
             {DEPARTMENT_LABELS[d]}
+            {d === suggested ? " (AI suggests)" : ""}
           </option>
         ))}
       </select>

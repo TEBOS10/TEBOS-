@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getSupabaseSessionClient } from "@/lib/supabase-server";
 import NotificationItem from "@/components/staff/NotificationItem";
 import CaseAssign from "@/components/staff/CaseAssign";
+import LeadPriorityBadge from "@/components/staff/LeadPriorityBadge";
 import { DEPARTMENT_LABELS, type Department, type StaffProfile } from "@/lib/staff";
 
 export const metadata = { title: "Dashboard — BAME staff" };
@@ -16,7 +17,13 @@ interface CaseRow {
   status: string;
   assigned_department: Department | null;
   created_at: string;
+  ai_score: number | null;
+  ai_priority: "hot" | "warm" | "cold" | null;
+  ai_summary: string | null;
+  ai_suggested_department: Department | null;
 }
+
+const NO_TRIAGE = { ai_score: null, ai_priority: null, ai_summary: null, ai_suggested_department: null };
 
 export default async function StaffDashboardPage() {
   const supabase = await getSupabaseSessionClient();
@@ -51,7 +58,7 @@ export default async function StaffDashboardPage() {
       .limit(30),
     supabase
       .from("leads")
-      .select("id, full_name, email, sport, status, assigned_department, created_at")
+      .select("id, full_name, email, sport, status, assigned_department, created_at, ai_score, ai_priority, ai_summary, ai_suggested_department")
       .order("created_at", { ascending: false })
       .limit(50),
     supabase
@@ -63,7 +70,7 @@ export default async function StaffDashboardPage() {
       ? Promise.all([
           supabase
             .from("leads")
-            .select("id, full_name, email, sport, status, assigned_department, created_at")
+            .select("id, full_name, email, sport, status, assigned_department, created_at, ai_score, ai_priority, ai_summary, ai_suggested_department")
             .is("assigned_department", null)
             .order("created_at", { ascending: false }),
           supabase
@@ -85,6 +92,10 @@ export default async function StaffDashboardPage() {
       status: l.status,
       assigned_department: l.assigned_department as Department | null,
       created_at: l.created_at,
+      ai_score: l.ai_score,
+      ai_priority: l.ai_priority,
+      ai_summary: l.ai_summary,
+      ai_suggested_department: l.ai_suggested_department as Department | null,
     })),
     ...(diagnostics || []).map((d) => ({
       table: "diagnostics" as const,
@@ -95,6 +106,7 @@ export default async function StaffDashboardPage() {
       status: d.status,
       assigned_department: d.assigned_department as Department | null,
       created_at: d.created_at,
+      ...NO_TRIAGE,
     })),
   ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
@@ -109,6 +121,10 @@ export default async function StaffDashboardPage() {
       status: l.status,
       assigned_department: null,
       created_at: l.created_at,
+      ai_score: l.ai_score,
+      ai_priority: l.ai_priority,
+      ai_summary: l.ai_summary,
+      ai_suggested_department: l.ai_suggested_department as Department | null,
     })),
     ...(unassignedDiagnostics || []).map((d) => ({
       table: "diagnostics" as const,
@@ -119,8 +135,15 @@ export default async function StaffDashboardPage() {
       status: d.status,
       assigned_department: null,
       created_at: d.created_at,
+      ...NO_TRIAGE,
     })),
-  ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  ].sort(
+    // Highest AI score first so the strongest enquiries get routed first;
+    // untriaged cases fall back to newest first.
+    (a, b) =>
+      (b.ai_score ?? -1) - (a.ai_score ?? -1) ||
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+  );
 
   return (
     <main className="px-5 py-10">
@@ -142,13 +165,15 @@ export default async function StaffDashboardPage() {
                 <div key={`${c.table}-${c.id}`} className="flex flex-wrap items-center justify-between gap-3 p-4 text-sm">
                   <Link href={`/staff/case/${c.table}/${c.id}`} className="hover:underline">
                     <p>
-                      {c.name} <span className="text-xs text-[var(--bame-muted)]">({c.table === "leads" ? "enquiry" : "diagnostic"})</span>
+                      {c.name} <span className="text-xs text-[var(--bame-muted)]">({c.table === "leads" ? "enquiry" : "diagnostic"})</span>{" "}
+                      <LeadPriorityBadge priority={c.ai_priority} score={c.ai_score} />
                     </p>
                     <p className="text-xs text-[var(--bame-muted)]">
                       {c.email} {c.sport ? `· ${c.sport}` : ""}
                     </p>
+                    {c.ai_summary && <p className="mt-1 max-w-xl text-xs text-[var(--bame-muted)]">{c.ai_summary}</p>}
                   </Link>
-                  <CaseAssign table={c.table} id={c.id} />
+                  <CaseAssign table={c.table} id={c.id} suggested={c.ai_suggested_department} />
                 </div>
               ))}
             </div>
@@ -179,7 +204,8 @@ export default async function StaffDashboardPage() {
               >
                 <div>
                   <p>
-                    {c.name} <span className="text-xs text-[var(--bame-muted)]">({c.table === "leads" ? "enquiry" : "diagnostic"})</span>
+                    {c.name} <span className="text-xs text-[var(--bame-muted)]">({c.table === "leads" ? "enquiry" : "diagnostic"})</span>{" "}
+                    <LeadPriorityBadge priority={c.ai_priority} score={c.ai_score} />
                   </p>
                   <p className="text-xs text-[var(--bame-muted)]">
                     {c.email} {c.sport ? `· ${c.sport}` : ""}

@@ -35,6 +35,7 @@ backed by Supabase.
 | `APPS_SCRIPT_URL` | Optional — Google Apps Script web app URL for PDF/email delivery |
 | `NEXT_PUBLIC_SUPABASE_URL` | Same as `SUPABASE_URL`, exposed to the browser for `/staff` auth |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Same as `SUPABASE_ANON_KEY`, exposed to the browser for `/staff` auth |
+| `ANTHROPIC_API_KEY` | Optional — enables AI lead triage (see below). Without it, leads save exactly as before |
 
 ## Local development
 
@@ -76,3 +77,21 @@ shared password, one Supabase Auth account per person.
   own department's cases and notifications.
 - **Departments** — `sales`, `production`, `pr`, `finance`, `tech`, `admin`
   (`src/lib/staff.ts`).
+
+## AI lead triage
+
+Every quick enquiry is sent to Claude (`src/lib/lead-triage.ts`) before it is
+saved. Claude returns a 0–100 score, a hot/warm/cold priority, a two-sentence
+summary, a suggested department and a next step, stored on the lead as the
+`ai_*` columns.
+
+- **Advisory, not autonomous** — nothing is routed automatically. Admins see
+  unassigned enquiries sorted hottest first with the summary inline, and the
+  Route dropdown preselects the AI's suggested department; a person still
+  makes the call. The full triage shows on the case page.
+- **Fails open** — no API key, a timeout (15s), a refusal or malformed output
+  all return `null`, and the lead is saved without triage.
+- **Untrusted input** — enquiry text is passed as data inside an `<enquiry>`
+  block and the prompt tells the model to treat attempts to instruct it as a
+  sign the enquiry isn't genuine. Because anonymous callers can insert into
+  `leads` directly, the `ai_*` columns are hints, not a trust boundary.

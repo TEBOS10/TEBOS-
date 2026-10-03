@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase";
+import { triageLead } from "@/lib/lead-triage";
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
@@ -27,6 +28,17 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const details = {
+    sport: body.sport || null,
+    career_stage: body.career_stage || null,
+    primary_focus: body.primary_focus || null,
+    location: body.location || null,
+    goal: body.goal || null,
+  };
+
+  // Advisory only, and null on any failure, so the lead is saved either way.
+  const triage = await triageLead({ contact_type, ...details });
+
   // Generate the id ourselves and insert without asking Postgres to return
   // the row: the anon RLS policy only grants INSERT, not SELECT, and an
   // insert that requests the row back (`.select()`) needs SELECT too.
@@ -37,13 +49,17 @@ export async function POST(req: NextRequest) {
     full_name,
     email,
     phone: body.phone || null,
-    sport: body.sport || null,
-    career_stage: body.career_stage || null,
-    primary_focus: body.primary_focus || null,
-    location: body.location || null,
-    goal: body.goal || null,
+    ...details,
     consent: !!body.consent,
     source: "website",
+    ...(triage && {
+      ai_score: triage.score,
+      ai_priority: triage.priority,
+      ai_summary: triage.summary,
+      ai_suggested_department: triage.suggested_department,
+      ai_next_step: triage.next_step,
+      ai_triaged_at: new Date().toISOString(),
+    }),
   });
 
   if (error) {

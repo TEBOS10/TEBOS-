@@ -4,6 +4,7 @@ import { INTAKE_SECTIONS, type IntakeField } from "@/lib/intake-schema";
 import { DEPARTMENT_HIGHLIGHT_SECTIONS, DEPARTMENT_LABELS, type StaffProfile } from "@/lib/staff";
 import DeliverableChecklist, { type DeliverableItem } from "@/components/staff/DeliverableChecklist";
 import OnboardPlayerButton from "@/components/staff/OnboardPlayerButton";
+import LeadPriorityBadge from "@/components/staff/LeadPriorityBadge";
 
 function fieldValue(payload: Record<string, unknown>, field: IntakeField): string | null {
   const raw = payload[field.name];
@@ -97,6 +98,33 @@ export default async function StaffCasePage({
               </div>
             )}
           </div>
+          {Boolean(l.ai_triaged_at) && (
+            <section className="mt-6 rounded-2xl border border-[var(--bame-accent)]/50 bg-[var(--bame-panel)] p-6 text-sm">
+              <div className="flex flex-wrap items-center gap-3">
+                <h2 className="text-sm font-semibold text-[var(--bame-accent)]">AI triage</h2>
+                <LeadPriorityBadge
+                  priority={l.ai_priority as "hot" | "warm" | "cold" | null}
+                  score={l.ai_score as number | null}
+                />
+              </div>
+              <p className="mt-3">{String(l.ai_summary)}</p>
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                <div>
+                  <p className="text-xs text-[var(--bame-muted)]">Suggested department</p>
+                  <p className="mt-1">
+                    {DEPARTMENT_LABELS[l.ai_suggested_department as keyof typeof DEPARTMENT_LABELS] || "—"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-[var(--bame-muted)]">Suggested next step</p>
+                  <p className="mt-1">{String(l.ai_next_step)}</p>
+                </div>
+              </div>
+              <p className="mt-4 text-xs text-[var(--bame-muted)]">
+                Generated automatically when the enquiry arrived. Advisory only: a person makes the routing decision.
+              </p>
+            </section>
+          )}
         </div>
       </main>
     );
