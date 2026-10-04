@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  canChangeBasis,
+  canObserve,
   checkMeasurement,
   checkObjectiveEdit,
   checkObjectiveTransition,
@@ -132,5 +134,27 @@ describe("the board", () => {
     ]);
     expect(d).toEqual({ steps: 4, founder: 2, undocumented: 1, automated: 1, middleware: 1, founderShare: 0.5 });
     expect(founderDependency([]).founderShare).toBeNull();
+  });
+});
+
+describe("observed pieces", () => {
+  it("only evidence TEBOS obtained, and that is current, confirms a piece", () => {
+    expect(canObserve({ state: "acquired", sourceType: "connected_system" })).toEqual({ ok: true });
+    expect(canObserve({ state: "partially_acquired", sourceType: "document" })).toEqual({ ok: true });
+    expect(canObserve({ state: "stale", sourceType: "connected_system" })).toMatchObject({ ok: false, code: "TEBOS_EVIDENCE_REQUIRED" });
+    expect(canObserve({ state: "unavailable", sourceType: "public_web" })).toMatchObject({ ok: false, code: "TEBOS_EVIDENCE_REQUIRED" });
+    expect(canObserve(null)).toMatchObject({ ok: false, code: "TEBOS_EVIDENCE_REQUIRED" });
+  });
+
+  it("what the owner said makes a piece stated, never observed", () => {
+    expect(canObserve({ state: "user_supplied", sourceType: "user_statement" })).toMatchObject({ ok: false });
+    expect(canObserve({ state: "acquired", sourceType: "user_statement" })).toMatchObject({ ok: false });
+  });
+
+  it("an observed piece stays observed, and nothing goes back to proposed", () => {
+    expect(canChangeBasis("stated", "observed")).toEqual({ ok: true });
+    expect(canChangeBasis("proposed", "stated")).toEqual({ ok: true });
+    expect(canChangeBasis("observed", "stated")).toMatchObject({ ok: false, code: "TEBOS_ILLEGAL_TRANSITION" });
+    expect(canChangeBasis("stated", "proposed")).toMatchObject({ ok: false, code: "TEBOS_ILLEGAL_TRANSITION" });
   });
 });

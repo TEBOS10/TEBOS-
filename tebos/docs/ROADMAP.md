@@ -56,6 +56,8 @@ against building "a platform that does everything".
 2. Findings that name their flow and objective, in the business review. The model proposes the link, and TEBOS
    validates that the flow belongs to the business.
 3. Observed pieces: link board pieces to the connections and evidence that confirm them.
+   - Done (4 Oct 2026): a piece is observed only on evidence TEBOS obtained and that is current, never on the owner's own
+     word; once observed it stays observed. The board offers "Confirm from evidence" and shows what confirmed each piece.
 4. Architecture proposals: suggested rules and owners for founder-only steps, each one an approvable action.
    - First slice built (1 Oct 2026): **operating-system blueprints** (`src/domain/blueprints.ts`, migration
      `operating_system_blueprints`). There are ten, one per kind of business. Each sets out the pieces, the flows, and

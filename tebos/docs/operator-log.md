@@ -20,6 +20,36 @@ Update this list every run; strike items when they're done.
 | 7 | Company registration and VAT number | Invoices that are legally complete |
 | 8 | Make the repo private, rotate database passwords, turn on leaked-password protection | Protecting the platform from copying |
 
+## 4 Oct 2026: observed pieces, confirmed only by evidence TEBOS obtained
+
+- **Read:**
+  - Main was green, and the worker was live with no errors since the 2 Oct deploy.
+  - The company snapshot is still all zeros: no enquiries, clients or intake calls yet. No maintainer items are open.
+  - The advisors show only the known by-design warnings: each public function checks its own token or role.
+  - 3 Oct's run stopped after choosing its work, before building it; nothing from it was shipped.
+- **Chosen (rule 3, the product):** "Next for the board", item 3: observed pieces. Item 2 (findings named by flow)
+  waits on the Claude API key (decision 2b).
+- **Built (migration `board_observed_pieces`):**
+  - A piece or step of the board is observed only when it cites evidence TEBOS obtained and that is current
+    (acquired, partly acquired, or system-generated). What the owner said (an interview answer, a statement)
+    makes a piece stated, never observed: the owner's word is not proof of itself. Before, the database accepted
+    an owner's statement here.
+  - Once evidence confirmed a piece, it stays observed: it can cite newer evidence, or be retired, but never
+    quietly fall back to stated or proposed.
+  - Mirrored in `src/domain/board.ts` (`canObserve`, `canChangeBasis`).
+  - On the board: "Confirm from evidence" on each piece offers only evidence TEBOS obtained (scans, documents,
+    connected systems), and an observed piece shows what confirmed it ("Confirmed by: …"), flagged if that
+    evidence has since gone stale. With nothing obtained yet, it says how to get evidence instead.
+  - Live check before applying: every observed piece and step on the live boards (BAME's 20) already cites
+    obtained evidence from documents or connected systems, so nothing live breaks.
+- **Proved:**
+  - core: typecheck and 237 unit tests pass.
+  - `test:db`: every SQL file passes and all 47 integration tests pass. The board test that once made a piece
+    observed from the owner's statement now asserts that this is refused.
+  - web: typecheck, 26 unit tests and 66 e2e tests pass (new `observed.spec.ts`).
+- **Next by the rules:** item 4, architecture proposals (suggested rules and owners for founder-only steps, each
+  an approvable action), unless the Claude API key arrives first, which unblocks item 2.
+
 ## 2 Oct 2026 (night): meeting mode, and intake calls that start on the spot
 
 - **At the founder's request:** in meetings, show TEBOS instead of talking about it. After the film, the prospect

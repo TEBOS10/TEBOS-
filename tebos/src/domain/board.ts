@@ -34,6 +34,30 @@ export type ComponentKind = (typeof COMPONENT_KINDS)[number];
 export const PERFORMERS = ["founder", "staff", "automation", "provider", "client"] as const;
 export type Performer = (typeof PERFORMERS)[number];
 
+/**
+ * Evidence that can confirm a piece of the board (make it "observed"): obtained
+ * and current. What the owner said (a user_statement source) makes a piece
+ * stated, never observed. Mirrors tebos_private.guard_board_basis.
+ */
+export const OBSERVING_EVIDENCE_STATES = ["acquired", "partially_acquired", "system_generated"] as const;
+
+export function canObserve(evidence: { state: string; sourceType: string } | null): Check {
+  if (!evidence || !(OBSERVING_EVIDENCE_STATES as readonly string[]).includes(evidence.state)) {
+    return fail("TEBOS_EVIDENCE_REQUIRED", "An observed piece must cite evidence TEBOS obtained and that is current.");
+  }
+  if (evidence.sourceType === "user_statement") {
+    return fail("TEBOS_EVIDENCE_REQUIRED", "What the owner said makes a piece stated, not observed.");
+  }
+  return OK;
+}
+
+/** A piece evidence confirmed stays observed: it can cite newer evidence or be retired, never fall back. */
+export function canChangeBasis(from: "proposed" | "stated" | "observed", to: "proposed" | "stated" | "observed"): Check {
+  if (from === "observed" && to !== "observed") return fail("TEBOS_ILLEGAL_TRANSITION", "A piece evidence confirmed stays observed.");
+  if (to === "proposed" && from !== "proposed") return fail("TEBOS_ILLEGAL_TRANSITION", "A stated or observed piece can't go back to being a proposal.");
+  return OK;
+}
+
 export type MeasurementBasis = "measured" | "stated";
 
 export interface ObjectiveTarget {

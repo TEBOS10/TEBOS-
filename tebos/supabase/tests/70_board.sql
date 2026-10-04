@@ -164,11 +164,21 @@ select t7.expect_error(format('insert into public.board_components (org_id, busi
   :'org', :'biz', 'CRM', 'software', 'observed'), 'TEBOS_EVIDENCE_REQUIRED');
 select t7.expect_error(format('insert into public.board_components (org_id, business_id, name, kind, basis, evidence_id) values (%L, %L, %L, %L, %L, %L)',
   :'org', :'biz', 'CRM', 'software', 'observed', :'missing_ev'), 'TEBOS_EVIDENCE_REQUIRED');
+-- what the owner said makes a piece stated, never observed
+select t7.expect_error(format('insert into public.board_components (org_id, business_id, name, kind, basis, evidence_id) values (%L, %L, %L, %L, %L, %L)',
+  :'org', :'biz', 'Website', 'provider', 'observed', :'stated_ev'), 'TEBOS_EVIDENCE_REQUIRED');
 insert into public.board_components (org_id, business_id, name, kind, supplier, basis, evidence_id, created_by)
-  values (:'org', :'biz', 'Website', 'provider', 'Studio North', 'observed', :'stated_ev', :'viewer') returning id as site \gset
+  values (:'org', :'biz', 'Website', 'provider', 'Studio North', 'observed', :'snap1', :'viewer') returning id as site \gset
 select t7.ok((select created_by = :'admin'::uuid from public.board_components where id = :'site'), 'components record who added them');
 select t7.expect_error(format('update public.board_components set created_by = %L where id = %L', :'viewer', :'site'), 'TEBOS_SERVER_ONLY');
 insert into public.board_components (org_id, business_id, name, kind) values (:'org', :'biz', 'Inbox', 'channel') returning id as inbox \gset
+-- evidence TEBOS obtained confirms a stated piece; it then stays observed
+update public.board_components set basis = 'observed', evidence_id = :'snap1' where id = :'inbox';
+select t7.ok((select basis = 'observed' and evidence_id = :'snap1' from public.board_components where id = :'inbox'), 'a connected system''s reading confirms a piece');
+select t7.expect_error(format('update public.board_components set basis = %L where id = %L', 'stated', :'inbox'), 'TEBOS_ILLEGAL_TRANSITION');
+select t7.expect_error(format('update public.board_components set evidence_id = %L where id = %L', :'stated_ev', :'inbox'), 'TEBOS_EVIDENCE_REQUIRED');
+update public.board_components set description = 'Where client requests arrive' where id = :'inbox';
+select t7.ok((select basis = 'observed' from public.board_components where id = :'inbox'), 'an observed piece can still be described');
 select t7.expect_error(format('insert into public.board_components (org_id, business_id, name, kind) values (%L, %L, %L, %L)',
   :'org', :'biz', 'inbox', 'channel'), '23505');
 insert into public.board_components (org_id, business_id, name, kind) values (:'org', :'biz2', 'Other tool', 'software') returning id as other_tool \gset
