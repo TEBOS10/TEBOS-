@@ -19,6 +19,7 @@ Update this list every run; strike items when they're done.
 | 6 | Social accounts created | Publishing the social pack |
 | 7 | Company registration and VAT number | Invoices that are legally complete |
 | 8 | Make the repo private, rotate database passwords, turn on leaked-password protection | Protecting the platform from copying |
+| 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
 ## 4 Oct 2026: observed pieces, confirmed only by evidence TEBOS obtained
 
@@ -47,6 +48,9 @@ Update this list every run; strike items when they're done.
   - `test:db`: every SQL file passes and all 47 integration tests pass. The board test that once made a piece
     observed from the owner's statement now asserts that this is refused.
   - web: typecheck, 26 unit tests and 66 e2e tests pass (new `observed.spec.ts`).
+- **Noticed, not touched:** on 3 Oct something outside this repo applied four `capital_*` migrations to TEBOS's
+  live database, creating a separate `capital` schema with 18 tables. They don't touch TEBOS's tables. Decision 9
+  asks the founder whether this belongs in TEBOS's database.
 - **Next by the rules:** item 4, architecture proposals (suggested rules and owners for founder-only steps, each
   an approvable action), unless the Claude API key arrives first, which unblocks item 2.
 
