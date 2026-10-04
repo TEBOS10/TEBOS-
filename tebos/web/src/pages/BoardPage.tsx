@@ -37,6 +37,7 @@ import {
   createObjective,
   measureAutomatically,
   getBoard,
+  observeComponent,
   recordMeasured,
   recordStated,
   retireStep,
@@ -45,6 +46,7 @@ import {
   type BoardFlow,
   type BoardStep,
   type MeasurableEvidence,
+  type ObservableEvidence,
   type Objective,
   type ObjectiveMeasurement,
   type Statement,
@@ -137,7 +139,7 @@ export function BoardPage({ id }: { id: string }) {
           {canEdit && <NewFlow businessId={business.id} objectives={objectives.filter((o) => o.status === "active" || o.status === "draft")} onCreated={q.reload} />}
         </div>
         <div className="stack">
-          <PiecesCard businessId={business.id} components={components} canEdit={canEdit} onChanged={q.reload} />
+          <PiecesCard businessId={business.id} components={components} observable={q.data.observable} cited={q.data.citedEvidence} canEdit={canEdit} onChanged={q.reload} />
         </div>
       </div>
     </div>
@@ -408,8 +410,12 @@ function NewObjective({ businessId, onCreated }: { businessId: string; onCreated
 // Pieces
 // ---------------------------------------------------------------------------
 
-function PiecesCard({ businessId, components, canEdit, onChanged }: { businessId: string; components: BoardComponent[]; canEdit: boolean; onChanged: () => void }) {
+function PiecesCard({ businessId, components, observable, cited, canEdit, onChanged }: {
+  businessId: string; components: BoardComponent[]; observable: ObservableEvidence[];
+  cited: Map<string, { fact: string | null; state: string; retrieved_at: string | null }>; canEdit: boolean; onChanged: () => void;
+}) {
   const org = useOrg();
+  const [observing, setObserving] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", kind: "software", supplier: "", ownerRole: "" });
   const [error, setError] = useState<unknown>(null);
 
@@ -438,11 +444,27 @@ function PiecesCard({ businessId, components, canEdit, onChanged }: { businessId
                 <span className="list-meta">
                   {statusLabel(c.kind)}{c.supplier ? ` · by ${c.supplier}` : ""}{c.owner_role ? ` · owned by ${c.owner_role}` : ""}
                 </span>
+                {c.basis === "observed" && c.evidence_id && (
+                  <span className="list-meta" data-testid="cited">
+                    Confirmed by: {cited.get(c.evidence_id)?.fact ?? "evidence you can't see"}
+                    {cited.get(c.evidence_id)?.state === "stale" ? " (since gone stale: cite newer evidence)" : ""}
+                  </span>
+                )}
+                {observing === c.id && (
+                  <ObserveForm evidence={observable} onCancel={() => setObserving(null)}
+                    onSubmit={(ev) => observeComponent(org.db, c.id, ev).then(() => { setObserving(null); onChanged(); }, setError)} />
+                )}
               </div>
               <div className="row" style={{ gap: 6 }}>
                 <Badge tone={c.basis === "observed" ? "good" : c.basis === "proposed" ? "warn" : "neutral"} title={BASIS_TITLE[c.basis] ?? c.basis}>{c.basis}</Badge>
                 {canEdit && c.basis === "proposed" && (
                   <button className="btn btn-sm" onClick={() => confirmComponent(org.db, c.id).then(onChanged, setError)}>Confirm</button>
+                )}
+                {canEdit && observing !== c.id && (
+                  <button className="btn btn-sm" onClick={() => setObserving(c.id)}
+                    title="Cite evidence TEBOS obtained (a scan, a document, a connected system) that shows this piece is real">
+                    {c.basis === "observed" ? "Cite newer evidence" : "Confirm from evidence"}
+                  </button>
                 )}
               </div>
             </li>
@@ -676,5 +698,33 @@ function BlueprintCard({ businessId, onApplied }: { businessId: string; onApplie
         <div><button className="btn btn-primary" disabled={!chosen || busy} onClick={apply}>{busy ? "Laying it down…" : "Apply blueprint"}</button></div>
       </div>
     </Card>
+  );
+}
+
+/** Pick the evidence that confirms a piece. Only evidence TEBOS obtained is offered: the owner's word makes a piece stated. */
+function ObserveForm({ evidence, onSubmit, onCancel }: { evidence: ObservableEvidence[]; onSubmit: (evidenceId: string) => void; onCancel: () => void }) {
+  const [picked, setPicked] = useState(evidence[0]?.evidenceId ?? "");
+  if (evidence.length === 0) {
+    return (
+      <div className="note" style={{ marginTop: 6 }}>
+        No evidence can confirm this yet: scan the business's website, add a document, or connect a system. What the owner says makes a piece
+        stated, not observed. <button className="btn btn-sm" onClick={onCancel}>Close</button>
+      </div>
+    );
+  }
+  return (
+    <form className="form" style={{ marginTop: 6 }} aria-label="Confirm from evidence" onSubmit={(e) => { e.preventDefault(); if (picked) onSubmit(picked); }}>
+      <Field label="Evidence that shows this piece is real">
+        <select className="input" value={picked} onChange={(e) => setPicked(e.target.value)}>
+          {evidence.map((ev) => (
+            <option key={ev.evidenceId} value={ev.evidenceId}>{ev.sourceLabel ? `${ev.sourceLabel}: ` : ""}{ev.fact.slice(0, 140)}</option>
+          ))}
+        </select>
+      </Field>
+      <div className="row" style={{ gap: 6 }}>
+        <button className="btn btn-sm btn-primary" disabled={!picked}>Confirm</button>
+        <button type="button" className="btn btn-sm" onClick={onCancel}>Cancel</button>
+      </div>
+    </form>
   );
 }

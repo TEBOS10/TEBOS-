@@ -7,6 +7,7 @@
 // ambiguous) and joined in memory.
 
 import { blueprintPayload, type Blueprint } from "@core/blueprints";
+import { OBSERVING_EVIDENCE_STATES } from "@core/board";
 import type { Database, Json } from "../database.types";
 import { domainOf } from "./format";
 import type { Db } from "./supabase";
@@ -830,8 +831,22 @@ export async function getBoard(db: Db, businessId: string) {
     seen.add(metric);
     measurable.push({ evidenceId: e.id, fact: e.fact, structuredValue: e.structured_value, retrievedAt: e.retrieved_at, sourceLabel: s.label });
   }
+  // Evidence that can confirm a piece of the board: obtained, current, and not the owner's own word.
+  const allSources = must(await db.from("sources").select("id, source_type, label").eq("business_id", businessId));
+  const confirming = allSources.filter((s) => s.source_type !== "user_statement");
+  const observable: ObservableEvidence[] = confirming.length
+    ? must(await db.from("evidence").select("id, source_id, state, fact, retrieved_at, created_at").in("source_id", confirming.map((s) => s.id))
+        .in("state", [...OBSERVING_EVIDENCE_STATES]).order("created_at", { ascending: false }).limit(200))
+        .filter((e) => e.fact)
+        .map((e) => ({ evidenceId: e.id, fact: e.fact!, sourceLabel: confirming.find((s) => s.id === e.source_id)?.label ?? null, retrievedAt: e.retrieved_at }))
+    : [];
+  // What each observed piece cites, even when that evidence is no longer current
+  const cited = [...new Set(must(components).filter((c) => c.evidence_id).map((c) => c.evidence_id!))];
+  const citedRows = cited.length ? must(await db.from("evidence").select("id, fact, state, retrieved_at").in("id", cited)) : [];
   return {
     business,
+    observable,
+    citedEvidence: new Map(citedRows.map((e) => [e.id, e])),
     objectives: must(objectives),
     measurements: must(measurements),
     components: must(components),
@@ -939,6 +954,18 @@ export async function applyBlueprint(db: Db, businessId: string, blueprint: Blue
 export async function confirmFlow(db: Db, flowId: string) {
   must(await db.from("board_steps").update({ basis: "stated" }).eq("flow_id", flowId).eq("basis", "proposed").select());
   return must(await db.from("board_flows").update({ basis: "stated" }).eq("id", flowId).select().single());
+}
+
+export interface ObservableEvidence {
+  evidenceId: string;
+  fact: string;
+  sourceLabel: string | null;
+  retrievedAt: string | null;
+}
+
+/** Evidence TEBOS obtained confirms a piece: it becomes observed, citing that evidence. */
+export async function observeComponent(db: Db, componentId: string, evidenceId: string) {
+  return must(await db.from("board_components").update({ basis: "observed", evidence_id: evidenceId }).eq("id", componentId).select().single());
 }
 
 export async function confirmComponent(db: Db, componentId: string) {
