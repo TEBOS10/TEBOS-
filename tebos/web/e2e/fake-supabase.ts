@@ -181,6 +181,18 @@ function answerRpc(tables: FakeSupabase["tables"], name: string, args: Record<st
     return now;
   }
   const t = tables as Record<string, Array<Record<string, unknown>>>;
+  if (name === "approve_step_proposal") {
+    // retires the founder step and puts the new one in its place, as the database function does
+    const prop = t.step_proposals?.find((x) => x.id === args.p_proposal);
+    const old = t.board_steps?.find((x) => x.id === prop?.step_id);
+    if (!prop || !old) return null;
+    const id = crypto.randomUUID();
+    old.retired_at = now;
+    t.board_steps!.push({ ...old, id, performer: prop.performer, performer_role: prop.performer_role, component_id: prop.component_id,
+      decision_rule: prop.decision_rule, documented: true, basis: "stated", evidence_id: null, retired_at: null, created_at: now });
+    Object.assign(prop, { status: "approved", decided_by: USER_ID, decided_at: now, new_step_id: id, decision_note: args.p_note ?? null });
+    return id;
+  }
   if (name === "start_meeting_call") {
     // records the waiting-list lead and the requested call, as the database function does
     const enquiry = crypto.randomUUID();
