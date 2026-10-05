@@ -841,10 +841,12 @@ export async function getBoard(db: Db, businessId: string) {
         .map((e) => ({ evidenceId: e.id, fact: e.fact!, sourceLabel: confirming.find((s) => s.id === e.source_id)?.label ?? null, retrievedAt: e.retrieved_at }))
     : [];
   // What each observed piece cites, even when that evidence is no longer current
+  const proposals = must(await db.from("step_proposals").select("*").eq("business_id", businessId).order("created_at", { ascending: false }).limit(200));
   const cited = [...new Set(must(components).filter((c) => c.evidence_id).map((c) => c.evidence_id!))];
   const citedRows = cited.length ? must(await db.from("evidence").select("id, fact, state, retrieved_at").in("id", cited)) : [];
   return {
     business,
+    proposals,
     observable,
     citedEvidence: new Map(citedRows.map((e) => [e.id, e])),
     objectives: must(objectives),
@@ -954,6 +956,40 @@ export async function applyBlueprint(db: Db, businessId: string, blueprint: Blue
 export async function confirmFlow(db: Db, flowId: string) {
   must(await db.from("board_steps").update({ basis: "stated" }).eq("flow_id", flowId).eq("basis", "proposed").select());
   return must(await db.from("board_flows").update({ basis: "stated" }).eq("id", flowId).select().single());
+}
+
+export type StepProposal = Row<"step_proposals">;
+
+export interface StepProposalInput {
+  performer: string;
+  performerRole: string;
+  componentId: string;
+  decisionRule: string;
+  reason: string;
+}
+
+/** The team proposes a rule and a new owner for a step only the founder does today. */
+export async function proposeStepRule(db: Db, step: BoardStep, d: StepProposalInput) {
+  return must(await db.from("step_proposals").insert({
+    org_id: step.org_id, business_id: step.business_id, step_id: step.id, performer: d.performer,
+    performer_role: d.performerRole.trim() || null, component_id: d.componentId || null,
+    decision_rule: d.decisionRule.trim(), reason: d.reason.trim(),
+  }).select().single());
+}
+
+/** The owner approves: the founder step is retired and the new step takes its place, in one step. */
+export async function approveStepProposal(db: Db, id: string, note: string) {
+  const { data, error } = await db.rpc("approve_step_proposal", { p_proposal: id, p_note: note.trim() || null });
+  if (error) throw error;
+  return data as string;
+}
+
+export async function rejectStepProposal(db: Db, id: string, note: string) {
+  return must(await db.from("step_proposals").update({ status: "rejected", decision_note: note.trim() }).eq("id", id).select().single());
+}
+
+export async function withdrawStepProposal(db: Db, id: string) {
+  return must(await db.from("step_proposals").update({ status: "withdrawn" }).eq("id", id).select().single());
 }
 
 export interface ObservableEvidence {

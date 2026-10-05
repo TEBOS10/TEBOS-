@@ -17,6 +17,10 @@ import {
   type MeasurementState,
   type ObjectiveMetric,
   type Performer,
+  canDecideProposal,
+  checkStepProposal,
+  PROPOSAL_PERFORMERS,
+  type ProposalPerformer,
 } from "@core/board";
 import { BLUEPRINTS, blueprintCoverage } from "@core/blueprints";
 import type { ObjectiveStatus } from "@core/states";
@@ -38,6 +42,10 @@ import {
   measureAutomatically,
   getBoard,
   observeComponent,
+  approveStepProposal,
+  proposeStepRule,
+  rejectStepProposal,
+  withdrawStepProposal,
   recordMeasured,
   recordStated,
   retireStep,
@@ -47,6 +55,7 @@ import {
   type BoardStep,
   type MeasurableEvidence,
   type ObservableEvidence,
+  type StepProposal,
   type Objective,
   type ObjectiveMeasurement,
   type Statement,
@@ -85,7 +94,7 @@ export function BoardPage({ id }: { id: string }) {
   if (q.loading && !q.data) return <Loading />;
   if (q.error) return <ErrorNote error={q.error} title="Couldn't load the operating board" />;
   if (!q.data) return <PageHeader title="Business not found">It doesn't exist, or it belongs to another organisation.</PageHeader>;
-  const { business, objectives, measurements, components, flows, steps, measurable, statements } = q.data;
+  const { business, objectives, measurements, components, flows, steps, measurable, statements, proposals } = q.data;
   const canEdit = org.can("business.write");
   const allSteps = founderDependency(steps.map((s) => ({ performer: s.performer as Performer, documented: s.documented, componentId: s.component_id })));
 
@@ -133,7 +142,7 @@ export function BoardPage({ id }: { id: string }) {
             </Card>
           )}
           {flows.map((f) => (
-            <FlowCard key={f.id} flow={f} steps={steps.filter((s) => s.flow_id === f.id)} components={components}
+            <FlowCard key={f.id} flow={f} steps={steps.filter((s) => s.flow_id === f.id)} components={components} proposals={proposals}
               objective={objectives.find((o) => o.id === f.objective_id) ?? null} canEdit={canEdit} onChanged={q.reload} />
           ))}
           {canEdit && <NewFlow businessId={business.id} objectives={objectives.filter((o) => o.status === "active" || o.status === "draft")} onCreated={q.reload} />}
@@ -495,10 +504,11 @@ function PiecesCard({ businessId, components, observable, cited, canEdit, onChan
 // Flows
 // ---------------------------------------------------------------------------
 
-function FlowCard({ flow, steps, components, objective, canEdit, onChanged }: {
-  flow: BoardFlow; steps: BoardStep[]; components: BoardComponent[]; objective: Objective | null; canEdit: boolean; onChanged: () => void;
+function FlowCard({ flow, steps, components, proposals, objective, canEdit, onChanged }: {
+  flow: BoardFlow; steps: BoardStep[]; components: BoardComponent[]; proposals: StepProposal[]; objective: Objective | null; canEdit: boolean; onChanged: () => void;
 }) {
   const org = useOrg();
+  const [proposing, setProposing] = useState<string | null>(null);
   const [error, setError] = useState<unknown>(null);
   const dep = founderDependency(steps.map((s) => ({ performer: s.performer as Performer, documented: s.documented, componentId: s.component_id })));
   const toolName = (id: string | null) => components.find((c) => c.id === id)?.name ?? null;
@@ -539,6 +549,15 @@ function FlowCard({ flow, steps, components, objective, canEdit, onChanged }: {
                   <td className="wrap">
                     {s.name}
                     {s.decision_rule && <div className="list-meta">Rule: {s.decision_rule}</div>}
+                    {s.performer === "founder" && (() => {
+                      const open = proposals.find((p) => p.step_id === s.id && p.status === "proposed");
+                      if (open) return <ProposalBox proposal={open} components={components} onChanged={onChanged} />;
+                      if (proposing === s.id) return <ProposeForm step={s} components={components} onCancel={() => setProposing(null)} onDone={() => { setProposing(null); onChanged(); }} />;
+                      return canEdit ? (
+                        <div><button className="btn btn-sm" style={{ marginTop: 4 }} onClick={() => setProposing(s.id)}
+                          title="Suggest who else can do this, and the written rule they follow">Propose a rule</button></div>
+                      ) : null;
+                    })()}
                   </td>
                   <td>
                     {s.performer === "founder" && !s.documented ? <Badge tone="warn" title="Done by the founder and written down nowhere">Founder only</Badge> : PERFORMER_LABEL[s.performer as Performer]}
@@ -726,5 +745,98 @@ function ObserveForm({ evidence, onSubmit, onCancel }: { evidence: ObservableEvi
         <button type="button" className="btn btn-sm" onClick={onCancel}>Cancel</button>
       </div>
     </form>
+  );
+}
+
+const PROPOSAL_WHO: Record<ProposalPerformer, string> = { staff: "The team", provider: "A provider", automation: "An automation", client: "The customer" };
+
+/** The team proposes who else does a founder-only step, and the rule they follow. The owner decides. */
+function ProposeForm({ step, components, onCancel, onDone }: { step: BoardStep; components: BoardComponent[]; onCancel: () => void; onDone: () => void }) {
+  const org = useOrg();
+  const [form, setForm] = useState({ performer: "staff" as ProposalPerformer, performerRole: "", componentId: "", decisionRule: "", reason: "" });
+  const [error, setError] = useState<unknown>(null);
+  const check = checkStepProposal({ stepPerformer: step.performer as Performer, stepRetired: !!step.retired_at, performer: form.performer,
+    componentId: form.componentId || null, decisionRule: form.decisionRule, reason: form.reason });
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    if (!check.ok) return;
+    setError(null);
+    try {
+      await proposeStepRule(org.db, step, form);
+      onDone();
+    } catch (err) {
+      setError(err);
+    }
+  }
+  return (
+    <form className="form" style={{ marginTop: 6 }} aria-label={`Propose a rule for ${step.name}`} onSubmit={submit}>
+      <div className="form-row">
+        <Field label="Who does it instead">
+          <select className="input" value={form.performer} onChange={(e) => setForm({ ...form, performer: e.target.value as ProposalPerformer })}>
+            {PROPOSAL_PERFORMERS.map((p) => <option key={p} value={p}>{PROPOSAL_WHO[p]}</option>)}
+          </select>
+        </Field>
+        <Field label="Role (optional)"><input className="input" value={form.performerRole} onChange={(e) => setForm({ ...form, performerRole: e.target.value })} placeholder="e.g. Legal" /></Field>
+        <Field label={form.performer === "automation" ? "Runs on" : "Tool (optional)"}>
+          <select className="input" value={form.componentId} onChange={(e) => setForm({ ...form, componentId: e.target.value })}>
+            <option value="">{form.performer === "automation" ? "Choose a piece…" : "None"}</option>
+            {components.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+        </Field>
+      </div>
+      <Field label="The rule they follow"><textarea className="input" rows={2} value={form.decisionRule} onChange={(e) => setForm({ ...form, decisionRule: e.target.value })}
+        placeholder="e.g. Contracts built only from the standard clauses go out without the CEO; anything else is flagged." /></Field>
+      <Field label="Why: what waits on the founder today"><textarea className="input" rows={2} value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} /></Field>
+      {!check.ok && (form.decisionRule || form.reason) && <p className="list-meta" role="note">{check.reason}</p>}
+      <ErrorNote error={error} title="Not proposed" />
+      <div className="row" style={{ gap: 6 }}>
+        <button className="btn btn-sm btn-primary" disabled={!check.ok}>Send to the owner</button>
+        <button type="button" className="btn btn-sm" onClick={onCancel}>Cancel</button>
+      </div>
+    </form>
+  );
+}
+
+/** An open proposal on a founder step: the owner approves or rejects it; its proposer can withdraw it. */
+function ProposalBox({ proposal: p, components, onChanged }: { proposal: StepProposal; components: BoardComponent[]; onChanged: () => void }) {
+  const org = useOrg();
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<unknown>(null);
+  const decide = canDecideProposal({ status: p.status, proposedBy: p.proposed_by }, { userId: org.userId, isOrgAdmin: org.role === "org_admin" });
+  const tool = components.find((c) => c.id === p.component_id)?.name;
+  async function run(f: () => Promise<unknown>) {
+    setBusy(true);
+    setError(null);
+    try {
+      await f();
+      onChanged();
+    } catch (err) {
+      setError(err);
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <div className="note" style={{ marginTop: 6 }} data-testid="proposal">
+      <div><Badge tone="info">proposed</Badge> {PROPOSAL_WHO[p.performer as ProposalPerformer]}{p.performer_role ? ` (${p.performer_role})` : ""}{tool ? `, on ${tool}` : ""}</div>
+      <div>Rule: {p.decision_rule}</div>
+      <div className="list-meta">Why: {p.reason}</div>
+      {decide.ok ? (
+        <div className="stack" style={{ marginTop: 6 }}>
+          <Field label="Note (needed to reject)"><input className="input" value={note} onChange={(e) => setNote(e.target.value)} /></Field>
+          <div className="row" style={{ gap: 6 }}>
+            <button className="btn btn-sm btn-primary" disabled={busy} onClick={() => run(() => approveStepProposal(org.db, p.id, note))}>Approve</button>
+            <button className="btn btn-sm" disabled={busy || !note.trim()} onClick={() => run(() => rejectStepProposal(org.db, p.id, note))}>Reject</button>
+          </div>
+        </div>
+      ) : p.proposed_by === org.userId ? (
+        <div className="row" style={{ gap: 6, marginTop: 6 }}>
+          <span className="list-meta">Waiting for the owner.</span>
+          <button className="btn btn-sm" disabled={busy} onClick={() => run(() => withdrawStepProposal(org.db, p.id))}>Withdraw</button>
+        </div>
+      ) : <div className="list-meta">Waiting for the owner.</div>}
+      <ErrorNote error={error} title="Not saved" />
+    </div>
   );
 }

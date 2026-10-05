@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   canChangeBasis,
+  canDecideProposal,
+  checkStepProposal,
   canObserve,
   checkMeasurement,
   checkObjectiveEdit,
@@ -156,5 +158,27 @@ describe("observed pieces", () => {
     expect(canChangeBasis("proposed", "stated")).toEqual({ ok: true });
     expect(canChangeBasis("observed", "stated")).toMatchObject({ ok: false, code: "TEBOS_ILLEGAL_TRANSITION" });
     expect(canChangeBasis("stated", "proposed")).toMatchObject({ ok: false, code: "TEBOS_ILLEGAL_TRANSITION" });
+  });
+});
+
+describe("architecture proposals", () => {
+  const base = { stepPerformer: "founder" as const, stepRetired: false, performer: "staff" as const, componentId: null,
+    decisionRule: "Contracts from the standard clauses go out without the CEO.", reason: "The CEO reads every contract." };
+  it("hands a live founder step to someone else, with a written rule and a reason", () => {
+    expect(checkStepProposal(base)).toEqual({ ok: true });
+    expect(checkStepProposal({ ...base, stepPerformer: "staff" })).toMatchObject({ ok: false, code: "TEBOS_VALIDATION" });
+    expect(checkStepProposal({ ...base, stepRetired: true })).toMatchObject({ ok: false });
+    expect(checkStepProposal({ ...base, performer: "founder" })).toMatchObject({ ok: false });
+    expect(checkStepProposal({ ...base, performer: "automation" })).toMatchObject({ ok: false, reason: expect.stringMatching(/piece/) });
+    expect(checkStepProposal({ ...base, performer: "automation", componentId: "c1" })).toEqual({ ok: true });
+    expect(checkStepProposal({ ...base, decisionRule: "Do it" })).toMatchObject({ ok: false });
+    expect(checkStepProposal({ ...base, reason: "" })).toMatchObject({ ok: false });
+  });
+  it("only the owner decides, never their own proposal, and only once", () => {
+    const p = { status: "proposed", proposedBy: "maint" };
+    expect(canDecideProposal(p, { userId: "owner", isOrgAdmin: true })).toEqual({ ok: true });
+    expect(canDecideProposal(p, { userId: "op", isOrgAdmin: false })).toMatchObject({ code: "TEBOS_NOT_APPROVER" });
+    expect(canDecideProposal({ ...p, proposedBy: "owner" }, { userId: "owner", isOrgAdmin: true })).toMatchObject({ code: "TEBOS_SELF_APPROVAL" });
+    expect(canDecideProposal({ ...p, status: "approved" }, { userId: "owner", isOrgAdmin: true })).toMatchObject({ code: "TEBOS_ILLEGAL_TRANSITION" });
   });
 });

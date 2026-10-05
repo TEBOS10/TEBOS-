@@ -66,6 +66,9 @@ against building "a platform that does everything".
      what the business stated. The public `/systems` page shows each blueprint's outline, never its rules.
      Done (2 Oct 2026): the delivery plan puts a client's draft operating system on their board by day 1, and it is
      confirmed with the owner by day 3 (companies: a draft by day 3, confirmed by day 21).
+   - Done (5 Oct 2026): **architecture proposals** for founder-only steps (migration `step_proposals`). The team proposes
+     who does a founder step instead and the written rule they follow; the owner approves or rejects, never their own
+     proposal. Approving retires the founder step and puts the new stated step in its place.
 5. Only then: automation of steps that have a written rule and a connected tool.
 
 | Stage | Delivers | Gate (proof) | Status |

@@ -232,3 +232,38 @@ export function founderDependency(steps: StepState[]): FounderDependency {
     founderShare: live.length ? founder / live.length : null,
   };
 }
+
+// ---------------------------------------------------------------------------
+// Architecture proposals (migration step_proposals): a written rule and a new
+// owner for a step only the founder does today. Mirrors the database's checks
+// so the interface can explain them; the database is the final authority.
+// ---------------------------------------------------------------------------
+
+export const PROPOSAL_PERFORMERS = ["staff", "provider", "automation", "client"] as const;
+export type ProposalPerformer = (typeof PROPOSAL_PERFORMERS)[number];
+
+export interface StepProposalDraft {
+  stepPerformer: Performer;
+  stepRetired: boolean;
+  performer: ProposalPerformer | "founder";
+  componentId: string | null;
+  decisionRule: string;
+  reason: string;
+}
+
+export function checkStepProposal(d: StepProposalDraft): Check {
+  if (d.stepPerformer !== "founder" || d.stepRetired) return fail("TEBOS_VALIDATION", "Proposals are for steps only the founder does today.");
+  if (!(PROPOSAL_PERFORMERS as readonly string[]).includes(d.performer)) return fail("TEBOS_VALIDATION", "A proposal hands the step to someone other than the founder.");
+  if (d.performer === "automation" && !d.componentId) return fail("TEBOS_VALIDATION", "An automated step must name the piece it runs on.");
+  if (d.decisionRule.trim().length < 10 || d.decisionRule.length > 2000) return fail("TEBOS_VALIDATION", "Write the rule out in full (10 to 2,000 characters).");
+  if (d.reason.trim().length < 10 || d.reason.length > 2000) return fail("TEBOS_VALIDATION", "Say why (10 to 2,000 characters): what waits on the founder today.");
+  return OK;
+}
+
+/** Only the business's owner (an org admin) decides a proposal, and never their own. */
+export function canDecideProposal(p: { status: string; proposedBy: string }, me: { userId: string; isOrgAdmin: boolean }): Check {
+  if (p.status !== "proposed") return fail("TEBOS_ILLEGAL_TRANSITION", `This proposal is already ${p.status}.`);
+  if (!me.isOrgAdmin) return fail("TEBOS_NOT_APPROVER", "The business's owner decides proposals.");
+  if (p.proposedBy === me.userId) return fail("TEBOS_SELF_APPROVAL", "Nobody decides their own proposal.");
+  return OK;
+}

@@ -2427,6 +2427,63 @@ export type Database = {
         }
         Relationships: []
       }
+      step_proposals: {
+        Row: {
+          business_id: string
+          component_id: string | null
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          decision_note: string | null
+          decision_rule: string
+          id: string
+          new_step_id: string | null
+          org_id: string
+          performer: string
+          performer_role: string | null
+          proposed_by: string
+          reason: string
+          status: string
+          step_id: string
+        }
+        Insert: {
+          business_id?: string
+          component_id?: string | null
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          decision_rule?: string
+          id?: string
+          new_step_id?: string | null
+          org_id?: string
+          performer?: string
+          performer_role?: string | null
+          proposed_by?: string
+          reason?: string
+          status?: string
+          step_id?: string
+        }
+        Update: {
+          business_id?: string
+          component_id?: string | null
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          decision_rule?: string
+          id?: string
+          new_step_id?: string | null
+          org_id?: string
+          performer?: string
+          performer_role?: string | null
+          proposed_by?: string
+          reason?: string
+          status?: string
+          step_id?: string
+        }
+        Relationships: []
+      }
       tool_calls: {
         Row: {
           agent_run_id: string
@@ -2492,6 +2549,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_step_proposal: {
+        Args: { p_proposal: string; p_note?: string | null }
+        Returns: string
+      }
       start_meeting_call: {
         Args: { p_name: string; p_business: string; p_email: string; p_phone: string; p_industry: string | null; p_size: string; p_consent: string }
         Returns: string

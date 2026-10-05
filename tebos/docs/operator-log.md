@@ -21,6 +21,39 @@ Update this list every run; strike items when they're done.
 | 8 | Make the repo private, rotate database passwords, turn on leaked-password protection | Protecting the platform from copying |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 5 Oct 2026: architecture proposals for founder-only steps
+
+- **Read:**
+  - Main was green. 4 Oct's run merged PR #29 but stopped before reconnecting the worker, so this run did that
+    first; the worker deployed it (SUCCESS) and started with no errors.
+  - The company snapshot is still all zeros. No maintainer items are open, and the advisors are unchanged.
+  - The live boards have 11 steps only the founder does, and 8 of them have no written rule.
+- **Chosen (rule 3, the product):** "Next for the board", item 4: architecture proposals, one approvable proposal per
+  founder-only step.
+- **Built (migration `step_proposals`):**
+  - The business's team (operators or admins) proposes, for a live founder step, who does it instead (the team,
+    a provider, an automation, or the customer), the written rule they follow, and why. An automation must name
+    the piece it runs on.
+  - There is one open proposal per step, and its content is frozen once proposed.
+  - Only the business's owner (an org admin) decides, and never on their own proposal. A rejection must say why.
+    A decided proposal can't be edited, and the proposer can withdraw an undecided one.
+  - `approve_step_proposal` changes the board in one transaction. It retires the founder step (the record of how
+    it was, with its evidence) and puts a new stated, written-down step in its place. Nothing is overwritten,
+    which keeps yesterday's rule: an observed step never quietly becomes something else.
+  - Mirrored in `src/domain/board.ts` (`checkStepProposal`, `canDecideProposal`).
+  - On the board: "Propose a rule" on each founder step, and the open proposal with Approve and Reject for the
+    owner, or Withdraw for its proposer.
+- **Fixed (root cause found):** the self-check e2e test that failed intermittently (logged on 30 Sep) read the
+  recorded request straight after the click. The click returns before the browser sends the request, so under a
+  busy full run the check sometimes saw nothing. It now waits for the request; what it checks is unchanged.
+  Every other such check already waits for a screen change first. The full e2e suite then passed three runs in a row.
+- **Proved:**
+  - core: typecheck and 239 unit tests pass.
+  - `test:db`: every SQL file passes (new `99w_step_proposals.sql`), and all 47 integration tests pass.
+  - web: typecheck, 26 unit tests and 68 e2e tests pass (new `proposals.spec.ts`).
+- **Next by the rules:** item 5, automation of steps that have a written rule and a connected tool. Its first slice
+  needs a connected tool on a client board; otherwise item 2, findings named by flow, once the Claude API key arrives.
+
 ## 4 Oct 2026: observed pieces, confirmed only by evidence TEBOS obtained
 
 - **Read:**

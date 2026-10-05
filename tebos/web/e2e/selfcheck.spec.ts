@@ -17,7 +17,9 @@ test("the self-check scores ten answers, shows where to start, shares only the s
   await page.getByRole("button", { name: "See my score" }).click();
 
   // the database's score (7 of 20 points), with no name sent
-  expect(fake.writes.find((w) => w.table === "submit_self_check")?.body).toEqual({ p_answers: [2, 2, 1, 0, 0, 0, 0, 0, 0, 2], p_size: "51-200", p_region: null });
+  // the click returns before the request is sent: wait for it, then check exactly what was sent
+  await expect.poll(() => fake.writes.find((w) => w.table === "submit_self_check")?.body)
+    .toEqual({ p_answers: [2, 2, 1, 0, 0, 0, 0, 0, 0, 2], p_size: "51-200", p_region: null });
   await expect(page.getByTestId("sc-card")).toContainText("35%");
   await expect(page.getByTestId("sc-card")).toContainText("The middleware in places");
   await expect(page.getByRole("heading", { name: "Where to start" })).toBeVisible();
