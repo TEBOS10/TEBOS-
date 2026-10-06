@@ -199,9 +199,10 @@ TEBOS's own company is mapped on its own board: departments, flows, and who real
 objectives (cash collected, lead decision time, leads per week, active clients, undelivered client emails) are
 measured automatically from TEBOS's own pipeline and payments. The founder-dependent steps on that board are
 the build order for the next departments:
-1. Monthly billing (finance), so cash comes in without the founder.
-2. The maintainer's queue (operations), so client delivery runs without the founder.
-3. Marketing and PR drafting with approval before publishing (tier 2).
+1. ~~Monthly billing (finance), so cash comes in without the founder.~~ Built.
+2. ~~The maintainer's queue (operations), so client delivery runs without the founder.~~ Built.
+3. ~~Marketing and PR drafting with approval before publishing (tier 2).~~ Built 6 Oct (`/marketing`): staff draft,
+   a platform admin approves, a person publishes and records where it went live. TEBOS never publishes.
 4. Department roles beyond sales and maintainer, each with a playbook like the sales one.
 People the founder still needs to appoint: a lawyer, an accountant, a head of sales.
 

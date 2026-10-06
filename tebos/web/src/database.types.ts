@@ -939,6 +939,57 @@ export type Database = {
         }
         Relationships: []
       }
+      content_drafts: {
+        Row: {
+          author_id: string
+          body: string
+          channel: string
+          created_at: string
+          id: string
+          published_at: string | null
+          published_by: string | null
+          published_url: string | null
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          author_id?: string
+          body?: string
+          channel?: string
+          created_at?: string
+          id?: string
+          published_at?: string | null
+          published_by?: string | null
+          published_url?: string | null
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          channel?: string
+          created_at?: string
+          id?: string
+          published_at?: string | null
+          published_by?: string | null
+          published_url?: string | null
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       contract_templates: {
         Row: {
           key: string
