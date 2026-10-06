@@ -16,10 +16,34 @@ Update this list every run; strike items when they're done.
 | 3 | A lawyer approves the contract templates (standard and company) and advises on POPIA | Signing clients |
 | 4 | Activate the 9 draft objectives on TEBOS's board | The company measuring itself, and the maintainer queue watching TEBOS |
 | 5 | Founder name and title for outreach and the site | Sending the outreach drafts |
-| 6 | Social accounts created | Publishing the social pack |
+| 6 | Social accounts created | Publishing the social pack, and the approved drafts on the Marketing page |
 | 7 | Company registration and VAT number | Invoices that are legally complete |
 | 8 | Make the repo private, rotate database passwords, turn on leaked-password protection | Protecting the platform from copying |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
+
+## 6 Oct 2026: marketing and PR drafts, approved before anything goes out
+
+- **Read:**
+  - Main was green, and the worker was live (SUCCESS) with no errors since 5 Oct's deploy.
+  - The company snapshot is still all zeros, no maintainer items are open, and the advisors are unchanged.
+- **Chosen (rule 4, company plumbing):** every product item is gated. Item 2 needs the Claude API key, item 5
+  needs a connected tool on a client board, and stage 5 waits on the earlier gates. So this run took item 3 of
+  "TEBOS on its own board": marketing and PR drafting with approval before publishing.
+- **Built (migration `content_drafts`):**
+  - Staff (sales, maintainer) draft LinkedIn, Instagram, Facebook, X and TikTok posts, blog articles, press
+    releases and newsletters on a new Marketing page (`/marketing`).
+  - The text is editable only while it's a draft. Once sent for approval it is frozen; to change it, pull it back
+    to a draft, which needs approval again.
+  - Only a platform admin approves or sends back, and sending back needs a note. Staff can't approve their own.
+  - "Published" is recorded only for an approved draft, by a person, with the https address where it went live.
+    It's never inferred, and TEBOS never publishes anything itself. Drafts are never deleted, only withdrawn.
+  - Mirrored in `src/domain/content.ts` (`canMoveDraft`, `canEditDraft`, `isPublishedUrl`).
+- **Proved:**
+  - core: typecheck and 244 unit tests pass.
+  - `test:db`: every SQL file passes (new `99x_content_drafts.sql`), and all 47 integration tests pass.
+  - web: typecheck, 26 unit tests and 70 e2e tests pass (new `marketing.spec.ts`).
+- **Next by the rules:** item 4 of the own board (department roles with playbooks), unless the Claude API key
+  arrives, which unblocks item 2 (findings named by flow).
 
 ## 5 Oct 2026: architecture proposals for founder-only steps
 

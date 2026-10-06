@@ -33,6 +33,7 @@ import { FilmPage } from "./pages/FilmPage";
 import { LandingPage } from "./pages/LandingPage";
 import { PricingPage } from "./pages/PricingPage";
 import { ContractPage, PaidPage } from "./pages/ContractPage";
+import { MarketingPage } from "./pages/MarketingPage";
 import { ContractTemplatesPage, OpportunityPage, PipelinePage } from "./pages/PipelinePage";
 import { SalesPlaybookPage, StaffInvitePage, StaffTeamPage } from "./pages/SalesPages";
 import { StaffShell } from "./components/StaffShell";
@@ -79,6 +80,7 @@ function staffRoutes(): Array<[string, (p: Record<string, string>) => ReactNode]
     ["/pipeline/billing", () => <BillingPage />],
     ["/pipeline/:id", (p) => <OpportunityPage id={p.id!} />],
     ["/sales", () => <SalesPlaybookPage />],
+    ["/marketing", () => <MarketingPage />],
   ];
 }
 const STAFF_ROUTES = staffRoutes();

@@ -1333,3 +1333,20 @@ export async function recordInvoiceEft(db: Db, inv: Invoice, reference: string, 
   });
   if (error) throw error;
 }
+
+// ---------------------------------------------------------------------------
+// Marketing and PR drafts: staff draft, a platform admin approves, a person publishes
+// ---------------------------------------------------------------------------
+export type ContentDraft = Row<"content_drafts">;
+
+export async function listContentDrafts(db: Db) {
+  return must(await db.from("content_drafts").select("*").order("updated_at", { ascending: false }).limit(300)) as ContentDraft[];
+}
+
+export async function createContentDraft(db: Db, d: { channel: string; title: string; body: string }) {
+  return must(await db.from("content_drafts").insert({ channel: d.channel, title: d.title.trim() || null, body: d.body.trim() }).select().single());
+}
+
+export async function updateContentDraft(db: Db, id: string, patch: { title?: string | null; body?: string; status?: string; review_note?: string | null; published_url?: string }) {
+  return must(await db.from("content_drafts").update(patch).eq("id", id).select().single());
+}
