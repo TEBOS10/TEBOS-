@@ -16,10 +16,49 @@ Update this list every run; strike items when they're done.
 | 3 | A lawyer approves the contract templates (standard and company) and advises on POPIA | Signing clients |
 | 4 | Activate the 9 draft objectives on TEBOS's board | The company measuring itself, and the maintainer queue watching TEBOS |
 | 5 | Founder name and title for outreach and the site | Sending the outreach drafts |
-| 6 | Social accounts created | Publishing the social pack, and the approved drafts on the Marketing page |
+| 6 | Social accounts created, and whether to invite a marketer (Staff → Invite, role Marketing) | Publishing the social pack and approved drafts |
 | 7 | Company registration and VAT number | Invoices that are legally complete |
 | 8 | Make the repo private, rotate database passwords, turn on leaked-password protection | Protecting the platform from copying |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
+
+## 7 Oct 2026: a marketing department, with its own role and playbook
+
+- **Read:**
+  - Main was green. The worker was live (SUCCESS) since 6 Oct's deploy. Its only error lines were the old
+    container being stopped during the swap.
+  - The company snapshot is still all zeros. No maintainer items are open, nobody has written a draft yet, and the
+    advisors are unchanged.
+- **Chosen (rule 4, company plumbing):** product items are still gated (the Claude API key; a connected tool on a
+  client board). So this run took item 4 of "TEBOS on its own board": department roles beyond sales and maintainer,
+  starting with marketing, the department that now has a page (6 Oct) but no-one to staff it.
+- **Built (migration `marketing_role`):**
+  - A **marketing** staff role. A platform admin invites marketers like any staff, and a marketer is never a member
+    of a client's organisation.
+  - Least privilege: marketing drafts content and reads its playbook. It sees no pipeline, leads, clients, billing or
+    sales playbook. Every older policy still names its own roles, so the new role gains nothing it isn't given.
+  - **Department playbooks.** Each playbook section now belongs to sales or marketing. Sales sections are read by
+    sales and maintainers, as before. Marketing sections are read by marketing, sales and maintainers. Admins edit
+    both.
+  - **The first marketing playbook**, five sections:
+    - what we say, and how;
+    - what we never publish (nothing invented; no client names without written permission; AI visuals labelled;
+      no provider names; nothing internal; no prices beyond a link to the pricing page);
+    - from draft to published;
+    - channels (newsletters only to people who asked, under POPIA);
+    - what to do when someone gets in touch (nothing of value before payment).
+  - Mirrored in `src/domain/staff.ts`, whose test checks the roles and departments against the migration.
+  - On screen:
+    - marketers land on their drafts;
+    - the menu shows them Marketing and Marketing playbook only;
+    - the pipeline refuses them even when opened by its address;
+    - the staff invite form offers Marketing.
+- **Proved:**
+  - core: typecheck and 249 unit tests pass.
+  - `test:db`: every SQL file passes (new `99y_marketing_role.sql`, and `90_sales.sql` unchanged), and all 47
+    integration tests pass.
+  - web: typecheck, 26 unit tests and 71 e2e tests pass (a new marketer test in `marketing.spec.ts`).
+- **Next by the rules:** the next department (finance or operations) only when there is work for it. Otherwise
+  hardening, unless the Claude API key arrives, which unblocks findings named by flow.
 
 ## 6 Oct 2026: marketing and PR drafts, approved before anything goes out
 

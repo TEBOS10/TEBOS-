@@ -35,7 +35,7 @@ import { PricingPage } from "./pages/PricingPage";
 import { ContractPage, PaidPage } from "./pages/ContractPage";
 import { MarketingPage } from "./pages/MarketingPage";
 import { ContractTemplatesPage, OpportunityPage, PipelinePage } from "./pages/PipelinePage";
-import { SalesPlaybookPage, StaffInvitePage, StaffTeamPage } from "./pages/SalesPages";
+import { MarketingPlaybookPage, SalesPlaybookPage, StaffInvitePage, StaffTeamPage } from "./pages/SalesPages";
 import { StaffShell } from "./components/StaffShell";
 import { BlogIndex, BlogPost } from "./pages/BlogPage";
 import { SystemsPage } from "./pages/SystemsPage";
@@ -81,6 +81,7 @@ function staffRoutes(): Array<[string, (p: Record<string, string>) => ReactNode]
     ["/pipeline/:id", (p) => <OpportunityPage id={p.id!} />],
     ["/sales", () => <SalesPlaybookPage />],
     ["/marketing", () => <MarketingPage />],
+    ["/marketing/playbook", () => <MarketingPlaybookPage />],
   ];
 }
 const STAFF_ROUTES = staffRoutes();
@@ -187,11 +188,13 @@ function NoOrganisation() {
   const { access, loading } = useStaff();
   const path = usePath();
   if (loading) return <div className="auth"><Loading label="Opening TEBOS" /></div>;
-  const staff = access?.sales || access?.maintainer;
+  const staff = access?.sales || access?.maintainer || access?.marketing;
   if (!staff || (access?.admin && path === "/")) return <CreateOrganisation />;
+  // marketing staff start on their drafts; they have no pipeline
+  const home = access?.sales || access?.maintainer ? <PipelinePage /> : <MarketingPage />;
   return (
     <StaffShell>
-      {path === "/" ? <PipelinePage /> : <Routes routes={STAFF_ROUTES} />}
+      {path === "/" ? home : <Routes routes={STAFF_ROUTES} />}
     </StaffShell>
   );
 }
