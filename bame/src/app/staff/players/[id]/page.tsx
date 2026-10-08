@@ -4,7 +4,16 @@ import { getSupabaseSessionClient } from "@/lib/supabase-server";
 import PlayerProfileForm from "@/components/staff/PlayerProfileForm";
 import OpportunityForm from "@/components/staff/OpportunityForm";
 import OpportunityControls from "@/components/staff/OpportunityControls";
-import { OPPORTUNITY_CATEGORY_LABELS, formatZAR, type Opportunity, type StaffProfile } from "@/lib/staff";
+import KickoffCallPanel from "@/components/staff/KickoffCallPanel";
+import PlayerDeliverableChecklist, { type PlayerDeliverableItem } from "@/components/staff/PlayerDeliverableChecklist";
+import {
+  DEPARTMENT_LABELS,
+  OPPORTUNITY_CATEGORY_LABELS,
+  formatZAR,
+  type Department,
+  type Opportunity,
+  type StaffProfile,
+} from "@/lib/staff";
 
 export const metadata = { title: "Player profile — BAME staff" };
 
@@ -31,6 +40,27 @@ export default async function StaffPlayerPage({ params }: { params: Promise<{ id
   if (!player) notFound();
   const oppRows = (opportunities || []) as Opportunity[];
 
+  let checklistItems: PlayerDeliverableItem[] = [];
+  if (player.department && player.package_tier) {
+    const [{ data: deliverables }, { data: statuses }] = await Promise.all([
+      supabase
+        .from("deliverables")
+        .select("id, title, phase")
+        .eq("department", player.department)
+        .eq("package_tier", player.package_tier)
+        .order("phase")
+        .order("sort_order"),
+      supabase.from("player_deliverable_status").select("deliverable_id, done").eq("player_id", id),
+    ]);
+    const doneMap = new Map((statuses || []).map((s) => [s.deliverable_id, s.done]));
+    checklistItems = (deliverables || []).map((dl) => ({
+      id: dl.id,
+      title: dl.title,
+      phase: dl.phase as PlayerDeliverableItem["phase"],
+      done: !!doneMap.get(dl.id),
+    }));
+  }
+
   return (
     <main className="px-5 py-10">
       <div className="mx-auto max-w-2xl">
@@ -39,6 +69,16 @@ export default async function StaffPlayerPage({ params }: { params: Promise<{ id
         </Link>
         <p className="bame-eyebrow mt-4">Player profile</p>
         <h1 className="mt-2 text-2xl">{player.full_name}</h1>
+
+        <div className="mt-6">
+          <KickoffCallPanel
+            playerId={id}
+            scheduledAt={player.kickoff_call_scheduled_at}
+            completedAt={player.kickoff_call_completed_at}
+            notes={player.kickoff_call_notes}
+          />
+        </div>
+
         <div className="mt-8">
           <PlayerProfileForm player={player} />
         </div>
@@ -49,6 +89,20 @@ export default async function StaffPlayerPage({ params }: { params: Promise<{ id
           >
             View originating case →
           </Link>
+        )}
+
+        {checklistItems.length > 0 && (
+          <section className="mt-8 rounded-2xl border border-[var(--bame-line)] bg-[var(--bame-panel)] p-6">
+            <h2 className="text-sm font-semibold">
+              {DEPARTMENT_LABELS[player.department as Department]} checklist — {player.package_tier} package
+            </h2>
+            <p className="mt-1 text-xs text-[var(--bame-muted)]">
+              Matched automatically from this player&apos;s package, so onboarding doesn&apos;t stall at a blank profile.
+            </p>
+            <div className="mt-4">
+              <PlayerDeliverableChecklist playerId={id} items={checklistItems} />
+            </div>
+          </section>
         )}
 
         <section className="mt-10">
