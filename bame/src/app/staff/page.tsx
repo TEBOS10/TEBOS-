@@ -7,14 +7,14 @@ import { DEPARTMENT_LABELS, type Department, type StaffProfile } from "@/lib/sta
 
 export const metadata = { title: "Dashboard — BAME staff" };
 
-// Each department's own walkthrough, shown right where they work. Admin has
-// none yet — the department process videos are still being produced.
+// Each department's own walkthrough, shown right where they work.
 const PROCESS_VIDEO_BY_DEPARTMENT: Partial<Record<Department, string>> = {
   sales: "/videos/bame-sales-process.mp4",
   production: "/videos/bame-production-process.mp4",
   pr: "/videos/bame-pr-process.mp4",
   finance: "/videos/bame-finance-process.mp4",
   tech: "/videos/bame-tech-process.mp4",
+  admin: "/videos/bame-admin-process.mp4",
 };
 
 interface CaseRow {
