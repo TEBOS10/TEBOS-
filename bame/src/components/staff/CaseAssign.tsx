@@ -4,9 +4,17 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { DEPARTMENTS, DEPARTMENT_LABELS, type Department } from "@/lib/staff";
 
-export default function CaseAssign({ table, id }: { table: "leads" | "diagnostics"; id: string }) {
+export default function CaseAssign({
+  table,
+  id,
+  currentDepartment,
+}: {
+  table: "leads" | "diagnostics";
+  id: string;
+  currentDepartment?: Department | null;
+}) {
   const router = useRouter();
-  const [department, setDepartment] = useState<Department>("sales");
+  const [department, setDepartment] = useState<Department>(currentDepartment || "sales");
   const [assigning, setAssigning] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -48,10 +56,10 @@ export default function CaseAssign({ table, id }: { table: "leads" | "diagnostic
         </select>
         <button
           onClick={onAssign}
-          disabled={assigning}
+          disabled={assigning || department === currentDepartment}
           className="rounded-full bg-[var(--bame-accent)] px-3 py-1 text-xs font-semibold text-[#1a1608] disabled:opacity-60"
         >
-          {assigning ? "Routing…" : "Route"}
+          {assigning ? "Routing…" : currentDepartment ? "Reassign" : "Route"}
         </button>
       </div>
       {error && <p className="mt-1 text-xs text-red-400">{error}</p>}

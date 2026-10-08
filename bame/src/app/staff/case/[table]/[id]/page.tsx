@@ -1,9 +1,10 @@
 import { notFound, redirect } from "next/navigation";
 import { getSupabaseSessionClient } from "@/lib/supabase-server";
 import { INTAKE_SECTIONS, type IntakeField } from "@/lib/intake-schema";
-import { DEPARTMENT_HIGHLIGHT_SECTIONS, DEPARTMENT_LABELS, type StaffProfile } from "@/lib/staff";
+import { DEPARTMENT_HIGHLIGHT_SECTIONS, DEPARTMENT_LABELS, type Department, type StaffProfile } from "@/lib/staff";
 import DeliverableChecklist, { type DeliverableItem } from "@/components/staff/DeliverableChecklist";
 import OnboardPlayerButton from "@/components/staff/OnboardPlayerButton";
+import CaseAssign from "@/components/staff/CaseAssign";
 
 function fieldValue(payload: Record<string, unknown>, field: IntakeField): string | null {
   const raw = payload[field.name];
@@ -97,6 +98,12 @@ export default async function StaffCasePage({
               </div>
             )}
           </div>
+          {profile.is_admin && (
+            <div className="mt-4">
+              <p className="mb-2 text-xs text-[var(--bame-muted)]">Routed to the wrong department? Reassign it:</p>
+              <CaseAssign table="leads" id={id} currentDepartment={l.assigned_department as Department | null} />
+            </div>
+          )}
         </div>
       </main>
     );
@@ -163,7 +170,7 @@ export default async function StaffCasePage({
         </div>
 
         {profile.is_admin && (
-          <div className="mt-4">
+          <div className="mt-4 space-y-4">
             {existingPlayerId ? (
               <a href={`/staff/players/${existingPlayerId}`} className="text-xs text-[var(--bame-accent)] hover:underline">
                 View player profile →
@@ -178,6 +185,10 @@ export default async function StaffCasePage({
                 packageTier={tier || "foundation"}
               />
             )}
+            <div>
+              <p className="mb-2 text-xs text-[var(--bame-muted)]">Routed to the wrong department? Reassign it:</p>
+              <CaseAssign table="diagnostics" id={id} currentDepartment={assignedDept as Department | null} />
+            </div>
           </div>
         )}
 
