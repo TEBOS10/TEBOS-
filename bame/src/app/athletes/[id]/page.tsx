@@ -32,9 +32,14 @@ export default async function AthletePortfolioPage({ params }: { params: Promise
   return (
     <main className="flex-1 bg-[var(--bame-bg)] px-5 py-16">
       <div className="mx-auto max-w-2xl">
-        <div className="flex items-center gap-2 text-xs text-[var(--bame-muted)]">
-          <Image src="/logo-mark.png" alt="BAME" width={20} height={20} className="rounded" />
-          Represented by BAME Sports Management
+        <div className="flex items-center justify-between gap-2 text-xs text-[var(--bame-muted)]">
+          <div className="flex items-center gap-2">
+            <Image src="/logo-mark.png" alt="BAME" width={20} height={20} className="rounded" />
+            Represented by BAME Sports Management
+          </div>
+          <Link href="/athletes" className="hover:text-[var(--bame-ink)] hover:underline">
+            ← All athletes
+          </Link>
         </div>
 
         <div className="mt-8 flex items-center gap-5">

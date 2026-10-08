@@ -23,7 +23,7 @@ const PRIMARY_FOCUS = [
 
 export default function QuickLeadForm() {
   const router = useRouter();
-  const [contactType, setContactType] = useState<"athlete" | "event">("athlete");
+  const [contactType, setContactType] = useState<"athlete" | "event" | "club">("athlete");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -92,6 +92,15 @@ export default function QuickLeadForm() {
           }`}
         >
           I run a sports event
+        </button>
+        <button
+          type="button"
+          onClick={() => setContactType("club")}
+          className={`flex-1 rounded-full px-4 py-2 text-sm font-medium transition ${
+            contactType === "club" ? "bg-[var(--bame-accent)] text-[#1a1608]" : "bg-transparent text-[var(--bame-muted)] ring-1 ring-[var(--bame-line)]"
+          }`}
+        >
+          I run a sports club
         </button>
       </div>
 

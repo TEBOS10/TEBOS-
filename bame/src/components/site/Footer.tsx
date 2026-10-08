@@ -11,6 +11,8 @@ export default function Footer() {
         <nav className="flex flex-wrap gap-5">
           <Link href="/#services">Services</Link>
           <Link href="/#athletes">Athletes</Link>
+          <Link href="/#clubs">Clubs</Link>
+          <Link href="/athletes">Athlete library</Link>
           <Link href="/#refer">Refer &amp; earn 10%</Link>
           <Link href="/intake">Get started</Link>
           <Link href="/privacy">Privacy</Link>

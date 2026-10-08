@@ -13,6 +13,7 @@ export default function Header() {
           <Link href="/#services" className="hover:text-[var(--bame-ink)]">Services</Link>
           <Link href="/#how-it-works" className="hover:text-[var(--bame-ink)]">How it works</Link>
           <Link href="/#athletes" className="hover:text-[var(--bame-ink)]">Athletes</Link>
+          <Link href="/#clubs" className="hover:text-[var(--bame-ink)]">Clubs</Link>
           <Link href="/#events" className="hover:text-[var(--bame-ink)]">Events</Link>
         </nav>
         <Link

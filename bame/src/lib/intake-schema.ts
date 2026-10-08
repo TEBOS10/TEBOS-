@@ -42,8 +42,9 @@ export interface IntakeSection {
   fields: IntakeField[];
 }
 
-const isAthlete = (v: Record<string, unknown>) => v.contact_type !== "event";
+const isAthlete = (v: Record<string, unknown>) => v.contact_type !== "event" && v.contact_type !== "club";
 const isEvent = (v: Record<string, unknown>) => v.contact_type === "event";
+const isClub = (v: Record<string, unknown>) => v.contact_type === "club";
 
 export const BRAND_ARCHETYPES: CardOption[] = [
   { value: "Global Icon", label: "The Global Icon", description: "Worldwide recognition, universal appeal, blockbuster-scale partnerships." },
@@ -68,7 +69,7 @@ export const INTAKE_SECTIONS: IntakeSection[] = [
         label: "I am",
         type: "radio",
         required: true,
-        options: ["An athlete", "A sports event organiser"],
+        options: ["An athlete", "A sports event organiser", "A sports club"],
       },
       { name: "full_name", label: "Full name", type: "text", required: true },
       { name: "email", label: "Email", type: "email", required: true },
@@ -463,6 +464,45 @@ export const INTAKE_SECTIONS: IntakeSection[] = [
       { name: "participant_experience_notes", label: "Participant experience — what needs to improve or be built? (optional)", type: "textarea", full: true },
       {
         name: "event_budget_capacity",
+        label: "Budget available for agreed programmes/services",
+        type: "chips",
+        options: ["Under R6.5k/mo", "R6.5k–R10k/mo", "R10k+/mo", "Depends on scope", "Not sure yet"],
+      },
+    ],
+  },
+  {
+    id: "club",
+    title: "Club details",
+    showIf: isClub,
+    description: "This covers BAME's club packages: Club foundation, Club growth, and Custom club.",
+    fields: [
+      { name: "club_name", label: "Club name", type: "text", required: true },
+      {
+        name: "club_package_interest",
+        label: "Which club package fits best?",
+        type: "chips",
+        options: ["Club foundation", "Club growth", "Custom club", "Not sure — recommend one"],
+        full: true,
+      },
+      { name: "club_sport", label: "Sport / code", type: "text" },
+      {
+        name: "club_level",
+        label: "Level",
+        type: "chips",
+        options: ["Grassroots / community", "School / academy", "Semi-professional", "Professional", "Multi-team / federation"],
+      },
+      { name: "club_location", label: "Location(s)", type: "text" },
+      {
+        name: "club_membership_size",
+        label: "Membership / player numbers",
+        type: "chips",
+        options: ["Under 50", "50–200", "200–1,000", "1,000+", "Not sure yet"],
+      },
+      { name: "club_stakeholder_map", label: "Key stakeholders (committee, sponsors, league/federation) (optional)", type: "textarea", full: true },
+      { name: "club_sponsorship_inventory", label: "Existing or planned sponsorship inventory / assets (optional)", type: "textarea", full: true },
+      { name: "club_member_experience_notes", label: "Member / supporter experience — what needs to improve or be built? (optional)", type: "textarea", full: true },
+      {
+        name: "club_budget_capacity",
         label: "Budget available for agreed programmes/services",
         type: "chips",
         options: ["Under R6.5k/mo", "R6.5k–R10k/mo", "R10k+/mo", "Depends on scope", "Not sure yet"],

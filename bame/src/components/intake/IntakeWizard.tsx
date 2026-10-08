@@ -9,6 +9,7 @@ const STORAGE_KEY = "bame_intake_draft_v1";
 const CONTACT_TYPE_OPTIONS = [
   { value: "athlete", label: "An athlete" },
   { value: "event", label: "A sports event organiser" },
+  { value: "club", label: "A sports club" },
 ];
 
 type Values = Record<string, string | boolean>;

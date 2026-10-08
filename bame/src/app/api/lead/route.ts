@@ -4,7 +4,7 @@ import { getSupabaseServerClient } from "@/lib/supabase";
 export async function POST(req: NextRequest) {
   const body = await req.json();
 
-  const contact_type = body.contact_type === "event" ? "event" : "athlete";
+  const contact_type = ["event", "club"].includes(body.contact_type) ? body.contact_type : "athlete";
   const full_name = String(body.full_name || "").trim();
   const email = String(body.email || "").trim();
 

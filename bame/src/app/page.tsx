@@ -69,6 +69,12 @@ const EVENT_PACKAGES = [
   { n: "03", title: "Custom event", desc: "For company-led, high-complexity, or multi-stakeholder events requiring a tailored operating plan and retainer.", items: ["Bespoke strategy", "Flexible delivery team", "Commercial and production alignment"] },
 ];
 
+const CLUB_PACKAGES = [
+  { n: "01", title: "Club foundation", desc: "For clubs establishing a clear brand, communication rhythm, and sponsor-ready presence.", items: ["Club brand narrative", "Member & supporter content direction", "Core digital presence"] },
+  { n: "02", title: "Club growth", desc: "For clubs building sponsorship readiness, membership growth, and a stronger commercial story.", items: ["Partner & sponsor proposition", "Campaign and PR direction", "Content and delivery rhythm"] },
+  { n: "03", title: "Custom club", desc: "For multi-team, academy, or federation-level clubs requiring a tailored operating plan and retainer.", items: ["Bespoke strategy", "Flexible delivery team", "Commercial and production alignment"] },
+];
+
 export default function Home() {
   return (
     <>
@@ -83,12 +89,15 @@ export default function Home() {
               Build the name. <em className="not-italic text-[var(--bame-accent)]">Own the moment.</em>
             </h1>
             <p className="mt-6 max-w-xl text-[var(--bame-ink)]/90 drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)]">
-              BAME helps athletes and sports events become commercially established through brand, PR, social media,
-              marketing, production, and sponsorship.
+              BAME helps athletes, sports clubs, and sports events become commercially established through brand, PR,
+              social media, marketing, production, and sponsorship.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link href="/intake?contact_type=athlete" className="rounded-full bg-[var(--bame-accent)] px-6 py-3 text-sm font-semibold text-[#1a1608]">
                 Build my brand
+              </Link>
+              <Link href="/intake?contact_type=club" className="rounded-full px-6 py-3 text-sm font-semibold text-[var(--bame-ink)] ring-1 ring-white/30 backdrop-blur-sm">
+                I run a sports club
               </Link>
               <Link href="/intake?contact_type=event" className="rounded-full px-6 py-3 text-sm font-semibold text-[var(--bame-ink)] ring-1 ring-white/30 backdrop-blur-sm">
                 I run a sports event
@@ -145,11 +154,15 @@ export default function Home() {
           <div className="mx-auto max-w-6xl px-5">
             <p className="bame-eyebrow">Built to replicate</p>
             <h2 className="mt-3 max-w-2xl text-3xl md:text-4xl">Our method adapts to your sport.</h2>
+            <p className="mt-4 max-w-2xl text-[var(--bame-muted)]">
+              Browse athletes BAME represents, by sport — each card opens that sport&apos;s published portfolios.
+            </p>
             <div className="mt-10 grid gap-5 md:grid-cols-3 lg:grid-cols-5">
               {SPORTS.map((s) => (
-                <div
+                <Link
                   key={s.n}
-                  className="floaty group relative h-56 overflow-hidden rounded-2xl border border-[var(--bame-line)] p-5"
+                  href={s.title === "Your sport" ? "/athletes" : `/athletes?sport=${encodeURIComponent(s.title)}`}
+                  className="floaty group relative block h-56 overflow-hidden rounded-2xl border border-[var(--bame-line)] p-5"
                 >
                   {s.image && (
                     <>
@@ -168,7 +181,7 @@ export default function Home() {
                     <h3 className="mt-2 text-lg">{s.title}</h3>
                     <p className="mt-2 text-xs text-[var(--bame-muted)]">{s.desc}</p>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </div>
@@ -282,6 +295,38 @@ export default function Home() {
                   </ul>
                   <Link
                     href={`/intake?contact_type=event&event_package_interest=${encodeURIComponent(p.title)}`}
+                    className="mt-6 inline-block rounded-full px-5 py-2.5 text-sm font-semibold ring-1 ring-[var(--bame-line)]"
+                  >
+                    Discuss this path
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Clubs */}
+        <section id="clubs" className="border-t border-[var(--bame-line)] py-20">
+          <div className="mx-auto max-w-6xl px-5">
+            <p className="bame-eyebrow">For sports clubs &amp; academies</p>
+            <h2 className="mt-3 max-w-2xl text-3xl md:text-4xl">Build the club&apos;s commercial story.</h2>
+            <p className="mt-4 max-w-2xl text-[var(--bame-muted)]">
+              Bring your club&apos;s brand, member and supporter experience, content, sponsorship story, and delivery
+              rhythm into one club plan.
+            </p>
+            <div className="mt-10 grid gap-6 md:grid-cols-3">
+              {CLUB_PACKAGES.map((p) => (
+                <div key={p.n} className="floaty rounded-2xl border border-[var(--bame-line)] bg-[var(--bame-panel)] p-6">
+                  <div className="bame-eyebrow">{p.n}</div>
+                  <h3 className="mt-2 text-xl">{p.title}</h3>
+                  <p className="mt-2 text-sm text-[var(--bame-muted)]">{p.desc}</p>
+                  <ul className="mt-4 space-y-2 text-sm text-[var(--bame-muted)]">
+                    {p.items.map((i) => (
+                      <li key={i}>— {i}</li>
+                    ))}
+                  </ul>
+                  <Link
+                    href={`/intake?contact_type=club&club_package_interest=${encodeURIComponent(p.title)}`}
                     className="mt-6 inline-block rounded-full px-5 py-2.5 text-sm font-semibold ring-1 ring-[var(--bame-line)]"
                   >
                     Discuss this path

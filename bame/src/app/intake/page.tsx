@@ -30,6 +30,7 @@ export default async function IntakePage({
   if (get("lead_id")) initialValues.lead_id = get("lead_id")!;
   if (get("package_interest")) initialValues.package_interest = get("package_interest")!;
   if (get("event_package_interest")) initialValues.event_package_interest = get("event_package_interest")!;
+  if (get("club_package_interest")) initialValues.club_package_interest = get("club_package_interest")!;
   if (get("lead_source")) initialValues.lead_source = get("lead_source")!;
 
   return (
@@ -38,7 +39,7 @@ export default async function IntakePage({
       <main className="flex-1">
         <section className="mx-auto max-w-3xl px-5 py-14">
           <p className="bame-eyebrow">Client diagnostic intake</p>
-          <h1 className="mt-3 text-3xl md:text-4xl">Athlete &amp; event diagnostic.</h1>
+          <h1 className="mt-3 text-3xl md:text-4xl">Athlete, club &amp; event diagnostic.</h1>
           <p className="mt-4 text-sm text-[var(--bame-muted)]">
             BAME uses this master intake to understand you, your commercial position, and what you need — across
             brand, PR, production, sponsorship and tech — before any work is scoped. Complete it once; every BAME
