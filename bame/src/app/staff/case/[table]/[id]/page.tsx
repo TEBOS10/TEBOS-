@@ -98,10 +98,10 @@ export default async function StaffCasePage({
               </div>
             )}
           </div>
-          {profile.is_admin && (
+          {(profile.is_admin || l.assigned_department === profile.department) && (
             <div className="mt-4">
               <p className="mb-2 text-xs text-[var(--bame-muted)]">Routed to the wrong department? Reassign it:</p>
-              <CaseAssign table="leads" id={id} currentDepartment={l.assigned_department as Department | null} />
+              <CaseAssign table="leads" id={id} currentDepartment={l.assigned_department as Department | null} isAdmin={profile.is_admin} />
             </div>
           )}
         </div>
@@ -141,8 +141,10 @@ export default async function StaffCasePage({
     return ah - bh;
   });
 
+  const canActOnThisCase = profile.is_admin || assignedDept === profile.department;
+
   let existingPlayerId: string | null = null;
-  if (profile.is_admin) {
+  if (canActOnThisCase) {
     const { data: existingPlayer } = await supabase
       .from("players")
       .select("id")
@@ -169,7 +171,7 @@ export default async function StaffCasePage({
           {d.created_at ? <span>Submitted {new Date(String(d.created_at)).toLocaleString()}</span> : null}
         </div>
 
-        {profile.is_admin && (
+        {canActOnThisCase && (
           <div className="mt-4 space-y-4">
             {existingPlayerId ? (
               <a href={`/staff/players/${existingPlayerId}`} className="text-xs text-[var(--bame-accent)] hover:underline">
@@ -187,7 +189,7 @@ export default async function StaffCasePage({
             )}
             <div>
               <p className="mb-2 text-xs text-[var(--bame-muted)]">Routed to the wrong department? Reassign it:</p>
-              <CaseAssign table="diagnostics" id={id} currentDepartment={assignedDept as Department | null} />
+              <CaseAssign table="diagnostics" id={id} currentDepartment={assignedDept as Department | null} isAdmin={profile.is_admin} />
             </div>
           </div>
         )}

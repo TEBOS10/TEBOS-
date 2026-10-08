@@ -148,7 +148,7 @@ export default async function StaffDashboardPage() {
                       {c.email} {c.sport ? `· ${c.sport}` : ""}
                     </p>
                   </Link>
-                  <CaseAssign table={c.table} id={c.id} />
+                  <CaseAssign table={c.table} id={c.id} isAdmin={profile.is_admin} />
                 </div>
               ))}
             </div>

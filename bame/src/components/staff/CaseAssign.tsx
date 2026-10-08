@@ -8,24 +8,26 @@ export default function CaseAssign({
   table,
   id,
   currentDepartment,
+  isAdmin,
 }: {
   table: "leads" | "diagnostics";
   id: string;
   currentDepartment?: Department | null;
+  isAdmin: boolean;
 }) {
   const router = useRouter();
   const [department, setDepartment] = useState<Department>(currentDepartment || "sales");
   const [assigning, setAssigning] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function onAssign() {
+  async function assignTo(target: Department | null) {
     setAssigning(true);
     setError(null);
     try {
       const res = await fetch("/api/staff/assign", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ table, id, department }),
+        body: JSON.stringify({ table, id, department: target }),
       });
       const json = await res.json();
       if (!res.ok || !json.ok) {
@@ -38,6 +40,24 @@ export default function CaseAssign({
     } finally {
       setAssigning(false);
     }
+  }
+
+  // Non-admins can only send a case they hold back to the unassigned pool —
+  // RLS only lets them write their own current department or null, so a full
+  // department picker here would just produce a confusing rejected request.
+  if (!isAdmin) {
+    return (
+      <div>
+        <button
+          onClick={() => assignTo(null)}
+          disabled={assigning}
+          className="rounded-full border border-[var(--bame-line)] px-3 py-1 text-xs text-[var(--bame-muted)] hover:text-[var(--bame-accent)] disabled:opacity-60"
+        >
+          {assigning ? "Sending back…" : "Not the right team — send back to unassigned"}
+        </button>
+        {error && <p className="mt-1 text-xs text-red-400">{error}</p>}
+      </div>
+    );
   }
 
   return (
@@ -55,7 +75,7 @@ export default function CaseAssign({
           ))}
         </select>
         <button
-          onClick={onAssign}
+          onClick={() => assignTo(department)}
           disabled={assigning || department === currentDepartment}
           className="rounded-full bg-[var(--bame-accent)] px-3 py-1 text-xs font-semibold text-[#1a1608] disabled:opacity-60"
         >
