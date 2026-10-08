@@ -16,7 +16,11 @@ export default function StaffLoginForm({ next }: { next: string }) {
     setLoading(true);
     setError(null);
     const supabase = getSupabaseBrowserClient();
-    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+    // Copy-pasting from WhatsApp/email often carries a trailing space or
+    // newline, which silently breaks an exact-match login with no useful
+    // error — trim the email (never the password, which may legitimately
+    // start/end with punctuation) before sending it.
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     if (signInError) {
       setError("Incorrect email or password.");
       setLoading(false);
