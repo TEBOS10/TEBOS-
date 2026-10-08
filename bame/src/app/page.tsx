@@ -201,6 +201,17 @@ export default function Home() {
                 </div>
               ))}
             </div>
+            <div className="mt-12 overflow-hidden rounded-2xl border border-[var(--bame-line)]">
+              <video
+                controls
+                playsInline
+                preload="metadata"
+                className="w-full"
+                aria-label="A short walkthrough of how BAME works, from the diagnostic to your team being routed"
+              >
+                <source src="/videos/bame-how-it-works.mp4" type="video/mp4" />
+              </video>
+            </div>
           </div>
         </section>
 

@@ -7,6 +7,16 @@ import { DEPARTMENT_LABELS, type Department, type StaffProfile } from "@/lib/sta
 
 export const metadata = { title: "Dashboard — BAME staff" };
 
+// Each department's own walkthrough, shown right where they work. Admin has
+// none yet — the department process videos are still being produced.
+const PROCESS_VIDEO_BY_DEPARTMENT: Partial<Record<Department, string>> = {
+  sales: "/videos/bame-sales-process.mp4",
+  production: "/videos/bame-production-process.mp4",
+  pr: "/videos/bame-pr-process.mp4",
+  finance: "/videos/bame-finance-process.mp4",
+  tech: "/videos/bame-tech-process.mp4",
+};
+
 interface CaseRow {
   table: "leads" | "diagnostics";
   id: string;
@@ -131,6 +141,19 @@ export default async function StaffDashboardPage() {
             {profile.is_admin ? "Every case" : `${DEPARTMENT_LABELS[profile.department]} queue`}
           </h1>
         </div>
+
+        {PROCESS_VIDEO_BY_DEPARTMENT[profile.department] && (
+          <section>
+            <h2 className="text-sm font-semibold">
+              How {DEPARTMENT_LABELS[profile.department]} works here
+            </h2>
+            <div className="mt-3 overflow-hidden rounded-2xl border border-[var(--bame-line)]">
+              <video controls playsInline preload="metadata" className="w-full">
+                <source src={PROCESS_VIDEO_BY_DEPARTMENT[profile.department]} type="video/mp4" />
+              </video>
+            </div>
+          </section>
+        )}
 
         {profile.is_admin && unassignedCases.length > 0 && (
           <section>
