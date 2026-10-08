@@ -286,7 +286,17 @@ export default function Home() {
         </section>
 
         {/* Events */}
-        <section id="events" className="border-t border-[var(--bame-line)] py-20">
+        <section id="events" className="relative overflow-hidden border-t border-[var(--bame-line)] py-20">
+          <div className="absolute inset-0 -z-10">
+            <Image
+              src="/hero/athletics.jpg"
+              alt=""
+              fill
+              sizes="100vw"
+              className="object-cover opacity-60"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-[var(--bame-bg)] via-[var(--bame-bg)]/45 to-[var(--bame-bg)]" />
+          </div>
           <div className="mx-auto max-w-6xl px-5">
             <p className="bame-eyebrow">For tournament & sports-event organisers</p>
             <h2 className="mt-3 max-w-2xl text-3xl md:text-4xl">Build the moment around the match.</h2>
@@ -295,7 +305,7 @@ export default function Home() {
             </p>
             <div className="mt-10 grid gap-6 md:grid-cols-3">
               {EVENT_PACKAGES.map((p) => (
-                <div key={p.n} className="floaty rounded-2xl border border-[var(--bame-line)] bg-[var(--bame-panel)] p-6">
+                <div key={p.n} className="floaty rounded-2xl border border-[var(--bame-line)] bg-[var(--bame-panel)]/90 p-6 backdrop-blur-sm">
                   <div className="bame-eyebrow">{p.n}</div>
                   <h3 className="mt-2 text-xl">{p.title}</h3>
                   <p className="mt-2 text-sm text-[var(--bame-muted)]">{p.desc}</p>
@@ -317,7 +327,17 @@ export default function Home() {
         </section>
 
         {/* Clubs */}
-        <section id="clubs" className="border-t border-[var(--bame-line)] py-20">
+        <section id="clubs" className="relative overflow-hidden border-t border-[var(--bame-line)] py-20">
+          <div className="absolute inset-0 -z-10">
+            <Image
+              src="/hero/football.jpg"
+              alt=""
+              fill
+              sizes="100vw"
+              className="object-cover opacity-60"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-[var(--bame-bg)] via-[var(--bame-bg)]/45 to-[var(--bame-bg)]" />
+          </div>
           <div className="mx-auto max-w-6xl px-5">
             <p className="bame-eyebrow">For sports clubs &amp; academies</p>
             <h2 className="mt-3 max-w-2xl text-3xl md:text-4xl">Build the club&apos;s commercial story.</h2>
@@ -327,7 +347,7 @@ export default function Home() {
             </p>
             <div className="mt-10 grid gap-6 md:grid-cols-3">
               {CLUB_PACKAGES.map((p) => (
-                <div key={p.n} className="floaty rounded-2xl border border-[var(--bame-line)] bg-[var(--bame-panel)] p-6">
+                <div key={p.n} className="floaty rounded-2xl border border-[var(--bame-line)] bg-[var(--bame-panel)]/90 p-6 backdrop-blur-sm">
                   <div className="bame-eyebrow">{p.n}</div>
                   <h3 className="mt-2 text-xl">{p.title}</h3>
                   <p className="mt-2 text-sm text-[var(--bame-muted)]">{p.desc}</p>
