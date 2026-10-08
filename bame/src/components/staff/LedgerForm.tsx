@@ -13,19 +13,31 @@ export default function LedgerForm() {
   const [department, setDepartment] = useState("");
   const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
-    await fetch("/api/staff/ledger", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ entry_type: entryType, amount, department: department || null, description }),
-    });
-    setAmount("");
-    setDescription("");
-    setSaving(false);
-    router.refresh();
+    setError(null);
+    try {
+      const res = await fetch("/api/staff/ledger", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ entry_type: entryType, amount, department: department || null, description }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.ok) {
+        setError(json.error || "Couldn't add that entry. Please try again.");
+        return;
+      }
+      setAmount("");
+      setDescription("");
+      router.refresh();
+    } catch {
+      setError("Couldn't reach the server. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -75,6 +87,7 @@ export default function LedgerForm() {
       >
         {saving ? "Adding…" : "Add entry"}
       </button>
+      {error && <p className="text-xs text-red-400 md:col-span-5">{error}</p>}
     </form>
   );
 }

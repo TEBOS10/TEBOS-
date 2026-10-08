@@ -28,20 +28,33 @@ export default function OpportunityControls({
 }) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function patch(fields: Record<string, unknown>) {
     setSaving(true);
-    await fetch("/api/staff/opportunities", {
-      method: "PATCH",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ id, ...fields }),
-    });
-    setSaving(false);
-    router.refresh();
+    setError(null);
+    try {
+      const res = await fetch("/api/staff/opportunities", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ id, ...fields }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.ok) {
+        setError(json.error || "That change didn't save. Please try again.");
+        return;
+      }
+      router.refresh();
+    } catch {
+      setError("Couldn't reach the server. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
     <div className="flex flex-wrap items-center gap-2">
+      {error && <span className="w-full text-xs text-red-400">{error}</span>}
       {isAdmin && (
         <select
           value={assignedDepartment || ""}

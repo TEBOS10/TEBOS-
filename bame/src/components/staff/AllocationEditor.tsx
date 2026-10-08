@@ -25,21 +25,35 @@ export default function AllocationEditor({ allocations }: { allocations: Allocat
     return initial;
   });
   const [saving, setSaving] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   async function save(tier: string, department: string) {
     const key = `${tier}:${department}`;
     setSaving(key);
-    await fetch("/api/staff/allocations", {
-      method: "PATCH",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ package_tier: tier, department, monthly_amount: values[key] }),
-    });
-    setSaving(null);
-    router.refresh();
+    setError(null);
+    try {
+      const res = await fetch("/api/staff/allocations", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ package_tier: tier, department, monthly_amount: values[key] }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.ok) {
+        setError(json.error || "That amount didn't save. Please try again.");
+        return;
+      }
+      router.refresh();
+    } catch {
+      setError("Couldn't reach the server. Please try again.");
+    } finally {
+      setSaving(null);
+    }
   }
 
   return (
-    <div className="overflow-x-auto">
+    <div>
+      {error && <p className="mb-2 text-xs text-red-400">{error}</p>}
+      <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
           <tr className="text-left text-xs text-[var(--bame-muted)]">
@@ -77,6 +91,7 @@ export default function AllocationEditor({ allocations }: { allocations: Allocat
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

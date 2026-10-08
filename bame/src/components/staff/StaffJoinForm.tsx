@@ -25,29 +25,34 @@ export default function StaffJoinForm({ token }: { token: string }) {
     }
 
     setLoading(true);
-    const res = await fetch("/api/staff/accept-invite", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ token, password }),
-    });
-    const json = await res.json();
-    if (!res.ok || !json.ok) {
-      setError(json.error || "Could not set up your account.");
-      setLoading(false);
-      return;
-    }
+    try {
+      const res = await fetch("/api/staff/accept-invite", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ token, password }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.ok) {
+        setError(json.error || "Could not set up your account.");
+        return;
+      }
 
-    const supabase = getSupabaseBrowserClient();
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: json.email,
-      password,
-    });
-    if (signInError) {
-      router.push("/staff/login");
-      return;
+      const supabase = getSupabaseBrowserClient();
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: json.email,
+        password,
+      });
+      if (signInError) {
+        router.push("/staff/login");
+        return;
+      }
+      router.push("/staff");
+      router.refresh();
+    } catch {
+      setError("Couldn't reach the server. Please try again.");
+    } finally {
+      setLoading(false);
     }
-    router.push("/staff");
-    router.refresh();
   }
 
   return (

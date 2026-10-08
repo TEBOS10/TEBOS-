@@ -27,16 +27,28 @@ export default function DeliverableChecklist({
 }) {
   const router = useRouter();
   const [pending, setPending] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   async function toggle(item: DeliverableItem) {
     setPending(item.id);
-    await fetch("/api/staff/deliverables", {
-      method: "PATCH",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ case_table: caseTable, case_id: caseId, deliverable_id: item.id, done: !item.done }),
-    });
-    setPending(null);
-    router.refresh();
+    setError(null);
+    try {
+      const res = await fetch("/api/staff/deliverables", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ case_table: caseTable, case_id: caseId, deliverable_id: item.id, done: !item.done }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.ok) {
+        setError(json.error || "That change didn't save. Please try again.");
+        return;
+      }
+      router.refresh();
+    } catch {
+      setError("Couldn't reach the server. Please try again.");
+    } finally {
+      setPending(null);
+    }
   }
 
   const phases: DeliverableItem["phase"][] = ["setup", "monthly", "process"];
@@ -47,6 +59,7 @@ export default function DeliverableChecklist({
       <p className="text-xs text-[var(--bame-muted)]">
         {done} of {items.length} complete
       </p>
+      {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
       <div className="mt-3 space-y-5">
         {phases.map((phase) => {
           const phaseItems = items.filter((i) => i.phase === phase);

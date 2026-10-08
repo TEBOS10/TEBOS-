@@ -36,21 +36,25 @@ export default function TeamManager() {
 
   async function load() {
     setLoading(true);
-    const res = await fetch("/api/staff/team", { cache: "no-store" });
-    const json = await res.json();
-    if (res.ok && json.ok) {
-      setStaff(json.staff || []);
-      setInvites(json.pending_invites || []);
-    } else {
-      setError(json.error || "Could not load team.");
+    try {
+      const res = await fetch("/api/staff/team", { cache: "no-store" });
+      const json = await res.json();
+      if (res.ok && json.ok) {
+        setStaff(json.staff || []);
+        setInvites(json.pending_invites || []);
+      } else {
+        setError(json.error || "Could not load team.");
+      }
+    } catch {
+      setError("Couldn't reach the server.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data fetch on mount
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function onInvite(e: React.FormEvent) {
@@ -58,32 +62,46 @@ export default function TeamManager() {
     setInviting(true);
     setError(null);
     setInviteLink(null);
-    const res = await fetch("/api/staff/team", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ action: "invite", email, full_name: fullName, department, is_admin: isAdmin }),
-    });
-    const json = await res.json();
-    if (!res.ok || !json.ok) {
-      setError(json.error || "Could not send invite.");
+    try {
+      const res = await fetch("/api/staff/team", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ action: "invite", email, full_name: fullName, department, is_admin: isAdmin }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.ok) {
+        setError(json.error || "Could not send invite.");
+        return;
+      }
+      setInviteLink(`${window.location.origin}/staff/join?token=${json.token}`);
+      setEmail("");
+      setFullName("");
+      setIsAdmin(false);
+      load();
+    } catch {
+      setError("Couldn't reach the server.");
+    } finally {
       setInviting(false);
-      return;
     }
-    setInviteLink(`${window.location.origin}/staff/join?token=${json.token}`);
-    setEmail("");
-    setFullName("");
-    setIsAdmin(false);
-    setInviting(false);
-    load();
   }
 
   async function onRevoke(inviteEmail: string) {
-    await fetch("/api/staff/team", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ action: "revoke_invite", email: inviteEmail }),
-    });
-    load();
+    setError(null);
+    try {
+      const res = await fetch("/api/staff/team", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ action: "revoke_invite", email: inviteEmail }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.ok) {
+        setError(json.error || "Could not revoke that invite.");
+        return;
+      }
+      load();
+    } catch {
+      setError("Couldn't reach the server.");
+    }
   }
 
   return (

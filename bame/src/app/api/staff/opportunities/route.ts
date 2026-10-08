@@ -83,6 +83,16 @@ export async function PATCH(req: NextRequest) {
     if (key in fields) update[key] = fields[key];
   }
 
+  // Routing (assigned_department) is admin-only — RLS only gates which rows
+  // can be updated, not which columns, so that restriction has to be
+  // enforced here rather than left to the "admin or own department" policy.
+  if ("assigned_department" in update) {
+    const { data: profile } = await supabase.from("profiles").select("is_admin").eq("id", user.id).maybeSingle();
+    if (!profile?.is_admin) {
+      return NextResponse.json({ ok: false, error: "Only admins can route an opportunity to a department" }, { status: 403 });
+    }
+  }
+
   // RLS scopes this update to admins (any row) or the opportunity's current
   // department (working their own queue) — see the opportunities UPDATE policy.
   const { error } = await supabase.from("opportunities").update(update).eq("id", id);

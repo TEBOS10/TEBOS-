@@ -8,6 +8,7 @@ export default function OpportunityForm({ playerId }: { playerId: string }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({
     title: "",
     category: "other",
@@ -22,15 +23,26 @@ export default function OpportunityForm({ playerId }: { playerId: string }) {
     e.preventDefault();
     if (!form.title.trim()) return;
     setSaving(true);
-    await fetch("/api/staff/opportunities", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ player_id: playerId, ...form }),
-    });
-    setSaving(false);
-    setOpen(false);
-    setForm({ title: "", category: "other", value_estimate: "", contact_name: "", contact_org: "", source: "", notes: "" });
-    router.refresh();
+    setError(null);
+    try {
+      const res = await fetch("/api/staff/opportunities", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ player_id: playerId, ...form }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.ok) {
+        setError(json.error || "Couldn't log that opportunity. Please try again.");
+        return;
+      }
+      setOpen(false);
+      setForm({ title: "", category: "other", value_estimate: "", contact_name: "", contact_org: "", source: "", notes: "" });
+      router.refresh();
+    } catch {
+      setError("Couldn't reach the server. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   if (!open) {
@@ -98,6 +110,7 @@ export default function OpportunityForm({ playerId }: { playerId: string }) {
         rows={2}
         className="w-full rounded-lg border border-[var(--bame-line)] bg-transparent px-3 py-2"
       />
+      {error && <p className="text-xs text-red-400">{error}</p>}
       <div className="flex gap-2">
         <button
           type="submit"

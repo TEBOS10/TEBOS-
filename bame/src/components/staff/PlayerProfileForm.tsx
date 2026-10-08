@@ -36,24 +36,36 @@ export default function PlayerProfileForm({ player }: { player: Player }) {
   });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
     setSaved(false);
-    await fetch("/api/staff/players", {
-      method: "PATCH",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        id: player.id,
-        ...form,
-        highlights: form.highlights.split("\n").map((s) => s.trim()).filter(Boolean),
-        achievements: form.achievements.split("\n").map((s) => s.trim()).filter(Boolean),
-      }),
-    });
-    setSaving(false);
-    setSaved(true);
-    router.refresh();
+    setError(null);
+    try {
+      const res = await fetch("/api/staff/players", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          id: player.id,
+          ...form,
+          highlights: form.highlights.split("\n").map((s) => s.trim()).filter(Boolean),
+          achievements: form.achievements.split("\n").map((s) => s.trim()).filter(Boolean),
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.ok) {
+        setError(json.error || "Couldn't save the profile. Please try again.");
+        return;
+      }
+      setSaved(true);
+      router.refresh();
+    } catch {
+      setError("Couldn't reach the server. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -172,6 +184,7 @@ export default function PlayerProfileForm({ player }: { player: Player }) {
           </a>
         )}
       </div>
+      {error && <p className="text-sm text-red-400">{error}</p>}
       <button
         type="submit"
         disabled={saving}

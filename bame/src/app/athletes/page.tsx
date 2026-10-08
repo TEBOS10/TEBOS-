@@ -16,6 +16,16 @@ interface PublicPlayer {
 
 const SPORT_FILTERS = ["Football", "Tennis", "Athletics", "Combat"];
 
+// Staff enter a player's sport as free text, so matching it to one of the
+// four homepage categories can't rely on an exact string match — this maps
+// each category to the real-world spellings/synonyms it should catch.
+const SPORT_SYNONYMS: Record<string, string[]> = {
+  Football: ["football", "soccer"],
+  Tennis: ["tennis"],
+  Athletics: ["athletics", "track", "track and field", "running", "athletic"],
+  Combat: ["combat", "boxing", "mma", "wrestling", "judo", "karate", "kickboxing", "taekwondo"],
+};
+
 export default async function AthleteLibraryPage({
   searchParams,
 }: {
@@ -23,15 +33,23 @@ export default async function AthleteLibraryPage({
 }) {
   const sp = await searchParams;
   const sportParam = sp.sport;
-  const sport = Array.isArray(sportParam) ? sportParam[0] : sportParam;
+  const rawSport = Array.isArray(sportParam) ? sportParam[0] : sportParam;
+  // Ignore anything that isn't one of the known filters rather than show a
+  // confusing empty state for a typo'd or stale URL.
+  const sport = SPORT_FILTERS.includes(rawSport || "") ? rawSport : undefined;
 
   const supabase = getSupabaseServerClient();
   // Only ever select public-safe columns — RLS also scopes this to
-  // portfolio_public = true rows, see the players table policy.
-  let query = supabase.from("players").select("id, full_name, sport, photo_url, bio").order("full_name");
-  if (sport) query = query.eq("sport", sport);
-  const { data: players } = await query;
-  const athletes = (players || []) as PublicPlayer[];
+  // portfolio_public = true rows, see the players table policy. Filtering by
+  // sport happens below, not in the query, since it needs synonym matching.
+  const { data: players } = await supabase.from("players").select("id, full_name, sport, photo_url, bio").order("full_name");
+  const allAthletes = (players || []) as PublicPlayer[];
+  const athletes = sport
+    ? allAthletes.filter((a) => {
+        const s = a.sport?.toLowerCase() || "";
+        return SPORT_SYNONYMS[sport].some((syn) => s.includes(syn));
+      })
+    : allAthletes;
 
   return (
     <>
