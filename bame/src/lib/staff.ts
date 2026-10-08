@@ -40,3 +40,44 @@ export const PACKAGE_CLIENT_FEES: Record<"foundation" | "growth", number> = {
 export function formatZAR(amount: number): string {
   return `R${amount.toLocaleString("en-ZA")}`;
 }
+
+export const OPPORTUNITY_STATUSES = ["new", "reviewed", "in_progress", "awaiting_response", "closed"] as const;
+export type OpportunityStatus = (typeof OPPORTUNITY_STATUSES)[number];
+
+export const OPPORTUNITY_STATUS_LABELS: Record<OpportunityStatus, string> = {
+  new: "New",
+  reviewed: "Reviewed",
+  in_progress: "In progress",
+  awaiting_response: "Awaiting response",
+  closed: "Closed",
+};
+
+export const OPPORTUNITY_CATEGORIES = ["sponsorship", "partnership", "media", "event", "business", "other"] as const;
+export type OpportunityCategory = (typeof OPPORTUNITY_CATEGORIES)[number];
+
+export const OPPORTUNITY_CATEGORY_LABELS: Record<OpportunityCategory, string> = {
+  sponsorship: "Sponsorship",
+  partnership: "Partnership",
+  media: "Media",
+  event: "Event",
+  business: "Business",
+  other: "Other",
+};
+
+export interface Opportunity {
+  id: string;
+  player_id: string;
+  title: string;
+  category: OpportunityCategory;
+  status: OpportunityStatus;
+  outcome: "won" | "lost" | null;
+  source: string | null;
+  value_estimate: number | null;
+  contact_name: string | null;
+  contact_email: string | null;
+  contact_org: string | null;
+  notes: string | null;
+  assigned_department: Department | null;
+  created_at: string;
+  updated_at: string;
+}
