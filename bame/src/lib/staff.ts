@@ -81,3 +81,108 @@ export interface Opportunity {
   created_at: string;
   updated_at: string;
 }
+
+// --- Sales prospecting / call sheet ---
+
+export const PROSPECT_CONTACT_TYPES = ["athlete", "club", "event", "brand", "other"] as const;
+export type ProspectContactType = (typeof PROSPECT_CONTACT_TYPES)[number];
+export const PROSPECT_CONTACT_TYPE_LABELS: Record<ProspectContactType, string> = {
+  athlete: "Athlete",
+  club: "Club",
+  event: "Event",
+  brand: "Brand / sponsor",
+  other: "Other",
+};
+
+export const PROSPECT_CHANNELS = ["instagram", "whatsapp", "email", "call", "linkedin", "referral", "other"] as const;
+export type ProspectChannel = (typeof PROSPECT_CHANNELS)[number];
+export const PROSPECT_CHANNEL_LABELS: Record<ProspectChannel, string> = {
+  instagram: "Instagram",
+  whatsapp: "WhatsApp",
+  email: "Email",
+  call: "Call",
+  linkedin: "LinkedIn",
+  referral: "Referral",
+  other: "Other",
+};
+
+export const PROSPECT_STATUSES = ["new", "contacted", "in_conversation", "deferred", "won", "lost"] as const;
+export type ProspectStatus = (typeof PROSPECT_STATUSES)[number];
+export const PROSPECT_STATUS_LABELS: Record<ProspectStatus, string> = {
+  new: "New",
+  contacted: "Contacted",
+  in_conversation: "In conversation",
+  deferred: "Deferred",
+  won: "Won",
+  lost: "Lost",
+};
+
+export const PROSPECT_SOURCES = ["outreach", "referral", "inbound_social", "event", "other"] as const;
+export type ProspectSource = (typeof PROSPECT_SOURCES)[number];
+export const PROSPECT_SOURCE_LABELS: Record<ProspectSource, string> = {
+  outreach: "Outreach",
+  referral: "Referral",
+  inbound_social: "Inbound (social)",
+  event: "Event",
+  other: "Other",
+};
+
+export const PROSPECT_PRIORITIES = ["high", "medium", "low"] as const;
+export type ProspectPriority = (typeof PROSPECT_PRIORITIES)[number];
+
+export const OUTREACH_OUTCOMES = [
+  "no_answer",
+  "connected",
+  "deferred",
+  "interested",
+  "not_interested",
+  "referral_given",
+  "won",
+  "lost",
+  "other",
+] as const;
+export type OutreachOutcome = (typeof OUTREACH_OUTCOMES)[number];
+export const OUTREACH_OUTCOME_LABELS: Record<OutreachOutcome, string> = {
+  no_answer: "No answer",
+  connected: "Connected",
+  deferred: "Deferred",
+  interested: "Interested",
+  not_interested: "Not interested",
+  referral_given: "Referral given",
+  won: "Won",
+  lost: "Lost",
+  other: "Other",
+};
+
+export interface Prospect {
+  id: string;
+  full_name: string;
+  org_name: string | null;
+  contact_type: ProspectContactType;
+  channel: ProspectChannel;
+  handle_or_contact: string | null;
+  status: ProspectStatus;
+  source: ProspectSource;
+  referred_by: string | null;
+  added_by: string | null;
+  assigned_department: Department;
+  priority: ProspectPriority;
+  notes: string | null;
+  last_contact_at: string | null;
+  next_follow_up_at: string | null;
+  created_at: string;
+  updated_at: string;
+  is_due?: boolean;
+  contact_count?: number;
+}
+
+export interface OutreachLogEntry {
+  id: string;
+  prospect_id: string;
+  logged_by: string | null;
+  channel: string;
+  outcome: OutreachOutcome;
+  summary: string | null;
+  follow_up_at: string | null;
+  created_at: string;
+}
