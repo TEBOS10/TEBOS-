@@ -14,8 +14,8 @@ const opp = (id: string, over: Record<string, unknown>) => ({
   decided_at: null, maintainer_id: null, source: "website", owner_id: null, created_at: now, updated_at: now, ...over,
 });
 const playbook = [
-  { id: "p1", department: "sales", key: "what", position: 10, title: "What TEBOS is", body: "**TEBOS is business operating architecture.**\n\n## Not an AI agency\n\n- We connect to what they already use.", updated_by: null, updated_at: now },
-  { id: "p2", department: "sales", key: "plans", position: 20, title: "Plans and prices", body: "## {{starter_name}}: {{starter_fee}}\n\n{{starter_deliverables}}", updated_by: null, updated_at: now },
+  { id: "p1", key: "what", position: 10, title: "What TEBOS is", body: "**TEBOS is business operating architecture.**\n\n## Not an AI agency\n\n- We connect to what they already use.", updated_by: null, updated_at: now },
+  { id: "p2", key: "plans", position: 20, title: "Plans and prices", body: "## {{starter_name}}: {{starter_fee}}\n\n{{starter_deliverables}}", updated_by: null, updated_at: now },
 ];
 
 test("a salesperson without an organisation sells from the staff workspace: playbook, leads, and their own pipeline", async ({ page }) => {

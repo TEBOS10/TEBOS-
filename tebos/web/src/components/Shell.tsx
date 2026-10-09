@@ -23,12 +23,9 @@ export function Shell({ children }: { children: ReactNode }) {
   const { organisation, organisations, switchOrganisation, role, db, session } = useOrg();
   // TEBOS's own staff also see the client pipeline and the sales playbook
   const { access } = useStaff();
-  const pipeline = access?.sales || access?.maintainer;
-  const nav = pipeline || access?.marketing
-    ? [...NAV,
-       ...(pipeline ? [{ to: "/pipeline", label: "Pipeline", icon: Briefcase, exact: false }, { to: "/sales", label: "Sales playbook", icon: BookOpen, exact: false }] : []),
+  const nav = access?.sales || access?.maintainer
+    ? [...NAV, { to: "/pipeline", label: "Pipeline", icon: Briefcase, exact: false }, { to: "/sales", label: "Sales playbook", icon: BookOpen, exact: false },
        { to: "/marketing", label: "Marketing", icon: Megaphone, exact: true },
-       { to: "/marketing/playbook", label: "Marketing playbook", icon: BookOpen, exact: true },
        ...(access?.sales ? [{ to: "/meet", label: "Meeting mode", icon: PhoneCall, exact: true }] : []),
        ...(access?.maintainer ? [{ to: "/pipeline/queue", label: "Maintainer queue", icon: ListChecks, exact: true }] : []),
        ...(access?.admin ? [{ to: "/pipeline/billing", label: "Billing", icon: Receipt, exact: true }] : [])]

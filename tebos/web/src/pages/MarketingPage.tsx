@@ -6,7 +6,6 @@ import { useState, type FormEvent } from "react";
 import { Badge, Card, Empty, ErrorNote, Field, Loading, PageHeader } from "../components/ui";
 import { createContentDraft, listContentDrafts, updateContentDraft, type ContentDraft } from "../lib/data";
 import { ago } from "../lib/format";
-import { Link } from "../lib/router";
 import { useSignedIn } from "../lib/session";
 import { useStaff } from "../lib/staff";
 import { useQuery } from "../lib/useQuery";
@@ -24,7 +23,7 @@ const STATUS: Record<ContentStatus, { label: string; tone: "neutral" | "info" | 
 const ORDER: ContentStatus[] = ["in_review", "approved", "rejected", "draft", "published", "withdrawn"];
 
 export function MarketingPage() {
-  return <StaffOnly title="Marketing" allow={(a) => a.sales || a.maintainer || a.marketing}>{() => <Drafts />}</StaffOnly>;
+  return <StaffOnly title="Marketing">{() => <Drafts />}</StaffOnly>;
 }
 
 function Drafts() {
@@ -35,7 +34,7 @@ function Drafts() {
   return (
     <div className="stack">
       <PageHeader eyebrow="TEBOS" title="Marketing and PR"
-        actions={<div className="row" style={{ gap: 6 }}><Link className="btn" to="/marketing/playbook">Marketing playbook</Link><button className="btn btn-primary" onClick={() => setWriting(true)}>New draft</button></div>}>
+        actions={<button className="btn btn-primary" onClick={() => setWriting(true)}>New draft</button>}>
         Posts, articles, press releases and newsletters. Everything is approved by a platform admin before it goes out, and TEBOS never
         publishes anything itself: whoever publishes it records where it went live.
       </PageHeader>

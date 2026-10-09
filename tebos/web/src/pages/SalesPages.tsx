@@ -2,9 +2,8 @@
 // the staff list where a platform admin invites people, and the page an
 // invited person opens to join. Staff join as staff only: they never become
 // members of a client's organisation.
-import type { PlaybookDepartment, StaffRole } from "@core/staff";
 import { BriefcaseBusiness, Printer } from "lucide-react";
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useState, type FormEvent } from "react";
 import { Card, Empty, ErrorNote, Field, Loading, PageHeader, StatusBadge } from "../components/ui";
 import {
   acceptStaffInvitation,
@@ -27,49 +26,26 @@ import { AgreementText } from "./ContractPage";
 import { StaffOnly } from "./PipelinePage";
 import { SignIn } from "./SignIn";
 
-const ROLE_LABEL: Record<string, string> = { sales: "Sales", maintainer: "Maintainer", marketing: "Marketing", admin: "Admin" };
-
-const PLAYBOOKS: Record<PlaybookDepartment, { eyebrow: string; title: string; intro: string; footer: ReactNode }> = {
-  sales: {
-    eyebrow: "TEBOS sales",
-    title: "Sales playbook",
-    intro: "What TEBOS is, who to sell to, the plans and prices, and how to run a call, from first message to payment. Internal: don't share it outside TEBOS.",
-    footer: <>Ready? <Link to="/pipeline">Add your lead to the pipeline</Link>. Prices here are the ones on the pricing page and in every contract.</>,
-  },
-  marketing: {
-    eyebrow: "TEBOS marketing",
-    title: "Marketing playbook",
-    intro: "What TEBOS says and never says, how a post goes from draft to published, the channels, and what to do when someone gets in touch. Internal: don't share it outside TEBOS.",
-    footer: <>Ready? <Link to="/marketing">Write a draft</Link>. Nothing goes out until a platform admin approves it.</>,
-  },
-};
+const ROLE_LABEL: Record<string, string> = { sales: "Sales", maintainer: "Maintainer", admin: "Admin" };
 
 export function SalesPlaybookPage() {
-  return <StaffOnly title="Sales playbook">{(a) => <Playbook department="sales" admin={a.admin} />}</StaffOnly>;
+  return <StaffOnly title="Sales playbook">{(a) => <Playbook admin={a.admin} />}</StaffOnly>;
 }
 
-export function MarketingPlaybookPage() {
-  return (
-    <StaffOnly title="Marketing playbook" allow={(a) => a.sales || a.maintainer || a.marketing}>
-      {(a) => <Playbook department="marketing" admin={a.admin} />}
-    </StaffOnly>
-  );
-}
-
-function Playbook({ department, admin }: { department: PlaybookDepartment; admin: boolean }) {
+function Playbook({ admin }: { admin: boolean }) {
   const { db } = useSignedIn();
-  const q = useQuery(() => listPlaybook(db, department), [department]);
-  const book = PLAYBOOKS[department];
+  const q = useQuery(() => listPlaybook(db), []);
   const [editing, setEditing] = useState<string | null>(null);
   const sections = q.data ?? [];
   return (
     <div className="stack playbook">
       <PageHeader
-        eyebrow={book.eyebrow}
-        title={book.title}
+        eyebrow="TEBOS sales"
+        title="Sales playbook"
         actions={<button className="btn no-print" onClick={() => window.print()}><Printer size={15} aria-hidden /> Print</button>}
       >
-        {book.intro}
+        What TEBOS is, who to sell to, the plans and prices, and how to run a call, from first message to payment. Internal:
+        don't share it outside TEBOS.
       </PageHeader>
       {q.error ? <ErrorNote error={q.error} title="Couldn't load the playbook" /> : !q.data ? <Loading /> : sections.length === 0 ? (
         <Card><Empty>The playbook is empty.</Empty></Card>
@@ -96,7 +72,7 @@ function Playbook({ department, admin }: { department: PlaybookDepartment; admin
         </>
       )}
       <p className="muted no-print">
-        {book.footer}
+        Ready? <Link to="/pipeline">Add your lead to the pipeline</Link>. Prices here are the ones on the pricing page and in every contract.
       </p>
     </div>
   );
@@ -147,7 +123,7 @@ function StaffAdmin() {
   const { db, userId } = useSignedIn();
   const staff = useStaff();
   const invitations = useQuery(() => listStaffInvitations(db), []);
-  const [form, setForm] = useState<{ email: string; role: StaffRole }>({ email: "", role: "sales" });
+  const [form, setForm] = useState<{ email: string; role: "sales" | "maintainer" }>({ email: "", role: "sales" });
   const [link, setLink] = useState<{ email: string; url: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
@@ -185,17 +161,16 @@ function StaffAdmin() {
     <div className="stack">
       <PageHeader eyebrow={<Link to="/pipeline">Client pipeline</Link>} title="Staff">
         TEBOS's own people. Sales see the pipeline and the playbook and add leads; maintainers look after clients once they're
-        onboarded; marketing drafts posts and articles for approval, and sees no pipeline or client. Staff never see a client's data unless they maintain that client.
+        onboarded. Staff never see a client's data unless they maintain that client.
       </PageHeader>
       <Card title="Invite someone" subtitle="The link works only for this email address, once confirmed, for 7 days.">
         <form className="form" onSubmit={invite} aria-label="Invite staff">
           <div className="form-row">
             <Field label="Email address"><input className="input" type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></Field>
             <Field label="Role">
-              <select className="input" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value as StaffRole })}>
+              <select className="input" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value as "sales" | "maintainer" })}>
                 <option value="sales">Sales</option>
                 <option value="maintainer">Maintainer</option>
-                <option value="marketing">Marketing</option>
               </select>
             </Field>
           </div>

@@ -32,4 +32,3 @@ export * from "./interviews/extract";
 export * from "./interviews/worker";
 // ElevenLabsVoice (./interviews/voice) and PgInterviewStore are server-only.
 export * from "./domain/content";
-export * from "./domain/staff";
