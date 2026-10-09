@@ -182,14 +182,21 @@ describe.skipIf(!enabled)("evidence pipeline against the TEBOS schema", () => {
     const acquired = await new AcquisitionWorker(store, { workerId: "it3", fetcher, politenessDelayMs: 0 }).runOnce();
     expect(acquired?.status).toBe("completed");
 
-    const failing: ReasoningProvider = { name: "fake", structured: async () => { throw new ReasoningError("provider_unavailable", "down"); } };
+    // a failure caused by the analysis itself (not a provider outage, which pauses the stage instead)
+    const failing: ReasoningProvider = { name: "fake", structured: async () => { throw new ReasoningError("invalid_output", "not JSON"); } };
     const worker = new IntelligenceWorker(scanOnly(pool), failing, { workerId: "it3" });
-    for (let i = 0; i < 3; i++) expect(await worker.runOnce()).toMatchObject({ scanId: acquired!.scanId, status: "failed" });
+    // retries wait out RETRY_AFTER: move earlier attempts back past it
+    const ageRuns = () => pool.query("update public.agent_runs set started_at = started_at - interval '11 minutes' where scan_id = $1", [acquired!.scanId]);
+    for (let i = 0; i < 3; i++) {
+      expect(await worker.runOnce()).toMatchObject({ scanId: acquired!.scanId, status: "failed" });
+      expect(await worker.runOnce()).toBeNull(); // not again straight away
+      await ageRuns();
+    }
     expect(await worker.runOnce()).toBeNull();
 
     const runs = (await pool.query("select status, error_detail from public.agent_runs where scan_id = $1 and agent_role = 'business_intelligence'", [acquired!.scanId])).rows;
     expect(runs).toHaveLength(3);
-    expect(runs.every((r) => r.status === "failed" && r.error_detail === "provider_unavailable: down")).toBe(true);
+    expect(runs.every((r) => r.status === "failed" && r.error_detail === "invalid_output: not JSON")).toBe(true);
     expect((await pool.query("select count(*)::int as n from public.findings where scan_id = $1", [acquired!.scanId])).rows[0].n).toBe(0);
   });
 });

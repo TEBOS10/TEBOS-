@@ -13,6 +13,10 @@ import type { ClaimedAnalysis, IntelligenceStore, ReviewInput, RunFinish } from 
 export const MAX_ANALYSIS_ATTEMPTS = 3;
 /** A "running" analysis older than this is considered abandoned. */
 const ABANDONED_AFTER = "30 minutes";
+/** A failed analysis is retried no sooner than this, so a fault isn't hammered. */
+export const RETRY_AFTER = "10 minutes";
+/** Failures that were the provider's, not the business's: they don't count as attempts. */
+const OWN_FAILURE = "a.status = 'failed' and coalesce((a.output_summary ->> 'providerFault')::boolean, false) = false";
 /** A business is reviewed at most this often, however often its figures change. */
 export const REVIEW_MIN_INTERVAL = "6 hours";
 
@@ -73,7 +77,10 @@ export class PgIntelligenceStore implements IntelligenceStore {
                                where a.scan_id = s.id and a.agent_role = 'business_intelligence'
                                  and a.status in ('succeeded', 'running'))
               and (select count(*) from public.agent_runs a
-                    where a.scan_id = s.id and a.agent_role = 'business_intelligence' and a.status = 'failed') < $1
+                    where a.scan_id = s.id and a.agent_role = 'business_intelligence' and ${OWN_FAILURE}) < $1
+              and not exists (select 1 from public.agent_runs a
+                               where a.scan_id = s.id and a.agent_role = 'business_intelligence' and a.status = 'failed'
+                                 and a.started_at > now() - interval '${RETRY_AFTER}')
             order by s.finished_at
             for update of s skip locked
             limit 1
@@ -154,7 +161,9 @@ export class PgIntelligenceStore implements IntelligenceStore {
              from public.businesses b join newest n on n.id = b.id
             where not exists (select 1 from public.agent_runs a where ${REVIEW_RUN} and a.status = 'running')
               and not exists (select 1 from public.agent_runs a where ${REVIEW_RUN} and a.status = 'succeeded' and a.started_at >= n.at)
-              and (select count(*) from public.agent_runs a where ${REVIEW_RUN} and a.status = 'failed' and a.started_at >= n.at) < $1
+              and (select count(*) from public.agent_runs a where ${REVIEW_RUN} and ${OWN_FAILURE} and a.started_at >= n.at) < $1
+              and not exists (select 1 from public.agent_runs a where ${REVIEW_RUN} and a.status = 'failed'
+                                 and a.started_at > now() - interval '${RETRY_AFTER}')
               and not exists (select 1 from public.agent_runs a where ${REVIEW_RUN} and a.status = 'succeeded'
                                  and coalesce((a.output_summary ->> 'unchanged')::boolean, false) = false
                                  and a.started_at > now() - interval '${REVIEW_MIN_INTERVAL}')
