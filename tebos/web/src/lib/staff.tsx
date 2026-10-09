@@ -15,13 +15,13 @@ interface Staff {
   reload: () => void;
 }
 
-const NO_ACCESS: StaffAccess = { admin: false, sales: false, maintainer: false };
+const NO_ACCESS: StaffAccess = { admin: false, sales: false, maintainer: false, marketing: false };
 const Ctx = createContext<Staff | null>(null);
 
 export function StaffProvider({ children }: { children: ReactNode }) {
   const { db, userId } = useSignedIn();
   const access = useQuery(() => (isDemo ? Promise.resolve(NO_ACCESS) : staffAccess(db, userId)), [userId]);
-  const isStaff = !!(access.data?.sales || access.data?.maintainer);
+  const isStaff = !!(access.data?.sales || access.data?.maintainer || access.data?.marketing);
   const directory = useQuery(() => (isStaff ? staffDirectory(db) : Promise.resolve([])), [isStaff]);
   const members = directory.data ?? [];
   const nameOf = (id: string | null | undefined) => {

@@ -51,10 +51,13 @@ interface Flag {
 const flagsOf = (o: OpportunityRow): Flag[] => ((o.screening as { flags?: Flag[] } | null)?.flags ?? []);
 const planName = (p: string) => PLAN_TERMS[p as PlanKey]?.name ?? p;
 
-export function StaffOnly({ title = "Pipeline", children }: { title?: string; children: (a: StaffAccess) => React.ReactNode }) {
+/** A page for TEBOS's staff; by default the pipeline's (sales and maintainers). */
+export function StaffOnly({ title = "Pipeline", allow = (a) => a.sales || a.maintainer, children }: {
+  title?: string; allow?: (a: StaffAccess) => boolean; children: (a: StaffAccess) => React.ReactNode;
+}) {
   const { access, loading } = useStaff();
   if (loading) return <Loading />;
-  if (!access?.sales && !access?.maintainer) {
+  if (!access || !allow(access)) {
     return <PageHeader title={title}>This page is for TEBOS's own staff.</PageHeader>;
   }
   return <>{children(access)}</>;
