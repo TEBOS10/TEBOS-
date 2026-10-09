@@ -10,7 +10,7 @@ Update this list every run; strike items when they're done.
 |---|---|---|
 | 0 | **Run the first real operating systems.** Pick real businesses (BAME first, then pilots) and let TEBOS lay down their blueprint | Real proof. The ten blueprints are templates, not client work; only real clients make a portfolio |
 | 1 | Paystack secret key on the worker, and the webhook `https://tebos-worker-production.up.railway.app/webhooks/paystack` | Taking the first payment, and monthly invoices |
-| 2b | Claude API key (`ANTHROPIC_API_KEY`) on the worker | Findings from scans and interviews: the next product step |
+| 2b | Replace the worker's `ANTHROPIC_API_KEY` with a key **scoped to a workspace** (the key set on 8 Oct is not, so every request is rejected) | Findings from scans and interviews: the next product step |
 | 2 | Resend key and a verified sending domain | Every client email: payment links, contracts, invoices, reminders, the next-day outline after an intake call |
 | 2c | A phone number on the voice provider, and the intake agent (`ELEVENLABS_INTAKE_AGENT_ID`, set-up in the README) | TEBOS ringing prospects from meetings |
 | 3 | A lawyer approves the contract templates (standard and company) and advises on POPIA | Signing clients |
@@ -19,7 +19,40 @@ Update this list every run; strike items when they're done.
 | 6 | Social accounts created | Publishing the social pack, and the approved drafts on the Marketing page |
 | 7 | Company registration and VAT number | Invoices that are legally complete |
 | 8 | Make the repo private, rotate database passwords, turn on leaked-password protection | Protecting the platform from copying |
+| 10 | Approve applying the `marketing_role` migration (built and tested 7 Oct; the apply was cancelled on 8 Oct) | The marketing department: its role, playbook and staff menu (commit 7ef841a, held back by cc20184) |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
+
+## 9 Oct 2026: a provider fault pauses analysis instead of using up every business's attempts
+
+- **Read:**
+  - Main was green.
+  - On 8 Oct the founder set the Claude API key, which turned the intelligence stage on. Saving it redeployed the
+    worker from a BAME branch: another session had switched the worker's source. That build failed. This session
+    reconnected the worker to main, and it is live (SUCCESS).
+  - The key is not scoped to a workspace, so the provider rejects every request.
+  - From 17:02 to 23:08 the worker made 15 failed analyses: 3 for a scan, 3 for one business review, and 9 for
+    BAME's review. Each set of 3 came within seconds, and BAME's review got a fresh 3 whenever its connected system
+    recorded new figures. Nothing was charged, because rejected requests aren't billed.
+  - 7 Oct's marketing department (PR #33, commit 7ef841a) is built and tested, but not live:
+    - applying its migration timed out once on 8 Oct, and was then cancelled at the approval step;
+    - it waits for the founder (decision 10);
+    - its screens need the migration, so this PR holds it back with a reverting commit (cc20184), and reverting
+      that commit restores it.
+- **Chosen (rule 1, broken):** the worker treated a provider fault as the business's fault, and retried at once.
+- **Built (worker only, no migration):**
+  - The provider reports a rejected key or request as *misconfigured*, and an overload or outage as *unavailable*.
+  - Either pauses the whole analysis stage. A set-up fault pauses it for 30 minutes. An outage pauses it for 1
+    minute, doubling each time up to 30, and back to 1 after a success. While paused, nothing is claimed.
+  - A provider fault is marked on its run (`providerFault`), so it doesn't count towards the business's 3 attempts.
+  - A failed analysis is retried no sooner than 10 minutes later.
+- **Proved:**
+  - core: typecheck and 248 unit tests pass (four new worker and provider tests).
+  - `test:db`: every SQL file passes, and all 50 integration tests pass. A new `intelligence-retry-pg.test.ts`
+    checks the wait, the provider-fault marking and the limit. The existing three-attempts test now uses a failure
+    the analysis caused, and still checks the limit of 3.
+  - No interface change.
+- **Next:** bring the marketing department back as soon as its migration is approved. Then findings, once a
+  workspace-scoped key is in place.
 
 ## 6 Oct 2026: marketing and PR drafts, approved before anything goes out
 

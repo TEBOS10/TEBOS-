@@ -68,18 +68,42 @@ export interface AnalysisReport {
   detail: string | null;
 }
 
+/** How long the stage pauses when the provider refuses the key or the request: a person has to fix the set-up. */
+export const MISCONFIGURED_PAUSE_MS = 30 * 60_000;
+/** The first pause after a provider outage; it doubles each time, up to MISCONFIGURED_PAUSE_MS. */
+export const OUTAGE_PAUSE_MS = 60_000;
+
 export class IntelligenceWorker {
+  /** While the provider is failing, no analysis is claimed: a provider fault is not a business's fault. */
+  private pausedUntil = 0;
+  private outages = 0;
+
   constructor(
     private readonly store: IntelligenceStore,
     private readonly provider: ReasoningProvider,
-    private readonly options: { workerId: string; log?: (e: Record<string, unknown>) => void },
+    private readonly options: { workerId: string; log?: (e: Record<string, unknown>) => void; now?: () => number },
   ) {}
+
+  private now() {
+    return this.options.now?.() ?? Date.now();
+  }
+
+  /** Pauses the whole stage after a provider fault; returns true if the error was one. */
+  private pauseFor(err: unknown): boolean {
+    if (!(err instanceof ReasoningError) || (err.kind !== "misconfigured" && err.kind !== "provider_unavailable")) return false;
+    const ms = err.kind === "misconfigured" ? MISCONFIGURED_PAUSE_MS : Math.min(OUTAGE_PAUSE_MS * 2 ** this.outages, MISCONFIGURED_PAUSE_MS);
+    this.outages++;
+    this.pausedUntil = this.now() + ms;
+    this.log({ event: "intelligence.paused", reason: err.kind, until: new Date(this.pausedUntil).toISOString(), detail: err.message });
+    return true;
+  }
 
   private log(e: Record<string, unknown>) {
     this.options.log?.(e);
   }
 
   async runOnce(): Promise<AnalysisReport | null> {
+    if (this.now() < this.pausedUntil) return null;
     const scan = await this.store.claimNextScan(this.options.workerId);
     if (scan) return this.analyse({ ...scan, kind: "scan" });
     const review = this.store.claimNextReview ? await this.store.claimNextReview(this.options.workerId) : null;
@@ -132,8 +156,10 @@ export class IntelligenceWorker {
         errorDetail: detail,
         latencyMs: Date.now() - started,
       });
-      return this.fail(claim, null, null, detail);
+      // a provider fault doesn't use up this business's attempts (providerFault), and pauses the stage
+      return this.fail(claim, null, null, detail, this.pauseFor(err) ? { providerFault: true } : {});
     }
+    this.outages = 0;
 
     const { accepted, rejected } = validateProposals(response.value, prepared.refs, input);
     await this.store.recordToolCall(claim, {
@@ -177,6 +203,7 @@ export class IntelligenceWorker {
     model: string | null,
     usage: { inputTokens: number; outputTokens: number } | null,
     detail: string,
+    extra: Record<string, unknown> = {},
   ): Promise<AnalysisReport> {
     this.log({ event: "analysis.failed", kind: claim.kind ?? "scan", scanId: claim.scanId, businessId: claim.businessId, detail });
     await this.store.finishRun(claim, {
@@ -185,7 +212,7 @@ export class IntelligenceWorker {
       model,
       tokensIn: usage?.inputTokens ?? null,
       tokensOut: usage?.outputTokens ?? null,
-      output: { findings: 0 },
+      output: { findings: 0, ...extra },
       errorDetail: detail,
     });
     return { kind: claim.kind ?? "scan", businessId: claim.businessId, scanId: claim.scanId, runId: claim.runId, status: "failed", findings: 0, rejected: [], detail };

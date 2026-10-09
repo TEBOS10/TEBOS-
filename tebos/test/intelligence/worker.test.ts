@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { AnthropicProvider } from "../../src/intelligence/anthropic-provider";
 import type { AcceptedFinding, EvidenceForReasoning, FindingsInput } from "../../src/intelligence/findings";
 import { ReasoningError, type ReasoningProvider, type StructuredRequest } from "../../src/intelligence/provider";
-import { IntelligenceWorker, type ClaimedAnalysis, type IntelligenceStore, type RunFinish } from "../../src/intelligence/worker";
+import { IntelligenceWorker, MISCONFIGURED_PAUSE_MS, OUTAGE_PAUSE_MS, type ClaimedAnalysis, type IntelligenceStore, type RunFinish } from "../../src/intelligence/worker";
 
 const evidence: EvidenceForReasoning[] = [
   { id: "ev-1", sourceId: "s1", sourceUri: "https://mmupi.example/", state: "acquired", fact: "Page links to WhatsApp", missingDescription: null, excerpt: "<a href=wa.me>", contentLocation: "a", confidence: 0.9 },
@@ -89,6 +89,61 @@ describe("intelligence worker", () => {
     expect(store.calls[0]).toMatchObject({ status: "failed" });
   });
 
+  it("pauses the whole stage when the provider refuses the set-up, without using up the business's attempts", async () => {
+    const store = new FakeStore(evidence);
+    store.claims.push({ runId: "run-2", scanId: "scan-2", orgId: "org", businessId: "biz" });
+    let now = 1_000_000;
+    const logs: Array<Record<string, unknown>> = [];
+    const worker = new IntelligenceWorker(store, provider(new ReasoningError("misconfigured", "key not scoped to a workspace")), { workerId: "w", now: () => now, log: (e) => logs.push(e) });
+
+    expect(await worker.runOnce()).toMatchObject({ status: "failed" });
+    expect(store.finish).toMatchObject({ status: "failed", output: { findings: 0, providerFault: true } });
+    expect(logs).toContainEqual(expect.objectContaining({ event: "intelligence.paused", reason: "misconfigured" }));
+
+    // paused: nothing is claimed, so the next scan keeps its attempts
+    now += MISCONFIGURED_PAUSE_MS - 1;
+    expect(await worker.runOnce()).toBeNull();
+    expect(store.claims).toHaveLength(1);
+    now += 1;
+    expect(await worker.runOnce()).toMatchObject({ runId: "run-2" });
+  });
+
+  it("waits longer after each provider outage, and starts again from a minute once it answers", async () => {
+    const store = new FakeStore(evidence);
+    store.claims = ["a", "b", "c", "d"].map((id) => ({ runId: id, scanId: id, orgId: "org", businessId: "biz" }));
+    let now = 0;
+    let down = true;
+    const p: ReasoningProvider = {
+      name: "fake",
+      async structured() {
+        if (down) throw new ReasoningError("provider_unavailable", "overloaded");
+        return { value: { findings: [] }, provider: "fake", model: "m", usage: { inputTokens: 1, outputTokens: 1 } };
+      },
+    };
+    const worker = new IntelligenceWorker(store, p, { workerId: "w", now: () => now });
+    await worker.runOnce();
+    now += OUTAGE_PAUSE_MS;
+    await worker.runOnce();
+    now += OUTAGE_PAUSE_MS; // the second pause is twice as long
+    expect(await worker.runOnce()).toBeNull();
+    now += OUTAGE_PAUSE_MS;
+    down = false;
+    expect(await worker.runOnce()).toMatchObject({ runId: "c", status: "succeeded" });
+    down = true;
+    await worker.runOnce();
+    now += OUTAGE_PAUSE_MS; // back to one minute
+    expect(store.claims).toHaveLength(0);
+  });
+
+  it("does not pause for a refusal: that is about this evidence, not the provider", async () => {
+    const store = new FakeStore(evidence);
+    store.claims.push({ runId: "run-2", scanId: "scan-2", orgId: "org", businessId: "biz" });
+    const worker = new IntelligenceWorker(store, provider(new ReasoningError("refusal", "declined")), { workerId: "w" });
+    await worker.runOnce();
+    expect(store.finish?.output).toEqual({ findings: 0 });
+    expect(await worker.runOnce()).toMatchObject({ runId: "run-2" });
+  });
+
   it("returns null when nothing is waiting", async () => {
     const store = new FakeStore(evidence);
     store.claims = [];
@@ -126,6 +181,17 @@ describe("Claude provider", () => {
       system: [{ type: "text", text: "SYS", cache_control: { type: "ephemeral" } }],
       messages: [{ role: "user", content: "PROMPT" }],
     });
+  });
+
+  it("reports a rejected key or request as a set-up fault, and an overload as an outage", async () => {
+    const failing = (err: Error) => ({ beta: { messages: { create: async () => { throw err; } } } }) as unknown as Anthropic;
+    const headers = new Headers();
+    const badRequest = new Anthropic.BadRequestError(400, undefined, "This API key is not scoped to a workspace", headers);
+    await expect(new AnthropicProvider("claude-opus-5", failing(badRequest)).structured(req)).rejects.toMatchObject({ kind: "misconfigured" });
+    const badKey = new Anthropic.AuthenticationError(401, undefined, "invalid x-api-key", headers);
+    await expect(new AnthropicProvider("claude-opus-5", failing(badKey)).structured(req)).rejects.toMatchObject({ kind: "misconfigured" });
+    const busy = new Anthropic.RateLimitError(429, undefined, "rate limited", headers);
+    await expect(new AnthropicProvider("claude-opus-5", failing(busy)).structured(req)).rejects.toMatchObject({ kind: "provider_unavailable" });
   });
 
   it("reports refusals and truncation instead of returning partial output", async () => {

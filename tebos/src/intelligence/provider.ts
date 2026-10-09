@@ -34,7 +34,12 @@ export interface StructuredResponse {
 
 export class ReasoningError extends Error {
   constructor(
-    readonly kind: "refusal" | "truncated" | "invalid_output" | "provider_unavailable",
+    /**
+     * misconfigured: the provider refused the key or the request itself (a
+     * setup fault, not this business's); provider_unavailable: a temporary
+     * outage or rate limit. Both are TEBOS's faults, not the evidence's.
+     */
+    readonly kind: "refusal" | "truncated" | "invalid_output" | "provider_unavailable" | "misconfigured",
     message: string,
   ) {
     super(message);

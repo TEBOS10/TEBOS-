@@ -43,7 +43,10 @@ export class AnthropicProvider implements ReasoningProvider {
       });
     } catch (err) {
       if (err instanceof Anthropic.AuthenticationError || err instanceof Anthropic.PermissionDeniedError) {
-        throw new ReasoningError("provider_unavailable", `Anthropic rejected the credentials: ${err.message}`);
+        throw new ReasoningError("misconfigured", `Anthropic rejected the credentials: ${err.message}`);
+      }
+      if (err instanceof Anthropic.BadRequestError || err instanceof Anthropic.NotFoundError) {
+        throw new ReasoningError("misconfigured", `Anthropic rejected the request: ${err.message}`);
       }
       if (err instanceof Anthropic.RateLimitError || err instanceof Anthropic.InternalServerError || err instanceof Anthropic.APIConnectionError) {
         throw new ReasoningError("provider_unavailable", `Anthropic is temporarily unavailable: ${err.message}`);
