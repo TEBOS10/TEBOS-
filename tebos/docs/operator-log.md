@@ -19,7 +19,7 @@ Update this list every run; strike items when they're done.
 | 6 | Social accounts created, and whether to invite a marketer (Staff → Invite, role Marketing) | Publishing the social pack and approved drafts |
 | 7 | Company registration and VAT number | Invoices that are legally complete |
 | 8 | Make the repo private, rotate database passwords, turn on leaked-password protection | Protecting the platform from copying |
-| 11 | **One-time set-up for building without you**, about 10 minutes (README → One-time set-up): the `SUPABASE_DB_URL` secret, branch protection on `main`, the `founder-approved-destructive` label, and that label on PR #36 (it adds the guard itself) | Database changes ship on their own once checks pass; no more SQL editor or approval prompts |
+| 11 | **One-time set-up for building without you**, about 10 minutes (README → One-time set-up): the `SUPABASE_DB_URL` secret, branch protection on `main`, the `founder-approved-destructive` label, and that label on the guard's pull request | Database changes ship on their own once checks pass; no more SQL editor or approval prompts |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
 ## 10 Oct 2026 (night): shipping without the founder at the keyboard, safely
@@ -59,7 +59,10 @@ Update this list every run; strike items when they're done.
   - after those fixes, Core and database and Web pass;
   - the 3D board e2e test also passes on GitHub, so its local failure earlier today came from this session's
     container, not the code.
-- **Waiting on the founder:** decision 11, the one-time set-up, including the label on this PR.
+- **Split:** the label could not be added from this session: the permission system refuses it, as it should.
+  So the guard migration and its test moved to their own pull request, which waits for the founder's label. CI,
+  migrations by CI, and the rules shipped without it.
+- **Waiting on the founder:** decision 11, the one-time set-up, including the label on the guard's pull request.
 
 ## 10 Oct 2026 (evening): the marketing department is live
 

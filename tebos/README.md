@@ -501,7 +501,7 @@ To add a schema change:
 
 ### Safeguards
 
-- **The database refuses data loss** (migration `destructive_guard`). Dropping a table, a column, a
+- **The database refuses data loss** (migration `destructive_guard`, in its own pull request until the founder labels it). Dropping a table, a column, a
   materialized view or a sequence in `public` or `tebos_private`, or dropping one of those schemas, fails
   with `TEBOS_DESTRUCTIVE_BLOCKED`. The exception is a transaction that first runs
   `set local tebos.allow_destructive = 'founder approved: <why>'`. Constraints, policies, functions,
