@@ -43,8 +43,13 @@ The founder's silence is not a reason to stop. It is the reason this loop exists
      The e2e tests need `PLAYWRIGHT_CHROMIUM` pointing at the preinstalled Chromium.
 5. **Ship**:
    - open a PR, wait for the checks, and merge when every check is green;
-   - apply any migration to the live project only after its tests pass. Migrations must be
-     additive; never drop or rewrite data;
+   - database changes reach the live project only through CI: once a merge to `main` passes every
+     check, the "Apply database migrations" workflow applies new migrations in order and records them
+     (`scripts/migrate.mjs`). Don't apply migrations by hand, and don't rename a migration after it
+     merges: its file name is its live version;
+   - migrations must be additive. The database refuses to drop a table, column or protected schema
+     (`destructive_guard`, once the founder approves it), and the migration check refuses a pull request that would, unless the
+     founder has labelled it `founder-approved-destructive`. Never add that label yourself;
    - reconnect the Railway worker source to `main` so it redeploys, and confirm the deployment succeeded.
 6. **Record** a new entry at the top of `operator-log.md` covering:
    - what was built and why it was chosen;
@@ -68,3 +73,18 @@ run starts from rule 2.1.
 - **Getting to green by cheating.** Never skip, disable or weaken a test; never push an empty commit.
 - **Vendor names in the web bundle, or a privileged key in a `VITE_` variable.**
 - **Destructive migrations**: dropping tables or columns, or rewriting existing rows.
+- **Lifting a guard yourself**: adding the `founder-approved-destructive` label, setting
+  `tebos.allow_destructive`, or changing the CI checks, branch protection or the database guard to get
+  a change through. Ask the founder instead.
+
+## What runs on its own, and what waits for the founder
+
+| Tier | What | How it ships |
+|---|---|---|
+| 1, automatic | Code, tests, additive migrations, deploys, fixes, internal docs | Merged when CI is green; migrations applied by CI; the worker redeploys from `main` |
+| 2, drafted for approval | Anything public: posts, articles, emails, messages to clients or prospects | Drafted on the Marketing page or as a draft; a person approves and sends it |
+| 3, always the founder | Money, contracts and legal text, prices, passwords and keys, deleting data | The founder does it, or labels the pull request `founder-approved-destructive` for a migration that removes data |
+
+Every run is recorded in `operator-log.md`. Each Monday's run also writes a short weekly summary at the top
+of the log: what shipped, what failed, what is waiting on the founder. To stop everything, pause the
+daily routine.

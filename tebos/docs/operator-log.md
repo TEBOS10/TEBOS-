@@ -19,7 +19,50 @@ Update this list every run; strike items when they're done.
 | 6 | Social accounts created, and whether to invite a marketer (Staff → Invite, role Marketing) | Publishing the social pack and approved drafts |
 | 7 | Company registration and VAT number | Invoices that are legally complete |
 | 8 | Make the repo private, rotate database passwords, turn on leaked-password protection | Protecting the platform from copying |
+| 11 | **One-time set-up for building without you**, about 10 minutes (README → One-time set-up): the `SUPABASE_DB_URL` secret, branch protection on `main`, the `founder-approved-destructive` label, and that label on the guard's pull request | Database changes ship on their own once checks pass; no more SQL editor or approval prompts |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
+
+## 10 Oct 2026 (night): shipping without the founder at the keyboard, safely
+
+- **Why:** the founder asked for less hands-on work without giving up safety. Most of their trips to Supabase
+  and GitHub came from nothing checking or applying changes by itself. The database connector also cancels any
+  migration containing `drop`, so on 10 Oct a migration had to be pasted into the SQL editor by hand.
+- **Built:**
+  - **CI on every pull request and on `main`** (`.github/workflows/ci.yml`):
+    - Migration check: applied migrations are immutable, new ones come in order, and data loss needs the
+      founder's label;
+    - Core and database: typecheck, unit tests and `test:db` on Postgres 17;
+    - Web: typecheck, unit tests, build, the provider-name check, and the Playwright e2e tests.
+  - **Migrations applied by CI** (`.github/workflows/migrate.yml`, `scripts/migrate.mjs`): after a green merge
+    to `main`, new migrations are applied in order, each in its own transaction, and recorded in Supabase's
+    history. A failure rolls back and stops the run. It does nothing until the `SUPABASE_DB_URL` secret exists.
+    The hand-applied `marketing_role` is listed in `supabase/applied-outside-history.txt`, to be recorded
+    without running again.
+  - **The database refuses data loss** (migration `destructive_guard`, rule code `TEBOS_DESTRUCTIVE_BLOCKED`):
+    - it refuses to drop tables, columns, materialized views or sequences in `public` or `tebos_private`, and
+      to drop those schemas or the guard's own schema and functions, unless the same transaction declares
+      `tebos.allow_destructive = 'founder approved: …'`;
+    - testing found that a cascade could take the guard with it, so a second trigger now refuses that first;
+    - Postgres runs no guard on commands about event triggers, so the owner can still remove it on purpose.
+      This is written down as a seatbelt, not a lock.
+  - **Operator rules:** the three tiers are written into `OPERATOR.md`, with a weekly summary on Mondays. The
+    loop may never lift a guard itself (the label, the setting, the CI checks or branch protection).
+- **Proved:**
+  - core: typecheck and 258 unit tests pass.
+  - `test:db`: every SQL file passes (new `99z_destructive_guard.sql`), and all 50 integration tests pass.
+  - The runner was tested on a local copy shaped like the live project. It recorded `marketing_role` without
+    running it, applied the guard, applied nothing on a second run, and the guard then refused a column drop.
+  - The migration check flags this PR's own guard migration until the label is added, as intended.
+- **First CI run on GitHub:**
+  - it caught a missing web message for the new rule code, now fixed;
+  - the test Postgres needed to trust test logins, as the local one does;
+  - after those fixes, Core and database and Web pass;
+  - the 3D board e2e test also passes on GitHub, so its local failure earlier today came from this session's
+    container, not the code.
+- **Split:** the label could not be added from this session: the permission system refuses it, as it should.
+  So the guard migration and its test moved to their own pull request, which waits for the founder's label. CI,
+  migrations by CI, and the rules shipped without it.
+- **Waiting on the founder:** decision 11, the one-time set-up, including the label on the guard's pull request.
 
 ## 10 Oct 2026 (evening): the marketing department is live
 

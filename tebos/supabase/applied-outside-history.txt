@@ -1,0 +1,5 @@
+# Migrations that were applied to the live database by hand, before the CI
+# runner (scripts/migrate.mjs) existed, so Supabase's history doesn't list
+# them. The runner records each one listed here without running it again.
+# Add a version here only after checking the live database has the change.
+20261007060000  # marketing_role: run by the founder in the SQL editor on 10 Oct 2026

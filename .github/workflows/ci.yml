@@ -1,0 +1,97 @@
+# Every pull request, and every push to main, must pass these before it can be
+# merged (with branch protection on main requiring them). They are the same
+# checks the build loop runs by hand.
+name: CI
+
+on:
+  pull_request:
+    # labelled: adding the founder's label re-runs the migration check
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  migrations:
+    name: Migration check
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # Applied migrations are history; a destructive one needs the founder's label.
+      - run: node tebos/scripts/check-migrations.mjs origin/${{ github.base_ref }}
+        env:
+          FOUNDER_APPROVED_DESTRUCTIVE: ${{ contains(github.event.pull_request.labels.*.name, 'founder-approved-destructive') }}
+
+  core:
+    name: Core and database
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tebos
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          # like the local test server: the monitoring tests log in as roles that have no password
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: "5432"
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: tebos/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run test:db
+
+  web:
+    name: Web
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tebos/web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            tebos/package-lock.json
+            tebos/web/package-lock.json
+      - run: npm ci --prefix ..
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      # The interface never names the AI or voice providers.
+      - name: No provider names in the bundle
+        run: "! grep -rliE 'anthropic|elevenlabs|claude' dist"
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-results
+          path: tebos/web/test-results
+          retention-days: 7
