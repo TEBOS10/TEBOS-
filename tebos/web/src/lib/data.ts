@@ -6,7 +6,6 @@
 // explicit queries (the schema's composite keys make implicit embedding
 // ambiguous) and joined in memory.
 
-import type { PlaybookDepartment, StaffRole } from "@core/staff";
 import { blueprintPayload, type Blueprint } from "@core/blueprints";
 import { OBSERVING_EVIDENCE_STATES } from "@core/board";
 import type { Database, Json } from "../database.types";
@@ -1026,7 +1025,6 @@ export interface StaffAccess {
   admin: boolean;
   sales: boolean;
   maintainer: boolean;
-  marketing: boolean;
 }
 
 export async function staffAccess(db: Db, userId: string): Promise<StaffAccess> {
@@ -1036,7 +1034,7 @@ export async function staffAccess(db: Db, userId: string): Promise<StaffAccess> 
   ]);
   const r = new Set((roles.data ?? []).map((x) => x.role));
   const isAdmin = !admin.error && !!admin.data;
-  return { admin: isAdmin, sales: isAdmin || r.has("sales"), maintainer: isAdmin || r.has("maintainer"), marketing: isAdmin || r.has("marketing") };
+  return { admin: isAdmin, sales: isAdmin || r.has("sales"), maintainer: isAdmin || r.has("maintainer") };
 }
 
 export async function listOpportunities(db: Db) {
@@ -1192,7 +1190,7 @@ export async function listStaffInvitations(db: Db) {
 }
 
 /** Returns the one-time token for the link; it is shown once and never stored. */
-export async function createStaffInvitation(db: Db, email: string, role: StaffRole) {
+export async function createStaffInvitation(db: Db, email: string, role: "sales" | "maintainer") {
   return must(await db.rpc("create_staff_invitation", { p_email: email.trim(), p_role: role })) as string;
 }
 
@@ -1219,9 +1217,9 @@ export async function acceptStaffInvitation(db: Db, token: string) {
 
 export type PlaybookSection = Row<"sales_playbook">;
 
-/** A department's playbook, readable only by that department's staff (row-level security). */
-export async function listPlaybook(db: Db, department: PlaybookDepartment) {
-  return must(await db.from("sales_playbook").select("*").eq("department", department).order("position")) as PlaybookSection[];
+/** The playbook, readable only by staff (row-level security). */
+export async function listPlaybook(db: Db) {
+  return must(await db.from("sales_playbook").select("*").order("position")) as PlaybookSection[];
 }
 
 export async function savePlaybookSection(db: Db, id: string, patch: { title: string; body: string }) {
