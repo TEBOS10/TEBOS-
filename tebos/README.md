@@ -495,7 +495,7 @@ To add a schema change:
    than every existing one.
 2. Run `npm test` and `npm run test:db` locally.
 3. Open a pull request. CI runs the same checks, plus the migration check (`scripts/check-migrations.mjs`).
-4. Merge when every check is green. The "Apply database migrations" workflow then applies it to the project
+4. Merge when every check is green. CI's last job, "Apply database migrations", then applies it to the project
    and records it under its file name (`scripts/migrate.mjs`). Nothing is applied by hand any more.
 5. Re-run the Supabase security advisor.
 
