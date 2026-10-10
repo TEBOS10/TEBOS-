@@ -48,7 +48,7 @@ The founder's silence is not a reason to stop. It is the reason this loop exists
      (`scripts/migrate.mjs`). Don't apply migrations by hand, and don't rename a migration after it
      merges: its file name is its live version;
    - migrations must be additive. The database refuses to drop a table, column or protected schema
-     (`destructive_guard`, once the founder approves it), and the migration check refuses a pull request that would, unless the
+     (`destructive_guard`), and the migration check refuses a pull request that would, unless the
      founder has labelled it `founder-approved-destructive`. Never add that label yourself;
    - reconnect the Railway worker source to `main` so it redeploys, and confirm the deployment succeeded.
 6. **Record** a new entry at the top of `operator-log.md` covering:
