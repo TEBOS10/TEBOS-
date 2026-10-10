@@ -15,7 +15,8 @@ permissions:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # never cancel a run on main: it may be applying database migrations
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   migrations:
@@ -95,3 +96,31 @@ jobs:
           name: playwright-results
           path: tebos/web/test-results
           retention-days: 7
+
+  # After a push to main passes every check, apply new database migrations to the
+  # live project and record them (scripts/migrate.mjs). Does nothing until the
+  # SUPABASE_DB_URL repository secret exists. The database's guard still refuses data loss.
+  migrate:
+    name: Apply database migrations
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [core, web]
+    runs-on: ubuntu-latest
+    environment: production
+    concurrency:
+      group: migrate-production
+      cancel-in-progress: false
+    defaults:
+      run:
+        working-directory: tebos
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: tebos/package-lock.json
+      - run: npm ci
+      - run: node scripts/migrate.mjs
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          SUPABASE_DB_CA: ${{ secrets.SUPABASE_DB_CA }}
