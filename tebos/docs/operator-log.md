@@ -53,6 +53,12 @@ Update this list every run; strike items when they're done.
   - The runner was tested on a local copy shaped like the live project. It recorded `marketing_role` without
     running it, applied the guard, applied nothing on a second run, and the guard then refused a column drop.
   - The migration check flags this PR's own guard migration until the label is added, as intended.
+- **First CI run on GitHub:**
+  - it caught a missing web message for the new rule code, now fixed;
+  - the test Postgres needed to trust test logins, as the local one does;
+  - after those fixes, Core and database and Web pass;
+  - the 3D board e2e test also passes on GitHub, so its local failure earlier today came from this session's
+    container, not the code.
 - **Waiting on the founder:** decision 11, the one-time set-up, including the label on this PR.
 
 ## 10 Oct 2026 (evening): the marketing department is live

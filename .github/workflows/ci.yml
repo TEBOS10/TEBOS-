@@ -5,6 +5,8 @@ name: CI
 
 on:
   pull_request:
+    # labelled: adding the founder's label re-runs the migration check
+    types: [opened, synchronize, reopened, labeled, unlabeled]
   push:
     branches: [main]
 
