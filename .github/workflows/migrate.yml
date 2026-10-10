@@ -1,0 +1,48 @@
+# Applies new migrations to the live database once a merge to main has passed
+# every CI check. Needs the SUPABASE_DB_URL repository secret; without it, it
+# does nothing. The database's own guard still refuses data loss.
+name: Apply database migrations
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Only show what would be applied"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: migrate-production
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+    runs-on: ubuntu-latest
+    environment: production
+    defaults:
+      run:
+        working-directory: tebos
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: tebos/package-lock.json
+      - run: npm ci
+      - run: node scripts/migrate.mjs ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && '--dry-run' || '' }}
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          SUPABASE_DB_CA: ${{ secrets.SUPABASE_DB_CA }}

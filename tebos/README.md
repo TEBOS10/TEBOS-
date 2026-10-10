@@ -487,15 +487,46 @@ All three values are secrets. They live only in Railway's variables, never in th
 
 The schema is applied to the dedicated Supabase project **`tebos-core`** (ref `jjibuvqpidimckmrhlqa`,
 region `eu-west-1`, in TEBOS10's org). It is separate from `bame-os`. Migration file names match the
-versions recorded in the project, so `supabase db push` sees them as already applied.
+versions recorded in the project.
 
 To add a schema change:
 
-1. Add a migration to `supabase/migrations/`.
+1. Add a migration to `supabase/migrations/`, named `<14-digit version>_<snake_case>.sql`, with a version newer
+   than every existing one.
 2. Run `npm test` and `npm run test:db` locally.
-3. Apply the migration to the project.
-4. Rename the file to the version the project records.
+3. Open a pull request. CI runs the same checks, plus the migration check (`scripts/check-migrations.mjs`).
+4. Merge when every check is green. The "Apply database migrations" workflow then applies it to the project
+   and records it under its file name (`scripts/migrate.mjs`). Nothing is applied by hand any more.
 5. Re-run the Supabase security advisor.
+
+### Safeguards
+
+- **The database refuses data loss** (migration `destructive_guard`). Dropping a table, a column, a
+  materialized view or a sequence in `public` or `tebos_private`, or dropping one of those schemas, fails
+  with `TEBOS_DESTRUCTIVE_BLOCKED`. The exception is a transaction that first runs
+  `set local tebos.allow_destructive = 'founder approved: <why>'`. Constraints, policies, functions,
+  triggers, indexes and views can still be dropped and re-created freely. It is a seatbelt, not a lock:
+  Postgres runs no guard on commands about event triggers, so the database owner can still remove it on
+  purpose.
+- **The migration check refuses** a pull request that changes an applied migration, adds one out of order,
+  or would destroy data or touch the guard, unless the founder has labelled it
+  `founder-approved-destructive`.
+- **History:** `supabase/applied-outside-history.txt` lists migrations that were applied by hand before the
+  runner existed. The runner records these without running them again.
+
+### One-time set-up (the founder)
+
+1. GitHub → the repository → Settings → Secrets and variables → Actions → New repository secret:
+   - `SUPABASE_DB_URL`: Supabase → Project Settings → Database → Connection string → "Session pooler" URI,
+     with the database password filled in. Never paste it anywhere else.
+   - Optional: `SUPABASE_DB_CA`, the contents of the CA certificate from the same page, so the runner also
+     verifies the server.
+2. GitHub → Settings → Branches → Add branch protection rule for `main`:
+   - tick "Require status checks to pass before merging";
+   - choose **Migration check**, **Core and database** and **Web**;
+   - tick "Do not allow bypassing the above settings".
+3. GitHub → Issues → Labels → New label `founder-approved-destructive`. Only the founder adds it to a pull
+   request.
 
 The only open advisor warning is intentional: signed-in users can execute `create_organisation`, which is
 how an organisation gets its first admin.
