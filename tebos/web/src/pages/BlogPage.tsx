@@ -24,6 +24,7 @@ export function SiteFrame({ current, children }: { current?: "blog" | "pricing";
       <header className="lp-nav">
         <a className="lp-brand" href="/"><span className="brand-mark" aria-hidden><ShieldCheck size={18} /></span> TEBOS</a>
         <nav className="lp-links" aria-label="Site">
+          <a href="/showcase">What TEBOS does</a>
           <a href="/demo">Demo</a>
           <a href="/systems">Systems</a>
           <a href="/waitlist">Waiting list</a>

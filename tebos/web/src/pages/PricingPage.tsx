@@ -52,6 +52,7 @@ export function PricingPage() {
       <header className="lp-nav">
         <a className="lp-brand" href="/"><span className="brand-mark" aria-hidden><ShieldCheck size={18} /></span> TEBOS</a>
         <nav className="lp-links" aria-label="Site">
+          <a href="/showcase">What TEBOS does</a>
           <a href="/demo">Demo</a>
           <a href="/self-check">Self-check</a>
           <a href="/blog">Blog</a>
