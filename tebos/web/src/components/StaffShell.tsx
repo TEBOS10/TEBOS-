@@ -11,15 +11,16 @@ export function StaffShell({ children }: { children: ReactNode }) {
   const path = usePath();
   const { db, session } = useSignedIn();
   const { access } = useStaff();
+  const pipeline = access?.sales || access?.maintainer;
   const nav = [
-    { to: "/pipeline", label: "Pipeline", icon: Briefcase },
-    { to: "/sales", label: "Sales playbook", icon: BookOpen },
+    ...(pipeline ? [{ to: "/pipeline", label: "Pipeline", icon: Briefcase }, { to: "/sales", label: "Sales playbook", icon: BookOpen }] : []),
     { to: "/marketing", label: "Marketing", icon: Megaphone },
+    { to: "/marketing/playbook", label: "Marketing playbook", icon: BookOpen },
     ...(access?.sales ? [{ to: "/meet", label: "Meeting mode", icon: PhoneCall }] : []),
     ...(access?.maintainer ? [{ to: "/pipeline/queue", label: "Maintainer queue", icon: ListChecks }] : []),
     ...(access?.admin ? [{ to: "/pipeline/billing", label: "Billing", icon: Receipt }, { to: "/pipeline/team", label: "Staff", icon: Users }] : []),
   ];
-  const roles = [access?.admin && "admin", access?.sales && "sales", access?.maintainer && "maintainer"].filter(Boolean);
+  const roles = [access?.admin && "admin", access?.sales && "sales", access?.maintainer && "maintainer", access?.marketing && !access?.admin && "marketing"].filter(Boolean);
   return (
     <div className="shell">
       <aside className="sidebar no-print">
@@ -32,7 +33,7 @@ export function StaffShell({ children }: { children: ReactNode }) {
         </div>
         <nav className="nav" aria-label="Main">
           {nav.map(({ to, label, icon: Icon }) => {
-            const active = to === "/pipeline" ? path === to || (path.startsWith("/pipeline/") && !/^\/pipeline\/(team|queue|billing)/.test(path)) : path === to || path.startsWith(`${to}/`);
+            const active = to === "/marketing" ? path === to : to === "/pipeline" ? path === to || (path.startsWith("/pipeline/") && !/^\/pipeline\/(team|queue|billing)/.test(path)) : path === to || path.startsWith(`${to}/`);
             return (
               <Link key={to} to={to} className={`nav-link ${active ? "active" : ""}`} aria-current={active ? "page" : undefined}>
                 <Icon size={17} aria-hidden /> {label}

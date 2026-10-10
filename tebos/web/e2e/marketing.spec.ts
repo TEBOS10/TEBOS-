@@ -83,3 +83,31 @@ test("a platform admin sends a draft back with a note, approves another, and rec
     status: "published", published_url: "https://tebos.blog/foundations",
   });
 });
+
+test("a marketer works from their drafts and their playbook, with no pipeline in sight", async ({ page }) => {
+  const fake = await installFakeSupabase(page);
+  const t = fake.tables as Record<string, Array<Record<string, unknown>>>;
+  t.memberships = [];
+  t.platform_admins = [];
+  t.platform_staff = [{ user_id: USER_ID, role: "marketing", added_by: null, created_at: now }];
+  t.content_drafts = [];
+  t.sales_playbook = [
+    { id: "s1", department: "sales", key: "plans", position: 10, title: "Plans and prices", body: "Sales only.", updated_by: null, updated_at: now },
+    { id: "m1", department: "marketing", key: "claims", position: 20, title: "What we never publish", body: "**Nothing invented.**", updated_by: null, updated_at: now },
+  ];
+
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "Marketing and PR" })).toBeVisible();
+  const nav = page.getByRole("navigation", { name: "Main" });
+  await expect(nav.getByRole("link", { name: "Pipeline" })).toHaveCount(0);
+  await expect(nav.getByRole("link", { name: "Sales playbook" })).toHaveCount(0);
+  await nav.getByRole("link", { name: "Marketing playbook" }).click();
+  await expect(page.getByRole("heading", { name: "Marketing playbook" })).toBeVisible();
+  await expect(page.getByText("Nothing invented.")).toBeVisible();
+  await expect(page.getByText("Sales only.")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Edit" })).toHaveCount(0);
+
+  // the pipeline isn't theirs, even by its address
+  await page.goto("/pipeline");
+  await expect(page.getByText("This page is for TEBOS's own staff.")).toBeVisible();
+});
