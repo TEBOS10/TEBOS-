@@ -43,10 +43,10 @@ The founder's silence is not a reason to stop. It is the reason this loop exists
      The e2e tests need `PLAYWRIGHT_CHROMIUM` pointing at the preinstalled Chromium.
 5. **Ship**:
    - open a PR, wait for the checks, and merge when every check is green;
-   - database changes reach the live project only through CI: once a merge to `main` passes every
-     check, CI's "Apply database migrations" job applies new migrations in order and records them
-     (`scripts/migrate.mjs`). Don't apply migrations by hand, and don't rename a migration after it
-     merges: its file name is its live version;
+   - after a merge to `main` passes every check, apply its new migrations: CI's "Apply database
+     migrations" job does it when its `SUPABASE_DB_URL` secret works; otherwise apply them with the database
+     connector, under the migration's own name (the runner matches by name, so nothing is applied twice).
+     Never rename a migration after it merges. Never ask the founder for database passwords or keys;
    - migrations must be additive. The database refuses to drop a table, column or protected schema
      (`destructive_guard`), and the migration check refuses a pull request that would, unless the
      founder has labelled it `founder-approved-destructive`. Never add that label yourself;
