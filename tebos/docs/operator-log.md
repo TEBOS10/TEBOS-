@@ -21,6 +21,24 @@ Update this list every run; strike items when they're done.
 | 8 | Make the repo private, rotate database passwords, turn on leaked-password protection | Protecting the platform from copying |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 10 Oct 2026 (night): "What TEBOS does", shown rather than told
+
+- The founder asked for a visual showcase: rows by category, like a streaming service, each card showing
+  something TEBOS does, built on what businesses are paying for now. New public page **`/showcase`**, linked from
+  every site menu as "What TEBOS does".
+- Eight rows (sales, money, founder work, numbers, delivery, websites, security, service), 17 cards. Opening a
+  card plays it: the problem, each step lighting up with who or what does it (automatic, the team, the owner, the
+  customer, a supplier), then what changes.
+- **Honest by construction.** TEBOS has no client case studies yet, so every card is labelled an illustration
+  with invented names and no results, and carries one of four labels: runs in TEBOS today, runs once a tool is
+  connected, TEBOS designs it for the business's team, or on the roadmap. A unit test fails if a card quotes a
+  percentage, mentions a case study or testimonial, names a supplier, or links anywhere but a public page.
+- The row order follows the research in [`market-needs.md`](market-needs.md) (finding customers and cash flow
+  first for small businesses; reporting, connected systems and approvals for larger ones).
+- No database change. Checks: typecheck, unit tests (web 45, core 258), database tests, e2e 74 of 75 (the 3D
+  `world.spec` fails only in this container and passes on GitHub).
+- Next: the founder's other ask, that a newly signed client gets full service delivery without the founder.
+
 ## 10 Oct 2026 (later still): the guard is live, and nothing technical is left for the founder
 
 - The founder said, rightly, that the set-up had turned them into a technical person. The point of TEBOS is that

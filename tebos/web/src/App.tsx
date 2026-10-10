@@ -38,6 +38,7 @@ import { ContractTemplatesPage, OpportunityPage, PipelinePage } from "./pages/Pi
 import { MarketingPlaybookPage, SalesPlaybookPage, StaffInvitePage, StaffTeamPage } from "./pages/SalesPages";
 import { StaffShell } from "./components/StaffShell";
 import { BlogIndex, BlogPost } from "./pages/BlogPage";
+import { ShowcasePage } from "./pages/ShowcasePage";
 import { SystemsPage } from "./pages/SystemsPage";
 import { WaitlistPage } from "./pages/WaitlistPage";
 import { MeetPage } from "./pages/MeetPage";
@@ -109,6 +110,7 @@ function Gate() {
   if (path === "/pricing") return <PricingPage />;
   if (path === "/blog") return <BlogIndex />;
   if (path === "/systems") return <SystemsPage />;
+  if (path === "/showcase") return <ShowcasePage />;
   if (path === "/waitlist") return <WaitlistPage />;
   if (path === "/self-check") return <SelfCheckPage />;
   if (path === "/self-check/result") return <SelfCheckShared />;
