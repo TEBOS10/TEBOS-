@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { describe, expect, it } from "vitest";
+import { PROVIDER_FAULT_DETAIL } from "../../src/domain/analysis";
 import { AnthropicProvider } from "../../src/intelligence/anthropic-provider";
 import type { AcceptedFinding, EvidenceForReasoning, FindingsInput } from "../../src/intelligence/findings";
 import { ReasoningError, type ReasoningProvider, type StructuredRequest } from "../../src/intelligence/provider";
@@ -97,7 +98,10 @@ describe("intelligence worker", () => {
     const worker = new IntelligenceWorker(store, provider(new ReasoningError("misconfigured", "key not scoped to a workspace")), { workerId: "w", now: () => now, log: (e) => logs.push(e) });
 
     expect(await worker.runOnce()).toMatchObject({ status: "failed" });
-    expect(store.finish).toMatchObject({ status: "failed", output: { findings: 0, providerFault: true } });
+    expect(store.finish).toMatchObject({ status: "failed", output: { findings: 0, providerFault: true, fault: "misconfigured" } });
+    // stored in neutral words; the raw message (which names the service) goes to the log only
+    expect(store.finish!.errorDetail).toBe(PROVIDER_FAULT_DETAIL.misconfigured);
+    expect(store.calls[0]!.errorDetail).toBe(PROVIDER_FAULT_DETAIL.misconfigured);
     expect(logs).toContainEqual(expect.objectContaining({ event: "intelligence.paused", reason: "misconfigured" }));
 
     // paused: nothing is claimed, so the next scan keeps its attempts

@@ -1,3 +1,4 @@
+import { analysisPausedSince, runDetail } from "@core/analysis";
 import { Card, Empty, ErrorNote, Loading, PageHeader, StatusBadge } from "../components/ui";
 import { auditTrail, systemOverview } from "../lib/data";
 import { ago, RISK_LABEL, statusLabel, when } from "../lib/format";
@@ -24,7 +25,15 @@ export function SystemPage() {
 
 function Overview({ data }: { data: Awaited<ReturnType<typeof systemOverview>> }) {
   const providers = data.connectors.length;
+  const pausedSince = analysisPausedSince(data.runs);
   return (
+      <>
+        {pausedSince && (
+          <div className="note note-warn" role="status" data-testid="analysis-paused">
+            <strong>Analysis is paused</strong> since {when(pausedSince)}. TEBOS's reasoning service is not answering, so no findings are being
+            made. Nothing about your business caused this, and nothing is invented while it lasts: TEBOS's team is fixing it, and analysis resumes on its own.
+          </div>
+        )}
         <div className="grid grid-2">
           <Card title="Capabilities" subtitle="What TEBOS knows how to do. Knowing is not the same as being connected.">
             <ul className="list">
@@ -76,7 +85,7 @@ function Overview({ data }: { data: Awaited<ReturnType<typeof systemOverview>> }
                         <span className="list-title">{statusLabel(r.agent_role)}</span>
                         <span className="list-meta">
                           {ago(r.started_at)}
-                          {r.error_detail ? ` · ${r.error_detail}` : ""}
+                          {runDetail(r) ? ` · ${runDetail(r)}` : ""}
                         </span>
                       </div>
                       <StatusBadge status={r.status} />
@@ -87,6 +96,7 @@ function Overview({ data }: { data: Awaited<ReturnType<typeof systemOverview>> }
             </Card>
           </div>
         </div>
+      </>
   );
 }
 
