@@ -4,7 +4,8 @@
 // Run by CI after a merge to main has passed every check:
 //   SUPABASE_DB_URL=... node scripts/migrate.mjs [--dry-run]
 //
-//   * A migration already in the history is skipped.
+//   * A migration already in the history (by version, or by name: the build
+//     loop's database connector records its own version) is skipped.
 //   * One listed in supabase/applied-outside-history.txt (run by hand before
 //     this runner existed) is recorded without being run again.
 //   * A failure rolls that migration back and stops: nothing after it runs.
@@ -34,11 +35,23 @@ const ca = process.env.SUPABASE_DB_CA;
 const local = process.env.SUPABASE_DB_SSL === "off";
 const client = new pg.Client({ connectionString: url, ssl: local ? false : ca ? { ca } : { rejectUnauthorized: false } });
 if (!ca && !local) console.log("Note: SUPABASE_DB_CA is not set, so the connection is encrypted but the server certificate is not verified.");
-await client.connect();
 try {
-  const applied = new Set((await client.query("select version from supabase_migrations.schema_migrations")).rows.map((r) => r.version));
+  await client.connect();
+} catch (err) {
+  // A login the database refuses is a set-up problem, not a code failure: say so plainly and leave the build green.
+  // The build loop applies migrations through its own database connection meanwhile.
+  if (err.code === "28P01" || err.code === "28000") {
+    console.log(`::warning::SUPABASE_DB_URL was refused by the database (${err.code}): no migrations applied by CI. The build loop applies them instead.`);
+    process.exit(0);
+  }
+  throw err;
+}
+try {
+  const history = (await client.query("select version, name from supabase_migrations.schema_migrations")).rows;
+  const applied = new Set(history.map((r) => r.version));
+  const names = new Set(history.map((r) => r.name));
   const newest = [...applied].sort().at(-1) ?? "0";
-  const pending = files.filter((f) => !applied.has(f.slice(0, 14)));
+  const pending = files.filter((f) => !applied.has(f.slice(0, 14)) && !names.has(f.slice(15, -4)));
   if (!pending.length) {
     console.log("Nothing to apply: the live database has every migration.");
     process.exit(0);

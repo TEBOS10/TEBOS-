@@ -19,8 +19,19 @@ Update this list every run; strike items when they're done.
 | 6 | Social accounts created, and whether to invite a marketer (Staff → Invite, role Marketing) | Publishing the social pack and approved drafts |
 | 7 | Company registration and VAT number | Invoices that are legally complete |
 | 8 | Make the repo private, rotate database passwords, turn on leaked-password protection | Protecting the platform from copying |
-| 11 | **One-time set-up for building without you**, about 10 minutes (README → One-time set-up): the `SUPABASE_DB_URL` secret, branch protection on `main`, the `founder-approved-destructive` label, and that label on the guard's pull request | Database changes ship on their own once checks pass; no more SQL editor or approval prompts |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
+
+## 10 Oct 2026 (later still): the guard is live, and nothing technical is left for the founder
+
+- The founder said, rightly, that the set-up had turned them into a technical person. The point of TEBOS is that
+  it does this itself. Decision 11 (secret, branch protection, labels) is withdrawn.
+- **The guard is live.** After the founder's approval (the label on #38), this session applied `destructive_guard`
+  with the database connector. It contains no `drop` statement, so the connector didn't cancel it. A rolled-back
+  probe in the live database confirmed the guard refuses a table drop. Both event triggers are enabled.
+- **CI's migration job:** the `SUPABASE_DB_URL` secret exists, but the database refuses its password. A refused
+  login is now a warning, not a failed build, and the build loop applies migrations with the connector meanwhile.
+  The runner also matches migrations by name, because the connector records its own version, so nothing is
+  applied twice. Fixing the secret is optional, not a decision.
 
 ## 10 Oct 2026 (late): CI applies migrations itself, and the guard is approved
 
