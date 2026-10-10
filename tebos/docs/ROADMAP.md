@@ -204,6 +204,9 @@ the build order for the next departments:
 3. ~~Marketing and PR drafting with approval before publishing (tier 2).~~ Built 6 Oct (`/marketing`): staff draft,
    a platform admin approves, a person publishes and records where it went live. TEBOS never publishes.
 4. Department roles beyond sales and maintainer, each with a playbook like the sales one.
+   First department built 7 Oct: **marketing** (migration `marketing_role`). Marketing staff draft content and read
+   their own playbook (`/marketing/playbook`), and see no pipeline, leads, clients or billing. Next: finance and
+   operations, once there is work for them.
 People the founder still needs to appoint: a lawyer, an accountant, a head of sales.
 
 ## Go to market

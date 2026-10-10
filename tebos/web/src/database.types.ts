@@ -2226,6 +2226,7 @@ export type Database = {
       sales_playbook: {
         Row: {
           id: string
+          department: string
           key: string
           position: number
           title: string
@@ -2235,6 +2236,7 @@ export type Database = {
         }
         Insert: {
           id?: string
+          department?: string
           key: string
           position: number
           title: string
