@@ -19,8 +19,38 @@ Update this list every run; strike items when they're done.
 | 6 | Social accounts created | Publishing the social pack, and the approved drafts on the Marketing page |
 | 7 | Company registration and VAT number | Invoices that are legally complete |
 | 8 | Make the repo private, rotate database passwords, turn on leaked-password protection | Protecting the platform from copying |
-| 10 | Approve applying the `marketing_role` migration (built and tested 7 Oct; the apply was cancelled on 8 Oct) | The marketing department: its role, playbook and staff menu (commit 7ef841a, held back by cc20184) |
+| 10 | Approve applying the `marketing_role` migration (built and tested 7 Oct; the apply was cancelled on 8 Oct) | The marketing department: its role, playbook and staff menu (in history as 7ef841a; reverting dfe3b18 brings it back unchanged) |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
+
+## 10 Oct 2026: clients see plainly that analysis is paused, never the provider's raw error
+
+- **Read:**
+  - Main was green, and the worker was live (SUCCESS) since 9 Oct.
+  - The 9 Oct pause worked: 38 provider-fault runs in about 19 hours, one every 30 minutes, none counted against a
+    business.
+  - The key is still not scoped to a workspace (decision 2b), and the marketing migration is still unapproved
+    (decision 10).
+  - Problem found: those failed runs stored the provider's raw error, its name and a JSON body, on rows that each
+    organisation's System page shows to its members. The page also never said that analysis was paused.
+- **Chosen (rule 2, live signal):** what clients see about a live fault.
+- **Built (no migration):**
+  - A provider fault is stored in neutral words that name no service, with its kind (`fault`) on the run. The raw
+    message goes only to the worker's log (`intelligence.paused`, `analysis.error`).
+  - An unexpected error is stored as "Analysis failed unexpectedly", and logged the same way.
+  - `src/domain/analysis.ts`:
+    - `analysisPausedSince` reads the pause from the recorded runs;
+    - `runDetail` shows the neutral words, including on runs recorded before this change.
+  - On the System page: an "Analysis is paused" notice, with when it started. Each worker run shows the neutral
+    words.
+  - Branch housekeeping: the marketing department restored by draft PR #34 is held back again by dfe3b18. It
+    stays in history and comes back with one revert once its migration is approved.
+- **Proved:**
+  - core: typecheck and 253 unit tests pass (new `analysis.test.ts`; the worker test checks the stored words).
+  - `test:db`: every SQL file passes, and all 50 integration tests pass.
+  - web: typecheck, 26 unit tests and 72 e2e tests pass (new `system.spec.ts`). The production bundle names no
+    provider.
+- **Next:** the same two decisions unblock the most: a workspace-scoped key (findings start), and the marketing
+  migration.
 
 ## 9 Oct 2026: a provider fault pauses analysis instead of using up every business's attempts
 

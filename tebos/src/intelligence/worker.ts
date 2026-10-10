@@ -15,6 +15,7 @@
 import { ReasoningError, type ReasoningProvider } from "./provider";
 import { prepareFindingsRequest, validateProposals, type AcceptedFinding, type FindingsInput, type RejectedFinding } from "./findings";
 import { prepareReviewRequest, reviewFingerprint } from "./review";
+import { PROVIDER_FAULT_DETAIL } from "../domain/analysis";
 
 export interface ClaimedAnalysis {
   kind?: "scan" | "review";
@@ -148,7 +149,13 @@ export class IntelligenceWorker {
     try {
       response = await this.provider.structured(prepared.request);
     } catch (err) {
-      const detail = err instanceof ReasoningError ? `${err.kind}: ${err.message}` : `Reasoning failed: ${(err as Error).message}`;
+      // A provider fault is stored in neutral words that name no service; the raw message goes to the worker's log only.
+      const fault = err instanceof ReasoningError && (err.kind === "misconfigured" || err.kind === "provider_unavailable") ? err.kind : null;
+      const known = err instanceof ReasoningError && !fault;
+      const detail = fault
+        ? PROVIDER_FAULT_DETAIL[fault]
+        : known ? `${(err as ReasoningError).kind}: ${(err as ReasoningError).message}` : "Analysis failed unexpectedly; the details are in the worker's log.";
+      if (!known) this.log({ event: "analysis.error", kind: claim.kind, businessId: claim.businessId, detail: (err as Error).message });
       await this.store.recordToolCall(claim, {
         status: "failed",
         inputSummary: { provider: this.provider.name, analysis: claim.kind, evidenceItems: prepared.refs.size, evidenceOmitted: prepared.omitted },
@@ -157,7 +164,7 @@ export class IntelligenceWorker {
         latencyMs: Date.now() - started,
       });
       // a provider fault doesn't use up this business's attempts (providerFault), and pauses the stage
-      return this.fail(claim, null, null, detail, this.pauseFor(err) ? { providerFault: true } : {});
+      return this.fail(claim, null, null, detail, this.pauseFor(err) ? { providerFault: true, fault } : {});
     }
     this.outages = 0;
 
