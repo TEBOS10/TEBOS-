@@ -21,6 +21,29 @@ Update this list every run; strike items when they're done.
 | 8 | Make the repo private, rotate database passwords, turn on leaked-password protection | Protecting the platform from copying |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 12 Oct 2026: a new client's diagnostic runs without the founder
+
+- State: nothing broken. The worker is healthy (last deploy SUCCESS), and main's checks are green. No enquiries,
+  clients or open maintainer items yet. Advisors are unchanged (the known, intended public functions, the
+  `capital` schema (decision 9), and leaked-password protection (decision 8)). No run on 11 Oct: the routine fired
+  but the run didn't complete.
+- Picked: the founder's ask that a newly signed client is served without them. One founder step on every small
+  plan was "Diagnostic interview": someone had to hold it and then tick it off.
+- **Now:**
+  - At onboarding TEBOS opens a written diagnostic interview for the client by itself: their industry's questions
+    when TEBOS has them (agencies), otherwise a new general **small-business diagnostic** (10 questions on where the
+    business runs through the owner, customers, money, team and tools, and numbers).
+  - The welcome email tells the owner to answer it.
+  - When the owner submits it (or a diagnostic call completes), a database rule closes the plan's
+    "Diagnostic interview" step itself, with a note of how many questions were answered. It records no person,
+    because TEBOS closed it.
+  - It closes only on a real completion (a cancelled interview closes nothing), and only for that client.
+- The diagnostic card on a business now asks that business's industry questions, not the agency ones for everyone.
+- Migration `diagnostic_closes_delivery` is additive: one new trigger, plus the delivery guard recording "no
+  person" when TEBOS closes a step.
+- Checks: typecheck; unit tests (core 259, web 45); database tests, including the new `99za` and the onboarding
+  flow; e2e 74 of 75 (the 3D `world.spec` fails only in this container).
+
 ## 10 Oct 2026 (night): "What TEBOS does", shown rather than told
 
 - The founder asked for a visual showcase: rows by category, like a streaming service, each card showing

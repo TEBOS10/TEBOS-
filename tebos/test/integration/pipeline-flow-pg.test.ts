@@ -174,6 +174,10 @@ describe.skipIf(!enabled)("client pipeline against the TEBOS schema", () => {
       [opp.business_id])).rows[0];
     expect(board).toEqual({ pieces: 5, flows: 3, steps: 13 });
     expect((await as<pg.QueryResult>(MAINT, "select count(*)::int as n from public.delivery_tasks where opportunity_id = $1", [id])).rows[0].n).toBe(5);
+    // the written diagnostic is open from day one, with their industry's questions, and the email points to it
+    const interviews = (await pool.query("select channel, status, playbook_key from public.interview_sessions where business_id = $1", [opp.business_id])).rows;
+    expect(interviews).toEqual([{ channel: "form", status: "open", playbook_key: "marketing-agency" }]);
+    expect(email.sends.find((x) => x.input.subject.includes("account is ready"))!.input.text).toContain("answer the written diagnostic interview");
 
     // staff see the emails went out, but never the links in them
     await expect(as(SALES, "select body from public.outbox_emails where opportunity_id = $1", [id])).rejects.toThrow(/permission denied/);

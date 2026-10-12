@@ -197,6 +197,8 @@ export class PipelineWorker {
       `${this.config.siteUrl}/invite/${token}`,
       ``,
       `You'll be your organisation's admin, and can invite your team from there. Your draft operating system is already on your board, and your TEBOS maintainer will be in touch to confirm it with you.`,
+      ``,
+      `Your first step: once you're signed in, open your business and answer the written diagnostic interview. It takes about twenty minutes, and it's how TEBOS learns where the business still runs through you.`,
     ]));
     this.log({ event: "pipeline.onboarded", opportunityId: o.id, orgId });
     return { step: "onboard", id: o.id, orgId };

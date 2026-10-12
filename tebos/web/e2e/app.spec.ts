@@ -384,7 +384,7 @@ test("booking an interview call needs a valid number, a time and the person's co
   await expect(page).toHaveURL(/\/interviews\//);
   await expect(page.getByText("Booked. TEBOS's AI interviewer will call at the time below.")).toBeVisible();
   expect(fake.writes.find((w) => w.table === "interview_sessions")?.body).toMatchObject({
-    channel: "voice", status: "scheduled", phone_number: "+27821234567", playbook_key: "marketing-agency",
+    channel: "voice", status: "scheduled", phone_number: "+27821234567", playbook_key: "small-business",
     consent_text: expect.stringContaining("recorded and transcribed"),
   });
   await snap(page, "8-interview-booked");
@@ -395,13 +395,14 @@ test("the same interview can be answered in writing, and becomes the owner's sta
   await page.goto(`/businesses/${BIZ}`);
   await page.getByRole("button", { name: "Answer in writing" }).click();
   await expect(page).toHaveURL(/\/interviews\//);
-  await page.getByLabel("Where do most of your new clients come from at the moment?").fill("Referrals from two past clients");
-  await page.getByLabel(/biggest client/).fill("About 40%");
+  // a ceramics business gets the general small-business questions
+  await page.getByLabel("Where did your last ten customers come from?").fill("Referrals from two past clients");
+  await page.getByLabel(/How do invoices go out/).fill("Every Friday from a spreadsheet");
   await page.getByRole("button", { name: "Submit 2 answers" }).click();
   const rpc = await expect.poll(() => fake.writes.find((w) => w.table === "submit_interview_answers")?.body).toBeTruthy().then(() => fake.writes.find((w) => w.table === "submit_interview_answers")!.body as { p_answers: Array<{ question_key: string; answer: string }> });
   expect(rpc.p_answers.filter((a) => a.answer)).toEqual([
-    expect.objectContaining({ question_key: "clients.concentration", answer: "About 40%" }),
-    expect.objectContaining({ question_key: "pipeline.sources", answer: "Referrals from two past clients" }),
+    expect.objectContaining({ question_key: "customers.sources", answer: "Referrals from two past clients" }),
+    expect.objectContaining({ question_key: "money.invoicing", answer: "Every Friday from a spreadsheet" }),
   ]);
 });
 
