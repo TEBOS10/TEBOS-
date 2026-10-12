@@ -1,5 +1,5 @@
 import { CALL_CONSENT_TEXT, checkBookingTime, normalisePhone } from "@core/interview";
-import { marketingAgencyPlaybook } from "@core/playbooks";
+import { playbookForIndustry } from "@core/playbooks";
 import { Phone, PenLine } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { bookInterviewCall, listInterviews, startWrittenInterview, type Business } from "../lib/data";
@@ -8,8 +8,6 @@ import { Link, navigate } from "../lib/router";
 import { useOrg } from "../lib/session";
 import { useQuery } from "../lib/useQuery";
 import { Card, Empty, ErrorNote, Field, StatusBadge } from "./ui";
-
-const PLAYBOOK = marketingAgencyPlaybook;
 
 /** Local date-time input value (yyyy-MM-ddTHH:mm) for a Date. */
 const localInput = (d: Date) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
@@ -21,6 +19,8 @@ const localInput = (d: Date) => new Date(d.getTime() - d.getTimezoneOffset() * 6
  */
 export function InterviewCard({ business }: { business: Business }) {
   const org = useOrg();
+  // their industry's questions when TEBOS has them, otherwise the general small-business diagnostic
+  const PLAYBOOK = playbookForIndustry(business.industry);
   const q = useQuery(() => listInterviews(org.db, business.id), [business.id]);
   const canBook = org.can("scan.run");
   const [mode, setMode] = useState<"none" | "call">("none");
@@ -68,7 +68,7 @@ export function InterviewCard({ business }: { business: Business }) {
   return (
     <Card title="Diagnostic interview" subtitle={`${PLAYBOOK.name}: what the public website can't show`}>
       <p className="muted">
-        TEBOS asks the owner or a manager {PLAYBOOK.sections.reduce((n, s) => n + s.questions.length, 0)} questions about clients, sales, delivery, capacity, results and cash.
+        TEBOS asks the owner or a manager {PLAYBOOK.sections.reduce((n, s) => n + s.questions.length, 0)} questions about {PLAYBOOK.sections.map((x) => x.title.toLowerCase()).join(", ")}.
         Answers are kept as the owner&apos;s own statements and weighed against documents and connected systems.
       </p>
       {q.data && q.data.length > 0 ? (

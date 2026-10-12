@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { checkBookingTime, normalisePhone } from "../../src/domain/interview";
-import { allQuestions, marketingAgencyPlaybook, playbook, PLAYBOOKS } from "../../src/domain/playbooks";
+import { allQuestions, marketingAgencyPlaybook, playbook, playbookForIndustry, PLAYBOOKS, smallBusinessPlaybook } from "../../src/domain/playbooks";
 import { buildExtractionRequest, unanswered, validateAnswers } from "../../src/interviews/extract";
 import { ElevenLabsVoice, type TranscriptTurn } from "../../src/interviews/voice";
 import { callVariables } from "../../src/interviews/worker";
@@ -31,6 +31,12 @@ describe("playbooks", () => {
     }
     expect(playbook("marketing-agency", 1)).toBe(marketingAgencyPlaybook);
     expect(playbook("marketing-agency", 99)).toBeNull();
+  });
+
+  it("gives every new client a written diagnostic: their industry's when there is one, otherwise the general one", () => {
+    expect(playbookForIndustry("marketing-agency")).toBe(marketingAgencyPlaybook);
+    for (const k of ["gym-fitness", "restaurant", null, undefined, "unknown"]) expect(playbookForIndustry(k)).toBe(smallBusinessPlaybook);
+    expect(allQuestions(smallBusinessPlaybook).length).toBeGreaterThanOrEqual(8);
   });
 });
 

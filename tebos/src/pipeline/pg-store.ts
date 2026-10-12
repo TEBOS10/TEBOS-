@@ -9,6 +9,7 @@ import { PLAN_TERMS, type PlanKey } from "../domain/plans";
 import type { PaystackWebhookStore } from "./paystack-webhook";
 import type { Screening, ScreeningHistory } from "./screening";
 import { blueprintByKey, blueprintPayload } from "../domain/blueprints";
+import { playbookForIndustry } from "../domain/playbooks";
 import { MAX_EMAIL_ATTEMPTS, type NewEnquiry, type Opportunity, type OutboxEmail, type PendingEmail, type PipelineStore, type Template } from "./worker";
 
 const RETRY_AFTER = "5 minutes";
@@ -189,6 +190,16 @@ export class PgPipelineStore implements PipelineStore, PaystackWebhookStore {
           `update public.delivery_tasks set status = 'done', note = $2
             where opportunity_id = $1 and title = 'Draft operating system on the board' and status = 'open'`,
           [id, `TEBOS laid the ${blueprint.industry} blueprint onto the board at onboarding: ${laid.pieces} pieces, ${laid.flows} flows and ${laid.steps} steps, all proposed for the owner to confirm.`],
+        );
+      }
+      // their diagnostic interview, in writing, open from day one: when the owner submits it, the
+      // database closes the plan's "Diagnostic interview" step with what they answered
+      if (steps.some((s) => s.key === "diagnostic")) {
+        const book = playbookForIndustry(o.industry);
+        await c.query(
+          `insert into public.interview_sessions (org_id, business_id, channel, playbook_key, playbook_version, status)
+           values ($1, $2, 'form', $3, $4, 'open')`,
+          [orgId, businessId, book.key, book.version],
         );
       }
       await this.outbox(c, id, email);
