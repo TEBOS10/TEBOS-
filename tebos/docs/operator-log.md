@@ -21,6 +21,21 @@ Update this list every run; strike items when they're done.
 | 8 | Make the repo private, rotate database passwords, turn on leaked-password protection | Protecting the platform from copying |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 13 Oct 2026: yesterday's change finished going live
+
+- **What was broken:** the 12 Oct run merged #41 but stopped before its last two steps.
+  - Its database rule (`diagnostic_closes_delivery`) was not applied.
+  - The worker was still running the 10 Oct code, so new clients would not yet get their diagnostic opened.
+  - Nothing failed for anyone (there are no clients yet), but the change was not live.
+- **Fixed today:**
+  - Applied the migration with the database connector under its own name. Checked live: the trigger is enabled and
+    the delivery guard is updated.
+  - Reconnected the worker to `main`, which deployed #41.
+- **Lesson kept:** a run is not finished at "merged". It ends only after the migration and the deploy are
+  confirmed live, as OPERATOR.md already says. When a run is cut short, the next run finishes it first, as
+  today's did.
+- State otherwise: main is green; there are no enquiries, clients or open maintainer items; advisors are unchanged.
+
 ## 12 Oct 2026: a new client's diagnostic runs without the founder
 
 - State: nothing broken. The worker is healthy (last deploy SUCCESS), and main's checks are green. No enquiries,
