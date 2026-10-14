@@ -798,6 +798,27 @@ export interface Statement {
   createdAt: string;
 }
 
+/** The home screen's picture of a few businesses: each one's board and objective readings, in one round of reads. */
+export async function businessGlance(db: Db, businessIds: string[]) {
+  if (businessIds.length === 0) return [];
+  const [objectives, measurements, components, flows, steps] = await Promise.all([
+    db.from("objectives").select("*").in("business_id", businessIds).in("status", ["active", "achieved"]).order("created_at"),
+    db.from("objective_measurements").select("*").in("business_id", businessIds).order("measured_at", { ascending: false }).limit(500),
+    db.from("board_components").select("*").in("business_id", businessIds).is("retired_at", null).order("name"),
+    db.from("board_flows").select("*").in("business_id", businessIds).is("retired_at", null).order("created_at"),
+    db.from("board_steps").select("*").in("business_id", businessIds).is("retired_at", null).order("position"),
+  ]);
+  const [o, m, c, f, st] = [must(objectives), must(measurements), must(components), must(flows), must(steps)];
+  return businessIds.map((id) => ({
+    businessId: id,
+    objectives: o.filter((x) => x.business_id === id),
+    measurements: m.filter((x) => x.business_id === id),
+    components: c.filter((x) => x.business_id === id),
+    flows: f.filter((x) => x.business_id === id),
+    steps: st.filter((x) => x.business_id === id),
+  }));
+}
+
 export async function getBoard(db: Db, businessId: string) {
   const business = maybe(await db.from("businesses").select("*").eq("id", businessId).maybeSingle());
   if (!business) return null;
