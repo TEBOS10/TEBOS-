@@ -21,6 +21,30 @@ Update this list every run; strike items when they're done.
 | 8 | Make the repo private, rotate database passwords, turn on leaked-password protection | Protecting the platform from copying |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 15 Oct 2026: TEBOS installs on the phone
+
+- The founder asked for the app to be installable, the next step for the phone as the main control point.
+- **Now:**
+  - The TEBOS web app can be installed on a phone (Android: Chrome menu, "Install app" or "Add to Home screen";
+    iPhone: Share, "Add to Home Screen"). It opens full screen on **Ask TEBOS**, with shortcuts to Ask TEBOS and
+    Approvals and the TEBOS icon.
+  - Where the browser offers it, "Install TEBOS on this device" appears in the menu.
+- **Offline, honestly:**
+  - A small service worker steps in only when a page can't load, and shows "You're offline".
+  - It stores no data, only the icon, so nothing out of date can ever be shown as current. The test asserts what
+    is stored.
+  - Working offline with data is deliberately not offered.
+- **Proof:**
+  - e2e `pwa.spec`: manifest, icons, and the service worker controlling the page;
+  - **Chrome's own installability check returns no errors**, run in a normal profile because browsers never
+    install from private windows;
+  - offline shows the notice, and the page recovers when the connection returns;
+  - the production build carries the manifest link on every page copy.
+- **Not yet:** push notifications. They need web-push keys and an end-to-end test; until then nothing claims them.
+- **Checks:**
+  - web: typecheck, 49 unit tests, e2e 81 of 81;
+  - core: unchanged.
+
 ## 15 Oct 2026: one organisation per company and client (founder-approved)
 
 - **The founder approved** moving the businesses that shared "Tidy Enterprise" into an organisation each, through a

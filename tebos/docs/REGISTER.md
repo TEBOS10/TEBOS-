@@ -13,8 +13,8 @@ dependency) · **Not started**.
 |---|---|---|
 | Web app (public site, client app, staff workspace) | Done | 75 e2e tests pass; live on Vercel |
 | Usable at phone width | Partial | On phones the menu folds behind a Menu button (app and staff workspace). Phone-width e2e covers REEDS and the menu; other pages are untested at that width |
-| Installable (manifest and icons) | Not started | No manifest in `web/index.html` |
-| Offline and service worker | Not started | |
+| Installable (manifest and icons) | Done | `manifest.webmanifest` (opens on Ask TEBOS; shortcuts to Ask TEBOS and Approvals), 192, 512 and maskable icons. Chrome's own installability check returns no errors (e2e `pwa.spec`); "Install TEBOS on this device" appears in the menu when the browser offers it |
+| Offline and service worker | Done (by design, minimal) | `public/sw.js`: with no connection a page shows an honest offline notice. It stores no data, only the icon (asserted in e2e). Working offline with data is deliberately not offered: TEBOS shows live figures |
 | Push notifications | Not started | Needs VAPID keys (free) |
 | Founder inbox: requests, reports, approvals, alerts | Partial | **Ask TEBOS** (`/reeds`): ask, follow progress, read the checked report, cancel. Approvals and alerts are not in it yet |
 

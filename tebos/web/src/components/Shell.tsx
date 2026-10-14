@@ -1,10 +1,11 @@
-import { BookOpen, Briefcase, Building2, CheckSquare, Gauge, Home, ListChecks, LogOut, Megaphone, Menu, MessageSquare, PhoneCall, Plug, Receipt, ScanSearch, ShieldCheck, Sparkles, Stamp, Users } from "lucide-react";
+import { BookOpen, Briefcase, Building2, CheckSquare, Download, Gauge, Home, ListChecks, LogOut, Megaphone, Menu, MessageSquare, PhoneCall, Plug, Receipt, ScanSearch, ShieldCheck, Sparkles, Stamp, Users } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { DEMO_BUSINESS } from "../demo/data";
 import { exitDemo, isDemo } from "../demo/mode";
 import { Link, usePath } from "../lib/router";
 import { useOrg } from "../lib/session";
 import { useStaff } from "../lib/staff";
+import { useInstallPrompt } from "../lib/install";
 
 const NAV = [
   { to: "/", label: "Home", icon: Home, exact: true },
@@ -24,6 +25,7 @@ export function Shell({ children }: { children: ReactNode }) {
   const { organisation, organisations, switchOrganisation, role, db, session } = useOrg();
   // on a phone the menu folds away behind a button, and folds again after choosing a page
   const [menuOpen, setMenuOpen] = useState(false);
+  const install = useInstallPrompt();
   useEffect(() => setMenuOpen(false), [path]);
   // TEBOS's own staff also see the client pipeline and the sales playbook
   const { access } = useStaff();
@@ -78,6 +80,11 @@ export function Shell({ children }: { children: ReactNode }) {
             <Link to="/account" className="mono account-link" title="Your account and password">{session.user.email}</Link>
             <span className="role">{role.replace("_", " ")}</span>
           </div>
+          {install && (
+            <button type="button" className="btn btn-ghost-dark" onClick={install}>
+              <Download size={15} aria-hidden /> Install TEBOS on this device
+            </button>
+          )}
           <button className="btn btn-ghost-dark" onClick={() => (isDemo ? exitDemo() : db.auth.signOut())}>
             <LogOut size={15} aria-hidden /> {isDemo ? "Leave demo" : "Sign out"}
           </button>
