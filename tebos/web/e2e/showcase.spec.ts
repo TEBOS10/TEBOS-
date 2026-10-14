@@ -49,3 +49,15 @@ test("a card that runs today links to where it can be tried", async ({ page }) =
   await expect(player).toContainText("Runs in TEBOS today");
   await expect(player.getByRole("link")).toHaveAttribute("href", /^\/(systems|demo)?$/);
 });
+
+test("signed in, the app menu still leads to the showcase and the film", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await installFakeSupabase(page);
+  await page.goto("/");
+  await page.getByRole("button", { name: "Menu" }).click();
+  const see = page.getByRole("navigation", { name: "See TEBOS" });
+  await expect(see.getByRole("link", { name: "The film" })).toHaveAttribute("href", "/film");
+  await see.getByRole("link", { name: "Showcase" }).click();
+  await expect(page).toHaveURL(/\/showcase$/);
+  await expect(page.getByRole("heading", { name: "See it working, one problem at a time" })).toBeVisible();
+});

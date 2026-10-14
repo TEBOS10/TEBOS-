@@ -76,6 +76,7 @@ h1, h2, h3, p { margin: 0; }
 }
 .nav-link:hover { background: var(--night-2); color: #fff; text-decoration: none; }
 .nav-link.active { background: rgba(127, 178, 255, 0.1); color: var(--lime); }
+.nav-heading { padding: 0 12px 4px; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--night-muted); font-weight: 700; }
 .sidebar-foot { margin-top: auto; display: flex; flex-direction: column; gap: 10px; padding: 0 6px; }
 .org-name { font-weight: 700; }
 .org-select { background: var(--night-2); color: var(--night-text); border: 1px solid var(--night-line); border-radius: 8px; padding: 6px 8px; font: inherit; }
