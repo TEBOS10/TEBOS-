@@ -44,7 +44,8 @@ describe("company contract draft", () => {
 describe("sitemap", () => {
   it("lists every blog article", async () => {
     const { POSTS } = await import("./blog");
-    const xml = readFileSync(join(__dirname, "../../public/sitemap.xml"), "utf8");
+    // the sitemap is generated at build time from the list of public pages
+    const xml = (await import("./pages")).sitemapXml();
     for (const p of POSTS) expect(xml).toContain(`/blog/${p.slug}</loc>`);
   });
 });
