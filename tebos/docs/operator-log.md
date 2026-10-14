@@ -21,6 +21,23 @@ Update this list every run; strike items when they're done.
 | 8 | Make the repo private, rotate database passwords, turn on leaked-password protection | Protecting the platform from copying |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 14 Oct 2026 (later): platform audit for the REEDS × TEBOS directive
+
+- The founder issued the master build directive. Its order: audit, then orchestration, then Tidy Enterprise and Tidy
+  Capital as separate products, then the phone. The first milestone is one request taken from receipt to a
+  verified report without the founder.
+- **Audit:** [`audit/2026-10-14-platform-audit.md`](audit/2026-10-14-platform-audit.md). The living status is in
+  [`REGISTER.md`](REGISTER.md). In short:
+  - TEBOS's control plane, approvals, audit and worker are real and tested.
+  - REEDS has no code yet.
+  - Tidy Capital exists only as a database schema and a function created outside the repository. Its nightly
+    ingestion has been blocked since 3 Oct (no market-data key).
+  - The Tidy Enterprise property product doesn't exist yet.
+- **Corrected live:** two Tidy Capital providers were marked `connected` without real access: Alpha Vantage (no
+  key) and Vanguard (only a chat connector). Both are now `placeholder`, with the reason recorded.
+- **Next:** Phase 2, the request ledger. Request type 1 is "What needs my attention today?", answered from live
+  data and verified by an independent recount.
+
 ## 14 Oct 2026: every public page can be found and shared on its own
 
 - **State:** nothing broken. The worker is healthy (#41 deployed 13 Oct, SUCCESS), and main is green.
