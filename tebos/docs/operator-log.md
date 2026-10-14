@@ -40,7 +40,26 @@ Update this list every run; strike items when they're done.
   - **BAME** and **rocomamas.com** each move to a new organisation of their own.
   - A new, empty **Tidy Enterprise** is created for the property business.
   - The founder is admin of each.
-  - The counts before and after are recorded here once the move is done.
+- **Done live, 14 Oct, 21:20 UTC:**
+  - Migration `move_business` applied with the connector.
+  - "Tidy Enterprise" renamed **TEBOS** (slug `tebos`). New organisations: **BAME** (`bame`), **rocomamas.com**
+    (`rocomamas`) and **Tidy Enterprise** (`tidy-enterprise`, empty, for the property business). The founder is
+    org admin of all four.
+  - Moved, matching the counts taken beforehand exactly:
+
+    | Business | Evidence | Sources | Scans (targets) | Runs (tool calls) | Objectives (measurements) | Board | Connection and credential |
+    |---|---|---|---|---|---|---|---|
+    | rocomamas.com | 104 | 7 | 1 (7) | 4 (11) | 0 | 0 | none |
+    | BAME | 279 | 4 | 0 | 57 (57) | 6 (8) | 41 | 1 and 1 |
+
+  - Checked afterwards:
+    - no record of any business sits outside its business's organisation;
+    - TEBOS is untouched (194 evidence, 223 runs, its company connection);
+    - both connections still read connected;
+    - a direct attempt to change a business's organisation was still refused live.
+  - BAME's hourly reading takes its organisation from its connection, so new readings land in BAME's
+    organisation.
+  - Audit history from before the move stays under TEBOS's organisation, as written.
 
 ## 14 Oct 2026 (night): REEDS takes its first request end to end
 
