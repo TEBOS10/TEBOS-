@@ -39,7 +39,7 @@ dependency) · **Not started**.
 | Capability registry with risk tiers | Done | 11 capabilities |
 | Reasoning provider interface (pause, retry, fault reporting) | Partial | One provider (Anthropic); key rejected |
 | Database guard against data loss | Done | Live and probed |
-| One organisation per company and client | Not started | TEBOS, BAME and rocomamas.com share "Tidy Enterprise"; the move needs an approved migration |
+| One organisation per company and client | Partial | Founder approved 14 Oct. Migration `move_business` adds the one sanctioned, server-only way to move a business (SQL test `99zc`); the live move is recorded in the operator log |
 
 ## Layer D: executors and integrations
 

@@ -21,6 +21,27 @@ Update this list every run; strike items when they're done.
 | 8 | Make the repo private, rotate database passwords, turn on leaked-password protection | Protecting the platform from copying |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 15 Oct 2026: one organisation per company and client (founder-approved)
+
+- **The founder approved** moving the businesses that shared "Tidy Enterprise" into an organisation each, through a
+  narrow exception to the rule that records never change organisation.
+- **The exception** (migration `move_business`):
+  - `tebos_private.move_business(business, organisation)` moves one business and everything that belongs to it
+    in one statement: sources, scans, evidence, runs, tool calls, connections and credentials, findings, actions,
+    objectives, measurements and the board.
+  - Only TEBOS's server can call it; a signed-in person or the API cannot.
+  - While it runs, the guards accept only an update that changes nothing but the organisation, for that business,
+    from its organisation to the named one. Everything else is refused as before.
+  - A client's business (one with a contract) can't be moved.
+  - Audit history stays where it was written.
+  - SQL test `99zc` proves all of this, including that setting the move's markers by hand opens nothing.
+- **The plan for the live move:**
+  - "Tidy Enterprise" becomes **TEBOS**: TEBOS's company records already live there.
+  - **BAME** and **rocomamas.com** each move to a new organisation of their own.
+  - A new, empty **Tidy Enterprise** is created for the property business.
+  - The founder is admin of each.
+  - The counts before and after are recorded here once the move is done.
+
 ## 14 Oct 2026 (night): REEDS takes its first request end to end
 
 - **Phase 2 of the directive.** A person can now ask TEBOS for something and get a verified answer, without
