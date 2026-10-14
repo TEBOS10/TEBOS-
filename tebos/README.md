@@ -454,6 +454,29 @@ enquiry is marked notified only when Resend accepts it, with Resend's message id
 (`notify_reference`). Failures are recorded in `notify_error` and retried up to 5 times, 5 minutes apart.
 The public can't write any of these columns.
 
+## REEDS: requests to TEBOS (migration `work_requests`)
+
+Ask TEBOS for something from the app (**Ask TEBOS**, `/reeds`, built for a phone). The worker plans it into tasks,
+runs each one, verifies each result independently, and reports back. The design is in
+[ADR 0004](docs/adr/0004-reeds-request-ledger.md).
+
+- **Who can ask:** admins and operators of an organisation, for that organisation. Members read its requests. The
+  server, agents and tasks can never create a request, so work can't spawn more work.
+- **Request types:** `attention_today` ("What needs my attention today?"):
+  - for the organisation: pending approvals, automated runs that failed in the last 24 hours, overdue delivery
+    steps, and open maintainer items;
+  - for platform admins, also: leads to decide, enquiries in the last 7 days, failed client emails, and Tidy
+    Capital's latest data update.
+- **Verified, or not reported:**
+  - Each task has an acceptance test and a separately written verifier (`src/reeds/checks.ts`). For counts, the
+    verifier recounts and re-tests every listed record.
+  - The database refuses `completed` until every task is verified (`TEBOS_WORK_UNVERIFIED`).
+  - A check that can't run is reported as "couldn't check", never as zero.
+- **Bounded:**
+  - at most 12 tasks per request (25 at most);
+  - 3 attempts per task (5 at most), counted by the database;
+  - failures end the request as `failed`, naming the task and the reason.
+
 ## Deploying on Railway
 
 The worker (acquisition, intelligence and execution) deploys as one Railway service from this repository.

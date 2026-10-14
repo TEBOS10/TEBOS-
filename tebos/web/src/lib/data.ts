@@ -1352,3 +1352,31 @@ export async function createContentDraft(db: Db, d: { channel: string; title: st
 export async function updateContentDraft(db: Db, id: string, patch: { title?: string | null; body?: string; status?: string; review_note?: string | null; published_url?: string }) {
   return must(await db.from("content_drafts").update(patch).eq("id", id).select().single());
 }
+
+// ---------------------------------------------------------------------------
+// REEDS: requests to TEBOS. A person asks; TEBOS plans, runs, verifies and
+// reports. The interface can only ask and cancel: the database lets nothing
+// else through, and a request is complete only when every task is verified.
+// ---------------------------------------------------------------------------
+
+export type WorkRequest = Row<"work_requests">;
+export type WorkTask = Row<"work_tasks">;
+
+export async function listWorkRequests(db: Db, orgId: string) {
+  return must(await db.from("work_requests").select("*").eq("org_id", orgId).order("created_at", { ascending: false }).limit(30));
+}
+
+export async function getWorkRequest(db: Db, id: string) {
+  const request = maybe(await db.from("work_requests").select("*").eq("id", id).maybeSingle());
+  if (!request) return null;
+  const tasks = must(await db.from("work_tasks").select("*").eq("request_id", id).order("position"));
+  return { request, tasks };
+}
+
+export async function askWorkRequest(db: Db, orgId: string, kind: string, note: string | null) {
+  return must(await db.from("work_requests").insert({ org_id: orgId, kind, note, status: "received" }).select().single());
+}
+
+export async function cancelWorkRequest(db: Db, id: string) {
+  return must(await db.from("work_requests").update({ status: "cancelled" }).eq("id", id).select().single());
+}

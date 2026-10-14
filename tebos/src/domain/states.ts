@@ -195,6 +195,34 @@ export const invoiceMachine = machine({
   },
 });
 
+// REEDS: a request is asked, planned, run, verified and only then completed.
+export const workRequestMachine = machine({
+  initial: ["received"],
+  transitions: {
+    received: ["planned", "failed", "cancelled"],
+    planned: ["running", "cancelled"],
+    running: ["verifying", "failed", "cancelled"],
+    verifying: ["completed", "failed"],
+    completed: [],
+    failed: [],
+    cancelled: [],
+  },
+});
+
+// A task is run (retried within its attempts), then checked: verified or rejected.
+export const workTaskMachine = machine({
+  initial: ["queued"],
+  transitions: {
+    queued: ["running", "cancelled"],
+    running: ["queued", "done", "failed"],
+    done: ["verified", "rejected"],
+    verified: [],
+    rejected: [],
+    failed: [],
+    cancelled: [],
+  },
+});
+
 export const MACHINES = {
   scan: scanMachine,
   scan_target: scanTargetMachine,
@@ -210,6 +238,8 @@ export const MACHINES = {
   opportunity: opportunityMachine,
   billing: billingMachine,
   invoice: invoiceMachine,
+  work_request: workRequestMachine,
+  work_task: workTaskMachine,
 } as const;
 
 export type MachineName = keyof typeof MACHINES;
@@ -226,6 +256,8 @@ export type InvitationStatus = StatesOf<typeof invitationMachine>;
 export type InterviewStatus = StatesOf<typeof interviewMachine>;
 export type ObjectiveStatus = StatesOf<typeof objectiveMachine>;
 export type OpportunityStatus = StatesOf<typeof opportunityMachine>;
+export type WorkRequestStatus = StatesOf<typeof workRequestMachine>;
+export type WorkTaskStatus = StatesOf<typeof workTaskMachine>;
 
 export function canTransition<M extends MachineName>(
   name: M,

@@ -1,8 +1,8 @@
 // The workspace for TEBOS's staff who aren't members of any organisation
 // (salespeople, and maintainers before their first client): the pipeline and
 // the playbook, and nothing of any client's.
-import { BookOpen, Briefcase, ListChecks, LogOut, Megaphone, PhoneCall, Receipt, ShieldCheck, Users } from "lucide-react";
-import type { ReactNode } from "react";
+import { BookOpen, Briefcase, ListChecks, LogOut, Megaphone, Menu, PhoneCall, Receipt, ShieldCheck, Users } from "lucide-react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Link, usePath } from "../lib/router";
 import { useSignedIn } from "../lib/session";
 import { useStaff } from "../lib/staff";
@@ -11,6 +11,8 @@ export function StaffShell({ children }: { children: ReactNode }) {
   const path = usePath();
   const { db, session } = useSignedIn();
   const { access } = useStaff();
+  const [menuOpen, setMenuOpen] = useState(false);
+  useEffect(() => setMenuOpen(false), [path]);
   const pipeline = access?.sales || access?.maintainer;
   const nav = [
     ...(pipeline ? [{ to: "/pipeline", label: "Pipeline", icon: Briefcase }, { to: "/sales", label: "Sales playbook", icon: BookOpen }] : []),
@@ -23,15 +25,18 @@ export function StaffShell({ children }: { children: ReactNode }) {
   const roles = [access?.admin && "admin", access?.sales && "sales", access?.maintainer && "maintainer", access?.marketing && !access?.admin && "marketing"].filter(Boolean);
   return (
     <div className="shell">
-      <aside className="sidebar no-print">
+      <aside className={`sidebar no-print ${menuOpen ? "open" : ""}`}>
         <div className="brand">
           <span className="brand-mark" aria-hidden><ShieldCheck size={18} /></span>
           <div>
             <div className="brand-name">TEBOS</div>
             <div className="brand-sub">Staff workspace</div>
           </div>
+          <button type="button" className="menu-toggle" aria-expanded={menuOpen} aria-controls="main-nav" onClick={() => setMenuOpen(!menuOpen)}>
+            <Menu size={18} aria-hidden /> Menu
+          </button>
         </div>
-        <nav className="nav" aria-label="Main">
+        <nav className="nav" id="main-nav" aria-label="Main">
           {nav.map(({ to, label, icon: Icon }) => {
             const active = to === "/marketing" ? path === to : to === "/pipeline" ? path === to || (path.startsWith("/pipeline/") && !/^\/pipeline\/(team|queue|billing)/.test(path)) : path === to || path.startsWith(`${to}/`);
             return (
