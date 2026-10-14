@@ -28,6 +28,8 @@
 //   maintenance   — hourly per client, the maintainer's queue from their live records:
 //                   objectives slipping or unmeasured, connections broken, findings and
 //                   approvals waiting (raised, refreshed and resolved automatically)
+//   reeds         — a person's request: planned into tasks, each run, verified independently,
+//                   and reported only when every task passed (src/reeds)
 // When PORT is set (Railway sets it), an HTTP server also receives provider
 // webhooks at /webhooks/resend/<connection id> and /webhooks/paystack, and
 // answers /health.
@@ -68,6 +70,8 @@ import { PgBillingStore } from "./billing/pg-store";
 import { BillingWorker } from "./billing/worker";
 import { PgMaintenanceStore } from "./maintenance/pg-store";
 import { MaintenanceWorker } from "./maintenance/worker";
+import { PgWorkStore } from "./reeds/pg-store";
+import { WorkWorker } from "./reeds/worker";
 
 const url = process.env.TEBOS_DATABASE_URL;
 if (!url) {
@@ -154,6 +158,7 @@ const billing = new BillingWorker(new PgBillingStore(pool, `billing-worker:${wor
   siteUrl: (process.env.TEBOS_SITE_URL || "https://tebos-demo.vercel.app").replace(/\/+$/, ""),
 }, log);
 const maintenance = new MaintenanceWorker(new PgMaintenanceStore(pool, `maintenance-worker:${workerId}`), log);
+const reeds = new WorkWorker(new PgWorkStore(pool, `reeds-worker:${workerId}`), log);
 
 const port = process.env.PORT ? Number(process.env.PORT) : null;
 const server = port ? createWebhookServer(executionStore, log, paystackKey ? { paystack: { secretKey: paystackKey, store: pipelineStore } } : {}) : null;
@@ -195,7 +200,8 @@ while (!stopping) {
   const piped = !stopping ? await step("pipeline", () => pipeline.runOnce()) : false;
   const billed = !stopping ? await step("billing", () => billing.runOnce()) : false;
   const maintained = !stopping ? await step("maintenance", () => maintenance.runOnce()) : false;
-  if (!acquired && !analysed && !executed && !interviewed && !intook && !monitored && !alerted && !piped && !billed && !maintained && !stopping) await new Promise((r) => setTimeout(r, pollMs));
+  const answered = !stopping ? await step("reeds", () => reeds.runOnce()) : false;
+  if (!acquired && !analysed && !executed && !interviewed && !intook && !monitored && !alerted && !piped && !billed && !maintained && !answered && !stopping) await new Promise((r) => setTimeout(r, pollMs));
 }
 await new Promise<void>((r) => (server ? server.close(() => r()) : r()));
 await pool.end();

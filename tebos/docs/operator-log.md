@@ -21,6 +21,30 @@ Update this list every run; strike items when they're done.
 | 8 | Make the repo private, rotate database passwords, turn on leaked-password protection | Protecting the platform from copying |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 14 Oct 2026 (night): REEDS takes its first request end to end
+
+- **Phase 2 of the directive.** A person can now ask TEBOS for something and get a verified answer, without
+  anyone managing the steps. This is the first milestone: one legitimate request, done, checked and reported.
+  - **Ask TEBOS** (`/reeds`): ask "What needs my attention today?" from a phone or a desktop, watch it go through
+    Asked, Planned, Done and checked, and Reported, then read the report and how each figure was checked.
+  - **The ledger** (migration `work_requests`, ADR 0004): requests and tasks with their own state machines. The
+    database refuses to mark a request complete until every task has passed its independent check. Only a person
+    can ask, so work can't spawn work. Tasks and attempts are capped.
+  - **The worker** plans, runs, verifies and reports, one step per cycle, alongside the other workers.
+  - **Proof:**
+    - SQL test `99zb`: who can ask, the limits, no false completion, isolation;
+    - integration test `reeds-pg`: a real request completes with figures matching a recount; another organisation's
+      records never appear; a failing executor is retried three times, then fails; an inflated figure is rejected
+      and never reported;
+    - e2e at phone width: asking, the report, the failure view, a viewer can read but not ask.
+  - **Caught by the tests:** three verifier queries were refused by the database. The request failed honestly
+    instead of reporting. Fixed, and a unit test now checks every query's parameters.
+- **Phones:** the menu used to fill the first screen of every page on a phone. It now folds behind a Menu button,
+  in the app and in the staff workspace.
+- **Checks:**
+  - core: typecheck, 265 unit tests, database and integration tests;
+  - web: typecheck, 49 unit tests, e2e 79 of 79.
+
 ## 14 Oct 2026 (later): platform audit for the REEDS × TEBOS directive
 
 - The founder issued the master build directive. Its order: audit, then orchestration, then Tidy Enterprise and Tidy

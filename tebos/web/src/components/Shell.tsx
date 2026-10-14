@@ -1,5 +1,5 @@
-import { BookOpen, Briefcase, Building2, CheckSquare, Gauge, Home, ListChecks, LogOut, Megaphone, PhoneCall, Plug, Receipt, ScanSearch, ShieldCheck, Sparkles, Stamp, Users } from "lucide-react";
-import type { ReactNode } from "react";
+import { BookOpen, Briefcase, Building2, CheckSquare, Gauge, Home, ListChecks, LogOut, Megaphone, Menu, MessageSquare, PhoneCall, Plug, Receipt, ScanSearch, ShieldCheck, Sparkles, Stamp, Users } from "lucide-react";
+import { useEffect, useState, type ReactNode } from "react";
 import { DEMO_BUSINESS } from "../demo/data";
 import { exitDemo, isDemo } from "../demo/mode";
 import { Link, usePath } from "../lib/router";
@@ -8,6 +8,7 @@ import { useStaff } from "../lib/staff";
 
 const NAV = [
   { to: "/", label: "Home", icon: Home, exact: true },
+  { to: "/reeds", label: "Ask TEBOS", icon: MessageSquare },
   { to: "/businesses", label: "Businesses", icon: Building2 },
   { to: "/scans", label: "Scans", icon: ScanSearch },
   { to: "/findings", label: "Findings", icon: Sparkles },
@@ -21,6 +22,9 @@ const NAV = [
 export function Shell({ children }: { children: ReactNode }) {
   const path = usePath();
   const { organisation, organisations, switchOrganisation, role, db, session } = useOrg();
+  // on a phone the menu folds away behind a button, and folds again after choosing a page
+  const [menuOpen, setMenuOpen] = useState(false);
+  useEffect(() => setMenuOpen(false), [path]);
   // TEBOS's own staff also see the client pipeline and the sales playbook
   const { access } = useStaff();
   const pipeline = access?.sales || access?.maintainer;
@@ -35,7 +39,7 @@ export function Shell({ children }: { children: ReactNode }) {
     : NAV;
   return (
     <div className="shell">
-      <aside className="sidebar no-print">
+      <aside className={`sidebar no-print ${menuOpen ? "open" : ""}`}>
         <div className="brand">
           <span className="brand-mark" aria-hidden>
             <ShieldCheck size={18} />
@@ -44,8 +48,11 @@ export function Shell({ children }: { children: ReactNode }) {
             <div className="brand-name">TEBOS</div>
             <div className="brand-sub">Business Operating Systems</div>
           </div>
+          <button type="button" className="menu-toggle" aria-expanded={menuOpen} aria-controls="main-nav" onClick={() => setMenuOpen(!menuOpen)}>
+            <Menu size={18} aria-hidden /> Menu
+          </button>
         </div>
-        <nav className="nav" aria-label="Main">
+        <nav className="nav" id="main-nav" aria-label="Main">
           {nav.map(({ to, label, icon: Icon, exact }) => {
             const active = exact ? path === to : path === to || path.startsWith(`${to}/`);
             return (

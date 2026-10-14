@@ -10,6 +10,7 @@ export const STATUS_TONE: Record<string, Tone> = {
   cancelled: "neutral", dismissed: "neutral", superseded: "neutral", consumed: "neutral", revoked: "neutral", disabled: "neutral",
   interpretation: "info", hypothesis: "warn",
   achieved: "good", missed: "bad", retired: "neutral",
+  received: "info", planned: "info", verifying: "info", done: "info",
 };
 
 export const statusLabel = (s: string) => s.replace(/_/g, " ");

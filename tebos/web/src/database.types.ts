@@ -990,6 +990,120 @@ export type Database = {
         }
         Relationships: []
       }
+      work_requests: {
+        Row: {
+          id: string
+          org_id: string
+          kind: string
+          note: string | null
+          status: string
+          requested_by: string
+          max_tasks: number
+          report: Json | null
+          failure_detail: string | null
+          planned_at: string | null
+          finished_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id?: string
+          kind?: string
+          note?: string | null
+          status?: string
+          requested_by?: string
+          max_tasks?: number
+          report?: Json | null
+          failure_detail?: string | null
+          planned_at?: string | null
+          finished_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          kind?: string
+          note?: string | null
+          status?: string
+          requested_by?: string
+          max_tasks?: number
+          report?: Json | null
+          failure_detail?: string | null
+          planned_at?: string | null
+          finished_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      work_tasks: {
+        Row: {
+          id: string
+          request_id: string
+          org_id: string
+          position: number
+          key: string
+          title: string
+          executor: string
+          acceptance: string
+          input: Json
+          status: string
+          attempts: number
+          max_attempts: number
+          result: Json | null
+          verification: Json | null
+          error: string | null
+          started_at: string | null
+          finished_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          request_id?: string
+          org_id?: string
+          position?: number
+          key?: string
+          title?: string
+          executor?: string
+          acceptance?: string
+          input?: Json
+          status?: string
+          attempts?: number
+          max_attempts?: number
+          result?: Json | null
+          verification?: Json | null
+          error?: string | null
+          started_at?: string | null
+          finished_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          request_id?: string
+          org_id?: string
+          position?: number
+          key?: string
+          title?: string
+          executor?: string
+          acceptance?: string
+          input?: Json
+          status?: string
+          attempts?: number
+          max_attempts?: number
+          result?: Json | null
+          verification?: Json | null
+          error?: string | null
+          started_at?: string | null
+          finished_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       contract_templates: {
         Row: {
           key: string

@@ -42,6 +42,7 @@ const MESSAGES: Record<RuleCode, string> = {
   TEBOS_CONTRACT_UNAPPROVED: "Contracts can only be sent from a template a lawyer has approved. Approve the template first.",
   TEBOS_RATE_LIMITED: "Too many submissions from here in the last hour. Please try again later.",
   TEBOS_DESTRUCTIVE_BLOCKED: "TEBOS refused this change because it would delete recorded data. Only the founder can approve that.",
+  TEBOS_WORK_UNVERIFIED: "This request can't be marked complete: not every part of it has been checked yet.",
   TEBOS_EVIDENCE_REQUIRED: "To mark this as observed, link evidence that was actually obtained. Otherwise record it as stated.",
 };
 

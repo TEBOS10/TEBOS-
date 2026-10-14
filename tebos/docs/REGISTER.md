@@ -12,21 +12,21 @@ dependency) · **Not started**.
 | Piece | Status | Evidence or blocker |
 |---|---|---|
 | Web app (public site, client app, staff workspace) | Done | 75 e2e tests pass; live on Vercel |
-| Usable at phone width | Partial | Layouts are responsive; only the showcase has a phone-width test |
+| Usable at phone width | Partial | On phones the menu folds behind a Menu button (app and staff workspace). Phone-width e2e covers REEDS and the menu; other pages are untested at that width |
 | Installable (manifest and icons) | Not started | No manifest in `web/index.html` |
 | Offline and service worker | Not started | |
 | Push notifications | Not started | Needs VAPID keys (free) |
-| Founder inbox: requests, reports, approvals, alerts | Not started | Phase 2 |
+| Founder inbox: requests, reports, approvals, alerts | Partial | **Ask TEBOS** (`/reeds`): ask, follow progress, read the checked report, cancel. Approvals and alerts are not in it yet |
 
 ## Layer B: REEDS (request ledger and orchestration)
 
 | Piece | Status | Evidence or blocker |
 |---|---|---|
-| Request ledger (request → plan → tasks → evidence → verified report) | Not started | Phase 2, first item |
-| Planner: deterministic request types | Not started | Request type 1: "What needs my attention today?" |
+| Request ledger (request → plan → tasks → evidence → verified report) | Done | Migration `work_requests`; SQL test `99zb`; integration test `reeds-pg` (happy path, isolation, retries, a tampered result rejected); ADR 0004 |
+| Planner: deterministic request types | Partial | One type: "What needs my attention today?" (4 organisation checks; 8 for platform admins). Business status is next |
 | Planner: free-text requests through a model | Blocked | AI key not workspace-scoped (decision 2b) |
-| Independent verifier (recomputation) | Not started | |
-| Limits: tasks per request, attempts, no recursive delegation, cost ceiling | Not started | |
+| Independent verifier (recomputation) | Done | `src/reeds/checks.ts`: separately written recount and per-record re-test, at a fixed `as_of` |
+| Limits: tasks per request, attempts, no recursive delegation, cost ceiling | Partial | Task, attempt and no-recursion limits are enforced by the database. A cost ceiling is needed once model tasks exist (deterministic tasks cost nothing) |
 | Conversational assistant on the phone | Partial | Today this is a Claude Code session opened from the Claude Android app, recorded only in the session, not in TEBOS |
 
 ## Layer C: TEBOS control plane
