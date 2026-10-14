@@ -69,5 +69,5 @@ export function sitemapXml(): string {
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`;
 }
 
-/** Where the built copy for a page goes, relative to the build folder (served without ".html": cleanUrls). */
+/** Where the built copy for a page goes, relative to the build folder. vercel.json rewrites each page's address to it. */
 export const pageFile = (path: string) => (path === "/" ? "index.html" : `${path.slice(1)}.html`);

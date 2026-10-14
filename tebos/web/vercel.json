@@ -1,8 +1,92 @@
 {
-  "cleanUrls": true,
   "headers": [
-    { "source": "/sw.js", "headers": [{ "key": "Cache-Control", "value": "no-cache" }, { "key": "Service-Worker-Allowed", "value": "/" }] },
-    { "source": "/manifest.webmanifest", "headers": [{ "key": "Content-Type", "value": "application/manifest+json" }] }
+    {
+      "source": "/sw.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache"
+        },
+        {
+          "key": "Service-Worker-Allowed",
+          "value": "/"
+        }
+      ]
+    },
+    {
+      "source": "/manifest.webmanifest",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/manifest+json"
+        }
+      ]
+    }
   ],
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "rewrites": [
+    {
+      "source": "/showcase",
+      "destination": "/showcase.html"
+    },
+    {
+      "source": "/systems",
+      "destination": "/systems.html"
+    },
+    {
+      "source": "/self-check",
+      "destination": "/self-check.html"
+    },
+    {
+      "source": "/demo",
+      "destination": "/demo.html"
+    },
+    {
+      "source": "/tour",
+      "destination": "/tour.html"
+    },
+    {
+      "source": "/film",
+      "destination": "/film.html"
+    },
+    {
+      "source": "/pricing",
+      "destination": "/pricing.html"
+    },
+    {
+      "source": "/waitlist",
+      "destination": "/waitlist.html"
+    },
+    {
+      "source": "/blog",
+      "destination": "/blog.html"
+    },
+    {
+      "source": "/privacy",
+      "destination": "/privacy.html"
+    },
+    {
+      "source": "/terms",
+      "destination": "/terms.html"
+    },
+    {
+      "source": "/blog/the-founder-is-the-middleware",
+      "destination": "/blog/the-founder-is-the-middleware.html"
+    },
+    {
+      "source": "/blog/map-your-business-like-a-chessboard",
+      "destination": "/blog/map-your-business-like-a-chessboard.html"
+    },
+    {
+      "source": "/blog/why-we-dont-promise-results",
+      "destination": "/blog/why-we-dont-promise-results.html"
+    },
+    {
+      "source": "/blog/before-you-buy-another-tool",
+      "destination": "/blog/before-you-buy-another-tool.html"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
 }

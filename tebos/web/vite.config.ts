@@ -7,7 +7,7 @@ import { PUBLIC_PAGES, pageFile, pageHtml, sitemapXml } from "./src/lib/pages";
 
 // After the build: a copy of index.html per public page with its own title,
 // description and link-preview tags, and the sitemap from the same list.
-// The host serves a page's copy before falling back to the app (vercel.json).
+// vercel.json rewrites each page's address to its copy, and everything else to the app.
 function publicPages(): Plugin {
   let outDir = "dist";
   return {
