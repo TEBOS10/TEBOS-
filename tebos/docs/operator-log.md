@@ -21,6 +21,30 @@ Update this list every run; strike items when they're done.
 | 8 | Make the repo private, rotate database passwords, turn on leaked-password protection | Protecting the platform from copying |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 14 Oct 2026: every public page can be found and shared on its own
+
+- **State:** nothing broken. The worker is healthy (#41 deployed 13 Oct, SUCCESS), and main is green.
+  - The live signal: the site has had **no enquiries and no self-checks yet**.
+  - Bringing people to the site is outward-facing, so it is the founder's (the social pack and the outreach drafts
+    wait on decisions 5 and 6).
+  - Within the loop's reach: make sure that when the site is found or shared, it presents itself properly.
+- **What was wrong:** the site is one page that changes after it loads. Search engines and link previews
+  (WhatsApp, LinkedIn, X) therefore saw the home page's title and text for every address: a shared self-check or
+  showcase link previewed as the home page. The hand-written sitemap was also missing `/showcase` and `/film`.
+- **Now:**
+  - One list of public pages (`web/src/lib/pages.ts`) gives each page and each article its own title and
+    description.
+  - The build writes a copy of the page per address carrying them, with its canonical address and preview tags.
+    The host serves that copy, then the app takes over as before (`cleanUrls` in `vercel.json`).
+  - The sitemap is generated from the same list.
+  - A test fails if a public route in the app is missing from the list, or if a title or description quotes a price,
+    a percentage, a case study or a supplier.
+- No database or worker change.
+- **Checks:**
+  - typecheck;
+  - unit tests (web 49, core 259) and database tests;
+  - e2e 75 of 75.
+
 ## 13 Oct 2026: yesterday's change finished going live
 
 - **What was broken:** the 12 Oct run merged #41 but stopped before its last two steps.
