@@ -40,6 +40,17 @@ describe("public pages", () => {
     expect(pageFile("/blog/a-post")).toBe("blog/a-post.html");
   });
 
+  it("routes every public page to its copy, and every other address to the app", () => {
+    // cleanUrls must stay off: with it on, the host refused the fallback to the app and every
+    // app address (/sign-in, /reeds, ...) answered "not found" (15 Oct 2026)
+    const config = JSON.parse(read("../../vercel.json")) as { cleanUrls?: boolean; rewrites: Array<{ source: string; destination: string }> };
+    expect(config.cleanUrls).toBeUndefined();
+    const fallback = config.rewrites.at(-1);
+    expect(fallback).toEqual({ source: "/(.*)", destination: "/index.html" });
+    const pages = PUBLIC_PAGES.filter((p) => p.path !== "/").map((p) => ({ source: p.path, destination: `/${pageFile(p.path)}` }));
+    expect(config.rewrites.slice(0, -1)).toEqual(pages);
+  });
+
   it("builds the sitemap from the same list, without private links", () => {
     const xml = sitemapXml();
     for (const p of PUBLIC_PAGES) expect(xml).toContain(`<loc>${SITE_URL}${p.path}</loc>`);

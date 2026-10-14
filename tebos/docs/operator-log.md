@@ -21,6 +21,22 @@ Update this list every run; strike items when they're done.
 | 8 | Make the repo private, rotate database passwords, turn on leaked-password protection | Protecting the platform from copying |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 15 Oct 2026 (night): the site answered "not found" for every app page; fixed
+
+- **What broke:** the founder signed in on the phone and got the host's "404: this page doesn't exist" at
+  `/sign-in`.
+  - The cause was mine, from 14 Oct (#43, per-page share previews). It switched on `cleanUrls` in `vercel.json`.
+  - With it on, the host no longer honoured the fallback that sends every other address (`/sign-in`, `/reeds`,
+    `/approvals`, ...) to the app, so those addresses answered 404.
+  - My tests run against the development server, which doesn't apply `vercel.json`, so they couldn't catch it.
+- **Fixed:**
+  - `cleanUrls` is off.
+  - `vercel.json` now lists each public page's address explicitly, mapped to its built copy, then the fallback to
+    the app. This is the same fallback that worked before 14 Oct.
+- **Kept from breaking again:** a test now fails if `cleanUrls` returns, if the fallback isn't last, or if any
+  public page lacks its rule.
+- **Not yet verified live:** this workspace can't reach the live site. The founder confirms by signing in again.
+
 ## 15 Oct 2026: TEBOS installs on the phone
 
 - The founder asked for the app to be installable, the next step for the phone as the main control point.
