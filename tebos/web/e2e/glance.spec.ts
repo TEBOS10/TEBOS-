@@ -5,6 +5,14 @@ import { seedBoard } from "./board-seed";
 // The home screen pictures each business from its own records: the 3D board,
 // a gauge per objective and a trend line of its readings.
 
+// Headless Chromium only offers WebGL through its software renderer, so it is switched on for this file (as in world.spec)
+test.use({
+  launchOptions: {
+    ...(process.env.PLAYWRIGHT_CHROMIUM ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM } : {}),
+    args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"],
+  },
+});
+
 test("home shows each business as its 3D board with gauges from its measured readings", async ({ page }) => {
   test.setTimeout(60_000);
   const errors: string[] = [];
@@ -14,7 +22,7 @@ test("home shows each business as its 3D board with gauges from its measured rea
   await page.goto("/?force3d");
   const card = page.getByTestId("business-glance").getByRole("article").first();
   // the same 3D chessboard as the board page, open on the first business
-  await expect(card.getByTestId("board-3d").locator("canvas")).toHaveCount(1, { timeout: 20_000 });
+  await expect(card.getByTestId("board-3d").locator("canvas")).toHaveCount(1, { timeout: 30_000 });
   await expect(card.getByText("1 founder-only steps")).toBeVisible();
   // 26 of 40 measured: 65%, with a trend line through both readings
   await expect(card.getByRole("img", { name: "Orders a month: 65% of the way to the target" })).toBeVisible();
