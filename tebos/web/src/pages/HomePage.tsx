@@ -1,5 +1,6 @@
 import { Activity, Building2, CheckSquare, Eye, FileSearch, Plug, ScanSearch, Stamp } from "lucide-react";
 import { useState, type FormEvent } from "react";
+import { BusinessGlance } from "../components/BusinessGlance";
 import { ScanRow } from "../components/ScanRow";
 import { Card, Empty, ErrorNote, Loading } from "../components/ui";
 import { DeliveryStep } from "../components/DeliveryPlan";
@@ -23,6 +24,7 @@ export function HomePage() {
       {org.can("scan.run") ? <ScanBox /> : <ViewerHero />}
       {summary.loading && !summary.data && <Loading />}
       <ErrorNote error={summary.error} title="Couldn't load the command centre" />
+      {summary.data && <BusinessGlance businesses={summary.data.businesses} total={summary.data.businessCount} />}
       <ClientDelivery />
       <ClientInvoices />
       {summary.data && <Overview data={summary.data} />}

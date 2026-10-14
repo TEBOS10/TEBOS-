@@ -712,3 +712,37 @@ table.table { width: 100%; border-collapse: collapse; }
 .reeds-stages li { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; font-size: 13px; background: var(--neutral-bg); color: var(--neutral-fg); }
 .reeds-stages li[data-reached="true"] { background: var(--good-bg); color: var(--good-fg); font-weight: 600; }
 [data-testid="reeds-report"] li[data-attention="true"] .list-title { color: var(--warn-fg); }
+
+/* Home: the businesses at a glance. Dark like the hero and the 3D board's stage; the board itself is ClientBoardView, unchanged. */
+.glance { background: var(--green); color: var(--night-text); border-radius: 22px; padding: 22px 24px; display: grid; gap: 16px; }
+.glance-head .eyebrow { color: #a3b4cc; margin: 0; }
+.glance-note { font-size: 12.5px; color: var(--night-muted); max-width: 720px; }
+.glance-card { background: var(--night-2); border: 1px solid var(--night-line); border-radius: 18px; padding: 16px; display: grid; gap: 12px; }
+.glance-title { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.glance-title h2 { font-size: 20px; font-weight: 800; color: #fff; }
+.glance-link, .glance-more { color: var(--lime); font-weight: 700; font-size: 13px; }
+.glance-facts { list-style: none; display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; color: var(--night-muted); padding: 0; margin: 0; }
+.glance-facts strong { color: #fff; }
+.glance-facts .warn strong { color: #f3b64b; }
+.glance-board { display: grid; gap: 10px; }
+.glance-board .cb-legend, .glance-board .cb-chip-count { color: var(--night-muted); }
+.glance-toggle { justify-self: start; padding: 6px 12px; border-radius: 10px; border: 1px solid var(--night-line); background: transparent; color: var(--night-text); font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; }
+.glance-empty { font-size: 13px; color: var(--night-muted); }
+.glance-empty a { color: var(--lime); }
+.glance-gauges { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.gauge { display: flex; gap: 12px; align-items: center; padding: 10px 12px; border-radius: 14px; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--night-line); }
+.gauge-ring { width: 64px; height: 64px; flex: none; }
+.gauge-track { fill: none; stroke: rgba(255, 255, 255, 0.1); stroke-width: 6; }
+.gauge-none .gauge-track { stroke-dasharray: 3 4; }
+.gauge-fill { fill: none; stroke: var(--lime); stroke-width: 6; stroke-linecap: round; transition: stroke-dasharray 0.8s ease; }
+.gauge-met .gauge-fill { stroke: #5fd08e; }
+.gauge-pct { fill: #fff; font-size: 13px; font-weight: 800; }
+.gauge-none .gauge-pct { fill: var(--night-muted); }
+.gauge-body { display: grid; gap: 3px; min-width: 0; }
+.gauge-title { font-weight: 700; font-size: 13.5px; color: #fff; }
+.gauge-meta { font-size: 12px; color: var(--night-muted); }
+.gauge-trend { width: 120px; height: 32px; }
+.gauge-trend polyline { fill: none; stroke: var(--lime); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.gauge-met .gauge-trend polyline { stroke: #5fd08e; }
+@media (prefers-reduced-motion: reduce) { .gauge-fill { transition: none; } }
+@media (max-width: 820px) { .glance { padding: 16px; border-radius: 18px; } .glance-card { padding: 12px; } }
