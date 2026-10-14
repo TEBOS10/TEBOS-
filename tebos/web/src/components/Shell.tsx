@@ -1,4 +1,4 @@
-import { BookOpen, Briefcase, Building2, CheckSquare, Download, Gauge, Home, ListChecks, LogOut, Megaphone, Menu, MessageSquare, PhoneCall, Plug, Receipt, ScanSearch, ShieldCheck, Sparkles, Stamp, Users } from "lucide-react";
+import { BookOpen, Briefcase, Clapperboard, Eye, Building2, CheckSquare, Download, Gauge, Home, ListChecks, LogOut, Megaphone, Menu, MessageSquare, PhoneCall, Plug, Receipt, ScanSearch, ShieldCheck, Sparkles, Stamp, Users } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { DEMO_BUSINESS } from "../demo/data";
 import { exitDemo, isDemo } from "../demo/mode";
@@ -18,6 +18,12 @@ const NAV = [
   { to: "/team", label: "Team", icon: Users },
   { to: "/connections", label: "Connections", icon: Plug },
   { to: "/system", label: "System", icon: Gauge },
+];
+
+// The visual side of TEBOS (showcase, film, tour) is public, so signed in it is otherwise out of reach
+const SEE = [
+  { to: "/showcase", label: "Showcase", icon: Eye, exact: true },
+  { to: "/film", label: "The film", icon: Clapperboard, exact: true },
 ];
 
 export function Shell({ children }: { children: ReactNode }) {
@@ -63,6 +69,14 @@ export function Shell({ children }: { children: ReactNode }) {
               </Link>
             );
           })}
+        </nav>
+        <nav className="nav nav-see" aria-label="See TEBOS">
+          <div className="nav-heading">See TEBOS</div>
+          {SEE.map(({ to, label, icon: Icon }) => (
+            <Link key={to} to={to} className="nav-link">
+              <Icon size={17} aria-hidden /> {label}
+            </Link>
+          ))}
         </nav>
         <div className="sidebar-foot">
           {organisations.length > 1 ? (
