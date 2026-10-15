@@ -746,3 +746,4 @@ table.table { width: 100%; border-collapse: collapse; }
 .gauge-met .gauge-trend polyline { stroke: #5fd08e; }
 @media (prefers-reduced-motion: reduce) { .gauge-fill { transition: none; } }
 @media (max-width: 820px) { .glance { padding: 16px; border-radius: 18px; } .glance-card { padding: 12px; } }
+.inbox-head { font-size: 12px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--faint); font-weight: 700; margin-bottom: 6px; }

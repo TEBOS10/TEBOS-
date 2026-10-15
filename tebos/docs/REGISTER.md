@@ -17,7 +17,7 @@ dependency) · **Not started**.
 | Offline and service worker | Done (by design, minimal) | `public/sw.js`: with no connection a page shows an honest offline notice. It stores no data, only the icon (asserted in e2e). Working offline with data is deliberately not offered: TEBOS shows live figures |
 | Visual home: each business at a glance | Done | Home shows each business (up to 3) as its 3D chessboard (the board page's view, unchanged), a gauge per objective and a trend line of measured readings; unmeasured objectives stay empty. Refreshes every minute. e2e `glance.spec`, unit `glance.test` |
 | Push notifications | Not started | Needs VAPID keys (free) |
-| Founder inbox: requests, reports, approvals, alerts | Partial | **Ask TEBOS** (`/reeds`): ask, follow progress, read the checked report, cancel. Approvals and alerts are not in it yet |
+| Founder inbox: requests, reports, approvals, alerts | Done | **Ask TEBOS** (`/reeds`): ask, follow progress, read the checked report, cancel; **Your inbox** lists pending approvals (decided on the action page, with its evidence) and alerts from records: runs failed in the last day, grouped by reason, and objectives past their date. e2e `reeds.spec`, unit `inbox.test`. Push notifications are separate (not started) |
 
 ## Layer B: REEDS (request ledger and orchestration)
 

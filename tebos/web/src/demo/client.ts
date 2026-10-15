@@ -34,6 +34,7 @@ function matches(row: Row, params: URLSearchParams): boolean {
       if (!list.includes(String(cell))) return false;
     }
     if (op === "gte" && !(String(cell) >= String(parseValue(value)))) return false;
+    if (op === "lt" && !(String(cell) < String(parseValue(value)))) return false;
     if (op === "lte" && !(String(cell) <= String(parseValue(value)))) return false;
   }
   return true;

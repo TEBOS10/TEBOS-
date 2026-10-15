@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { installFakeSupabase } from "./fake-supabase";
-import { ORG, USER_ID } from "./fixtures";
+import { ACTION, BIZ, ORG, USER_ID } from "./fixtures";
 
 // REEDS from a phone: ask TEBOS, watch it work, read the checked report. The
 // fake backend stands in for the worker; the rules that only verified work
@@ -93,4 +93,37 @@ test("on a phone the menu folds away, opens from the Menu button, and folds afte
   // the page itself starts on the first screen
   const top = await page.getByRole("heading", { name: "Ask TEBOS" }).boundingBox();
   expect(top!.y).toBeLessThan(300);
+});
+
+test("the inbox shows what waits on a decision and what went wrong, from the records alone", async ({ page }) => {
+  const fake = await installFakeSupabase(page);
+  const t = fake.tables as unknown as Record<string, Record<string, unknown>[]>;
+  const ago = (h: number) => new Date(Date.now() - h * 3600_000).toISOString();
+  t.approvals = [{ id: "ap1", org_id: ORG, action_id: ACTION, status: "pending", risk_tier: 2, requested_by: USER_ID, requested_at: ago(1), requested_operation: "email.send" }];
+  // the same reason twice in the last day reads as one alert; a failure two days ago doesn't count
+  const failed = { org_id: ORG, business_id: BIZ, agent_role: "business_intelligence", status: "failed", error_detail: "Analysis is paused: the reasoning service refused its set-up." };
+  t.agent_runs!.push({ ...failed, id: "f1", started_at: ago(2) }, { ...failed, id: "f2", started_at: ago(1) }, { ...failed, id: "f3", started_at: ago(48) });
+  t.objectives = [
+    { id: "ob1", org_id: ORG, business_id: BIZ, title: "20 leads a month", status: "active", due_on: "2026-01-31" },
+    { id: "ob2", org_id: ORG, business_id: BIZ, title: "Not yet due", status: "active", due_on: "2999-12-31" },
+  ];
+  await page.goto("/reeds");
+  const inbox = page.getByTestId("reeds-inbox");
+  const waiting = inbox.getByRole("region", { name: "Waiting on a decision" });
+  await expect(waiting.getByRole("link", { name: "Add a structured order form" })).toHaveAttribute("href", `/actions/${ACTION}`);
+  await expect(waiting.getByRole("link", { name: "Review and decide" })).toBeVisible();
+  const alerts = inbox.getByRole("region", { name: "Alerts" });
+  await expect(alerts.getByText("Business reviews failed · 2 times in the last day")).toBeVisible();
+  await expect(alerts.getByText(/Analysis is paused/)).toBeVisible();
+  await expect(alerts.getByText('"20 leads a month" is past its date')).toBeVisible();
+  await expect(alerts.getByText(/Not yet due/)).toHaveCount(0);
+  await expect(page.getByText("1 waiting on a decision · 2 alerts")).toBeVisible();
+});
+
+test("an empty inbox says so plainly", async ({ page }) => {
+  await installFakeSupabase(page);
+  await page.goto("/reeds");
+  const inbox = page.getByTestId("reeds-inbox");
+  await expect(inbox.getByText("Nothing is waiting for a decision.")).toBeVisible();
+  await expect(inbox.getByText("No failures in the last day, and no objective is past its date.")).toBeVisible();
 });

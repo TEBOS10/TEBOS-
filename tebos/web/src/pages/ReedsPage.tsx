@@ -6,8 +6,10 @@ import { REQUEST_KINDS, type RequestKind } from "@core/work";
 import { AlertTriangle, CheckCircle2, CircleDashed, Send } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { Card, Empty, ErrorNote, Field, Loading, PageHeader, StatusBadge } from "../components/ui";
-import { askWorkRequest, cancelWorkRequest, getWorkRequest, listWorkRequests, type WorkRequest, type WorkTask } from "../lib/data";
-import { ago, when } from "../lib/format";
+import { askWorkRequest, cancelWorkRequest, getWorkRequest, inboxFor, listWorkRequests, type WorkRequest, type WorkTask } from "../lib/data";
+import { alertsFrom } from "../lib/inbox";
+import { usePeople } from "../lib/people";
+import { ago, RISK_LABEL, when } from "../lib/format";
 import { Link, navigate } from "../lib/router";
 import { useOrg } from "../lib/session";
 import { useQuery } from "../lib/useQuery";
@@ -35,6 +37,7 @@ export function ReedsPage() {
       {canAsk(org.role) ? <AskCard onAsked={(id) => navigate(`/reeds/${id}`)} /> : (
         <p className="note note-info" role="status">Admins and operators of {org.organisation.name} can ask TEBOS for work. You can read what was asked and answered.</p>
       )}
+      <Inbox />
       <Card title="Requests" subtitle={`Asked in ${org.organisation.name}`}>
         {q.loading && !q.data && <Loading />}
         <ErrorNote error={q.error} title="Couldn't load requests" />
@@ -191,5 +194,55 @@ function TaskItem({ t }: { t: WorkTask }) {
       </div>
       <StatusBadge status={t.status} />
     </li>
+  );
+}
+
+/** What is waiting on a decision and what has gone wrong, so the phone is enough to keep up. Decisions are made on the action's page, with its evidence. */
+function Inbox() {
+  const org = useOrg();
+  const { nameOf } = usePeople();
+  const q = useQuery(() => inboxFor(org.db, org.organisation.id), [org.organisation.id], { pollMs: 60_000, keepPolling: () => true });
+  if (q.loading && !q.data) return <Loading />;
+  if (q.error) return <ErrorNote error={q.error} title="Couldn't load your inbox" />;
+  if (!q.data) return null;
+  const alerts = alertsFrom(q.data.failedRuns, q.data.overdue);
+  const decide = org.can("approval.decide");
+  return (
+    <Card title="Your inbox" subtitle={`${q.data.approvals.length} waiting on a decision · ${alerts.length} ${alerts.length === 1 ? "alert" : "alerts"}`}>
+      <div className="stack" data-testid="reeds-inbox">
+        <section aria-label="Waiting on a decision">
+          <h3 className="inbox-head">Waiting on a decision</h3>
+          {q.data.approvals.length === 0 ? <Empty>Nothing is waiting for a decision.</Empty> : (
+            <ul className="list">
+              {q.data.approvals.map(({ approval: a, action }) => (
+                <li key={a.id}>
+                  <div className="list-main">
+                    {action ? <Link to={`/actions/${action.id}`} className="list-title">{action.title}</Link> : <span className="list-title">{a.requested_operation}</span>}
+                    <span className="list-meta">{RISK_LABEL[a.risk_tier]} · requested by {nameOf(a.requested_by)} {ago(a.requested_at)}</span>
+                  </div>
+                  {action && <Link to={`/actions/${action.id}`} className="btn btn-sm">{decide ? "Review and decide" : "View"}</Link>}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+        <section aria-label="Alerts">
+          <h3 className="inbox-head">Alerts</h3>
+          {alerts.length === 0 ? <Empty>No failures in the last day, and no objective is past its date.</Empty> : (
+            <ul className="list">
+              {alerts.map((a) => (
+                <li key={a.key}>
+                  <div className="list-main">
+                    <span className="list-title"><AlertTriangle size={14} aria-hidden /> {a.title}{a.count > 1 ? ` · ${a.count} times in the last day` : ""}</span>
+                    <span className="list-meta">{a.detail}{a.key.startsWith("run:") ? ` · last ${ago(a.at)}` : ""}</span>
+                  </div>
+                  {a.link && <Link to={a.link} className="btn btn-sm">Open</Link>}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      </div>
+    </Card>
   );
 }
