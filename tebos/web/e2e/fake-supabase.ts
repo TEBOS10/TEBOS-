@@ -38,6 +38,9 @@ function matches(row: Record<string, unknown>, params: URLSearchParams): boolean
     const cell = row[key];
     if (op === "eq" && String(cell) !== String(parseValue(value))) return false;
     if (op === "neq" && String(cell) === String(parseValue(value))) return false;
+    // ISO dates and times compare correctly as strings
+    if (op === "gte" && !(String(cell) >= String(parseValue(value)))) return false;
+    if (op === "lt" && !(String(cell) < String(parseValue(value)))) return false;
     if (op === "is" && !(value === "null" ? cell === null || cell === undefined : cell === parseValue(value))) return false;
     if (op === "in") {
       const list = value.replace(/^\(|\)$/g, "").split(",").map(parseValue).map(String);

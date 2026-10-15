@@ -360,6 +360,31 @@ export async function decideApproval(db: Db, approvalId: string, decision: "appr
   return must(await db.from("approvals").update({ status: decision, decision_note: note || null }).eq("id", approvalId).select().single());
 }
 
+/** The Ask TEBOS inbox: approvals waiting on a decision, runs that failed in the last day, and active objectives past their date. */
+export async function inboxFor(db: Db, orgId: string, now = new Date()) {
+  const since = new Date(now.getTime() - 24 * 3600_000).toISOString();
+  const today = now.toISOString().slice(0, 10);
+  const [pending, failed, overdue] = await Promise.all([
+    db.from("approvals").select("*").eq("org_id", orgId).eq("status", "pending").order("requested_at", { ascending: false }).limit(50),
+    db.from("agent_runs").select("agent_role, error_detail, started_at").eq("org_id", orgId).eq("status", "failed").gte("started_at", since)
+      .order("started_at", { ascending: false }).limit(200),
+    db.from("objectives").select("id, title, due_on, business_id").eq("org_id", orgId).eq("status", "active").lt("due_on", today).order("due_on"),
+  ]);
+  const approvals = must(pending);
+  const objectives = must(overdue);
+  const [actions, businesses] = await Promise.all([
+    approvals.length ? db.from("actions").select("id, title, business_id, risk_tier").in("id", [...new Set(approvals.map((a) => a.action_id))]) : null,
+    objectives.length ? db.from("businesses").select("id, name").in("id", [...new Set(objectives.map((o) => o.business_id))]) : null,
+  ]);
+  const acts = actions ? must(actions) : [];
+  const biz = businesses ? must(businesses) : [];
+  return {
+    approvals: approvals.map((a) => ({ approval: a, action: acts.find((x) => x.id === a.action_id) ?? null })),
+    failedRuns: must(failed),
+    overdue: objectives.map((o) => ({ ...o, businessName: biz.find((b) => b.id === o.business_id)?.name ?? null })),
+  };
+}
+
 export async function listApprovals(db: Db, orgId: string) {
   const approvals = must(await db.from("approvals").select("*").eq("org_id", orgId).order("requested_at", { ascending: false }).limit(100));
   const actions = approvals.length ? must(await db.from("actions").select("id, title, business_id, risk_tier").in("id", [...new Set(approvals.map((a) => a.action_id))])) : [];

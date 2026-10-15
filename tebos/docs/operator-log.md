@@ -21,6 +21,35 @@ Update this list every run; strike items when they're done.
 | 8 | Make the repo private, rotate database passwords, turn on leaked-password protection | Protecting the platform from copying |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 15 Oct 2026 (daily run): approvals and alerts in the Ask TEBOS inbox
+
+- **State read:**
+  - `main` is green, and the worker runs #45's build (SUCCESS).
+  - Every business review in the last two days failed (97 runs) with "the reasoning service refused its set-up": the
+    AI key is not workspace-scoped (decision 2b).
+  - No open maintainer items, no REEDS requests yet, and the security advisors are unchanged (the token-based
+    functions and server-only tables are deliberate).
+- **Chosen:** the founder's build order, item 1: the phone inbox. Roadmap items 2 (findings naming their flow)
+  and 5 (automation) wait on the AI key and on connected tools.
+- **Now on Ask TEBOS** (`/reeds`), a **Your inbox** card:
+  - **Waiting on a decision:** pending approvals, each linking to its action, where the decision is made with
+    the evidence in view. Nothing is approved from the list.
+  - **Alerts:** runs that failed in the last day, grouped by their reported reason so one cause reads as one alert
+    with a count, and active objectives past their date.
+  - Every alert comes from a record. With nothing to show, it says so.
+  - It refreshes every minute.
+- **Proof:**
+  - unit `inbox.test` (grouping, counts, ordering);
+  - e2e: a pending approval links to its action; two failures read as one alert, and one from two days ago
+    doesn't count; an objective past its date shows and one not yet due doesn't; the empty state.
+  - Checks: web typecheck, 60 unit tests, e2e 86 of 86; core 265 tests. No schema change.
+- **Also shipped since the last entry, at the founder's request:**
+  - #50: the app menu links to the showcase and the film. Signed in, they had no way back.
+  - #51: the signed-in home shows each business at a glance: its 3D chessboard (the board page's view,
+    unchanged), a gauge per objective from measured readings, and trend lines.
+  - Both are live (Vercel production deployment succeeded).
+- **Worker:** unchanged by these web-only changes, so no redeploy.
+
 ## 15 Oct 2026 (night): the site answered "not found" for every app page; fixed
 
 - **What broke:** the founder signed in on the phone and got the host's "404: this page doesn't exist" at
