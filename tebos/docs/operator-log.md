@@ -26,6 +26,20 @@ Update this list every run; strike items when they're done.
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 17 Oct 2026: the TEPOS city in 3D, built from the blueprint up
+
+- **Asked by the founder,** with a video of a house rising from blueprint to finished home: the city should
+  build itself in 3D and move around.
+- **Built:** on opening, every building goes through five stages while the camera flies round the city:
+  blueprint lines, foundation, timber frame, walls, then the lights come on.
+  - Each building stops where its portal really is: a built portal finishes, lit; one not built yet stays a
+    frame with a crane; one you can't open stays a blueprint. Nothing looks further along than it is.
+  - Afterwards the camera keeps drifting; drag to look around, pinch or scroll to come closer, "Build it
+    again" to replay. Each building's label is a button that opens its portal.
+  - Drawn only where the device has a graphics chip; with reduced motion, or without one, the drawn city
+    stays. The 3D part loads separately, so the rest of TEPOS isn't slowed.
+- Tests: a new e2e test in `tepos.spec.ts`; all 113 e2e tests pass.
+
 ## 16 Oct 2026 (night): both apps deploy themselves from `main`
 
 The founder set this up in Vercel and Supabase, step by step from the phone:

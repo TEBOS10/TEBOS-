@@ -1,13 +1,17 @@
 // TEPOS home and portal pages. Each portal opens in the organisation that holds it. Portals not built yet say
 // so, and say what they will hold; nothing here is invented.
+import { lazy, Suspense, useState } from "react";
 import { ErrorNote } from "../components/ui";
-import { PortalTile, usePortal } from "../components/Portal";
+import { PortalTile, usePortal, type PortalOrigin } from "../components/Portal";
 import { Link, navigate } from "../lib/router";
 import { useOrg } from "../lib/session";
 import { useQuery } from "../lib/useQuery";
 import { ResiliencePage } from "../pages/ResiliencePage";
 import { COMING, PORTALS, type Portal } from "./portals";
 import { TeposCity } from "./TeposCity";
+import { use3d } from "../world/support";
+
+const TeposCity3D = lazy(() => import("./TeposCity3D"));
 
 /** Opens a portal: into its organisation first, then its page. */
 export function useOpenPortal() {
@@ -22,15 +26,22 @@ export function useOpenPortal() {
 
 export function TeposHome() {
   const { open, overlay, target } = useOpenPortal();
+  // the city in 3D where the device draws it smoothly; the drawn city otherwise, and with reduced motion
+  const [three] = useState(() => use3d());
+  const onOpenCity = (p: Portal, e: PortalOrigin) => { const t = target(p); if (t.allowed) open(e, p.shade, p.accent, t.go); };
   return (
     <div className="tepos">
       {overlay}
       <header className="tepos-head">
         <div className="tepos-eyebrow">TEPOS · Tidy Enterprise Personal Operating System</div>
         <h1>Tidy</h1>
-        <p>Your own city. Each building is a portal; the ones still under scaffolding aren't built yet.</p>
+        <p>Your own city. Each building is a portal: the finished ones are open, the ones still under construction aren't built yet.</p>
       </header>
-      <TeposCity onOpen={(p, e) => { const t = target(p); if (t.allowed) open(e, p.shade, p.accent, t.go); }} allowed={(p) => target(p).allowed} />
+      {three ? (
+        <Suspense fallback={<div className="city3d city3d-loading" aria-hidden />}>
+          <TeposCity3D onOpen={onOpenCity} allowed={(p) => target(p).allowed} />
+        </Suspense>
+      ) : <TeposCity onOpen={onOpenCity} allowed={(p) => target(p).allowed} />}
       <section className="portal-grid" aria-label="Portals">
         {PORTALS.map((p) => {
           const t = target(p);
