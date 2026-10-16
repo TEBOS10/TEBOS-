@@ -5,6 +5,8 @@ import { DEPARTMENT_HIGHLIGHT_SECTIONS, DEPARTMENT_LABELS, type Department, type
 import DeliverableChecklist, { type DeliverableItem } from "@/components/staff/DeliverableChecklist";
 import OnboardPlayerButton from "@/components/staff/OnboardPlayerButton";
 import CaseAssign from "@/components/staff/CaseAssign";
+import ContractForm from "@/components/staff/ContractForm";
+import ContractPanel from "@/components/staff/ContractPanel";
 
 function fieldValue(payload: Record<string, unknown>, field: IntakeField): string | null {
   const raw = payload[field.name];
@@ -144,14 +146,21 @@ export default async function StaffCasePage({
   const canActOnThisCase = profile.is_admin || assignedDept === profile.department;
 
   let existingPlayerId: string | null = null;
+  let existingContract: { id: string; status: "draft" | "sent"; athlete_email: string | null; sent_at: string | null } | null = null;
   if (canActOnThisCase) {
-    const { data: existingPlayer } = await supabase
-      .from("players")
-      .select("id")
-      .eq("source_case_table", "diagnostics")
-      .eq("source_case_id", id)
-      .maybeSingle();
+    const [{ data: existingPlayer }, { data: contractRow }] = await Promise.all([
+      supabase.from("players").select("id").eq("source_case_table", "diagnostics").eq("source_case_id", id).maybeSingle(),
+      supabase
+        .from("contracts")
+        .select("id, status, athlete_email, sent_at")
+        .eq("source_case_table", "diagnostics")
+        .eq("source_case_id", id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]);
     existingPlayerId = existingPlayer?.id || null;
+    existingContract = contractRow || null;
   }
 
   return (
@@ -173,6 +182,22 @@ export default async function StaffCasePage({
 
         {canActOnThisCase && (
           <div className="mt-4 space-y-4">
+            {existingContract ? (
+              <ContractPanel
+                contractId={existingContract.id}
+                status={existingContract.status}
+                athleteEmail={existingContract.athlete_email}
+                sentAt={existingContract.sent_at}
+              />
+            ) : (
+              <ContractForm
+                caseTable="diagnostics"
+                caseId={id}
+                defaultFullName={String(d.athlete_full_name || "Unnamed")}
+                defaultEmail={d.athlete_email ? String(d.athlete_email) : null}
+                defaultPackageTier={tier}
+              />
+            )}
             {existingPlayerId ? (
               <a href={`/staff/players/${existingPlayerId}`} className="text-xs text-[var(--bame-accent)] hover:underline">
                 View player profile →

@@ -10,6 +10,15 @@ export const DEPARTMENT_LABELS: Record<Department, string> = {
   admin: "Administration",
 };
 
+export const PACKAGE_TIERS = ["foundation", "growth", "custom"] as const;
+export type PackageTier = (typeof PACKAGE_TIERS)[number];
+
+export const PACKAGE_TIER_LABELS: Record<PackageTier, string> = {
+  foundation: "Foundation",
+  growth: "Growth",
+  custom: "Custom",
+};
+
 export interface StaffProfile {
   id: string;
   full_name: string;
