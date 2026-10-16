@@ -1426,3 +1426,97 @@ export async function askWorkRequest(db: Db, orgId: string, kind: string, note: 
 export async function cancelWorkRequest(db: Db, id: string) {
   return must(await db.from("work_requests").update({ status: "cancelled" }).eq("id", id).select().single());
 }
+
+// ---------------------------------------------------------------------------
+// Property Revenue Architecture (Tidy Enterprise). The database numbers cases,
+// enforces the integrity rules and audits every change; these calls only read
+// and write under the person's own session.
+// ---------------------------------------------------------------------------
+
+export type PropertyCase = Row<"property_cases">;
+export type PropertyEvidence = Row<"property_evidence">;
+export type PropertyFigure = Row<"property_figures">;
+export type PropertyPathway = Row<"property_pathways">;
+export type PropertyGate = Row<"property_gates">;
+
+export async function listPropertyCases(db: Db, orgId: string) {
+  const cases = must(await db.from("property_cases").select("*").eq("org_id", orgId).order("updated_at", { ascending: false }).limit(200));
+  const ids = cases.map((c) => c.id);
+  const [evidence, figures] = ids.length
+    ? await Promise.all([
+        db.from("property_evidence").select("case_id, kind, status, title, id, source, period_end, received_on, confidence").in("case_id", ids),
+        db.from("property_figures").select("case_id, key").in("case_id", ids),
+      ])
+    : [null, null];
+  return {
+    cases,
+    evidence: evidence ? must(evidence) : [],
+    figures: figures ? must(figures) : [],
+  };
+}
+
+export async function createPropertyCase(
+  db: Db,
+  orgId: string,
+  c: { label: string; problem: string; objective: string; property_type: string | null; disposition_reason: string },
+) {
+  return must(await db.from("property_cases").insert({ org_id: orgId, ...c }).select().single());
+}
+
+export async function getPropertyCase(db: Db, id: string) {
+  const c = maybe(await db.from("property_cases").select("*").eq("id", id).maybeSingle());
+  if (!c) return null;
+  const [evidence, figures, pathways, gates] = await Promise.all([
+    db.from("property_evidence").select("*").eq("case_id", id).order("created_at"),
+    db.from("property_figures").select("*").eq("case_id", id),
+    db.from("property_pathways").select("*").eq("case_id", id).order("created_at"),
+    db.from("property_gates").select("*").eq("case_id", id),
+  ]);
+  return { case: c, evidence: must(evidence), figures: must(figures), pathways: must(pathways), gates: must(gates) };
+}
+
+/** The case's history: every change to it and its records, newest first, from the audit trail. */
+export async function propertyCaseHistory(db: Db, orgId: string, entityIds: string[]) {
+  if (entityIds.length === 0) return [];
+  return must(await db.from("audit_events").select("*").eq("org_id", orgId).in("entity_id", entityIds).order("id", { ascending: false }).limit(200));
+}
+
+export async function updatePropertyCase(db: Db, id: string, patch: Partial<PropertyCase>) {
+  return must(await db.from("property_cases").update(patch).eq("id", id).select().single());
+}
+
+export async function savePropertyEvidence(db: Db, row: Partial<PropertyEvidence> & { org_id: string; case_id: string; category: string; kind: string; title: string }) {
+  const { id, ...rest } = row;
+  if (id) return must(await db.from("property_evidence").update(rest).eq("id", id).select().single());
+  return must(await db.from("property_evidence").insert(rest).select().single());
+}
+
+export async function deletePropertyEvidence(db: Db, id: string) {
+  const { error } = await db.from("property_evidence").delete().eq("id", id);
+  if (error) throw error;
+}
+
+export async function savePropertyFigure(
+  db: Db,
+  existing: PropertyFigure | undefined,
+  row: { org_id: string; case_id: string; key: string; value: number; basis: string; evidence_id: string | null; as_of: string; note: string | null },
+) {
+  if (existing) return must(await db.from("property_figures").update(row).eq("id", existing.id).select().single());
+  return must(await db.from("property_figures").insert(row).select().single());
+}
+
+/** Back to unknown: the figure's row goes (and its history stays in the audit trail). */
+export async function clearPropertyFigure(db: Db, id: string) {
+  const { error } = await db.from("property_figures").delete().eq("id", id);
+  if (error) throw error;
+}
+
+export async function savePropertyPathway(db: Db, existing: PropertyPathway | undefined, row: Partial<PropertyPathway> & { org_id: string; case_id: string; pathway: string }) {
+  if (existing) return must(await db.from("property_pathways").update(row).eq("id", existing.id).select().single());
+  return must(await db.from("property_pathways").insert(row).select().single());
+}
+
+export async function savePropertyGate(db: Db, existing: PropertyGate | undefined, row: { org_id: string; case_id: string; gate: string; status: string; owner: string | null; note: string | null }) {
+  if (existing) return must(await db.from("property_gates").update(row).eq("id", existing.id).select().single());
+  return must(await db.from("property_gates").insert(row).select().single());
+}

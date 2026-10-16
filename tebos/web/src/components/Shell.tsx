@@ -1,4 +1,4 @@
-import { BookOpen, Briefcase, Clapperboard, Eye, Building2, CheckSquare, Download, Gauge, Home, ListChecks, LogOut, Megaphone, Menu, MessageSquare, PhoneCall, Plug, Receipt, ScanSearch, ShieldCheck, Sparkles, Stamp, Users } from "lucide-react";
+import { BookOpen, Briefcase, Landmark, Clapperboard, Eye, Building2, CheckSquare, Download, Gauge, Home, ListChecks, LogOut, Megaphone, Menu, MessageSquare, PhoneCall, Plug, Receipt, ScanSearch, ShieldCheck, Sparkles, Stamp, Users } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { DEMO_BUSINESS } from "../demo/data";
 import { exitDemo, isDemo } from "../demo/mode";
@@ -36,15 +36,17 @@ export function Shell({ children }: { children: ReactNode }) {
   // TEBOS's own staff also see the client pipeline and the sales playbook
   const { access } = useStaff();
   const pipeline = access?.sales || access?.maintainer;
+  // Tidy Enterprise's property cases: the founder's own practice, for TEBOS's admins
+  const base = access?.admin ? [...NAV, { to: "/property", label: "Property cases", icon: Landmark, exact: false }] : NAV;
   const nav = pipeline || access?.marketing
-    ? [...NAV,
+    ? [...base,
        ...(pipeline ? [{ to: "/pipeline", label: "Pipeline", icon: Briefcase, exact: false }, { to: "/sales", label: "Sales playbook", icon: BookOpen, exact: false }] : []),
        { to: "/marketing", label: "Marketing", icon: Megaphone, exact: true },
        { to: "/marketing/playbook", label: "Marketing playbook", icon: BookOpen, exact: true },
        ...(access?.sales ? [{ to: "/meet", label: "Meeting mode", icon: PhoneCall, exact: true }] : []),
        ...(access?.maintainer ? [{ to: "/pipeline/queue", label: "Maintainer queue", icon: ListChecks, exact: true }] : []),
        ...(access?.admin ? [{ to: "/pipeline/billing", label: "Billing", icon: Receipt, exact: true }] : [])]
-    : NAV;
+    : base;
   return (
     <div className="shell">
       <aside className={`sidebar no-print ${menuOpen ? "open" : ""}`}>
