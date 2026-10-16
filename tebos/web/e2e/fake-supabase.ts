@@ -267,6 +267,9 @@ const COLUMN_DEFAULTS: Record<string, Record<string, unknown>> = {
   // the database's defaults; the reference stands in for the trigger that numbers cases
   property_cases: { ref: "PA-001", disposition: "hold_optimise", suspected_cause: "unknown", authority: "unconfirmed", disposition_at: new Date().toISOString() },
   property_pathways: { specialists: [] },
+  // the database copies the case's figures into a baseline; the fake leaves it empty, as a case with no figures would be refused
+  property_baselines: { figures: [], captured_on: new Date().toISOString().slice(0, 10), target_note: null },
+  property_workstreams: { approval: "not_needed", status: "planned" },
   interview_sessions: { transcript: null, extraction_status: "pending", extraction_detail: null, failure_detail: null, duration_seconds: null, provider: null, provider_reference: null, started_at: null, ended_at: null },
   connection_instances: { business_id: null, granted_scopes: [], credential_ref_id: null, webhook_credential_ref_id: null, last_verified_at: null, last_success_at: null, last_failure_at: null, failure_detail: null, verification_requested_at: null },
 };

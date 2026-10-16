@@ -4,6 +4,8 @@ import { describe, expect, it } from "vitest";
 import {
   AUTHORITY, BASES, CONFIDENCE, DISPOSITION_REASON_MIN, DISPOSITIONS, EVIDENCE_CATEGORIES, FIGURE_KEYS, FIGURES, GATES, OBJECTIVES, PATHWAYS,
   PROBLEMS, PROPERTY_TYPES, SPECIALISTS, SUSPECTED_CAUSES,
+  APPROVALS, OUTCOME_KEYS, WORKSTREAM_STATUSES, checkWorkstream, scorecard, workstreamExceptions,
+  type Actual, type Baseline, type OutcomeKey, type Review, type Workstream,
   checkDisposition, checkEvidence, checkFigure, checkGate, checkPathway, composeAssessment, economics, evidenceReadiness,
   EVIDENCE_CHECKLIST, isStale, money, type AssessmentInput, type EvidenceItem, type Figure, type FigureKey, type GateState,
 } from "../src/domain/property";
@@ -200,6 +202,7 @@ describe("the assessment report", () => {
 
 describe("property rules mirror the database", () => {
   const sql = readFileSync(join(__dirname, "..", "supabase", "migrations", "20261016150000_property_cases.sql"), "utf8");
+  const exec = readFileSync(join(__dirname, "..", "supabase", "migrations", "20261016200000_property_execution.sql"), "utf8");
   const list = (column: string) => {
     const m = sql.match(new RegExp(`${column}\\s+text[^\\n]*?check \\(${column} in \\(([^)]*)\\)\\)`));
     expect(m, column).toBeTruthy();
@@ -217,7 +220,8 @@ describe("property rules mirror the database", () => {
     expect(list("basis")).toEqual(Object.keys(BASES).sort());
     expect(list("pathway")).toEqual(Object.keys(PATHWAYS).sort());
     expect(list("gate")).toEqual(GATES.map((g) => g.key).sort());
-    const keys = sql.match(/key\s+text not null check \(key in \(([^)]*)\)\)/s)![1]!;
+    // the figure keys' latest definition: the execution migration widened them
+    const keys = exec.match(/add constraint property_figures_key_check check \(key in \(([^)]*)\)\)/s)![1]!;
     expect([...keys.matchAll(/'([a-z_]+)'/g)].map((x) => x[1]).sort()).toEqual([...FIGURE_KEYS].sort());
     const forecasts = sql.match(/check \(key not in \(([^)]*)\) or basis = 'estimated'\)/)![1]!;
     expect([...forecasts.matchAll(/'([a-z_]+)'/g)].map((x) => x[1]).sort()).toEqual(FIGURE_KEYS.filter((k) => FIGURES[k].forecast).sort());
@@ -225,5 +229,89 @@ describe("property rules mirror the database", () => {
     expect([...specialists.matchAll(/'([a-z_]+)'/g)].map((x) => x[1]).sort()).toEqual(Object.keys(SPECIALISTS).sort());
     expect(sql).toMatch(/between 10 and 2000/);
     expect(DISPOSITION_REASON_MIN).toBe(10);
+  });
+
+  it("lists the same workstream statuses, approvals and outcome actuals", () => {
+    const listIn = (src: string, column: string) => [...src.match(new RegExp(`${column}\\s+text[^\\n]*?check \\(${column} in \\(([^)]*)\\)\\)`))![1]!.matchAll(/'([a-z_]+)'/g)].map((x) => x[1]).sort();
+    const ws = exec.slice(exec.indexOf("create table public.property_workstreams"));
+    expect(listIn(ws, "status")).toEqual([...WORKSTREAM_STATUSES].sort());
+    expect(listIn(ws, "approval")).toEqual(Object.keys(APPROVALS).sort());
+    const ov = exec.slice(exec.indexOf("create table public.property_outcome_values"));
+    expect([...ov.match(/key\s+text not null check \(key in \(([^)]*)\)\)/s)![1]!.matchAll(/'([a-z_]+)'/g)].map((x) => x[1]).sort()).toEqual([...OUTCOME_KEYS].sort());
+    expect(listIn(ov, "basis")).toEqual(["owner_reported", "verified"]);
+    // the baseline copies every figure except the forecasts
+    expect([...exec.match(/f\.key not in \(([^)]*)\)/)![1]!.matchAll(/'([a-z_]+)'/g)].map((x) => x[1]).sort()).toEqual(FIGURE_KEYS.filter((k) => FIGURES[k].forecast).sort());
+  });
+});
+
+describe("execution workstreams", () => {
+  const ws = (over: Partial<Workstream> = {}): Workstream => ({
+    id: "w1", title: "Reconcile arrears", owner: "Tidy", dueOn: "2026-10-20", status: "planned", dependsOn: null, budget: null,
+    approval: "not_needed", approvedBy: null, approvedOn: null, completionEvidence: null, completedOn: null, note: null, ...over,
+  });
+  it("need an owner and deadline; a budget needs approval before it is spent; done needs evidence; blocked says why", () => {
+    expect(checkWorkstream(ws({ owner: " " }), []).ok).toBe(false);
+    expect(checkWorkstream(ws({ budget: 3500 }), []).ok).toBe(false);
+    expect(checkWorkstream(ws({ budget: 3500, approval: "pending" }), []).ok).toBe(true);
+    expect(checkWorkstream(ws({ budget: 3500, approval: "pending", status: "in_progress" }), []).ok).toBe(false);
+    expect(checkWorkstream(ws({ budget: 3500, approval: "approved" }), []).ok).toBe(false);
+    expect(checkWorkstream(ws({ budget: 3500, approval: "approved", approvedBy: "Owner", approvedOn: "2026-10-16", status: "in_progress" }), []).ok).toBe(true);
+    expect(checkWorkstream(ws({ status: "done" }), []).ok).toBe(false);
+    expect(checkWorkstream(ws({ status: "done", completionEvidence: "Ledger reconciled", completedOn: "2026-10-16" }), []).ok).toBe(true);
+    expect(checkWorkstream(ws({ status: "blocked" }), []).ok).toBe(false);
+  });
+  it("start only after what they depend on is done, and never depend on themselves", () => {
+    const first = ws({ id: "a" });
+    const second = ws({ id: "b", dependsOn: "a", status: "in_progress" });
+    expect(checkWorkstream(second, [first, second]).ok).toBe(false);
+    expect(checkWorkstream(second, [{ ...first, status: "done", completionEvidence: "x", completedOn: "2026-10-16" }, second]).ok).toBe(true);
+    expect(checkWorkstream({ ...first, dependsOn: "b" }, [first, { ...second, status: "planned" }]).ok).toBe(false);
+  });
+  it("raise overdue, blocked and awaiting-approval exceptions, and none for finished work", () => {
+    const list = [ws({ id: "a", dueOn: "2026-10-01" }), ws({ id: "b", status: "blocked", note: "No quote" }), ws({ id: "c", budget: 900, approval: "pending" }),
+      ws({ id: "d", dueOn: "2026-10-01", status: "done", completionEvidence: "x", completedOn: "2026-10-02" })];
+    const ex = workstreamExceptions(list, "2026-10-16");
+    expect(ex.map((x) => x.id)).toEqual(["a", "b", "c"]);
+    expect(ex[2]!.reason).toMatch(/R900 awaiting approval/);
+  });
+});
+
+describe("the outcome scorecard", () => {
+  const baseline: Baseline = { capturedOn: "2026-09-01", figures: FULL.concat([fig("arrears_balance", 18_000, "owner_reported")]), targetCashFlow: 15_000 };
+  const actual = (key: OutcomeKey, value: number): Actual => ({ key, value, basis: "owner_reported" });
+  const review = (reviewOn: string, collected: number, arrears: number): Review => ({
+    id: reviewOn, reviewOn,
+    values: [...FULL.filter((f) => f.key !== "rent_collected").map((f) => actual(f.key as OutcomeKey, f.value)), actual("rent_collected", collected), actual("arrears_balance", arrears), actual("implementation_spent", 4_000)],
+  });
+  it("measures realised change against the frozen baseline and the target", () => {
+    const s = scorecard(baseline, [review("2026-10-15", 43_000, 12_000)], "2026-10-16T00:00:00Z", "2026-11-15");
+    expect(s.baseline?.economics.cashFlow.value).toBe(12_500);
+    const r = s.rows[0]!;
+    expect(r.cashFlowChange.value).toBe(2_500);
+    expect(r.cashFlowChange.basis).toBe("owner_reported");
+    expect(r.collectionChange.value).toBeCloseTo((43_000 / 45_000) * 100 - 90);
+    expect(r.arrears).toEqual({ baseline: 18_000, actual: 12_000, change: -6_000 });
+    expect(r.vsTarget).toBe(0);
+    expect(r.implementationSpent).toBe(4_000);
+    expect(s.flags).toEqual([]);
+  });
+  it("flags a fall below baseline or target, growing arrears and an overdue review; and says so when nothing can be measured", () => {
+    const s = scorecard(baseline, [review("2026-10-15", 39_000, 20_000)], "2026-12-01T00:00:00Z", "2026-11-15");
+    expect(s.flags.join(" ")).toMatch(/below the baseline/);
+    expect(s.flags.join(" ")).toMatch(/short of the target/);
+    expect(s.flags.join(" ")).toMatch(/Arrears have grown by R2 000/);
+    expect(s.flags.join(" ")).toMatch(/2026-11-15 is overdue/);
+    expect(scorecard(null, [], "2026-10-16T00:00:00Z", null).flags[0]).toMatch(/No baseline/);
+    const partial = scorecard(baseline, [{ id: "p", reviewOn: "2026-10-15", values: [actual("rent_collected", 44_000)] }], "2026-10-16T00:00:00Z", null);
+    expect(partial.rows[0]!.cashFlowChange.value).toBeNull();
+    expect(partial.flags.join(" ")).toMatch(/can't be compared on cash flow: missing/);
+  });
+  it("the outcome gate needs a baseline and actuals", () => {
+    const passed = (gate: GateState["gate"]): GateState => ({ gate, status: "passed", owner: "T", note: "n" });
+    const four = [passed("evidence"), passed("root_cause"), passed("feasibility"), passed("authorisation")];
+    const ctx = { authority: "confirmed" as const, conflicting: 0 };
+    expect(checkGate(four, passed("outcome"), ctx).ok).toBe(false);
+    expect(checkGate(four, passed("outcome"), { ...ctx, hasBaseline: true, actuals: 0 }).ok).toBe(false);
+    expect(checkGate(four, passed("outcome"), { ...ctx, hasBaseline: true, actuals: 3 }).ok).toBe(true);
   });
 });

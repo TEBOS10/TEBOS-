@@ -204,6 +204,7 @@ export const FIGURES = {
   debt_service: { label: "Debt service", group: "costs", money: true, forecast: false },
   reserve: { label: "Maintenance / capital reserve", group: "costs", money: true, forecast: false },
   one_off_capex: { label: "One-off capital need (not monthly)", group: "costs", money: true, forecast: false },
+  arrears_balance: { label: "Arrears outstanding (total owed, not monthly)", group: "income", money: true, forecast: false },
   uplift: { label: "Estimated monthly net benefit of the plan", group: "scenario", money: true, forecast: true },
   implementation_cost: { label: "Once-off implementation cost", group: "scenario", money: true, forecast: true },
   downside_impact: { label: "Monthly downside impact (stress test)", group: "scenario", money: true, forecast: true },
@@ -412,7 +413,7 @@ export interface GateState { gate: GateKey; status: GateStatus; owner: string | 
 export function checkGate(
   gates: GateState[],
   next: GateState,
-  ctx: { authority: Authority; conflicting: number },
+  ctx: { authority: Authority; conflicting: number; hasBaseline?: boolean; actuals?: number },
 ): Check {
   const order = GATES.map((g) => g.key);
   const i = order.indexOf(next.gate);
@@ -424,11 +425,156 @@ export function checkGate(
       if (ctx.authority !== "confirmed") return fail("TEBOS_VALIDATION", "The evidence gate needs the owner's authority confirmed.");
       if (ctx.conflicting > 0) return fail("TEBOS_VALIDATION", "Resolve conflicting evidence before passing the evidence gate.");
     }
+    if (next.gate === "outcome" && (!ctx.hasBaseline || !ctx.actuals)) {
+      return fail("TEBOS_VALIDATION", "The outcome gate needs a captured baseline and a review of actual results.");
+    }
   } else if (statusOf(next.gate) === "passed" && order.slice(i + 1).some((k) => statusOf(k) === "passed")) {
     return fail("TEBOS_VALIDATION", "Reopen the later gates first: a gate can't reopen while a later one stands passed.");
   }
   if (next.status === "blocked" && !next.note?.trim()) return fail("TEBOS_VALIDATION", "Say what is blocking this gate.");
   return OK;
+}
+
+// ---------------------------------------------------------------------------
+// Execution workstreams
+// ---------------------------------------------------------------------------
+
+export const WORKSTREAM_STATUSES = ["planned", "in_progress", "blocked", "done", "cancelled"] as const;
+export type WorkstreamStatus = (typeof WORKSTREAM_STATUSES)[number];
+export const APPROVALS = { not_needed: "No budget", pending: "Awaiting approval", approved: "Approved" } as const;
+export type ApprovalState = keyof typeof APPROVALS;
+
+export interface Workstream {
+  id: string;
+  title: string;
+  owner: string;
+  dueOn: string;
+  status: WorkstreamStatus;
+  dependsOn: string | null;
+  budget: number | null;
+  approval: ApprovalState;
+  approvedBy: string | null;
+  approvedOn: string | null;
+  completionEvidence: string | null;
+  completedOn: string | null;
+  note: string | null;
+}
+
+/** Mirrors migration property_execution: dependencies done first, budgets approved before spending, done with evidence. */
+export function checkWorkstream(w: Workstream, all: Workstream[]): Check {
+  const blank = (s: string | null) => !s?.trim();
+  if (blank(w.title) || blank(w.owner) || !w.dueOn) return fail("TEBOS_VALIDATION", "A workstream needs a task, an accountable owner and a deadline.");
+  if (w.budget !== null && (!Number.isFinite(w.budget) || w.budget < 0)) return fail("TEBOS_VALIDATION", "A budget is zero or more.");
+  if ((w.budget ?? 0) > 0 && w.approval === "not_needed") return fail("TEBOS_VALIDATION", "A budget needs an approval: set it to awaiting approval or approved.");
+  if (w.approval === "approved" && (blank(w.approvedBy) || !w.approvedOn)) return fail("TEBOS_VALIDATION", "Record who approved the budget and when.");
+  if (w.dependsOn) {
+    // walk the chain: no cycles
+    const seen = new Set<string>([w.id]);
+    let next: string | null = w.dependsOn;
+    while (next) {
+      if (seen.has(next)) return fail("TEBOS_VALIDATION", "A workstream can't depend on itself through others.");
+      seen.add(next);
+      next = all.find((x) => x.id === next)?.dependsOn ?? null;
+    }
+  }
+  if (w.status === "in_progress" || w.status === "done") {
+    if ((w.budget ?? 0) > 0 && w.approval !== "approved") return fail("TEBOS_VALIDATION", "A budget is spent only once it is approved.");
+    const dep = w.dependsOn ? all.find((x) => x.id === w.dependsOn) : null;
+    if (dep && dep.status !== "done") return fail("TEBOS_VALIDATION", `"${dep.title}" must be done first.`);
+  }
+  if (w.status === "done" && (blank(w.completionEvidence) || !w.completedOn)) return fail("TEBOS_VALIDATION", "Done needs the evidence of completion and the date.");
+  if (w.status === "blocked" && blank(w.note)) return fail("TEBOS_VALIDATION", "Say what is blocking it.");
+  return OK;
+}
+
+/** The exceptions to raise: overdue, blocked, or waiting on a budget approval. */
+export function workstreamExceptions(list: Workstream[], today: string): Array<{ id: string; title: string; reason: string }> {
+  const out: Array<{ id: string; title: string; reason: string }> = [];
+  for (const w of list) {
+    if (w.status === "done" || w.status === "cancelled") continue;
+    if (w.dueOn < today) out.push({ id: w.id, title: w.title, reason: `overdue since ${w.dueOn} (${w.owner})` });
+    if (w.status === "blocked") out.push({ id: w.id, title: w.title, reason: `blocked: ${w.note ?? "no reason given"}` });
+    if (w.approval === "pending") out.push({ id: w.id, title: w.title, reason: `budget ${w.budget === null ? "" : money(w.budget) + " "}awaiting approval` });
+  }
+  return out;
+}
+
+// ---------------------------------------------------------------------------
+// Outcome scorecard: actual performance against a dated, frozen baseline
+// ---------------------------------------------------------------------------
+
+/** What an outcome review records: measured actuals, never estimates. */
+export const OUTCOME_KEYS = [
+  "units", "vacant_units", "scheduled_rent", "other_income", "vacancy_loss", "rent_due", "rent_collected",
+  "operating_expenses", "debt_service", "reserve", "arrears_balance", "implementation_spent",
+] as const;
+export type OutcomeKey = (typeof OUTCOME_KEYS)[number];
+export const OUTCOME_LABEL: Record<OutcomeKey, string> = {
+  ...(Object.fromEntries(OUTCOME_KEYS.filter((k) => k !== "implementation_spent").map((k) => [k, FIGURES[k as FigureKey].label])) as Record<Exclude<OutcomeKey, "implementation_spent">, string>),
+  implementation_spent: "Spent on the plan so far (total)",
+};
+export type ActualBasis = "verified" | "owner_reported";
+
+export interface Actual { key: OutcomeKey; value: number; basis: ActualBasis; evidenceId?: string | null }
+export interface Review { id: string; reviewOn: string; values: Actual[] }
+export interface Baseline { capturedOn: string; figures: Figure[]; targetCashFlow: number | null }
+
+export interface ScoreRow {
+  reviewOn: string;
+  actual: Economics;
+  /** actual − baseline, monthly; the realised net benefit when it is the cash flow */
+  cashFlowChange: Metric;
+  noiChange: Metric;
+  /** percentage points */
+  collectionChange: Metric;
+  occupancyChange: Metric;
+  expenseRatioChange: Metric;
+  arrears: { baseline: number | null; actual: number | null; change: number | null };
+  vsTarget: number | null;
+  implementationSpent: number | null;
+}
+
+export interface Scorecard {
+  baseline: { capturedOn: string; economics: Economics; targetCashFlow: number | null } | null;
+  rows: ScoreRow[];
+  flags: string[];
+}
+
+const diff = (a: Metric, b: Metric, formula: string): Metric => combine(a, b, formula, (x, y) => x - y);
+
+export function scorecard(baseline: Baseline | null, reviews: Review[], asOf: string, nextReviewOn: string | null): Scorecard {
+  const flags: string[] = [];
+  if (!baseline) return { baseline: null, rows: [], flags: ["No baseline captured: outcomes can't be measured until it is."] };
+  const base = economics(baseline.figures);
+  const baseArrears = baseline.figures.find((f) => f.key === "arrears_balance")?.value ?? null;
+  const rows = [...reviews].sort((a, b) => a.reviewOn.localeCompare(b.reviewOn)).map((r): ScoreRow => {
+    const figs: Figure[] = r.values.filter((v) => v.key !== "implementation_spent")
+      .map((v) => ({ key: v.key as FigureKey, value: v.value, basis: v.basis, asOf: r.reviewOn, evidenceId: v.evidenceId ?? null }));
+    const actual = economics(figs);
+    const arrears = r.values.find((v) => v.key === "arrears_balance")?.value ?? null;
+    return {
+      reviewOn: r.reviewOn,
+      actual,
+      cashFlowChange: diff(actual.cashFlow, base.cashFlow, "Actual cash flow − baseline cash flow (realised net benefit, monthly)"),
+      noiChange: diff(actual.noi, base.noi, "Actual NOI − baseline NOI"),
+      collectionChange: diff(actual.collectionRate, base.collectionRate, "Change in collection rate, percentage points"),
+      occupancyChange: diff(actual.occupancy, base.occupancy, "Change in occupancy, percentage points"),
+      expenseRatioChange: diff(actual.expenseRatio, base.expenseRatio, "Change in operating expense ratio, percentage points"),
+      arrears: { baseline: baseArrears, actual: arrears, change: arrears !== null && baseArrears !== null ? arrears - baseArrears : null },
+      vsTarget: actual.cashFlow.value !== null && baseline.targetCashFlow !== null ? actual.cashFlow.value - baseline.targetCashFlow : null,
+      implementationSpent: r.values.find((v) => v.key === "implementation_spent")?.value ?? null,
+    };
+  });
+  const latest = rows.at(-1);
+  if (rows.length === 0) flags.push("No outcome review yet: record what actually happened.");
+  if (latest) {
+    if (latest.cashFlowChange.value !== null && latest.cashFlowChange.value < 0) flags.push(`Cash flow is ${money(-latest.cashFlowChange.value)} a month below the baseline (review of ${latest.reviewOn}).`);
+    if (latest.vsTarget !== null && latest.vsTarget < 0) flags.push(`Cash flow is ${money(-latest.vsTarget)} a month short of the target.`);
+    if (latest.arrears.change !== null && latest.arrears.change > 0) flags.push(`Arrears have grown by ${money(latest.arrears.change)} since the baseline.`);
+    if (latest.cashFlowChange.value === null) flags.push(`The latest review can't be compared on cash flow: ${latest.cashFlowChange.missing.length ? `missing ${latest.cashFlowChange.missing.map((k) => FIGURES[k].label.toLowerCase()).join(", ")}` : "not defined for these figures"}.`);
+  }
+  if (nextReviewOn && nextReviewOn < asOf.slice(0, 10)) flags.push(`The review due on ${nextReviewOn} is overdue.`);
+  return { baseline: { capturedOn: baseline.capturedOn, economics: base, targetCashFlow: baseline.targetCashFlow }, rows, flags };
 }
 
 // ---------------------------------------------------------------------------
@@ -459,6 +605,10 @@ export interface AssessmentInput {
   figures: Figure[];
   pathways: Array<PathwayRecord & { risks: string | null; specialists: Specialist[]; downside: string | null; disqualifiers: string | null; timeline: string | null; costOnceOff: number | null }>;
   gates: GateState[];
+  workstreams?: Workstream[];
+  baseline?: Baseline | null;
+  reviews?: Review[];
+  nextReviewOn?: string | null;
   /** when the report is generated (ISO); every date judgement uses it */
   asOf: string;
 }
@@ -480,6 +630,9 @@ export interface Assessment {
   risks: string[];
   specialists: string[];
   gates: Array<{ title: string; status: GateStatus; owner: string | null; note: string | null }>;
+  workstreams: Workstream[];
+  exceptions: Array<{ id: string; title: string; reason: string }>;
+  scorecard: Scorecard;
   nextActions: string[];
 }
 
@@ -530,12 +683,17 @@ export function composeAssessment(input: AssessmentInput): Assessment {
   const gates = GATES.map((g) => ({ title: g.title, status: gateState(g.key)?.status ?? "not_started", owner: gateState(g.key)?.owner ?? null, note: gateState(g.key)?.note ?? null }));
   const nextGate = GATES.find((g) => (gateState(g.key)?.status ?? "not_started") !== "passed");
 
+  const workstreams = input.workstreams ?? [];
+  const exceptions = workstreamExceptions(workstreams, input.asOf.slice(0, 10));
+  const score = scorecard(input.baseline ?? null, input.reviews ?? [], input.asOf, input.nextReviewOn ?? null);
   const nextActions = [
     ...(c.authority !== "confirmed" ? ["Confirm and record the owner's authority and mandate."] : []),
+    ...exceptions.map((x) => `Workstream "${x.title}": ${x.reason}.`),
     ...ready.conflicting.map((e) => `Reconcile the conflicting evidence: ${e.title}.`),
     ...ready.missing.slice(0, 6).map((m) => `Obtain: ${m.title.toLowerCase()}.`),
     ...input.evidence.filter((e) => e.followUp?.trim() && e.status !== "checked").map((e) => `${e.title}: ${e.followUp!.trim()}`),
     ...(nextGate ? [`Work toward gate "${nextGate.title}": ${nextGate.question}`] : ["All gates passed: keep measuring against the baseline."]),
+    ...(score.baseline || (input.workstreams?.length ?? 0) > 0 ? score.flags : []),
   ];
 
   return {
@@ -560,6 +718,9 @@ export function composeAssessment(input: AssessmentInput): Assessment {
     risks,
     specialists,
     gates,
+    workstreams,
+    exceptions,
+    scorecard: score,
     nextActions,
   };
 }

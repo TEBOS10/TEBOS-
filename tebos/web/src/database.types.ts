@@ -2731,6 +2731,7 @@ export type Database = {
           created_by: string | null
           created_at: string
           updated_at: string
+          next_review_on: string | null
         }
         Insert: {
           id?: string
@@ -2751,6 +2752,7 @@ export type Database = {
           created_by?: string | null
           created_at?: string
           updated_at?: string
+          next_review_on?: string | null
         }
         Update: {
           id?: string
@@ -2771,6 +2773,7 @@ export type Database = {
           created_by?: string | null
           created_at?: string
           updated_at?: string
+          next_review_on?: string | null
         }
         Relationships: []
       }
@@ -2976,6 +2979,186 @@ export type Database = {
           status?: string
           owner?: string | null
           note?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      property_workstreams: {
+        Row: {
+          id: string
+          org_id: string
+          case_id: string
+          title: string
+          owner: string
+          due_on: string
+          status: string
+          depends_on: string | null
+          budget: number | null
+          approval: string
+          approved_by: string | null
+          approved_on: string | null
+          completion_evidence: string | null
+          completed_on: string | null
+          note: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          case_id: string
+          title: string
+          owner: string
+          due_on: string
+          status?: string
+          depends_on?: string | null
+          budget?: number | null
+          approval?: string
+          approved_by?: string | null
+          approved_on?: string | null
+          completion_evidence?: string | null
+          completed_on?: string | null
+          note?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          case_id?: string
+          title?: string
+          owner?: string
+          due_on?: string
+          status?: string
+          depends_on?: string | null
+          budget?: number | null
+          approval?: string
+          approved_by?: string | null
+          approved_on?: string | null
+          completion_evidence?: string | null
+          completed_on?: string | null
+          note?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      property_baselines: {
+        Row: {
+          id: string
+          org_id: string
+          case_id: string
+          captured_on: string
+          figures: Json
+          target_cash_flow: number | null
+          target_note: string | null
+          captured_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          case_id: string
+          captured_on?: string
+          figures?: Json
+          target_cash_flow?: number | null
+          target_note?: string | null
+          captured_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          case_id?: string
+          captured_on?: string
+          figures?: Json
+          target_cash_flow?: number | null
+          target_note?: string | null
+          captured_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      property_outcome_reviews: {
+        Row: {
+          id: string
+          org_id: string
+          case_id: string
+          review_on: string
+          period_start: string | null
+          period_end: string | null
+          note: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          case_id: string
+          review_on: string
+          period_start?: string | null
+          period_end?: string | null
+          note?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          case_id?: string
+          review_on?: string
+          period_start?: string | null
+          period_end?: string | null
+          note?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      property_outcome_values: {
+        Row: {
+          id: string
+          org_id: string
+          case_id: string
+          review_id: string
+          key: string
+          value: number
+          basis: string
+          evidence_id: string | null
+          note: string | null
+          recorded_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          case_id: string
+          review_id: string
+          key: string
+          value: number
+          basis: string
+          evidence_id?: string | null
+          note?: string | null
+          recorded_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          case_id?: string
+          review_id?: string
+          key?: string
+          value?: number
+          basis?: string
+          evidence_id?: string | null
+          note?: string | null
+          recorded_by?: string | null
           created_at?: string
           updated_at?: string
         }

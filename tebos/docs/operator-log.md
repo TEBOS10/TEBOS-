@@ -24,6 +24,26 @@ Update this list every run; strike items when they're done.
 | 11 | When there's income: Supabase Pro (about USD 25 a month) so the vault and Tidy Capital can have their own project, out of the client database. Until then the vault is a private organisation inside TEBOS | Full separation of your private data |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 16 Oct 2026: Property Revenue Architecture, workstreams and the outcome scorecard
+
+- **Asked by the founder:** the next step after the case workspace.
+- **Built** (migration `property_execution`, additive):
+  - **Workstreams:** owner, deadline, status, dependency, budget and approval, evidence of completion. The rules:
+    a workstream starts only after its dependency is done, with no cycles; a budget is spent only once approved;
+    done needs evidence and a date; blocked says why. Exceptions are raised for overdue, blocked and awaiting-approval work.
+  - **The baseline:** the database copies the case's figures when it is captured, whatever the client sends, and
+    freezes them. Only the target can be revised.
+  - **Outcome reviews:** dated between the baseline and today. Actuals are verified or owner-reported, never estimated.
+  - **The scorecard:** realised net benefit (cash-flow change against the baseline), variance against the target,
+    collection, occupancy, NOI and arrears changes, and spend so far. It flags shortfalls and an overdue review.
+  - **The outcome gate** now needs a baseline and actuals.
+  - **Arrears outstanding** became a figure, so it can be baselined.
+  - The report and the CSV export include all of it.
+- **Proof:**
+  - core: 291 tests, including `property.test` (25);
+  - database: 55 of 55, including SQL `99ze`;
+  - web: 60 unit tests, and e2e 95 of 95, including `property.spec` (8).
+
 ## 16 Oct 2026: Property Revenue Architecture, the case workspace (founder's specification)
 
 - **Asked:** the founder sent three things: the Property Revenue Architect dossier (the business specification),
