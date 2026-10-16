@@ -7,7 +7,7 @@
 //
 // Mirrors the kind check on public.work_requests (test/schema-parity.test.ts).
 
-export type RequestKind = "attention_today";
+export type RequestKind = "attention_today" | "business_status";
 
 /** Who a task's figures are about: the requester's organisation, or the whole platform (platform admins only). */
 export type TaskScope = "org" | "platform";
@@ -56,10 +56,30 @@ export const ATTENTION_TASKS: readonly TaskSpec[] = [
     none: "Tidy Capital's latest market-data update succeeded.", some: () => "Tidy Capital's latest market-data update did not succeed." },
 ];
 
+/** "How are my businesses doing?": the organisation's objectives against their targets, and where the founder is still the only record. */
+export const STATUS_TASKS: readonly TaskSpec[] = [
+  { key: "objectives.off_target", title: "Objectives whose latest measured reading misses the target", executor: "count.objectives_off_target", scope: "org",
+    acceptance: `Count this organisation's active objectives whose latest measured reading misses its target (below an at-least target, above an at-most one). ${COUNT_TEST}`,
+    none: "Every measured objective is on target.", some: (n) => `${plural(n, "objective is", "objectives are")} off target on the latest measured reading.` },
+  { key: "objectives.unmeasured", title: "Objectives with no measured reading", executor: "count.objectives_unmeasured", scope: "org",
+    acceptance: `Count this organisation's active objectives with no reading measured from a connected system. ${COUNT_TEST}`,
+    none: "Every active objective has a measured reading.", some: (n) => `${plural(n, "objective has", "objectives have")} no measured reading yet; what the owner said doesn't count.` },
+  { key: "objectives.overdue", title: "Objectives past their date", executor: "count.objectives_overdue", scope: "org",
+    acceptance: `Count this organisation's active objectives whose due date has passed. ${COUNT_TEST}`,
+    none: "No active objective is past its date.", some: (n) => `${plural(n, "objective is", "objectives are")} past the date and still open: mark each achieved from a measured reading, or missed.` },
+  { key: "board.founder_only", title: "Steps only the founder does, written down nowhere", executor: "count.founder_only_steps", scope: "org",
+    acceptance: `Count this organisation's current board steps done by the founder and not documented. ${COUNT_TEST}`,
+    none: "No step depends on the founder's memory alone.", some: (n) => `${plural(n, "step depends", "steps depend")} on the founder alone, with no written rule.` },
+];
+
 export const REQUEST_KINDS: Record<RequestKind, { title: string; description: string }> = {
   attention_today: {
     title: "What needs my attention today?",
     description: "Approvals waiting, failed runs, overdue delivery and open maintainer items; for platform admins also leads, enquiries, failed emails and Tidy Capital's data.",
+  },
+  business_status: {
+    title: "How are my businesses doing?",
+    description: "Objectives against their targets, objectives with no measured reading or past their date, and steps that still depend on the founder alone.",
   },
 };
 
@@ -70,10 +90,12 @@ export function planRequest(kind: RequestKind, requester: { platformAdmin: boole
   switch (kind) {
     case "attention_today":
       return ATTENTION_TASKS.filter((t) => t.scope === "org" || requester.platformAdmin);
+    case "business_status":
+      return [...STATUS_TASKS];
   }
 }
 
-export const taskSpec = (key: string): TaskSpec | undefined => ATTENTION_TASKS.find((t) => t.key === key);
+export const taskSpec = (key: string): TaskSpec | undefined => [...ATTENTION_TASKS, ...STATUS_TASKS].find((t) => t.key === key);
 
 /** What an executor found. Unavailable is an honest "couldn't check", never a zero. */
 export type CheckResult =

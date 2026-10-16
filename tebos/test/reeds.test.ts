@@ -1,7 +1,7 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { ATTENTION_TASKS, composeReport, planRequest, REQUEST_KINDS, reportLine, taskSpec } from "../src/domain/work";
+import { ATTENTION_TASKS, composeReport, planRequest, REQUEST_KINDS, reportLine, STATUS_TASKS, taskSpec } from "../src/domain/work";
 import { COUNT_CHECKS, EXECUTORS } from "../src/reeds/checks";
 
 const sql = readdirSync(join(__dirname, "..", "supabase", "migrations")).sort()
@@ -17,8 +17,18 @@ describe("REEDS plans", () => {
     expect(admin.length).toBeLessThanOrEqual(12); // the ledger's default task limit
   });
 
+  it("plans \"how are my businesses doing?\" the same for everyone, from the organisation's own records only", () => {
+    const member = planRequest("business_status", { platformAdmin: false });
+    expect(member.map((t) => t.key)).toEqual(["objectives.off_target", "objectives.unmeasured", "objectives.overdue", "board.founder_only"]);
+    expect(planRequest("business_status", { platformAdmin: true })).toEqual(member);
+    expect(member.every((t) => t.scope === "org")).toBe(true);
+    // keys are unique across request kinds, so a task's spec is never ambiguous
+    const keys = [...ATTENTION_TASKS, ...STATUS_TASKS].map((t) => t.key);
+    expect(new Set(keys).size).toBe(keys.length);
+  });
+
   it("gives every task an executor that exists, a verifiable acceptance test and a valid key", () => {
-    for (const t of ATTENTION_TASKS) {
+    for (const t of [...ATTENTION_TASKS, ...STATUS_TASKS]) {
       expect(EXECUTORS, t.key).toContain(t.executor);
       expect(t.acceptance.length).toBeGreaterThanOrEqual(10);
       expect(t.key).toMatch(/^[a-z][a-z0-9_.]{1,60}$/);
@@ -36,8 +46,10 @@ describe("REEDS plans", () => {
   });
 
   it("knows exactly the request kinds the database accepts", () => {
+    // the latest definition wins: a later migration that replaces the check, else the table's own
+    const replaced = [...sql.matchAll(/add constraint work_requests_kind_check check \(kind in \(([^)]*)\)\)/g)].at(-1);
     const table = sql.slice(sql.indexOf("create table public.work_requests"));
-    const m = table.match(/kind\s+text not null check \(kind in \(([^)]*)\)\)/);
+    const m = replaced ?? table.match(/kind\s+text not null check \(kind in \(([^)]*)\)\)/);
     expect(m, "work_requests kind check").toBeTruthy();
     const kinds = [...m![1]!.matchAll(/'([a-z_]+)'/g)].map((x) => x[1]).sort();
     expect(kinds).toEqual(Object.keys(REQUEST_KINDS).sort());

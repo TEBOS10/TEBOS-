@@ -127,3 +127,11 @@ test("an empty inbox says so plainly", async ({ page }) => {
   await expect(inbox.getByText("Nothing is waiting for a decision.")).toBeVisible();
   await expect(inbox.getByText("No failures in the last day, and no objective is past its date.")).toBeVisible();
 });
+
+test("the second question can be asked: how are my businesses doing?", async ({ page }) => {
+  const fake = await installFakeSupabase(page);
+  await page.goto("/reeds");
+  await page.getByLabel(/How are my businesses doing\?/).check();
+  await page.getByRole("button", { name: "Ask TEBOS" }).click();
+  await expect.poll(() => fake.writes.find((w) => w.table === "work_requests" && w.method === "POST")?.body).toMatchObject({ kind: "business_status" });
+});
