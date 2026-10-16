@@ -17,13 +17,18 @@ The founder's silence is not a reason to stop. It is the reason this loop exists
       and worker errors in the logs. Fix it first.
    2. **A live signal that code can fix.** This covers a maintainer item or a company-board objective
       off target because of something in TEBOS itself, and a security advisor warning.
-   3. **The next unbuilt step of the product.** TEBOS's product is the operating system it builds for
+   3. **The founder's priorities.** Take the first unbuilt item from `ROADMAP.md` "Founder's priorities",
+      the founder's own order (set 16 Oct 2026: cash first). These may be built ahead of the stage gates
+      below; the rules in "Never" still apply to every one of them. When an item needs the founder's input
+      (a price, how they work, a credential), build what doesn't need it, put the question at the top of
+      the founder's decisions, and move to the next item.
+   4. **The next unbuilt step of the product.** TEBOS's product is the operating system it builds for
       each client business: know it, map it, architect it, connect it, automate it, improve it. Take the
       first unbuilt item from `ROADMAP.md` "Next for the board", then stage 5 (operating systems). Only
       when those are blocked, take company plumbing ("TEBOS on its own board", pipeline "Next").
       The item's stage gate must be met, or the roadmap must say it may be built ahead of its gate. A
       gate that waits on the founder goes at the top of the founder's decisions, because it blocks the product.
-   4. **Hardening.** Look for missing failure states, tests, audit events, performance, or a rule
+   5. **Hardening.** Look for missing failure states, tests, audit events, performance, or a rule
       mirrored in the database but not in `src/domain` (or the reverse).
    If a piece of work needs something only the founder can give (a key, a signature, a decision on
    price or legal text), don't build around it. Add it to the founder's decisions and pick the next item.

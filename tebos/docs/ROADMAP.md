@@ -16,6 +16,46 @@ Where TEBOS aims to be better than a general AI model or an agent tool is in wha
 Models such as Claude are the reasoning engines behind the control plane (§49). The TEBOS product is
 the control plane itself.
 
+## Founder's priorities (in order; set 16 Oct 2026)
+
+The founder runs several things at once: TEBOS (the builder, which also sells to outside businesses), property
+(a newly qualified agent, the Property Revenue Architect business, and property qualifications towards asset
+management), Tidy Capital (the reserve fund and investing) and the founder's own academics. The company has to
+keep moving when the founder is busy, and has to pay its own subscriptions. So the daily build run works through
+this list first (OPERATOR.md rule 2.3). **Cash first:** Tidy Capital grows money over years; it doesn't pay this
+month's bills, so earning comes before investing.
+
+1. **Property Revenue Architect: the revenue review workflow.** A property's records (type, location, units,
+   current rent or rates, occupancy, costs) with each figure labelled measured, stated by the owner, or estimated;
+   a revenue baseline; the gaps against comparable properties; the ranked opportunities, each with its evidence and
+   its assumptions; and a review report the founder can hand to an owner. Prices and any client-facing text are
+   the founder's (tier 3). How the founder assesses a property today is a founder question: build the record-keeping
+   and report first, and ask.
+2. **REEDS works without being asked.** Standing requests: the founder sets a question once ("every Monday: how are
+   my businesses doing?") and the server raises it on schedule, with the report waiting in the inbox. The rule that
+   only a person can ask stays: a standing request is the founder's own request, repeated, never one the system
+   invents. Then the **weekly money brief**: what TEBOS and its tools cost (subscriptions the founder records, each
+   with its renewal date), what came in (recorded payments and commissions), the months the money lasts, and the
+   next best earning move from the records. Nothing estimated is shown as measured.
+3. **The agent's pipeline.** Buyers, sellers and listings for the founder's real-estate work: every lead with its
+   next step and date, follow-ups drafted for approval (never sent by TEBOS), and commission expected versus received.
+4. **The study path.** The qualifications towards asset management (property finance, property investment and
+   development, and what the FSCA requires to manage other people's money) as objectives with dates and evidence of
+   completion.
+5. **The private vault.** The founder's own organisation inside TEBOS (free for now): documents stored privately,
+   every read audited, shared only through short-lived signed links, searchable ("REEDS, find my document").
+   Built so it can move to its own Supabase project, out of the client database, once income pays for one (the
+   free plan's two projects are in use: `tebos-core` and `bame-os`).
+6. **Tidy Capital, honestly.** Bring the `capital` schema and its ingestion into this repository; a research and
+   paper-trading ledger where every idea is time-stamped before its outcome is known and every result, win or loss,
+   is recorded. That becomes the verifiable track record a future fund needs. No live trading, and no figure that
+   isn't recorded. Its market-data key (Alpha Vantage, in Vault) is the founder's to set.
+7. **BAME talks to TEBOS both ways.** BAME already reports hourly (read-only). Next: BAME's own events (a new case,
+   an overdue deliverable) arrive as signed notifications, and approved actions go back (ROADMAP "Platform
+   monitoring").
+
+Later, and not before there is income and a lawyer's advice: buying media, banking or other protective assets.
+
 ## The model: business operating architecture
 
 TEBOS is business operating architecture ([ADR 0003](adr/0003-business-operating-architecture.md)): it makes a

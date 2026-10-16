@@ -19,7 +19,19 @@ Update this list every run; strike items when they're done.
 | 6 | Social accounts created, and whether to invite a marketer (Staff → Invite, role Marketing) | Publishing the social pack and approved drafts |
 | 7 | Company registration and VAT number | Invoices that are legally complete |
 | 8 | Make the repo private, rotate database passwords, turn on leaked-password protection | Protecting the platform from copying |
+| 10 | **Property Revenue Architect:** how you assess a property today (what you look at, what you compare it with), and what you'll charge for a review | The first paid property reviews, priority 1 |
+| 11 | When there's income: Supabase Pro (about USD 25 a month) so the vault and Tidy Capital can have their own project, out of the client database. Until then the vault is a private organisation inside TEBOS | Full separation of your private data |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
+
+## 16 Oct 2026: the founder's priorities, cash first
+
+- The founder set the order for the whole company (ROADMAP "Founder's priorities"). The daily run now takes these
+  first (OPERATOR rule 2.3), so work continues when the founder is busy.
+- **Why cash first:** subscriptions keep running out. Tidy Capital is how money grows over years; commissions,
+  Property Revenue Architect reviews and TEBOS clients are how bills get paid this month.
+- **The vault goes inside TEBOS for now:** the free plan allows two projects and both are in use. It is built
+  to move out to its own project later.
+- New founder questions: 10 (how you assess a property, and the review price) and 11 (Supabase Pro when there's income).
 
 ## 16 Oct 2026 (daily run): Ask TEBOS answers "How are my businesses doing?"
 
