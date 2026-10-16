@@ -69,14 +69,12 @@ test("after a password sign-in, the code comes first; nothing else loads until i
   expect(fake.writes.filter((w) => w.table.endsWith("/verify"))).toHaveLength(2);
 });
 
-test("the private records say what they need when the session has no second step", async ({ page }) => {
+test("in TEPOS, the private records say what they need when the session has no second step", async ({ page }) => {
   const fake = await installFakeSupabase(page);
   const t = fake.tables as unknown as Record<string, Record<string, unknown>[]>;
   t.organisations!.push({ id: VAULT, name: "IREKUN", slug: "irekun", private: true, created_at: new Date().toISOString() });
   t.memberships!.push({ org_id: VAULT, user_id: USER_ID, role: "org_admin", created_at: new Date().toISOString() });
-  await page.goto("/");
-  await page.getByRole("combobox", { name: "Organisation" }).selectOption({ label: "IREKUN" });
-  await page.getByRole("group", { name: "Side" }).getByRole("link", { name: /TEPOS/ }).click();
+  await page.goto("http://localhost:5175/");
   await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Tidy Capital" }).click();
   await expect(page.getByRole("heading", { name: "Two-step sign-in is needed" })).toBeVisible();
   await page.getByRole("link", { name: "Set up two-step sign-in" }).click();

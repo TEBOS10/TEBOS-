@@ -1,4 +1,4 @@
-import { BookOpen, GraduationCap, KeyRound, LayoutGrid, LineChart, Vault, Home as HomeIcon, Briefcase, Landmark, Clapperboard, Eye, Building2, CheckSquare, Download, Gauge, Home, ListChecks, LogOut, Megaphone, Menu, MessageSquare, PhoneCall, Plug, Receipt, ScanSearch, ShieldCheck, Sparkles, Stamp, Users } from "lucide-react";
+import { BookOpen, Briefcase, Clapperboard, Eye, Building2, CheckSquare, Download, Gauge, Home, ListChecks, LogOut, Megaphone, Menu, MessageSquare, PhoneCall, Plug, Receipt, ScanSearch, ShieldCheck, Sparkles, Stamp, Users } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { DEMO_BUSINESS } from "../demo/data";
 import { exitDemo, isDemo } from "../demo/mode";
@@ -6,7 +6,6 @@ import { Link, usePath } from "../lib/router";
 import { useOrg } from "../lib/session";
 import { useStaff } from "../lib/staff";
 import { useInstallPrompt } from "../lib/install";
-import { isTeposPath } from "../lib/portals";
 
 const NAV = [
   { to: "/", label: "Home", icon: Home, exact: true },
@@ -19,18 +18,6 @@ const NAV = [
   { to: "/team", label: "Team", icon: Users },
   { to: "/connections", label: "Connections", icon: Plug },
   { to: "/system", label: "System", icon: Gauge },
-];
-
-// TEPOS: the founder's own portals (lib/portals.ts), apart from TEBOS's clients
-const TEPOS_NAV = [
-  { to: "/tepos", label: "TEPOS home", icon: LayoutGrid, exact: true },
-  { to: "/tepos/capital", label: "Tidy Capital", icon: Vault, exact: true },
-  { to: "/property", label: "Tidy Enterprise", icon: Landmark, exact: false },
-  { to: "/tepos/irekun", label: "IREKUN", icon: KeyRound, exact: true },
-  { to: "/tepos/academics", label: "Academics", icon: GraduationCap, exact: true },
-  { to: "/tepos/agent", label: "Real Estate Job", icon: HomeIcon, exact: true },
-  { to: "/tepos/forex", label: "Forex", icon: LineChart, exact: true },
-  { to: "/reeds", label: "Ask REEDS", icon: MessageSquare, exact: false },
 ];
 
 // The visual side of TEBOS (showcase, film, tour) is public, so signed in it is otherwise out of reach
@@ -49,11 +36,8 @@ export function Shell({ children }: { children: ReactNode }) {
   // TEBOS's own staff also see the client pipeline and the sales playbook
   const { access } = useStaff();
   const pipeline = access?.sales || access?.maintainer;
-  // TEPOS, the founder's personal side: for whoever owns a private organisation, and TEBOS's admins
-  const hasTepos = !!access?.admin || organisations.some((o) => o.organisation.private);
-  const tepos = hasTepos && isTeposPath(path);
   const base = NAV;
-  const nav = tepos ? TEPOS_NAV : pipeline || access?.marketing
+  const nav = pipeline || access?.marketing
     ? [...base,
        ...(pipeline ? [{ to: "/pipeline", label: "Pipeline", icon: Briefcase, exact: false }, { to: "/sales", label: "Sales playbook", icon: BookOpen, exact: false }] : []),
        { to: "/marketing", label: "Marketing", icon: Megaphone, exact: true },
@@ -70,19 +54,13 @@ export function Shell({ children }: { children: ReactNode }) {
             <ShieldCheck size={18} />
           </span>
           <div>
-            <div className="brand-name">{tepos ? "TEPOS" : "TEBOS"}</div>
-            <div className="brand-sub">{tepos ? "Personal Operating System" : "Business Operating Systems"}</div>
+            <div className="brand-name">TEBOS</div>
+            <div className="brand-sub">Business Operating Systems</div>
           </div>
           <button type="button" className="menu-toggle" aria-expanded={menuOpen} aria-controls="main-nav" onClick={() => setMenuOpen(!menuOpen)}>
             <Menu size={18} aria-hidden /> Menu
           </button>
         </div>
-        {hasTepos && (
-          <div className="side-switch" role="group" aria-label="Side">
-            <Link to="/tepos" className={`side-option ${tepos ? "active" : ""}`} aria-current={tepos ? "true" : undefined}>TEPOS<small>Personal</small></Link>
-            <Link to="/" className={`side-option ${tepos ? "" : "active"}`} aria-current={tepos ? undefined : "true"}>TEBOS<small>Clients</small></Link>
-          </div>
-        )}
         <nav className="nav" id="main-nav" aria-label="Main">
           {nav.map(({ to, label, icon: Icon, exact }) => {
             const active = exact ? path === to : path === to || path.startsWith(`${to}/`);

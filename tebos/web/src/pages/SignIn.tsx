@@ -8,7 +8,9 @@ import { useSessionState } from "../lib/session";
  * and for teammates they invite. "Create account" is offered only to someone
  * holding an invitation (allowSignUp).
  */
-export function SignIn({ notice: intro, allowSignUp = false }: { notice?: string; allowSignUp?: boolean } = {}) {
+export function SignIn({ notice: intro, allowSignUp = false, name = "TEBOS", tagline = "Understand the business. Know what matters. Execute what is next." }: {
+  notice?: string; allowSignUp?: boolean; name?: string; tagline?: string;
+} = {}) {
   const { db } = useSessionState();
   const [mode, setMode] = useState<"sign_in" | "sign_up" | "reset">("sign_in");
   const [email, setEmail] = useState("");
@@ -27,7 +29,7 @@ export function SignIn({ notice: intro, allowSignUp = false }: { notice?: string
       setBusy(false);
       if (res.error) return setError(res.error);
       // Same answer whether or not the address has an account.
-      return setNotice("If that address has a TEBOS account, a reset link is on its way. Open it on this device.");
+      return setNotice(`If that address has an account, a reset link is on its way. Open it on this device.`);
     }
     const res =
       mode === "sign_in"
@@ -49,9 +51,9 @@ export function SignIn({ notice: intro, allowSignUp = false }: { notice?: string
           </span>
           <div>
             <h1 className="page-title" style={{ fontSize: 22 }}>
-              TEBOS
+              {name}
             </h1>
-            <p className="muted">Understand the business. Know what matters. Execute what is next.</p>
+            <p className="muted">{tagline}</p>
           </div>
         </div>
         {intro && <div className="note note-info">{intro}</div>}
@@ -86,7 +88,7 @@ export function SignIn({ notice: intro, allowSignUp = false }: { notice?: string
             Forgot password?
           </button>
         )}
-        {mode === "reset" && <p className="muted">Enter your email and TEBOS will send you a link to choose a new password.</p>}
+        {mode === "reset" && <p className="muted">Enter your email and {name} will send you a link to choose a new password.</p>}
         <ErrorNote error={error} title={mode === "sign_in" ? "Couldn't sign in" : mode === "reset" ? "Couldn't send the link" : "Couldn't create the account"} />
         {notice && <div className="note note-info">{notice}</div>}
         <button className="btn btn-primary" disabled={busy || (mode !== "sign_in" && !!notice)}>
@@ -97,9 +99,11 @@ export function SignIn({ notice: intro, allowSignUp = false }: { notice?: string
             Back to sign in
           </button>
         )}
-        <p className="muted" style={{ textAlign: "center", fontSize: 14 }}>
-          New to TEBOS? Accounts are set up when your plan starts: <a href="/pricing">see the plans</a>, or <a href="/demo">try the demo</a> with no account.
-        </p>
+        {name === "TEBOS" && (
+          <p className="muted" style={{ textAlign: "center", fontSize: 14 }}>
+            New to TEBOS? Accounts are set up when your plan starts: <a href="/pricing">see the plans</a>, or <a href="/demo">try the demo</a> with no account.
+          </p>
+        )}
       </form>
     </div>
   );

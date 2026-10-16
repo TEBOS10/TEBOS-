@@ -1,13 +1,13 @@
-// TEPOS, the Tidy Enterprise Personal Operating System: the founder's own portals, apart from TEBOS's clients.
-// Each tile opens its portal (switching to the organisation that holds it). Portals not built yet say so, and say
-// what they will hold; nothing here is invented.
-import { useQuery } from "../lib/useQuery";
+// TEPOS home and portal pages. Each portal opens in the organisation that holds it. Portals not built yet say
+// so, and say what they will hold; nothing here is invented.
+import { ErrorNote } from "../components/ui";
+import { PortalTile, usePortal } from "../components/Portal";
 import { Link, navigate } from "../lib/router";
 import { useOrg } from "../lib/session";
-import { COMING, PORTALS, type Portal } from "../lib/portals";
-import { PortalTile, usePortal } from "../components/Portal";
-import { ErrorNote } from "../components/ui";
-import { ResiliencePage } from "./ResiliencePage";
+import { useQuery } from "../lib/useQuery";
+import { ResiliencePage } from "../pages/ResiliencePage";
+import { COMING, PORTALS, type Portal } from "./portals";
+import { TeposCity } from "./TeposCity";
 
 /** Opens a portal: into its organisation first, then its page. */
 export function useOpenPortal() {
@@ -28,8 +28,9 @@ export function TeposHome() {
       <header className="tepos-head">
         <div className="tepos-eyebrow">TEPOS · Tidy Enterprise Personal Operating System</div>
         <h1>Tidy</h1>
-        <p>Your own portals, kept apart from TEBOS's clients. Choose one to go in.</p>
+        <p>Your own city. Each building is a portal; the ones still under scaffolding aren't built yet.</p>
       </header>
+      <TeposCity onOpen={(p, e) => { const t = target(p); if (t.allowed) open(e, p.shade, p.accent, t.go); }} allowed={(p) => target(p).allowed} />
       <section className="portal-grid" aria-label="Portals">
         {PORTALS.map((p) => {
           const t = target(p);
@@ -40,7 +41,7 @@ export function TeposHome() {
           );
         })}
       </section>
-      <p className="tepos-foot">REEDS works across both sides: <Link to="/reeds">ask REEDS</Link>. Clients live in <Link to="/">TEBOS</Link>.</p>
+      <p className="tepos-foot">REEDS works across TEPOS and TEBOS: <Link to="/reeds">ask REEDS</Link>.</p>
     </div>
   );
 }
@@ -50,11 +51,11 @@ export function TeposPortalPage({ portal }: { portal: string }) {
   if (portal === "irekun") return <Irekun />;
   const p = PORTALS.find((x) => x.key === portal);
   const coming = COMING[portal];
-  if (!p || !coming) return <div className="tepos"><h1>Not found</h1><p><Link to="/tepos">Back to TEPOS</Link></p></div>;
+  if (!p || !coming) return <div className="tepos"><h1>Not found</h1><p><Link to="/">Back to TEPOS</Link></p></div>;
   return (
     <div className="tepos">
-      <header className="tepos-head" style={{ borderColor: p.shade }}>
-        <div className="tepos-eyebrow"><Link to="/tepos">TEPOS</Link> / {p.name}</div>
+      <header className="tepos-head">
+        <div className="tepos-eyebrow"><Link to="/">TEPOS</Link> / {p.name}</div>
         <h1>{p.name}</h1>
         <p>{p.line}</p>
       </header>
@@ -79,7 +80,7 @@ function Irekun() {
   return (
     <div className="tepos">
       <header className="tepos-head">
-        <div className="tepos-eyebrow"><Link to="/tepos">TEPOS</Link> / IREKUN</div>
+        <div className="tepos-eyebrow"><Link to="/">TEPOS</Link> / IREKUN</div>
         <h1>IREKUN</h1>
         <p>The security backbone of Tidy. Never sold.</p>
       </header>
@@ -93,7 +94,7 @@ function Irekun() {
         </div>
         <div className="tepos-card">
           <h2>Private organisation</h2>
-          <p>{org.organisation.private ? `${org.organisation.name}: you are its only member. The database refuses anyone else, including invitations.` : "Open IREKUN from TEPOS to see your private organisation."}</p>
+          <p>{org.organisation.private ? `${org.organisation.name}: you are its only member. The database refuses anyone else, including invitations.` : "Open IREKUN from the city to see your private organisation."}</p>
         </div>
         <div className="tepos-card">
           <h2>Not built yet</h2>

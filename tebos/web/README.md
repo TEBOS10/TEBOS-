@@ -58,6 +58,24 @@ To set it up from scratch instead:
 
    Sign-up confirmation emails then link back to the app.
 
+## TEPOS: the founder's separate app
+
+TEPOS (the Tidy Enterprise Personal Operating System) is built from this folder, but separately from TEBOS:
+
+| | TEBOS | TEPOS |
+|---|---|---|
+| Entry | `index.html`, `src/main.tsx` | `tepos/index.html`, `tepos/main.tsx` |
+| Config | `vite.config.ts` | `vite.tepos.config.ts` |
+| Build | `npm run build:tebos` → `dist` | `npm run build:tepos` → `dist-tepos` |
+| Dev | `npm run dev` | `npm run dev:tepos` |
+
+- `npm run build` builds both, then `scripts/check-bundles.mjs` fails if the TEBOS bundle mentions TEPOS.
+- TEPOS needs its own Vercel project. Use the same Root Directory (`tebos/web`), with Build Command
+  `npm run build:tepos` and Output Directory `dist-tepos`. It takes the same two public variables.
+- Add its address to Supabase's Redirect URLs.
+- TEPOS lets in only someone who owns a private organisation, and lists only TEPOS organisations
+  (`organisations.app`).
+
 ## Tests
 
 ```bash

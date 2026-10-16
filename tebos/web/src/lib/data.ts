@@ -51,10 +51,15 @@ export const OPEN_ACTION_STATUSES = ["proposed", "ready", "awaiting_approval", "
 // Organisations
 // ---------------------------------------------------------------------------
 
-export async function myOrganisations(db: Db, userId: string) {
+/** Which web app an organisation belongs to: TEBOS (clients) or TEPOS (the founder's own). Private ones are TEPOS's. */
+export type App = "tebos" | "tepos";
+export const appOf = (o: Pick<Organisation, "private"> & { app?: string | null }): App => (o.app === "tepos" || o.private ? "tepos" : "tebos");
+
+/** The person's organisations in this app only: TEBOS never lists TEPOS's, and the other way round. */
+export async function myOrganisations(db: Db, userId: string, app: App = "tebos") {
   const memberships = must(await db.from("memberships").select("*").eq("user_id", userId));
   if (memberships.length === 0) return [];
-  const orgs = must(await db.from("organisations").select("*").in("id", memberships.map((m) => m.org_id)));
+  const orgs = must(await db.from("organisations").select("*").in("id", memberships.map((m) => m.org_id))).filter((o) => appOf(o) === app);
   return memberships
     .map((m) => ({ membership: m, organisation: orgs.find((o) => o.id === m.org_id)! }))
     .filter((x) => x.organisation)

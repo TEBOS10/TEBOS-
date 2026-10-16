@@ -1,5 +1,5 @@
-// TEPOS, the Tidy Enterprise Personal Operating System: the founder's personal side (founder, 17 Oct 2026).
-// TEBOS serves clients; TEPOS runs Tidy's own portals. Each portal is a tile in its own shade of earthy brown or
+// TEPOS, the Tidy Enterprise Personal Operating System: the founder's own web app, separate from TEBOS
+// (founder, 16 Oct 2026). TEBOS serves clients; TEPOS runs Tidy's own portals. Each portal is a tile in its own shade of earthy brown or
 // beige. A portal that isn't built yet says so: it never shows invented figures.
 
 export interface Portal {
@@ -20,17 +20,17 @@ export interface Portal {
 
 export const PORTALS: readonly Portal[] = [
   { key: "capital", name: "Tidy Capital", line: "The reserve: every income stream, and how many months the money lasts.",
-    shade: "#3b2a1e", accent: "#d9b77e", monogram: "TC", org: "irekun", to: "/tepos/capital", built: true },
+    shade: "#3b2a1e", accent: "#d9b77e", monogram: "TC", org: "irekun", to: "/capital", built: true },
   { key: "enterprise", name: "Tidy Enterprise", line: "Property Revenue Architecture cases, and the credentials towards asset management.",
     shade: "#6b4a32", accent: "#ecd3ab", monogram: "TE", org: "tidy-enterprise", to: "/property", built: true },
   { key: "irekun", name: "IREKUN", line: "Security: two-step sign-in and the private organisation only you can open.",
-    shade: "#241a14", accent: "#c08a5a", monogram: "IR", org: "irekun", to: "/tepos/irekun", built: true },
+    shade: "#241a14", accent: "#c08a5a", monogram: "IR", org: "irekun", to: "/irekun", built: true },
   { key: "academics", name: "Academics", line: "The study path towards asset management: qualifications, dates and evidence.",
-    shade: "#d9c4a5", accent: "#6b4a32", monogram: "AC", to: "/tepos/academics", built: false },
+    shade: "#d9c4a5", accent: "#6b4a32", monogram: "AC", to: "/academics", built: false },
   { key: "agent", name: "Real Estate Job", line: "Listings, buyers and sellers, appointments, and no enquiry left unanswered.",
-    shade: "#8a6a4f", accent: "#f3e6d0", monogram: "RE", to: "/tepos/agent", built: false },
+    shade: "#8a6a4f", accent: "#f3e6d0", monogram: "RE", to: "/agent", built: false },
   { key: "forex", name: "Forex", line: "Paper trading with every idea time-stamped before its outcome. No live trading.",
-    shade: "#efe3cf", accent: "#8a5a35", monogram: "FX", to: "/tepos/forex", built: false },
+    shade: "#efe3cf", accent: "#8a5a35", monogram: "FX", to: "/forex", built: false },
 ];
 
 /** What each portal not built yet will hold, from the roadmap (docs/ROADMAP.md, founder's priorities). */
@@ -51,6 +51,3 @@ export const COMING: Record<string, { priority: string; holds: string[] }> = {
     "No live trading, and no figure that isn't recorded. Forex income always counts as speculative in Tidy Capital.",
   ] },
 };
-
-/** TEPOS pages: the menu shows the TEPOS side on these. */
-export const isTeposPath = (path: string) => path === "/tepos" || path.startsWith("/tepos/") || path === "/property" || path.startsWith("/property/") || path === "/resilience";

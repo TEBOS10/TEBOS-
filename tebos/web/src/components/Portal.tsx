@@ -3,6 +3,9 @@
 import { inkFor } from "@core/brand";
 import { useState, type CSSProperties, type MouseEvent, type ReactNode } from "react";
 
+/** Anything with an element to open from: a click on a tile, or a key press on a building. */
+export type PortalOrigin = { currentTarget: Element };
+
 interface Opening {
   rect: DOMRect;
   shade: string;
@@ -13,7 +16,7 @@ const DURATION = 650;
 
 export function usePortal() {
   const [opening, setOpening] = useState<Opening | null>(null);
-  function open(e: MouseEvent<HTMLElement>, shade: string, accent: string, go: () => void) {
+  function open(e: PortalOrigin, shade: string, accent: string, go: () => void) {
     const reduced = typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduced) return go();
     setOpening({ rect: e.currentTarget.getBoundingClientRect(), shade, accent });

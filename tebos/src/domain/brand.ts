@@ -1,4 +1,4 @@
-// A business's colours, for its tile on the TEBOS client map (founder, 17 Oct 2026: "the colours should be based
+// A business's colours, for its tile on the TEBOS client map (founder, 16 Oct 2026: "the colours should be based
 // off of the business's colours"). Stored on the business and checked by the database
 // (migration 20261017140000_business_brand.sql); text on a tile is always chosen for contrast, never assumed.
 import { fail, OK, type Check } from "./rules";

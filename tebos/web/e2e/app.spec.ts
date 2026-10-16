@@ -311,7 +311,7 @@ test("someone who forgot their password can ask for a reset link", async ({ page
   await page.getByRole("button", { name: "Forgot password?" }).click();
   await page.getByLabel("Email").fill("operator@fixture.test");
   await page.getByRole("button", { name: "Send reset link" }).click();
-  await expect(page.getByText("If that address has a TEBOS account, a reset link is on its way.")).toBeVisible();
+  await expect(page.getByText("If that address has an account, a reset link is on its way.")).toBeVisible();
   const reset = fake.writes.find((w) => w.table.startsWith("auth/recover"));
   expect(reset?.body).toMatchObject({ email: "operator@fixture.test" });
   expect(decodeURIComponent(reset!.table)).toContain("redirect_to=http://localhost:5174/reset-password");
