@@ -1,7 +1,8 @@
 # Strategic Resilience: blueprint, data model, MVP roadmap and threat model
 
 Stage 1 and 2 of the founder's *Strategic Resilience & Environmental Intelligence Dossier* (v1.0, 16 Oct 2026).
-Nothing in this document is built yet. **Built** means implemented and tested; **proposed** means designed only.
+**Built** means implemented and tested; **proposed** means designed only. Status, 17 Oct 2026: slice 1 (financial
+resilience) is built (§7). Everything else is proposed.
 
 ## 1. One-page blueprint
 
@@ -95,7 +96,10 @@ material risks with an owner and review date; unresolved high-impact risks; and 
 | T9 | **Scope creep into surveillance** | Legal and ethical harm | The source registry is the only way data comes in, and each source records its authorisation. There is no capability for covert collection. Sensors show their status and can be paused |
 | T10 | **Secrets in notes** | Credential exposure | No password or key columns. A pattern check refuses secret-shaped strings in narrative fields |
 
-## 5. Questions that genuinely block the prototype
+## 5. Questions that genuinely block the prototype (answered 17 Oct 2026)
+
+**The founder's answers:** inside TEBOS, free; only the founder; the personal vaults (A, B, G) later.
+
 
 1. **Where it lives for now.** Is a separate private organisation inside TEBOS's database acceptable for the MVP? This
    is the free option already chosen for the vault. The alternative is to wait for a separate project, which costs
@@ -124,3 +128,63 @@ Before it is built, each feature states:
 - how to recover from it or switch it off.
 
 The review sits in this folder, next to the feature's tests.
+
+## 7. Built: slice 1, financial resilience (17 Oct 2026)
+
+| Part | Where |
+|---|---|
+| Rules and calculations | `src/domain/resilience.ts` |
+| Database | Migration `20261017040000_resilience_money.sql` |
+| Interface | Menu → **Resilience** (`web/src/pages/ResiliencePage.tsx`) |
+
+**Private organisations.** A private organisation is created by `create_private_organisation`, and it is private for
+good.
+- It has one member, its creator, as admin.
+- The database refuses a second member, any other role and any invitation, by any path, the service role included.
+- Resilience records can't be stored in any other organisation.
+- The live one is called **IREKUN**.
+
+**Money items.** Each item records:
+- the entity it belongs to: Tidy, Tidy Capital, Tidy Enterprise, TEBOS, IREKUN or Personal;
+- what it is: an essential cost, another cost, income, a reserve, a debt or a commitment;
+- for income, its stream and whether it is reliable;
+- how often it is paid;
+- whether a reserve is liquid;
+- its basis (verified, stated or estimated) and the document it rests on;
+- a due date, an as-of date and a note.
+
+The rules:
+- **Unknown is not zero.** An amount can be left blank. Anything that needs it then says "Not established" and
+  names the missing item.
+- **Reliable income is verified** and names its document.
+- **Speculative income never counts as cash.** Forex trading income and lump sums (commissions) are always
+  speculative. When a lump sum arrives, it is recorded as a reserve.
+- **No secrets.** Secret-shaped text is refused in every text field: private keys, provider keys and tokens, and
+  notes such as "password:" or "PIN =".
+- **Redacted auditing.** The audit trail records who changed which fields, and when, never the content.
+- **Only the owner reads or writes** the records.
+
+**The runway:**
+- **Available** = liquid reserves − debts due within 90 days.
+- **Base runway** = available ÷ (essential costs − reliable income), with each amount converted to a monthly figure.
+- **Downside runway** = available ÷ essential costs, as if all income stopped.
+- Each result is labelled by its weakest input.
+- It is shown for everything together, or for one entity at a time.
+
+**Also shown:**
+- income by stream and by how often it pays, with speculative income and expected lump sums kept apart;
+- flags: debts due or overdue, reserve balances more than 45 days old, one stream above half of reliable income, and
+  commitments.
+
+**Tests:**
+- `test/resilience.test.ts`: the rules, the formulas, and parity with the migration;
+- `supabase/tests/99zf_resilience_money.sql`: one member, the private flag frozen, records only in private
+  organisations, every rule, secrets refused, the redacted trail, and other people seeing nothing;
+- `web/e2e/resilience.spec.ts`.
+
+**Not built yet:**
+- **Two-step sign-in (T2) is not enforced yet.** It is the next safeguard, and it is required before documents or
+  the decision log go in.
+- The retention job (T7).
+- The encrypted export (slice 5).
+- Slices 2–4.

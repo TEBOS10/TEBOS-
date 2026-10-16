@@ -1,4 +1,4 @@
-import { BookOpen, Briefcase, Landmark, Clapperboard, Eye, Building2, CheckSquare, Download, Gauge, Home, ListChecks, LogOut, Megaphone, Menu, MessageSquare, PhoneCall, Plug, Receipt, ScanSearch, ShieldCheck, Sparkles, Stamp, Users } from "lucide-react";
+import { BookOpen, LifeBuoy, Briefcase, Landmark, Clapperboard, Eye, Building2, CheckSquare, Download, Gauge, Home, ListChecks, LogOut, Megaphone, Menu, MessageSquare, PhoneCall, Plug, Receipt, ScanSearch, ShieldCheck, Sparkles, Stamp, Users } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { DEMO_BUSINESS } from "../demo/data";
 import { exitDemo, isDemo } from "../demo/mode";
@@ -37,7 +37,10 @@ export function Shell({ children }: { children: ReactNode }) {
   const { access } = useStaff();
   const pipeline = access?.sales || access?.maintainer;
   // Tidy Enterprise's property cases: the founder's own practice, for TEBOS's admins
-  const base = access?.admin ? [...NAV, { to: "/property", label: "Property cases", icon: Landmark, exact: false }] : NAV;
+  const property = access?.admin ? [...NAV, { to: "/property", label: "Property cases", icon: Landmark, exact: false }] : NAV;
+  // the founder's private resilience records: for whoever owns a private organisation, and TEBOS's admins
+  const base = access?.admin || organisations.some((o) => o.organisation.private)
+    ? [...property, { to: "/resilience", label: "Resilience", icon: LifeBuoy, exact: false }] : property;
   const nav = pipeline || access?.marketing
     ? [...base,
        ...(pipeline ? [{ to: "/pipeline", label: "Pipeline", icon: Briefcase, exact: false }, { to: "/sales", label: "Sales playbook", icon: BookOpen, exact: false }] : []),
