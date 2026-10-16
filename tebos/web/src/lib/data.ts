@@ -1438,6 +1438,10 @@ export type PropertyEvidence = Row<"property_evidence">;
 export type PropertyFigure = Row<"property_figures">;
 export type PropertyPathway = Row<"property_pathways">;
 export type PropertyGate = Row<"property_gates">;
+export type PropertyWorkstream = Row<"property_workstreams">;
+export type PropertyBaseline = Row<"property_baselines">;
+export type PropertyReview = Row<"property_outcome_reviews">;
+export type PropertyActual = Row<"property_outcome_values">;
 
 export async function listPropertyCases(db: Db, orgId: string) {
   const cases = must(await db.from("property_cases").select("*").eq("org_id", orgId).order("updated_at", { ascending: false }).limit(200));
@@ -1466,13 +1470,20 @@ export async function createPropertyCase(
 export async function getPropertyCase(db: Db, id: string) {
   const c = maybe(await db.from("property_cases").select("*").eq("id", id).maybeSingle());
   if (!c) return null;
-  const [evidence, figures, pathways, gates] = await Promise.all([
+  const [evidence, figures, pathways, gates, workstreams, baselines, reviews, actuals] = await Promise.all([
     db.from("property_evidence").select("*").eq("case_id", id).order("created_at"),
     db.from("property_figures").select("*").eq("case_id", id),
     db.from("property_pathways").select("*").eq("case_id", id).order("created_at"),
     db.from("property_gates").select("*").eq("case_id", id),
+    db.from("property_workstreams").select("*").eq("case_id", id).order("due_on"),
+    db.from("property_baselines").select("*").eq("case_id", id),
+    db.from("property_outcome_reviews").select("*").eq("case_id", id).order("review_on"),
+    db.from("property_outcome_values").select("*").eq("case_id", id),
   ]);
-  return { case: c, evidence: must(evidence), figures: must(figures), pathways: must(pathways), gates: must(gates) };
+  return {
+    case: c, evidence: must(evidence), figures: must(figures), pathways: must(pathways), gates: must(gates),
+    workstreams: must(workstreams), baseline: must(baselines)[0] ?? null, reviews: must(reviews), actuals: must(actuals),
+  };
 }
 
 /** The case's history: every change to it and its records, newest first, from the audit trail. */
@@ -1519,4 +1530,27 @@ export async function savePropertyPathway(db: Db, existing: PropertyPathway | un
 export async function savePropertyGate(db: Db, existing: PropertyGate | undefined, row: { org_id: string; case_id: string; gate: string; status: string; owner: string | null; note: string | null }) {
   if (existing) return must(await db.from("property_gates").update(row).eq("id", existing.id).select().single());
   return must(await db.from("property_gates").insert(row).select().single());
+}
+
+export async function savePropertyWorkstream(db: Db, existing: PropertyWorkstream | undefined, row: Omit<PropertyWorkstream, "id" | "created_at" | "updated_at">) {
+  if (existing) return must(await db.from("property_workstreams").update(row).eq("id", existing.id).select().single());
+  return must(await db.from("property_workstreams").insert(row).select().single());
+}
+
+/** The database copies the case's current figures into the baseline; only the target is sent. */
+export async function capturePropertyBaseline(db: Db, row: { org_id: string; case_id: string; target_cash_flow: number | null; target_note: string | null }) {
+  return must(await db.from("property_baselines").insert(row).select().single());
+}
+
+export async function setPropertyTarget(db: Db, id: string, target_cash_flow: number | null, target_note: string | null) {
+  return must(await db.from("property_baselines").update({ target_cash_flow, target_note }).eq("id", id).select().single());
+}
+
+export async function createPropertyReview(db: Db, row: { org_id: string; case_id: string; review_on: string; period_start: string | null; period_end: string | null; note: string | null }) {
+  return must(await db.from("property_outcome_reviews").insert(row).select().single());
+}
+
+export async function savePropertyActual(db: Db, existing: PropertyActual | undefined, row: { org_id: string; case_id: string; review_id: string; key: string; value: number; basis: string; evidence_id: string | null }) {
+  if (existing) return must(await db.from("property_outcome_values").update(row).eq("id", existing.id).select().single());
+  return must(await db.from("property_outcome_values").insert(row).select().single());
 }

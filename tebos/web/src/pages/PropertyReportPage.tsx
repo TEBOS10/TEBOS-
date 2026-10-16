@@ -3,7 +3,7 @@
 // statements, estimates and recommendations are kept in separate sections.
 // Print or save as PDF from the browser; the structured case exports as JSON,
 // and the evidence register and figures as CSV (safe against formula injection).
-import { BASES, CONFIDENCE, EVIDENCE_CATEGORIES, FIGURES, money, PATHWAYS, SPECIALISTS, type Basis, type EvidenceCategory, type FigureKey, type Metric, type PathwayKey } from "@core/property";
+import { APPROVALS, BASES, CONFIDENCE, type ApprovalState, EVIDENCE_CATEGORIES, FIGURES, money, PATHWAYS, SPECIALISTS, type Basis, type EvidenceCategory, type FigureKey, type Metric, type PathwayKey } from "@core/property";
 import { ErrorNote, Loading } from "../components/ui";
 import { toCsv, downloadCsv } from "../lib/csv";
 import { getPropertyCase } from "../lib/data";
@@ -34,6 +34,10 @@ export function PropertyReportPage({ id }: { id: string }) {
     downloadCsv(`${r.meta.ref}-evidence-${stamp}.csv`, toCsv(
       ["Category", "Title", "Status", "Confidence", "Source", "Period from", "Period to", "Received", "Responsible", "Document reference", "Notes", "Follow-up"],
       data.evidence.map((x) => [EVIDENCE_CATEGORIES[x.category as EvidenceCategory] ?? x.category, x.title, x.status, x.confidence, x.source, x.period_start, x.period_end, x.received_on, x.responsible, x.document_ref, x.notes, x.follow_up]),
+    ));
+    if (data.workstreams.length) downloadCsv(`${r.meta.ref}-workstreams-${stamp}.csv`, toCsv(
+      ["Task", "Owner", "Due", "Status", "Budget", "Approval", "Approved by", "Approved on", "Evidence of completion", "Completed on", "Note"],
+      data.workstreams.map((w) => [w.title, w.owner, w.due_on, w.status, w.budget === null ? null : Number(w.budget), w.approval, w.approved_by, w.approved_on, w.completion_evidence, w.completed_on, w.note]),
     ));
     downloadCsv(`${r.meta.ref}-figures-${stamp}.csv`, toCsv(
       ["Figure", "Monthly value", "Basis", "As of"],
@@ -153,6 +157,39 @@ export function PropertyReportPage({ id }: { id: string }) {
       <section className="pra-report-section">
         <h2>Decision gates</h2>
         <table className="pra-table"><tbody>{r.gates.map((g) => <tr key={g.title}><td>{g.title}</td><td>{g.status.replace("_", " ")}</td><td>{g.owner ?? "—"}</td><td>{g.note ?? "—"}</td></tr>)}</tbody></table>
+      </section>
+
+      <section className="pra-report-section">
+        <h2>Execution workstreams</h2>
+        {r.workstreams.length === 0 ? <p className="pra-empty">No workstreams yet.</p> : (
+          <table className="pra-table">
+            <thead><tr><th>Task</th><th>Owner</th><th>Due</th><th>Status</th><th>Budget</th><th>Evidence of completion</th></tr></thead>
+            <tbody>{r.workstreams.map((w) => (
+              <tr key={w.id}><td>{w.title}</td><td>{w.owner}</td><td>{w.dueOn}</td><td>{w.status.replace("_", " ")}</td>
+                <td>{w.budget === null ? "—" : `${money(w.budget)} · ${APPROVALS[w.approval as ApprovalState].toLowerCase()}`}</td><td>{w.completionEvidence ? `${w.completionEvidence} (${w.completedOn})` : "—"}</td></tr>
+            ))}</tbody>
+          </table>
+        )}
+        {r.exceptions.length > 0 && <ul>{r.exceptions.map((x, i) => <li key={`${x.id}-${i}`}>Exception: {x.title}: {x.reason}.</li>)}</ul>}
+      </section>
+
+      <section className="pra-report-section">
+        <h2>Outcome scorecard</h2>
+        {!r.scorecard.baseline ? <p>No baseline has been captured, so outcomes can't be measured yet.</p> : (
+          <>
+            <p>Baseline captured {r.scorecard.baseline.capturedOn}: cash flow {fmt(r.scorecard.baseline.economics.cashFlow)} ({basisOf(r.scorecard.baseline.economics.cashFlow)}); target {r.scorecard.baseline.targetCashFlow === null ? "not set" : money(r.scorecard.baseline.targetCashFlow)}.</p>
+            {r.scorecard.rows.length === 0 ? <p className="pra-empty">No review of actual results yet.</p> : (
+              <table className="pra-table">
+                <thead><tr><th>Review</th><th className="num">Actual cash flow</th><th className="num">Change vs baseline</th><th className="num">vs target</th><th className="num">Arrears change</th><th>Basis</th></tr></thead>
+                <tbody>{r.scorecard.rows.map((x) => (
+                  <tr key={x.reviewOn}><td>{x.reviewOn}</td><td className="num">{fmt(x.actual.cashFlow)}</td><td className="num">{fmt(x.cashFlowChange)}</td>
+                    <td className="num">{x.vsTarget === null ? "Not established" : money(x.vsTarget)}</td><td className="num">{x.arrears.change === null ? "Not established" : money(x.arrears.change)}</td><td>{basisOf(x.cashFlowChange)}</td></tr>
+                ))}</tbody>
+              </table>
+            )}
+          </>
+        )}
+        {r.scorecard.flags.length > 0 && <ul>{r.scorecard.flags.map((x) => <li key={x}>{x}</li>)}</ul>}
       </section>
 
       <section className="pra-report-section"><h2>Next actions</h2><ol>{r.nextActions.map((x) => <li key={x}>{x}</li>)}</ol></section>

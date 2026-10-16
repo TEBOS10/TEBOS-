@@ -51,8 +51,34 @@ The first milestone is a reliable single-case workflow, from intake to a decisio
    - Gates pass in order, each with an owner and the evidence for passing.
    - The evidence gate needs the owner's authority confirmed and no conflicting evidence.
    - A gate can't reopen while a later one stands passed.
-7. **History.** Every change to the case and its records, read from the tamper-evident audit trail.
-8. **The Property Opportunity Assessment report.** It covers:
+7. **Execution workstreams.** Each workstream records:
+   - a task, its accountable owner, a deadline and a status (planned, in progress, blocked, done, cancelled);
+   - the workstream it depends on;
+   - a budget, with its approval (who approved it, and when);
+   - the evidence of completion.
+
+   The rules:
+   - a workstream starts only once what it depends on is done, and dependency cycles are refused;
+   - a budget is spent only once it is approved;
+   - done needs the evidence of completion and a date;
+   - blocked says why.
+
+   Exceptions are raised for anything overdue, blocked or awaiting budget approval.
+8. **Outcome scorecard.**
+   - **The baseline is captured by the database:** it copies the case's figures as they stand, so a baseline can't
+     be typed in, and it is frozen afterwards. Only the target cash flow and its note can be revised.
+   - **Outcome reviews** are dated between the baseline and today. They record actuals, measured or stated by the
+     owner, never estimated; a verified actual rests on checked evidence.
+   - **The scorecard compares each review with the baseline:**
+     - cash flow, and the change against the baseline: the realised monthly net benefit;
+     - the variance against the target;
+     - collection rate and occupancy (percentage points), NOI and arrears;
+     - spend on the plan so far.
+   - It flags results below the baseline or the target, growing arrears, a review that can't be compared, and an
+     overdue next review.
+   - **The outcome gate** passes only with a baseline and a review of actual results.
+9. **History.** Every change to the case and its records, read from the tamper-evident audit trail.
+10. **The Property Opportunity Assessment report.** It covers:
    - executive assessment;
    - verified facts, owner-reported statements and estimates, each in its own section;
    - unknowns and source quality;
@@ -90,6 +116,9 @@ same rules, so they hold however the data arrives. `test/property.test.ts` check
 | `property_figures` | One row per supplied figure (no row means unknown): value, basis, linked evidence, as-of date |
 | `property_pathways` | One row per assessed pathway, with everything a recommendation must explain |
 | `property_gates` | One row per gate touched: status, owner, evidence note |
+| `property_workstreams` | Task, owner, deadline, status, dependency, budget and approval, evidence of completion |
+| `property_baselines` | One per case: the figures copied when captured (frozen), the target cash flow |
+| `property_outcome_reviews` / `property_outcome_values` | Dated reviews and their actuals, each verified or owner-reported |
 
 ## Tests
 
@@ -97,15 +126,14 @@ same rules, so they hold however the data arrives. `test/property.test.ts` check
 |---|---|
 | `test/property.test.ts` | Every formula; unknown ≠ zero; double-counting flags; weakest-basis labelling; readiness weighting and staleness; disposition, figure, pathway and gate rules; the report's separation of facts, statements and estimates; parity with the migration |
 | `supabase/tests/99zd_property_cases.sql` | On Postgres: numbering; frozen reference; reasons and timestamps; verified figures need checked evidence (from the same case); forecasts are estimates; evidence that verifies a figure can't be unchecked or removed; one recommendation; gate order and conditions; audit history of figure and disposition changes; viewers read only; other organisations see nothing; no deletes |
-| `web/e2e/property.spec.ts` | Opening a case from the menu; figures computed only when complete; a refusal shown before anything is sent; readiness; disposition and gate rules in the interface; the report sections; JSON and CSV export; read-only viewers |
+| `supabase/tests/99ze_property_execution.sql` | On Postgres: dependency order and no cycles; budgets approved before spending; done with evidence; the baseline copied from stored figures, whatever is sent, and frozen; reviews dated between the baseline and today; actuals never estimated; the outcome gate needs a baseline and actuals |
+| `web/e2e/property.spec.ts` | Opening a case from the menu; figures computed only when complete; a refusal shown before anything is sent; readiness; disposition and gate rules in the interface; the report sections; JSON and CSV export; read-only viewers; workstream rules and exceptions; capturing a baseline sends only the target; the scorecard's changes and flags |
 
 ## Limitations (not built yet)
 
 - **Documents aren't uploaded:** the evidence register records where a document is kept. Secure upload comes with
   the private vault (founder's priority 5).
 - **No AI document analysis.** Any future extraction will be shown as fallible, cite its source and need a person's review.
-- **Execution workstreams** (owner, task, deadline, dependency, budget, evidence of completion) and the **outcome
-  scorecard** (actual against a dated baseline) are the next step. The outcome gate exists; its measurements don't yet.
 - **The monthly subscription view** (what was done this month, figures then and now) builds on these cases next.
 - **Prices aren't in the product:** the R2,800 assessment in the dossier is a working price for the founder to confirm.
 - Nothing here is a valuation, legal opinion, credit decision or financing approval. South African legal, tax,

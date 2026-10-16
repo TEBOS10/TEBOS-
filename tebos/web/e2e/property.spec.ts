@@ -218,3 +218,90 @@ test("a viewer reads the case but can't change it", async ({ page }) => {
   await expect(page.getByRole("form", { name: "Rent due from occupied units", exact: true }).getByRole("spinbutton")).toBeDisabled();
   await expect(page.getByRole("button", { name: "Save" })).toHaveCount(0);
 });
+
+test("workstreams keep owners, dependencies, budget approvals and evidence of completion, and raise exceptions", async ({ page }) => {
+  const fake = await installFakeSupabase(page);
+  const t = seed(fake, { authority: "confirmed" });
+  const ws = (id: string, over: Record<string, unknown>) => ({ id, org_id: ORG, case_id: CASE, title: id, owner: "Tidy", due_on: "2026-12-31", status: "planned", depends_on: null,
+    budget: null, approval: "not_needed", approved_by: null, approved_on: null, completion_evidence: null, completed_on: null, note: null, created_at: now(), updated_at: now(), ...over });
+  t.property_workstreams = [ws("Reconcile arrears ledger", { due_on: "2026-01-31" }), ws("Appoint collections agent", { depends_on: "Reconcile arrears ledger", budget: 3500, approval: "pending" })];
+  await page.goto(`/property/${CASE}`);
+  await page.getByRole("button", { name: "Workstreams" }).click();
+  const alerts = page.getByRole("alert").first();
+  await expect(alerts).toContainText("Reconcile arrears ledger: overdue since 2026-01-31");
+  await expect(alerts).toContainText("budget R3 500 awaiting approval");
+
+  // can't start before its dependency is done, nor spend before approval
+  await page.getByTestId("workstreams").getByRole("row", { name: /Appoint collections agent/ }).getByRole("button", { name: "Edit" }).click();
+  const form = page.getByRole("form", { name: "Edit Appoint collections agent" });
+  await form.getByLabel("Status").selectOption("in_progress");
+  await form.getByRole("button", { name: "Save workstream" }).click();
+  await expect(form.getByRole("alert")).toContainText("spent only once it is approved");
+  await form.getByLabel("Budget approval").selectOption("approved");
+  await form.getByLabel("Approved by").fill("Owner");
+  await form.getByLabel("Approved on").fill("2026-10-16");
+  await form.getByRole("button", { name: "Save workstream" }).click();
+  await expect(form.getByRole("alert")).toContainText('"Reconcile arrears ledger" must be done first');
+  expect(fake.writes.filter((w) => w.table === "property_workstreams")).toHaveLength(0);
+
+  // add one: done needs evidence
+  await form.getByRole("button", { name: "Close" }).click();
+  await page.getByRole("button", { name: "+ Add workstream" }).click();
+  const add = page.getByRole("form", { name: "Add workstream" });
+  await add.getByLabel("Task").fill("Send arrears letters");
+  await add.getByLabel("Accountable owner").fill("Owner");
+  await add.getByLabel("Deadline").fill("2026-11-15");
+  await add.getByLabel("Status").selectOption("done");
+  await add.getByRole("button", { name: "Save workstream" }).click();
+  await expect(add.getByRole("alert")).toContainText("evidence of completion");
+  await add.getByLabel("Evidence of completion").fill("Letters sent by registered post; slips filed");
+  await add.getByLabel("Completed on").fill("2026-10-15");
+  await add.getByRole("button", { name: "Save workstream" }).click();
+  await expect.poll(() => fake.writes.find((w) => w.table === "property_workstreams" && w.method === "POST")?.body).toMatchObject({
+    title: "Send arrears letters", owner: "Owner", due_on: "2026-11-15", status: "done", completion_evidence: "Letters sent by registered post; slips filed", completed_on: "2026-10-15",
+  });
+  await expect(page.getByTestId("workstreams")).toContainText("Send arrears letters");
+});
+
+test("the baseline is captured by the database, and the scorecard measures actuals against it", async ({ page }) => {
+  const fake = await installFakeSupabase(page);
+  const t = seed(fake, { authority: "confirmed" });
+  const f = (key: string, value: number) => ({ id: `f-${key}`, org_id: ORG, case_id: CASE, key, value, basis: "owner_reported", evidence_id: null, as_of: "2026-10-01", note: null, recorded_by: USER_ID, created_at: now(), updated_at: now() });
+  t.property_figures = [f("rent_due", 45000)];
+  await page.goto(`/property/${CASE}`);
+  await page.getByRole("button", { name: "Outcomes" }).click();
+  await expect(page.getByText("No baseline captured")).toBeVisible();
+  const cap = page.getByRole("form", { name: "Capture baseline" });
+  await cap.getByLabel("Target monthly cash flow (R)").fill("15000");
+  await cap.getByRole("button", { name: "Capture baseline now" }).click();
+  // only the target is sent: the figures are copied by the database, never typed in
+  await expect.poll(() => fake.writes.find((w) => w.table === "property_baselines")?.body).toEqual({ org_id: ORG, case_id: CASE, target_cash_flow: 15000, target_note: null });
+
+  // a seeded baseline and a review: the change is measured, flagged and labelled
+  const full = [["scheduled_rent", 50000], ["other_income", 0], ["vacancy_loss", 5000], ["rent_due", 45000], ["rent_collected", 40500], ["operating_expenses", 12000], ["debt_service", 15000], ["reserve", 2000], ["arrears_balance", 18000]] as const;
+  t.property_baselines = [{ id: "b1", org_id: ORG, case_id: CASE, captured_on: "2026-09-01", target_cash_flow: 15000, target_note: "After collections fix", captured_by: USER_ID, created_at: now(), updated_at: now(),
+    figures: full.map(([key, value]) => ({ key, value, basis: "owner_reported", as_of: "2026-09-01", evidence_id: null })) }];
+  t.property_outcome_reviews = [{ id: "r1", org_id: ORG, case_id: CASE, review_on: "2026-10-15", period_start: null, period_end: null, note: null, created_at: now(), updated_at: now() }];
+  t.property_outcome_values = full.map(([key, value]) => ({ id: `a-${key}`, org_id: ORG, case_id: CASE, review_id: "r1", key, value: key === "rent_collected" ? 43000 : key === "arrears_balance" ? 20000 : value,
+    basis: "owner_reported", evidence_id: null, note: null, recorded_by: USER_ID, created_at: now(), updated_at: now() }));
+  await page.reload();
+  await page.getByRole("button", { name: "Outcomes" }).click();
+  await expect(page.getByTestId("baseline-cash")).toHaveText("R11 500");
+  const row = page.getByTestId("scorecard").getByRole("row", { name: /2026-10-15/ });
+  await expect(row).toContainText("R14 000");
+  await expect(row).toContainText("+R2 500");
+  await expect(row).toContainText("−R1 000");
+  await expect(page.getByRole("alert").first()).toContainText("R1 000 a month short of the target");
+  await expect(page.getByRole("alert").first()).toContainText("Arrears have grown by R2 000");
+  // an actual can't be an estimate: the only bases offered are measured ones
+  const actual = page.getByRole("form", { name: "Actual: Rent actually collected" });
+  await expect(actual.getByLabel("Basis").locator("option")).toHaveText(["Owner-reported", "Verified"]);
+  await actual.getByLabel("Basis").selectOption("verified");
+  await actual.getByRole("button", { name: "Save" }).click();
+  await expect(actual.getByRole("alert")).toContainText("names evidence that was checked");
+
+  // the report carries both
+  await page.getByRole("link", { name: "Assessment report" }).click();
+  const report = page.getByTestId("property-report");
+  await expect(report.locator(".pra-report-section").filter({ has: page.getByRole("heading", { name: "Outcome scorecard" }) })).toContainText("Baseline captured 2026-09-01");
+});

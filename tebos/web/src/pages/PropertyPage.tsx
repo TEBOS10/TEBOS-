@@ -8,6 +8,8 @@ import {
   OBJECTIVES, PATHWAYS, PROBLEMS, PROPERTY_TYPES, PROPERTY_TYPE_LABEL, SPECIALISTS, SUSPECTED_CAUSES,
   type Authority, type Basis, type Disposition, type EvidenceCategory, type EvidenceStatus, type FigureKey, type GateKey,
   type GateStatus, type Metric, type PathwayKey, type PathwayStatus, type Specialist,
+  APPROVALS, OUTCOME_KEYS, OUTCOME_LABEL, WORKSTREAM_STATUSES, checkWorkstream, scorecard, workstreamExceptions,
+  type ActualBasis, type ApprovalState, type OutcomeKey, type WorkstreamStatus,
 } from "@core/property";
 import type { Check } from "@core/rules";
 import { useMemo, useState, type FormEvent, type ReactNode } from "react";
@@ -15,10 +17,11 @@ import { ErrorNote, Loading } from "../components/ui";
 import {
   clearPropertyFigure, createPropertyCase, deletePropertyEvidence, getPropertyCase, listPropertyCases, propertyCaseHistory,
   savePropertyEvidence, savePropertyFigure, savePropertyGate, savePropertyPathway, updatePropertyCase,
-  type PropertyEvidence, type PropertyFigure, type PropertyGate, type PropertyPathway,
+  capturePropertyBaseline, createPropertyReview, savePropertyActual, savePropertyWorkstream, setPropertyTarget,
+  type PropertyActual, type PropertyEvidence, type PropertyFigure, type PropertyGate, type PropertyPathway, type PropertyWorkstream,
 } from "../lib/data";
 import { ago, when } from "../lib/format";
-import { caseExport, toEvidence, toFigure, toGate } from "../lib/property";
+import { caseExport, toBaseline, toEvidence, toFigure, toGate, toReviews, toWorkstream } from "../lib/property";
 import { Link, navigate } from "../lib/router";
 import { useOrg } from "../lib/session";
 import { useQuery } from "../lib/useQuery";
@@ -159,7 +162,7 @@ function NewCase({ onCreated }: { onCreated: (id: string) => void }) {
 
 const TABS = [
   ["overview", "Overview"], ["assessment", "Assessment"], ["evidence", "Evidence room"], ["economics", "Economics"],
-  ["pathways", "Pathways"], ["gates", "Execution gates"], ["history", "History"],
+  ["pathways", "Pathways"], ["workstreams", "Workstreams"], ["outcomes", "Outcomes"], ["gates", "Execution gates"], ["history", "History"],
 ] as const;
 type Tab = (typeof TABS)[number][0];
 
@@ -195,6 +198,8 @@ export function PropertyCasePage({ id }: { id: string }) {
       {tab === "evidence" && <EvidenceRoom data={data} onChanged={q.reload} />}
       {tab === "economics" && <Economics data={data} onChanged={q.reload} />}
       {tab === "pathways" && <Pathways data={data} onChanged={q.reload} />}
+      {tab === "workstreams" && <Workstreams data={data} onChanged={q.reload} />}
+      {tab === "outcomes" && <Outcomes data={data} onChanged={q.reload} />}
       {tab === "gates" && <Gates data={data} onChanged={q.reload} />}
       {tab === "history" && <History data={data} />}
     </Shell>
@@ -495,7 +500,7 @@ function FigureRow({ k, data, existing, canWork, onChanged }: { k: FigureKey; da
   };
   return (
     <form className="pra-figure" aria-label={spec.label} onSubmit={save}>
-      <label className="pra-field">{spec.label}{spec.money ? (k === "one_off_capex" || k === "implementation_cost" ? " (R, once-off)" : " (R / month)") : ""}
+      <label className="pra-field">{spec.label}{spec.money ? (k === "one_off_capex" || k === "implementation_cost" ? " (R, once-off)" : k === "arrears_balance" ? " (R, total)" : " (R / month)") : ""}
         <input type="number" min="0" step={spec.money ? "0.01" : "1"} inputMode="decimal" value={value} placeholder="Unknown" disabled={!canWork} onChange={(e) => setValue(e.target.value)} />
       </label>
       <label className="pra-field">Basis
@@ -616,6 +621,241 @@ function PathwayForm({ k, data, existing, onSaved }: { k: PathwayKey; data: Case
 }
 
 // ---------------------------------------------------------------------------
+// Workstreams
+// ---------------------------------------------------------------------------
+
+const WS_TONE: Record<WorkstreamStatus, string> = { planned: "", in_progress: "amber", blocked: "red", done: "green", cancelled: "" };
+
+function Workstreams({ data, onChanged }: { data: CaseData; onChanged: () => void }) {
+  const canWork = useCanWork();
+  const [editing, setEditing] = useState<PropertyWorkstream | "new" | null>(null);
+  const list = data.workstreams.map(toWorkstream);
+  const exceptions = workstreamExceptions(list, today());
+  const titleOf = (id: string | null) => data.workstreams.find((w) => w.id === id)?.title ?? "";
+  return (
+    <>
+      <section className="pra-card" aria-label="Workstreams">
+        <div className="pra-head"><div><h2>Execution workstreams</h2><p>Each one has an accountable owner, a deadline and a status. It starts only once what it depends on is done, spends a budget only once approved, and is done only with evidence of completion.</p></div>
+          {canWork && <button type="button" className="pra-btn" onClick={() => setEditing("new")}>+ Add workstream</button>}</div>
+        {exceptions.length > 0 && <div className="pra-notice" role="alert">{exceptions.map((x, i) => <p key={`${x.id}-${i}`}>{x.title}: {x.reason}.</p>)}</div>}
+        {data.workstreams.length === 0 ? <p className="pra-empty">No workstreams yet. Add them once a pathway is chosen and authorised.</p> : (
+          <div className="pra-table-wrap">
+            <table className="pra-table" data-testid="workstreams">
+              <thead><tr><th>Task</th><th>Owner</th><th>Due</th><th>Status</th><th>Depends on</th><th>Budget</th><th>Completion</th><th /></tr></thead>
+              <tbody>{data.workstreams.map((w) => (
+                <tr key={w.id}>
+                  <td><strong>{w.title}</strong>{w.note ? <><br /><span className="pra-note">{w.note}</span></> : null}</td>
+                  <td>{w.owner}</td>
+                  <td>{w.due_on}</td>
+                  <td><Tag tone={WS_TONE[w.status as WorkstreamStatus]}>{w.status.replace("_", " ")}</Tag></td>
+                  <td>{titleOf(w.depends_on) || "—"}</td>
+                  <td>{w.budget === null ? "—" : money(Number(w.budget))}{w.budget !== null && Number(w.budget) > 0 ? <><br /><span className="pra-note">{APPROVALS[w.approval as ApprovalState]}{w.approved_by ? ` · ${w.approved_by}` : ""}</span></> : null}</td>
+                  <td>{w.completion_evidence ? `${w.completion_evidence} (${w.completed_on})` : "—"}</td>
+                  <td>{canWork && <button type="button" className="pra-link" onClick={() => setEditing(w)}>Edit</button>}</td>
+                </tr>
+              ))}</tbody>
+            </table>
+          </div>
+        )}
+      </section>
+      {editing && <WorkstreamForm key={editing === "new" ? "new" : editing.id} data={data} existing={editing === "new" ? undefined : editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); onChanged(); }} />}
+    </>
+  );
+}
+
+function WorkstreamForm({ data, existing, onClose, onSaved }: { data: CaseData; existing?: PropertyWorkstream; onClose: () => void; onSaved: () => void }) {
+  const org = useOrg();
+  const [f, setF] = useState({
+    title: existing?.title ?? "", owner: existing?.owner ?? "", due_on: existing?.due_on ?? "", status: (existing?.status ?? "planned") as WorkstreamStatus,
+    depends_on: existing?.depends_on ?? "", budget: existing?.budget === null || existing?.budget === undefined ? "" : String(existing.budget),
+    approval: (existing?.approval ?? "not_needed") as ApprovalState, approved_by: existing?.approved_by ?? "", approved_on: existing?.approved_on ?? "",
+    completion_evidence: existing?.completion_evidence ?? "", completed_on: existing?.completed_on ?? "", note: existing?.note ?? "",
+  });
+  const w = useWrite(onSaved);
+  const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    const row = {
+      org_id: data.case.org_id, case_id: data.case.id, title: f.title.trim(), owner: f.owner.trim(), due_on: f.due_on, status: f.status,
+      depends_on: f.depends_on || null, budget: f.budget.trim() === "" ? null : Number(f.budget), approval: f.approval,
+      approved_by: blank(f.approved_by), approved_on: blank(f.approved_on), completion_evidence: blank(f.completion_evidence),
+      completed_on: blank(f.completed_on), note: blank(f.note),
+    };
+    const id = existing?.id ?? "new";
+    const others = data.workstreams.filter((x) => x.id !== id).map(toWorkstream);
+    const me = { id, title: row.title, owner: row.owner, dueOn: row.due_on, status: row.status, dependsOn: row.depends_on, budget: row.budget, approval: row.approval,
+      approvedBy: row.approved_by, approvedOn: row.approved_on, completionEvidence: row.completion_evidence, completedOn: row.completed_on, note: row.note };
+    void w.run(checkWorkstream(me, [...others, me]), () => savePropertyWorkstream(org.db, existing, row));
+  };
+  return (
+    <form className="pra-card pra-editor" aria-label={existing ? `Edit ${existing.title}` : "Add workstream"} onSubmit={submit}>
+      <div className="pra-head"><div><h2>{existing ? "Edit workstream" : "Add workstream"}</h2><p>Deadlines are planning windows, not promises.</p></div><button type="button" className="pra-btn ghost" onClick={onClose}>Close</button></div>
+      <div className="pra-fields">
+        <label className="pra-field pra-full">Task<input value={f.title} onChange={set("title")} placeholder="e.g. Reconcile the arrears ledger to bank receipts" /></label>
+        <label className="pra-field">Accountable owner<input value={f.owner} onChange={set("owner")} /></label>
+        <label className="pra-field">Deadline<input type="date" value={f.due_on} onChange={set("due_on")} /></label>
+        <label className="pra-field">Status<select value={f.status} onChange={set("status")}>{WORKSTREAM_STATUSES.map((x) => <option key={x} value={x}>{x.replace("_", " ")}</option>)}</select></label>
+        <label className="pra-field">Depends on<select value={f.depends_on} onChange={set("depends_on")}><option value="">Nothing</option>
+          {data.workstreams.filter((x) => x.id !== existing?.id).map((x) => <option key={x.id} value={x.id}>{x.title}</option>)}</select></label>
+        <label className="pra-field">Budget (R)<input type="number" min="0" step="0.01" value={f.budget} onChange={set("budget")} placeholder="None" /></label>
+        <label className="pra-field">Budget approval<select value={f.approval} onChange={set("approval")}>{(Object.keys(APPROVALS) as ApprovalState[]).map((x) => <option key={x} value={x}>{APPROVALS[x]}</option>)}</select></label>
+        <label className="pra-field">Approved by<input value={f.approved_by} onChange={set("approved_by")} /></label>
+        <label className="pra-field">Approved on<input type="date" value={f.approved_on} onChange={set("approved_on")} /></label>
+        <label className="pra-field pra-full">Evidence of completion<input value={f.completion_evidence} onChange={set("completion_evidence")} placeholder="What shows it is done" /></label>
+        <label className="pra-field">Completed on<input type="date" value={f.completed_on} onChange={set("completed_on")} /></label>
+        <label className="pra-field">Note / what blocks it<input value={f.note} onChange={set("note")} /></label>
+      </div>
+      <ErrorNote error={w.error} title="The workstream wasn't saved" />
+      <button className="pra-btn primary" disabled={w.busy}>Save workstream</button>
+    </form>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Outcome scorecard
+// ---------------------------------------------------------------------------
+
+const signed = (n: number | null, kind: "money" | "pp") =>
+  n === null ? "Not established" : kind === "money" ? `${n > 0 ? "+" : ""}${money(n)}` : `${n > 0 ? "+" : n < 0 ? "−" : ""}${Math.abs(n).toFixed(1)} pp`;
+
+function Outcomes({ data, onChanged }: { data: CaseData; onChanged: () => void }) {
+  const org = useOrg();
+  const canWork = useCanWork();
+  const baseline = data.baseline ? toBaseline(data.baseline) : null;
+  const score = scorecard(baseline, toReviews(data.reviews, data.actuals), new Date().toISOString(), data.case.next_review_on);
+  const [target, setTarget] = useState(data.baseline?.target_cash_flow === null || data.baseline?.target_cash_flow === undefined ? "" : String(data.baseline.target_cash_flow));
+  const [targetNote, setTargetNote] = useState(data.baseline?.target_note ?? "");
+  const [nextReview, setNextReview] = useState(data.case.next_review_on ?? "");
+  const [reviewOn, setReviewOn] = useState(today());
+  const capture = useWrite(onChanged);
+  const targetW = useWrite(onChanged);
+  const nextW = useWrite(onChanged);
+  const newReview = useWrite(onChanged);
+  const targetValue = target.trim() === "" ? null : Number(target);
+  const targetCheck = targetValue !== null && !Number.isFinite(targetValue) ? { ok: false as const, code: "TEBOS_VALIDATION" as const, reason: "Enter the target as a number." } : null;
+  const b = score.baseline;
+  return (
+    <>
+      <section className="pra-card" aria-label="Baseline">
+        <div className="pra-head"><div><h2>Baseline</h2><p>The case's figures, frozen as they stand when captured. Results are measured against it; it can't be edited afterwards, only the target revised.</p></div>
+          {b ? <Tag tone="green">Captured {b.capturedOn}</Tag> : <Tag tone="amber">Not captured</Tag>}</div>
+        {b ? (
+          <div className="pra-three">
+            <div><div className="pra-label">Baseline cash flow</div><div className="pra-value" data-testid="baseline-cash">{fmtMetric(b.economics.cashFlow)}</div><div className="pra-note"><MetricNote m={b.economics.cashFlow} /></div></div>
+            <div><div className="pra-label">Baseline collection rate</div><div className="pra-value">{fmtMetric(b.economics.collectionRate, "percent")}</div></div>
+            <div><div className="pra-label">Target cash flow</div><div className="pra-value">{b.targetCashFlow === null ? "Not set" : money(b.targetCashFlow)}</div><div className="pra-note">{data.baseline?.target_note ?? "Set after the analysis"}</div></div>
+          </div>
+        ) : <p className="pra-empty">{data.figures.length ? "Capture the baseline once the figures reflect the property before any intervention." : "Record the case's figures on the Economics tab first."}</p>}
+        {canWork && (
+          <form className="pra-fields" aria-label={b ? "Revise target" : "Capture baseline"} onSubmit={(e) => {
+            e.preventDefault();
+            if (b) void targetW.run(targetCheck, () => setPropertyTarget(org.db, data.baseline!.id, targetValue, blank(targetNote)));
+            else void capture.run(targetCheck ?? (data.figures.length ? null : { ok: false, code: "TEBOS_VALIDATION", reason: "Record the baseline figures before capturing the baseline." }),
+              () => capturePropertyBaseline(org.db, { org_id: data.case.org_id, case_id: data.case.id, target_cash_flow: targetValue, target_note: blank(targetNote) }));
+          }}>
+            <label className="pra-field">Target monthly cash flow (R)<input type="number" step="0.01" value={target} onChange={(e) => setTarget(e.target.value)} placeholder="Set after analysis" /></label>
+            <label className="pra-field">Target note<input value={targetNote} onChange={(e) => setTargetNote(e.target.value)} /></label>
+            <div className="pra-full"><ErrorNote error={capture.error ?? targetW.error} title={b ? "The target wasn't saved" : "The baseline wasn't captured"} /></div>
+            <button className={`pra-btn ${b ? "" : "primary"}`} disabled={capture.busy || targetW.busy}>{b ? "Save target" : "Capture baseline now"}</button>
+          </form>
+        )}
+      </section>
+
+      <section className="pra-card" aria-label="Scorecard">
+        <div className="pra-head"><div><h2>Outcome scorecard</h2><p>Actual performance against the dated baseline. Actuals are measured or stated by the owner, never estimated; a change is shown only when both sides are known.</p></div></div>
+        {score.flags.length > 0 && <div className="pra-notice" role="alert">{score.flags.map((x) => <p key={x}>{x}</p>)}</div>}
+        {score.rows.length > 0 && (
+          <div className="pra-table-wrap">
+            <table className="pra-table" data-testid="scorecard">
+              <thead><tr><th>Review</th><th className="num">Cash flow</th><th className="num">Change vs baseline</th><th className="num">vs target</th><th className="num">Collection</th><th className="num">Occupancy</th><th className="num">NOI change</th><th className="num">Arrears change</th><th className="num">Spent so far</th></tr></thead>
+              <tbody>{score.rows.map((r) => (
+                <tr key={r.reviewOn}>
+                  <td>{r.reviewOn}</td>
+                  <td className="num">{fmtMetric(r.actual.cashFlow)}</td>
+                  <td className="num">{signed(r.cashFlowChange.value, "money")}</td>
+                  <td className="num">{signed(r.vsTarget, "money")}</td>
+                  <td className="num">{signed(r.collectionChange.value, "pp")}</td>
+                  <td className="num">{signed(r.occupancyChange.value, "pp")}</td>
+                  <td className="num">{signed(r.noiChange.value, "money")}</td>
+                  <td className="num">{signed(r.arrears.change, "money")}</td>
+                  <td className="num">{r.implementationSpent === null ? "—" : money(r.implementationSpent)}</td>
+                </tr>
+              ))}</tbody>
+            </table>
+          </div>
+        )}
+        {canWork && (
+          <div className="pra-row">
+            <form className="pra-row" aria-label="Next review date" onSubmit={(e) => { e.preventDefault(); void nextW.run(null, () => updatePropertyCase(org.db, data.case.id, { next_review_on: nextReview || null })); }}>
+              <label className="pra-field">Next review due<input type="date" value={nextReview} onChange={(e) => setNextReview(e.target.value)} /></label>
+              <button className="pra-btn ghost" disabled={nextW.busy}>Set</button>
+            </form>
+            {b && (
+              <form className="pra-row" aria-label="Start a review" onSubmit={(e) => {
+                e.preventDefault();
+                const bad = reviewOn < b.capturedOn || reviewOn > today() ? { ok: false as const, code: "TEBOS_VALIDATION" as const, reason: `A review is dated between the baseline (${b.capturedOn}) and today.` } : null;
+                void newReview.run(bad, () => createPropertyReview(org.db, { org_id: data.case.org_id, case_id: data.case.id, review_on: reviewOn, period_start: null, period_end: null, note: null }));
+              }}>
+                <label className="pra-field">Review date<input type="date" value={reviewOn} onChange={(e) => setReviewOn(e.target.value)} /></label>
+                <button className="pra-btn" disabled={newReview.busy}>Start review</button>
+              </form>
+            )}
+          </div>
+        )}
+        <ErrorNote error={nextW.error ?? newReview.error} title="That wasn't saved" />
+      </section>
+
+      {data.reviews.slice().reverse().map((r) => <ReviewCard key={r.id} data={data} reviewId={r.id} reviewOn={r.review_on} canWork={canWork} onChanged={onChanged} />)}
+    </>
+  );
+}
+
+function ReviewCard({ data, reviewId, reviewOn, canWork, onChanged }: { data: CaseData; reviewId: string; reviewOn: string; canWork: boolean; onChanged: () => void }) {
+  return (
+    <section className="pra-card" aria-label={`Review of ${reviewOn}`}>
+      <div className="pra-head"><div><h2>Review of {reviewOn}</h2><p>Record what actually happened this period. Leave unknown actuals empty.</p></div></div>
+      {OUTCOME_KEYS.map((k) => (
+        <ActualRow key={k} k={k} data={data} reviewId={reviewId} existing={data.actuals.find((a) => a.review_id === reviewId && a.key === k)} canWork={canWork} onChanged={onChanged} />
+      ))}
+    </section>
+  );
+}
+
+function ActualRow({ k, data, reviewId, existing, canWork, onChanged }: { k: OutcomeKey; data: CaseData; reviewId: string; existing?: PropertyActual; canWork: boolean; onChanged: () => void }) {
+  const org = useOrg();
+  const [value, setValue] = useState(existing ? String(Number(existing.value)) : "");
+  const [basis, setBasis] = useState<ActualBasis>((existing?.basis as ActualBasis) ?? "owner_reported");
+  const [evidenceId, setEvidenceId] = useState(existing?.evidence_id ?? "");
+  const w = useWrite(onChanged);
+  const checked = data.evidence.filter((e) => e.status === "checked");
+  const isMoney = k !== "units" && k !== "vacant_units";
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    const n = value.trim() === "" ? NaN : Number(value);
+    const ev = data.evidence.find((x) => x.id === evidenceId);
+    const check: Check = value.trim() === "" || !Number.isFinite(n) || n < 0 ? { ok: false, code: "TEBOS_VALIDATION", reason: "Enter the actual, zero or more." }
+      : !isMoney && !Number.isInteger(n) ? { ok: false, code: "TEBOS_VALIDATION", reason: "Units are whole numbers." }
+      : basis === "verified" && (!ev || ev.status !== "checked") ? { ok: false, code: "TEBOS_VALIDATION", reason: "A verified actual names evidence that was checked." }
+      : { ok: true };
+    void w.run(check, () => savePropertyActual(org.db, existing, { org_id: data.case.org_id, case_id: data.case.id, review_id: reviewId, key: k, value: n, basis, evidence_id: basis === "verified" ? evidenceId : null }));
+  };
+  return (
+    <form className="pra-figure" aria-label={`Actual: ${OUTCOME_LABEL[k]}`} onSubmit={submit}>
+      <label className="pra-field">{OUTCOME_LABEL[k]}{isMoney ? " (R)" : ""}
+        <input type="number" min="0" step={isMoney ? "0.01" : "1"} value={value} placeholder="Unknown" disabled={!canWork} onChange={(e) => setValue(e.target.value)} /></label>
+      <label className="pra-field">Basis<select value={basis} disabled={!canWork} onChange={(e) => setBasis(e.target.value as ActualBasis)}><option value="owner_reported">Owner-reported</option><option value="verified">Verified</option></select></label>
+      {basis === "verified" ? (
+        <label className="pra-field">Checked evidence<select value={evidenceId} disabled={!canWork} onChange={(e) => setEvidenceId(e.target.value)}>
+          <option value="">{checked.length ? "Choose…" : "No checked evidence yet"}</option>{checked.map((x) => <option key={x.id} value={x.id}>{x.title}</option>)}</select></label>
+      ) : <span />}
+      {canWork && <button className="pra-btn" disabled={w.busy}>Save</button>}
+      {existing && <span className="pra-note pra-full">Recorded: {isMoney ? money(Number(existing.value)) : Number(existing.value)} · {BASES[existing.basis as Basis]}</span>}
+      <div className="pra-full"><ErrorNote error={w.error} title={`${OUTCOME_LABEL[k]} wasn't saved`} /></div>
+    </form>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Gates
 // ---------------------------------------------------------------------------
 
@@ -639,7 +879,8 @@ function GateRow({ n, gate, data, existing, canWork, onChanged }: { n: number; g
   const conflicting = data.evidence.filter((e) => e.status === "conflicting").length;
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    const check = checkGate(data.gates.map(toGate), { gate, status, owner: blank(owner), note: blank(note) }, { authority: data.case.authority as Authority, conflicting });
+    const check = checkGate(data.gates.map(toGate), { gate, status, owner: blank(owner), note: blank(note) },
+      { authority: data.case.authority as Authority, conflicting, hasBaseline: !!data.baseline, actuals: data.actuals.length });
     void w.run(check, () => savePropertyGate(org.db, existing, { org_id: data.case.org_id, case_id: data.case.id, gate, status, owner: blank(owner), note: blank(note) }));
   };
   const tone = existing?.status === "passed" ? "green" : existing?.status === "blocked" ? "red" : existing?.status === "in_progress" ? "amber" : "";
@@ -667,11 +908,12 @@ function GateRow({ n, gate, data, existing, canWork, onChanged }: { n: number; g
 // History, from the audit trail
 // ---------------------------------------------------------------------------
 
-const HISTORY_FIELDS = ["disposition", "disposition_reason", "authority", "value", "basis", "status", "evidence_id", "label", "problem", "objective", "suspected_cause", "owner", "note"];
+const HISTORY_FIELDS = ["due_on", "approval", "completion_evidence", "target_cash_flow", "next_review_on", "disposition", "disposition_reason", "authority", "value", "basis", "status", "evidence_id", "label", "problem", "objective", "suspected_cause", "owner", "note"];
 
 function History({ data }: { data: CaseData }) {
   const org = useOrg();
-  const ids = useMemo(() => [data.case.id, ...data.evidence.map((e) => e.id), ...data.figures.map((f) => f.id), ...data.pathways.map((p) => p.id), ...data.gates.map((g) => g.id)], [data]);
+  const ids = useMemo(() => [data.case.id, ...data.evidence.map((e) => e.id), ...data.figures.map((f) => f.id), ...data.pathways.map((p) => p.id), ...data.gates.map((g) => g.id),
+    ...data.workstreams.map((w) => w.id), ...(data.baseline ? [data.baseline.id] : []), ...data.reviews.map((r) => r.id), ...data.actuals.map((a) => a.id)], [data]);
   const q = useQuery(() => propertyCaseHistory(org.db, org.organisation.id, ids), [ids.join(",")]);
   return (
     <section className="pra-card" aria-label="Case history">
