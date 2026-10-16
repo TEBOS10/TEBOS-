@@ -35,6 +35,8 @@ insert into public.memberships (org_id, user_id, role) values (:'shared_org', :'
 
 set role authenticated;
 select set_config('request.jwt.claim.sub', :'owner', false);
+-- signed in with two-step sign-in (99zg covers sessions without it)
+select set_config('request.jwt.claims', '{"aal":"aal2"}', false);
 
 -- ===========================================================================
 -- A private organisation: one member, its owner, and it stays private

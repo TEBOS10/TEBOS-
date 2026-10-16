@@ -1,4 +1,5 @@
 import { SetPassword } from "../components/SetPassword";
+import { TwoStepSettings } from "../components/TwoStep";
 import { Card, PageHeader } from "../components/ui";
 import { usePeople } from "../lib/people";
 import { useOrg } from "../lib/session";
@@ -15,6 +16,9 @@ export function AccountPage() {
       <div className="grid grid-2">
         <Card title="Change password" subtitle="Takes effect immediately. Other devices stay signed in until their session ends.">
           <SetPassword />
+        </Card>
+        <Card title="Two-step sign-in" subtitle="A code from an authenticator app, on top of your password. A stolen password alone then opens nothing.">
+          <TwoStepSettings active={org.twoStep} />
         </Card>
       </div>
     </div>
