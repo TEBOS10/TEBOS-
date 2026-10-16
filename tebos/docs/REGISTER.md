@@ -71,7 +71,11 @@ dependency) · **Not started**.
 
 | Piece | Status | Evidence or blocker |
 |---|---|---|
-| Property intelligence, revenue and deal analysis, gated workflow | Not started | No code or data found anywhere |
+| Property Revenue Architecture: case workspace (intake, evidence room, labelled economics, pathways, gates, history) | Done | 16 Oct: migration `property_cases`, `src/domain/property.ts`; tests `property.test` (18), SQL `99zd`, e2e `property.spec` (6). See `docs/property-revenue-architecture.md` |
+| Property Opportunity Assessment report, JSON and CSV export | Done | Generated from stored records; verified, owner-reported and estimated kept apart |
+| Execution workstreams and outcome scorecard | Not started | Next step |
+| Monthly subscription view and pricing from a market file | Not started | Price is the founder's (decision 10) |
+| Secure document upload | Not started | With the private vault |
 
 ## Housekeeping
 

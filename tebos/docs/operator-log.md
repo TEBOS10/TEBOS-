@@ -24,6 +24,38 @@ Update this list every run; strike items when they're done.
 | 11 | When there's income: Supabase Pro (about USD 25 a month) so the vault and Tidy Capital can have their own project, out of the client database. Until then the vault is a private organisation inside TEBOS | Full separation of your private data |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 16 Oct 2026: Property Revenue Architecture, the case workspace (founder's specification)
+
+- **Asked:** the founder sent three things: the Property Revenue Architect dossier (the business specification),
+  the HTML prototype (the visual reference) and a build brief. The brief asked for a real application, not a mock-up.
+- **What the prototype already did:**
+  - it calculated NOI, cash flow, collection rate and occupancy only when the inputs were filled;
+  - blank meant unknown;
+  - it had evidence checkboxes, gates and a JSON export.
+- **What it didn't do:**
+  - nothing was saved, and there was one hardcoded case;
+  - readiness counted ticks;
+  - figures weren't labelled verified or owner-reported;
+  - a single "vacancy / collection loss" field invited double-counting;
+  - there was no audit trail and no report.
+- **Built:** the case workspace in the Tidy Enterprise organisation:
+  - intake with the five dispositions, each with a reason, a time and its history;
+  - an evidence register weighted by materiality and quality;
+  - figures labelled verified, owner-reported or estimated, where verified rests on checked evidence;
+  - economics that never treat unknown as zero, with vacancy and collection shortfall counted once;
+  - the seven pathways, with one explained recommendation;
+  - five ordered gates;
+  - history from the audit trail;
+  - the assessment report with PDF, JSON and CSV export;
+  - the prototype's dark visual style.
+- **Proof:**
+  - core: 284 tests, including `property.test` (18);
+  - database: 55 of 55, including SQL `99zd`;
+  - web: 60 unit tests, and e2e 93 of 93, including `property.spec` (6).
+- **Not yet:** document upload (with the vault), execution workstreams and the outcome scorecard (next), the monthly
+  subscription view, and any AI document analysis. No property data was entered: the workspace is empty until a
+  real case is opened.
+
 ## 16 Oct 2026: the founder's priorities, cash first
 
 - The founder set the order for the whole company (ROADMAP "Founder's priorities"). The daily run now takes these

@@ -25,7 +25,9 @@ keep moving when the founder is busy, and has to pay its own subscriptions. So t
 this list first (OPERATOR.md rule 2.3). **Cash first:** Tidy Capital grows money over years; it doesn't pay this
 month's bills, so earning comes before investing.
 
-1. **Property Revenue Architect, as an affordable monthly subscription** (founder, 16 Oct). Owners of
+1. **Property Revenue Architect, as an affordable monthly subscription** (founder, 16 Oct). *Built 16 Oct: the case
+   workspace and assessment report (docs/property-revenue-architecture.md). Next: execution workstreams and the outcome
+   scorecard, then the monthly subscription view.* Owners of
    underperforming properties can't pay a large once-off fee, so the product is a monthly plan with practical
    results: each month, what was fixed, what was done (a spreadsheet set up, a business registered), what is next.
    It doesn't need the founder present for every step. Build it on what TEBOS already has: the delivery plan

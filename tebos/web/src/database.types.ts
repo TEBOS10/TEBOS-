@@ -2711,6 +2711,276 @@ export type Database = {
           },
         ]
       }
+      property_cases: {
+        Row: {
+          id: string
+          org_id: string
+          ref: string
+          label: string
+          property_type: string | null
+          problem: string
+          objective: string
+          suspected_cause: string
+          authority: string
+          authority_note: string | null
+          constraints: string | null
+          desired_outcome: string | null
+          disposition: string
+          disposition_reason: string
+          disposition_at: string
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          ref?: string
+          label: string
+          property_type?: string | null
+          problem: string
+          objective: string
+          suspected_cause?: string
+          authority?: string
+          authority_note?: string | null
+          constraints?: string | null
+          desired_outcome?: string | null
+          disposition?: string
+          disposition_reason: string
+          disposition_at?: string
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          ref?: string
+          label?: string
+          property_type?: string | null
+          problem?: string
+          objective?: string
+          suspected_cause?: string
+          authority?: string
+          authority_note?: string | null
+          constraints?: string | null
+          desired_outcome?: string | null
+          disposition?: string
+          disposition_reason?: string
+          disposition_at?: string
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      property_evidence: {
+        Row: {
+          id: string
+          org_id: string
+          case_id: string
+          category: string
+          kind: string
+          title: string
+          source: string | null
+          period_start: string | null
+          period_end: string | null
+          received_on: string | null
+          responsible: string | null
+          status: string
+          confidence: string | null
+          document_ref: string | null
+          notes: string | null
+          follow_up: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          case_id: string
+          category: string
+          kind: string
+          title: string
+          source?: string | null
+          period_start?: string | null
+          period_end?: string | null
+          received_on?: string | null
+          responsible?: string | null
+          status?: string
+          confidence?: string | null
+          document_ref?: string | null
+          notes?: string | null
+          follow_up?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          case_id?: string
+          category?: string
+          kind?: string
+          title?: string
+          source?: string | null
+          period_start?: string | null
+          period_end?: string | null
+          received_on?: string | null
+          responsible?: string | null
+          status?: string
+          confidence?: string | null
+          document_ref?: string | null
+          notes?: string | null
+          follow_up?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      property_figures: {
+        Row: {
+          id: string
+          org_id: string
+          case_id: string
+          key: string
+          value: number
+          basis: string
+          evidence_id: string | null
+          as_of: string
+          note: string | null
+          recorded_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          case_id: string
+          key: string
+          value: number
+          basis: string
+          evidence_id?: string | null
+          as_of: string
+          note?: string | null
+          recorded_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          case_id?: string
+          key?: string
+          value?: number
+          basis?: string
+          evidence_id?: string | null
+          as_of?: string
+          note?: string | null
+          recorded_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      property_pathways: {
+        Row: {
+          id: string
+          org_id: string
+          case_id: string
+          pathway: string
+          status: string
+          rationale: string | null
+          why_preferred: string | null
+          evidence_summary: string | null
+          cost_once_off: number | null
+          timeline: string | null
+          risks: string | null
+          specialists: string[]
+          downside: string | null
+          disqualifiers: string | null
+          decision_owner: string | null
+          would_change: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          case_id: string
+          pathway: string
+          status?: string
+          rationale?: string | null
+          why_preferred?: string | null
+          evidence_summary?: string | null
+          cost_once_off?: number | null
+          timeline?: string | null
+          risks?: string | null
+          specialists?: string[]
+          downside?: string | null
+          disqualifiers?: string | null
+          decision_owner?: string | null
+          would_change?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          case_id?: string
+          pathway?: string
+          status?: string
+          rationale?: string | null
+          why_preferred?: string | null
+          evidence_summary?: string | null
+          cost_once_off?: number | null
+          timeline?: string | null
+          risks?: string | null
+          specialists?: string[]
+          downside?: string | null
+          disqualifiers?: string | null
+          decision_owner?: string | null
+          would_change?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      property_gates: {
+        Row: {
+          id: string
+          org_id: string
+          case_id: string
+          gate: string
+          status: string
+          owner: string | null
+          note: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          case_id: string
+          gate: string
+          status?: string
+          owner?: string | null
+          note?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          case_id?: string
+          gate?: string
+          status?: string
+          owner?: string | null
+          note?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
