@@ -2,9 +2,14 @@ import { KeyRound } from "lucide-react";
 import { useState } from "react";
 import { SetPassword } from "../components/SetPassword";
 import { navigate } from "../lib/router";
+import { useSessionState } from "../lib/session";
 
-/** /reset-password: reached from the emailed reset link, which signs the person in for this purpose. */
+/**
+ * Reached from the emailed reset link, which signs the person in for this purpose: at /reset-password, or wherever
+ * the link lands (the session marks it as a recovery). Nothing else opens until a new password is chosen.
+ */
 export function ResetPassword() {
+  const { endRecovery } = useSessionState();
   const [done, setDone] = useState(false);
   return (
     <div className="auth">
@@ -19,8 +24,8 @@ export function ResetPassword() {
         </div>
         <SetPassword submitLabel="Save new password" onDone={() => setDone(true)} />
         {done && (
-          <button className="btn" onClick={() => navigate("/")}>
-            Continue to TEBOS
+          <button className="btn" onClick={() => { endRecovery(); navigate("/"); }}>
+            Continue
           </button>
         )}
       </div>

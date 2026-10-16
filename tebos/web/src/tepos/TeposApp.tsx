@@ -53,9 +53,11 @@ export function TeposApp() {
 }
 
 function Gate() {
-  const { state } = useSessionState();
+  const { state, recovery } = useSessionState();
   const path = usePath();
-  if (path === "/reset-password" && state.phase === "ready") return <ResetPassword />;
+  // a password-reset link: the new password comes first, wherever the link landed
+  if (recovery && state.phase !== "loading" && state.phase !== "signed_out" && state.phase !== "error") return <ResetPassword />;
+  if (path === "/reset-password" && state.phase !== "loading" && state.phase !== "signed_out" && state.phase !== "error") return <ResetPassword />;
   switch (state.phase) {
     case "loading":
       return <div className="auth"><Loading label="Opening TEPOS" /></div>;
