@@ -140,5 +140,14 @@ update public.work_requests set status = 'cancelled' where id = :'req';
 reset role;
 select t99zb.ok((select status = 'failed' from public.work_requests where id = :'req'), 'a viewer changes nothing');
 
+-- the second kind (15 Oct): "how are my businesses doing?" is asked the same way, and fixed once asked
+set role authenticated;
+select set_config('request.jwt.claim.sub', :'admin', false);
+insert into public.work_requests (org_id, kind, status) values (:'org', 'business_status', 'received');
+reset role;
+select id as status_req from public.work_requests where org_id = :'org' and kind = 'business_status' \gset
+select t99zb.ok((select requested_by = :'admin' and status = 'received' from public.work_requests where id = :'status_req'), 'a status request is asked like any other');
+select t99zb.expect_error(format($$update public.work_requests set kind = 'attention_today' where id = %L$$, :'status_req'), 'TEBOS_INPUT_FROZEN');
+
 select t99zb.ok((select count(*) >= 1 from public.audit_events where entity_type = 'work_requests'), 'requests are audited');
 select set_config('tebos.actor_type', '', false), set_config('tebos.actor_id', '', false);

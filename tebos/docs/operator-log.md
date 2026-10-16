@@ -21,6 +21,33 @@ Update this list every run; strike items when they're done.
 | 8 | Make the repo private, rotate database passwords, turn on leaked-password protection | Protecting the platform from copying |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 16 Oct 2026 (daily run): Ask TEBOS answers "How are my businesses doing?"
+
+- **State read:**
+  - `main` is green, and the worker runs #45's build (SUCCESS, no errors logged since).
+  - Business reviews still fail on the AI key: 48 in the last day (decision 2b).
+  - No maintainer items and no REEDS requests yet. The advisors are unchanged.
+- **Chosen:** item 2 of the founder's build order, a second REEDS request type. It is deterministic, so the AI key
+  doesn't block it.
+- **Built:** "How are my businesses doing?" runs four checks on the organisation's own records. Each check has a
+  separately written recount and a re-test of every record it lists:
+  - active objectives whose **latest measured reading misses the target**. The executor picks the latest reading
+    with `distinct on`; the verifier re-derives it as "no later reading exists". What the owner said never counts;
+  - active objectives with **no measured reading**;
+  - active objectives **past their date**;
+  - board steps that **only the founder does, written down nowhere**.
+  - Migration `business_status_request` only widens the list of request kinds. The kind stays fixed once asked,
+    and planning and reporting stay the server's.
+  - The ask screen offers the new question with no interface change: it lists the kinds the domain defines.
+- **Proof:**
+  - integration `reeds-pg`, on real Postgres: an objective that met its target earlier but misses on the latest
+    reading counts as off target; a stated-only objective counts as unmeasured; a documented or retired founder
+    step doesn't count. Every task is verified. Another organisation asking sees none of it;
+  - SQL `99zb`: the new kind is asked like the first, and is fixed once asked;
+  - unit: the plan, unique keys across kinds, and parity with the database's latest kind check;
+  - e2e: asking it from the phone sends `business_status`;
+  - core: 266 tests, database 55 of 55; web: 60 unit tests, e2e 87 of 87.
+
 ## 15 Oct 2026 (daily run): approvals and alerts in the Ask TEBOS inbox
 
 - **State read:**

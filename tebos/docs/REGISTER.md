@@ -24,7 +24,7 @@ dependency) · **Not started**.
 | Piece | Status | Evidence or blocker |
 |---|---|---|
 | Request ledger (request → plan → tasks → evidence → verified report) | Done | Migration `work_requests`; SQL test `99zb`; integration test `reeds-pg` (happy path, isolation, retries, a tampered result rejected); ADR 0004 |
-| Planner: deterministic request types | Partial | One type: "What needs my attention today?" (4 organisation checks; 8 for platform admins). Business status is next |
+| Planner: deterministic request types | Partial | Two types: "What needs my attention today?" (4 organisation checks; 8 for platform admins) and "How are my businesses doing?" (objectives off target, unmeasured or past their date, and founder-only steps; migration `business_status_request`, integration test `reeds-pg`). Free-text requests wait on the AI key |
 | Planner: free-text requests through a model | Blocked | AI key not workspace-scoped (decision 2b) |
 | Independent verifier (recomputation) | Done | `src/reeds/checks.ts`: separately written recount and per-record re-test, at a fixed `as_of` |
 | Limits: tasks per request, attempts, no recursive delegation, cost ceiling | Partial | Task, attempt and no-recursion limits are enforced by the database. A cost ceiling is needed once model tasks exist (deterministic tasks cost nothing) |

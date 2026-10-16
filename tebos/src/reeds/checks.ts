@@ -60,6 +60,59 @@ export const COUNT_CHECKS: Record<string, CountCheck> = {
     recount: `select count(*)::int as n from public.maintainer_items m where m.org_id = $1 and m.raised_at <= $2 and m.status = 'open'`,
     recheck: `select count(*)::int as n from public.maintainer_items m where m.id = any($3::uuid[]) and m.org_id = $1 and m.status = 'open' and $2::timestamptz is not null`,
   },
+  // "How are my businesses doing?": the latest measured reading of an objective is the one with the latest
+  // measured_at (ties broken by id) at or before as_of. The executor picks it with distinct on; the verifier
+  // re-derives it with "no later reading exists".
+  "count.objectives_off_target": {
+    list: `with latest as (
+             select distinct on (objective_id) objective_id, value from public.objective_measurements
+              where org_id = $1 and basis = 'measured' and measured_at <= $2 order by objective_id, measured_at desc, id desc)
+           select o.id::text, count(*) over () ::int as n from public.objectives o join latest l on l.objective_id = o.id
+            where o.org_id = $1 and o.status = 'active'
+              and ((o.direction = 'at_least' and l.value < o.target_value) or (o.direction = 'at_most' and l.value > o.target_value))
+            order by o.due_on, o.id limit ${LIMIT}`,
+    recount: `select count(*)::int as n from public.objectives o where o.status = 'active' and o.org_id = $1 and exists (
+                select 1 from public.objective_measurements m
+                 where m.objective_id = o.id and m.basis = 'measured' and m.measured_at <= $2
+                   and case o.direction when 'at_least' then m.value < o.target_value else m.value > o.target_value end
+                   and not exists (select 1 from public.objective_measurements later
+                                    where later.objective_id = o.id and later.basis = 'measured' and later.measured_at <= $2
+                                      and (later.measured_at > m.measured_at or (later.measured_at = m.measured_at and later.id > m.id))))`,
+    recheck: `select count(*)::int as n from public.objectives o where o.id = any($3::uuid[]) and o.org_id = $1 and o.status = 'active' and exists (
+                select 1 from public.objective_measurements m
+                 where m.objective_id = o.id and m.basis = 'measured' and m.measured_at <= $2
+                   and case o.direction when 'at_least' then m.value < o.target_value else m.value > o.target_value end
+                   and not exists (select 1 from public.objective_measurements later
+                                    where later.objective_id = o.id and later.basis = 'measured' and later.measured_at <= $2
+                                      and (later.measured_at > m.measured_at or (later.measured_at = m.measured_at and later.id > m.id))))`,
+  },
+  "count.objectives_unmeasured": {
+    list: `select o.id::text, count(*) over () ::int as n from public.objectives o
+            where o.org_id = $1 and o.status = 'active' and o.created_at <= $2
+              and o.id not in (select objective_id from public.objective_measurements where org_id = $1 and basis = 'measured' and measured_at <= $2)
+            order by o.created_at, o.id limit ${LIMIT}`,
+    recount: `select count(*)::int as n from public.objectives o where o.status = 'active' and o.org_id = $1 and o.created_at <= $2
+                and not exists (select 1 from public.objective_measurements m where m.objective_id = o.id and m.basis = 'measured' and m.measured_at <= $2)`,
+    recheck: `select count(*)::int as n from public.objectives o where o.id = any($3::uuid[]) and o.org_id = $1 and o.status = 'active'
+                and not exists (select 1 from public.objective_measurements m where m.objective_id = o.id and m.basis = 'measured' and m.measured_at <= $2)`,
+  },
+  "count.objectives_overdue": {
+    list: `select id::text, count(*) over () ::int as n from public.objectives
+            where org_id = $1 and status = 'active' and due_on < ($2::timestamptz at time zone 'UTC')::date order by due_on, id limit ${LIMIT}`,
+    recount: `select count(*)::int as n from public.objectives o where o.status = 'active' and o.org_id = $1
+                and o.due_on::timestamp < date_trunc('day', $2::timestamptz at time zone 'UTC')`,
+    recheck: `select count(*)::int as n from public.objectives o where o.id = any($3::uuid[]) and o.org_id = $1 and o.status = 'active'
+                and o.due_on::timestamp < date_trunc('day', $2::timestamptz at time zone 'UTC')`,
+  },
+  "count.founder_only_steps": {
+    list: `select id::text, count(*) over () ::int as n from public.board_steps
+            where org_id = $1 and performer = 'founder' and not documented and retired_at is null and created_at <= $2
+            order by created_at, id limit ${LIMIT}`,
+    recount: `select count(*)::int as n from public.board_steps s where s.org_id = $1 and s.retired_at is null and s.created_at <= $2
+                and s.documented = false and s.performer = 'founder'`,
+    recheck: `select count(*)::int as n from public.board_steps s where s.id = any($3::uuid[]) and s.org_id = $1 and s.performer = 'founder'
+                and s.documented = false and s.retired_at is null and $2::timestamptz is not null`,
+  },
   // platform checks: $1 is still passed, and ignored
   "count.leads_to_decide": {
     list: `select id::text, count(*) over () ::int as n from public.opportunities
