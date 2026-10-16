@@ -10,6 +10,7 @@ import type { Check } from "@core/rules";
 import { useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { ErrorNote, Loading } from "../components/ui";
 import { createPrivateOrganisation, deleteMoneyItem, listMoneyItems, saveMoneyItem, type MoneyItemRow } from "../lib/data";
+import { Link } from "../lib/router";
 import { useOrg } from "../lib/session";
 import { useQuery } from "../lib/useQuery";
 
@@ -30,7 +31,28 @@ function Tag({ tone = "", children }: { tone?: string; children: ReactNode }) {
 export function ResiliencePage() {
   const org = useOrg();
   if (!org.organisation.private) return <div className="pra"><PrivateOrganisation /></div>;
+  if (!org.twoStep) return <div className="pra"><TwoStepRequired /></div>;
   return <div className="pra"><Money /></div>;
+}
+
+/** The database opens these records only in a session that passed two-step sign-in. */
+function TwoStepRequired() {
+  const org = useOrg();
+  return (
+    <>
+      <header className="pra-top">
+        <div>
+          <div className="pra-eyebrow">Strategic resilience · {org.organisation.name} · only you</div>
+          <h1>Two-step sign-in is needed</h1>
+          <p className="pra-sub">These records open only after you sign in with your password and a code from your authenticator app. A stolen password alone opens nothing here.</p>
+        </div>
+      </header>
+      <section className="pra-card" data-testid="two-step-required">
+        <p className="pra-text">Turn on two-step sign-in on your account page. If it is already on, sign out and sign in again with your code.</p>
+        <div className="pra-actions"><Link to="/account" className="pra-btn primary">Set up two-step sign-in</Link></div>
+      </section>
+    </>
+  );
 }
 
 /** Resilience records live only in a private organisation: switch to it, or create it. */

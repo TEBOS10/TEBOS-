@@ -182,9 +182,20 @@ The rules:
   organisations, every rule, secrets refused, the redacted trail, and other people seeing nothing;
 - `web/e2e/resilience.spec.ts`.
 
+**Two-step sign-in (T2), built 17 Oct 2026.** Migration `20261017100000_two_step_resilience.sql` and
+`web/src/components/TwoStep.tsx`.
+- **The database enforces it.** Resilience records are read and written only in a session that passed the second
+  step, a code from an authenticator app (TOTP, assurance level aal2). A password alone opens nothing; the
+  organisation itself still shows, so the app can say what is needed.
+- **Account page:** turn it on by scanning the QR code or typing the key, then confirm with a code. Add a backup
+  authenticator on a second device, or remove one. An earlier attempt that was never confirmed is cleared first.
+- **After a password sign-in**, an account with an authenticator is asked for the code before anything else loads.
+- **Recovery:** the backup authenticator. If every authenticator is lost, the owner of the Supabase project removes
+  the factor (Authentication → Users), then the founder signs in with the password and sets it up again.
+- **Tests:** `supabase/tests/99zg_two_step.sql` and `web/e2e/two-step.spec.ts`.
+- Supabase holds the factor's secret; TEBOS never stores it.
+
 **Not built yet:**
-- **Two-step sign-in (T2) is not enforced yet.** It is the next safeguard, and it is required before documents or
-  the decision log go in.
 - The retention job (T7).
 - The encrypted export (slice 5).
 - Slices 2–4.

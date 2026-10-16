@@ -42,6 +42,7 @@ import { ReedsPage, ReedsRequestPage } from "./pages/ReedsPage";
 import { PropertyCasePage, PropertyCasesPage } from "./pages/PropertyPage";
 import { PropertyReportPage } from "./pages/PropertyReportPage";
 import { ResiliencePage } from "./pages/ResiliencePage";
+import { TwoStepChallenge } from "./components/TwoStep";
 import { ShowcasePage } from "./pages/ShowcasePage";
 import { SystemsPage } from "./pages/SystemsPage";
 import { WaitlistPage } from "./pages/WaitlistPage";
@@ -159,6 +160,8 @@ function Gate() {
       }
       // Visitors land on the home page; everything else asks them to sign in.
       return path === "/" ? <LandingPage /> : <SignIn />;
+    case "two_step":
+      return <TwoStepChallenge />;
     case "no_organisation":
       return (
         <StaffProvider>

@@ -69,22 +69,52 @@ function order(rows: Array<Record<string, unknown>>, spec: string | null) {
   });
 }
 
-export async function installFakeSupabase(page: Page, opts: { signedIn?: boolean } = {}): Promise<FakeSupabase> {
+/** An authenticator (TOTP factor) on the fixture account. */
+export interface FakeFactor {
+  id: string;
+  friendly_name: string;
+  factor_type: "totp";
+  status: "verified" | "unverified";
+  created_at: string;
+  updated_at: string;
+}
+
+/** The only code the fake accepts. */
+export const GOOD_CODE = "123456";
+
+const fixtureUser = (factors: FakeFactor[]) => ({
+  id: USER_ID, email: "operator@fixture.test", aud: "authenticated", role: "authenticated", app_metadata: {}, user_metadata: {},
+  created_at: new Date().toISOString(), factors,
+});
+
+function fixtureSession(aal: "aal1" | "aal2" | undefined, factors: FakeFactor[]) {
+  const exp = Math.floor(Date.now() / 1000) + 3600;
+  const payload = Buffer.from(JSON.stringify({ sub: USER_ID, exp, role: "authenticated", ...(aal ? { aal } : {}) })).toString("base64url");
+  return {
+    access_token: `eyJhbGciOiJIUzI1NiJ9.${payload}.fixture`,
+    refresh_token: "fixture",
+    token_type: "bearer",
+    expires_in: 3600,
+    expires_at: exp,
+    user: fixtureUser(factors),
+  };
+}
+
+export const verifiedFactor = (friendly_name = "Phone"): FakeFactor => ({
+  id: crypto.randomUUID(), friendly_name, factor_type: "totp", status: "verified", created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+});
+
+export async function installFakeSupabase(
+  page: Page,
+  opts: { signedIn?: boolean; aal?: "aal1" | "aal2"; factors?: FakeFactor[] } = {},
+): Promise<FakeSupabase & { factors: FakeFactor[] }> {
   const tables = fixtureTables();
   const writes: FakeSupabase["writes"] = [];
   let refusal: Refusal | null = null;
+  const factors: FakeFactor[] = opts.factors ?? [];
 
   if (opts.signedIn !== false) {
-    const exp = Math.floor(Date.now() / 1000) + 3600;
-    const payload = Buffer.from(JSON.stringify({ sub: USER_ID, exp, role: "authenticated" })).toString("base64url");
-    const session = {
-      access_token: `eyJhbGciOiJIUzI1NiJ9.${payload}.fixture`,
-      refresh_token: "fixture",
-      token_type: "bearer",
-      expires_in: 3600,
-      expires_at: exp,
-      user: { id: USER_ID, email: "operator@fixture.test", aud: "authenticated", role: "authenticated", app_metadata: {}, user_metadata: {}, created_at: new Date().toISOString() },
-    };
+    const session = fixtureSession(opts.aal, factors);
     await page.addInitScript((s) => localStorage.setItem("sb-fixture-auth-token", s), JSON.stringify(session));
   }
 
@@ -97,11 +127,37 @@ export async function installFakeSupabase(page: Page, opts: { signedIn?: boolean
     const headers = { "content-type": "application/json", "access-control-allow-origin": "*", "access-control-expose-headers": "content-range" };
     if (req.method() === "OPTIONS") return route.fulfill({ status: 204, headers: { ...headers, "access-control-allow-headers": "*", "access-control-allow-methods": "*" } });
 
+    if (url.pathname.startsWith("/auth/v1/factors")) {
+      // two-step sign-in: enrol, challenge, verify (only GOOD_CODE passes), remove
+      writes.push({ method: req.method(), table: `auth${url.pathname.slice(8)}`, body: req.method() === "DELETE" ? null : req.postDataJSON() });
+      const [, , , , id, step] = url.pathname.split("/");
+      const now = new Date().toISOString();
+      if (!id && req.method() === "POST") {
+        const body = req.postDataJSON() as { friendly_name?: string };
+        const f: FakeFactor = { id: crypto.randomUUID(), friendly_name: body.friendly_name ?? "", factor_type: "totp", status: "unverified", created_at: now, updated_at: now };
+        factors.push(f);
+        return route.fulfill({ status: 200, headers, body: JSON.stringify({ id: f.id, type: "totp", friendly_name: f.friendly_name,
+          totp: { qr_code: '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"/>', secret: "JBSWY3DPEHPK3PXP", uri: "otpauth://totp/TEBOS:fixture?secret=JBSWY3DPEHPK3PXP" } }) });
+      }
+      const f = factors.find((x) => x.id === id);
+      if (!f) return route.fulfill({ status: 404, headers, body: JSON.stringify({ code: 404, error_code: "mfa_factor_not_found", msg: "Factor not found" }) });
+      if (req.method() === "DELETE") {
+        factors.splice(factors.indexOf(f), 1);
+        return route.fulfill({ status: 200, headers, body: JSON.stringify({ id: f.id }) });
+      }
+      if (step === "challenge") return route.fulfill({ status: 200, headers, body: JSON.stringify({ id: crypto.randomUUID(), type: "totp", expires_at: Math.floor(Date.now() / 1000) + 300 }) });
+      if (step === "verify") {
+        const { code } = req.postDataJSON() as { code: string };
+        if (code !== GOOD_CODE) return route.fulfill({ status: 422, headers, body: JSON.stringify({ code: 422, error_code: "mfa_verification_failed", msg: "Invalid TOTP code entered" }) });
+        f.status = "verified";
+        return route.fulfill({ status: 200, headers, body: JSON.stringify(fixtureSession("aal2", factors)) });
+      }
+    }
     if (url.pathname.startsWith("/auth/v1/")) {
       if (req.method() !== "GET") writes.push({ method: req.method(), table: `auth${url.pathname.slice(8)}${url.search}`, body: req.postDataJSON() });
       // Updating the user answers with the user, as Supabase does.
-      const user = { id: USER_ID, email: "operator@fixture.test", aud: "authenticated", role: "authenticated", app_metadata: {}, user_metadata: {}, created_at: new Date().toISOString() };
-      return route.fulfill({ status: 200, headers, body: JSON.stringify(url.pathname === "/auth/v1/user" ? user : {}) });
+      if (url.pathname === "/auth/v1/token") return route.fulfill({ status: 200, headers, body: JSON.stringify(fixtureSession(factors.some((f) => f.status === "verified") ? "aal2" : undefined, factors)) });
+      return route.fulfill({ status: 200, headers, body: JSON.stringify(url.pathname === "/auth/v1/user" ? fixtureUser(factors) : {}) });
     }
 
     const m = /^\/rest\/v1\/(rpc\/)?([a-z_]+)$/.exec(url.pathname);
@@ -156,7 +212,7 @@ export async function installFakeSupabase(page: Page, opts: { signedIn?: boolean
     return route.fulfill({ status: 200, headers: { ...headers, ...range }, body: JSON.stringify(rows) });
   });
 
-  return { tables, writes, refuse: (r) => (refusal = r) };
+  return { tables, writes, factors, refuse: (r) => (refusal = r) };
 }
 
 // The two invitation functions, answered from the fixture tables; any other RPC returns a fresh id.

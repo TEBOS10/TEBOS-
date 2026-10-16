@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { installFakeSupabase, type FakeSupabase } from "./fake-supabase";
+import { installFakeSupabase, verifiedFactor, type FakeSupabase } from "./fake-supabase";
 import { USER_ID } from "./fixtures";
 
 // Strategic resilience, slice 1: financial resilience in the founder's private
@@ -8,6 +8,8 @@ import { USER_ID } from "./fixtures";
 // here the interface must pre-check them, show refusals, and compute the runway
 // only from what is recorded.
 
+// the founder's session passed two-step sign-in; two-step.spec covers sessions that didn't
+const TWO_STEP = { aal: "aal2" as const, factors: [verifiedFactor()] };
 const VAULT = "f1000000-0000-4000-8000-000000000001";
 const now = () => new Date().toISOString();
 const today = () => new Date().toISOString().slice(0, 10);
@@ -36,7 +38,7 @@ async function openVault(page: import("@playwright/test").Page) {
 }
 
 test("without a private organisation, the page offers to create one, and nobody else can join it", async ({ page }) => {
-  const fake = await installFakeSupabase(page);
+  const fake = await installFakeSupabase(page, TWO_STEP);
   tables(fake).platform_admins = [{ user_id: USER_ID, created_at: now() }];
   await page.goto("/");
   await page.getByRole("link", { name: "Resilience" }).click();
@@ -50,7 +52,7 @@ test("without a private organisation, the page offers to create one, and nobody 
 });
 
 test("runway counts reliable income only; speculative income and lump sums are shown, never counted", async ({ page }) => {
-  const fake = await installFakeSupabase(page);
+  const fake = await installFakeSupabase(page, TWO_STEP);
   seedVault(fake, [
     row({ kind: "essential_cost", label: "Rent", amount: 8000, cadence: "monthly" }),
     row({ kind: "essential_cost", label: "Food", amount: 4000, cadence: "monthly" }),
@@ -76,7 +78,7 @@ test("runway counts reliable income only; speculative income and lump sums are s
 });
 
 test("an unknown amount stays unknown, and is named", async ({ page }) => {
-  const fake = await installFakeSupabase(page);
+  const fake = await installFakeSupabase(page, TWO_STEP);
   seedVault(fake, [
     row({ kind: "essential_cost", label: "Rent", amount: 8000, cadence: "monthly" }),
     row({ kind: "essential_cost", label: "Medical aid", amount: null, cadence: "monthly" }),
@@ -89,7 +91,7 @@ test("an unknown amount stays unknown, and is named", async ({ page }) => {
 });
 
 test("adding an item: secrets and unverified 'reliable' income are refused before anything is sent", async ({ page }) => {
-  const fake = await installFakeSupabase(page);
+  const fake = await installFakeSupabase(page, TWO_STEP);
   seedVault(fake);
   await openVault(page);
   await page.getByRole("button", { name: "Add an item" }).click();
@@ -117,7 +119,7 @@ test("adding an item: secrets and unverified 'reliable' income are refused befor
 });
 
 test("a database refusal is shown in its own words; a record can be deleted", async ({ page }) => {
-  const fake = await installFakeSupabase(page);
+  const fake = await installFakeSupabase(page, TWO_STEP);
   seedVault(fake, [row({ kind: "reserve", label: "Savings", amount: 1000, liquid: true })]);
   await openVault(page);
   await page.getByTestId("items-reserve").getByRole("button", { name: "Edit" }).click();

@@ -11,6 +11,8 @@ export interface OrgContext {
   userId: string;
   organisation: Organisation;
   role: OrgRole;
+  /** this session passed two-step sign-in (aal2); the private organisation's records need it */
+  twoStep: boolean;
   organisations: Array<{ membership: Membership; organisation: Organisation }>;
   switchOrganisation: (id: string) => void;
   refreshOrganisations: () => Promise<void>;
@@ -22,11 +24,23 @@ type State =
   | { phase: "signed_out" }
   | { phase: "no_organisation"; session: Session }
   | { phase: "error"; message: string }
-  | { phase: "ready"; session: Session; organisations: OrgContext["organisations"]; currentId: string };
+  // signed in with a password, and the account has two-step sign-in: the code comes first
+  | { phase: "two_step"; session: Session }
+  | { phase: "ready"; session: Session; organisations: OrgContext["organisations"]; currentId: string; twoStep: boolean };
 
 const Ctx = createContext<{ state: State; db: Db; refresh: () => Promise<void>; switchOrganisation: (id: string) => void } | null>(null);
 
 const ORG_KEY = "tebos.organisation";
+
+/** The session's assurance level, read from its token. Anything unreadable counts as no second step. */
+async function assurance(db: Db): Promise<{ current: string | null; next: string | null }> {
+  try {
+    const { data } = await db.auth.mfa.getAuthenticatorAssuranceLevel();
+    return { current: data?.currentLevel ?? null, next: data?.nextLevel ?? null };
+  } catch {
+    return { current: null, next: null };
+  }
+}
 const remembered = () => {
   try {
     return localStorage.getItem(ORG_KEY);
@@ -57,11 +71,13 @@ export function SessionProvider({ db, children }: { db: Db; children: ReactNode 
       if (s === undefined) return;
       if (!s) return setState({ phase: "signed_out" });
       try {
+        const level = await assurance(db);
+        if (level.next === "aal2" && level.current !== "aal2") return setState({ phase: "two_step", session: s });
         const organisations = await myOrganisations(db, s.user.id);
         if (organisations.length === 0) return setState({ phase: "no_organisation", session: s });
         const want = preferId ?? remembered();
         const currentId = organisations.find((o) => o.organisation.id === want)?.organisation.id ?? organisations[0]!.organisation.id;
-        setState({ phase: "ready", session: s, organisations, currentId });
+        setState({ phase: "ready", session: s, organisations, currentId, twoStep: level.current === "aal2" });
       } catch (e) {
         setState({ phase: "error", message: (e as Error).message ?? "Could not load your organisations" });
       }
@@ -106,6 +122,7 @@ export function useOrg(): OrgContext {
     userId: state.session.user.id,
     organisation: current.organisation,
     role,
+    twoStep: state.twoStep,
     organisations: state.organisations,
     switchOrganisation,
     refreshOrganisations: refresh,
