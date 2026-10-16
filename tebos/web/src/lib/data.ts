@@ -72,6 +72,11 @@ export async function createOrganisation(db: Db, name: string, slug: string) {
   return must(await db.rpc("create_organisation", { p_name: name, p_slug: slug }));
 }
 
+/** A private organisation: its creator is, and stays, its only member (resilience records live here). */
+export async function createPrivateOrganisation(db: Db, name: string, slug: string) {
+  return must(await db.rpc("create_private_organisation", { p_name: name, p_slug: slug }));
+}
+
 export const slugify = (s: string) =>
   s.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
 
@@ -1553,4 +1558,24 @@ export async function createPropertyReview(db: Db, row: { org_id: string; case_i
 export async function savePropertyActual(db: Db, existing: PropertyActual | undefined, row: { org_id: string; case_id: string; review_id: string; key: string; value: number; basis: string; evidence_id: string | null }) {
   if (existing) return must(await db.from("property_outcome_values").update(row).eq("id", existing.id).select().single());
   return must(await db.from("property_outcome_values").insert(row).select().single());
+}
+
+// ---------------------------------------------------------------------------
+// Strategic Resilience: money items (private organisations only)
+// ---------------------------------------------------------------------------
+
+export type MoneyItemRow = Row<"res_money_items">;
+
+export async function listMoneyItems(db: Db, orgId: string) {
+  return must(await db.from("res_money_items").select("*").eq("org_id", orgId).order("kind").order("label"));
+}
+
+export async function saveMoneyItem(db: Db, id: string | null, row: Omit<MoneyItemRow, "id" | "created_by" | "created_at" | "updated_at">) {
+  if (id) return must(await db.from("res_money_items").update(row).eq("id", id).select().single());
+  return must(await db.from("res_money_items").insert(row).select().single());
+}
+
+export async function deleteMoneyItem(db: Db, id: string) {
+  const { error } = await db.from("res_money_items").delete().eq("id", id);
+  if (error) throw error;
 }

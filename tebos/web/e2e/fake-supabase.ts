@@ -166,6 +166,12 @@ function answerRpc(tables: FakeSupabase["tables"], name: string, args: Record<st
     (tables.invitations ??= []).unshift({ id: crypto.randomUUID(), org_id: args.p_org, email: args.p_email.toLowerCase(), role: args.p_role, status: "pending", invited_by: USER_ID, accepted_by: null, created_at: now, expires_at: new Date(Date.now() + 7 * 864e5).toISOString(), accepted_at: null });
     return "fixture-invitation-token";
   }
+  if (name === "create_private_organisation") {
+    const id = crypto.randomUUID();
+    tables.organisations!.push({ id, name: args.p_name, slug: args.p_slug, private: true, created_at: now });
+    tables.memberships!.push({ org_id: id, user_id: USER_ID, role: "org_admin", created_at: now });
+    return id;
+  }
   if (name === "accept_invitation") {
     if (args.p_token === "expired-token") return null;
     const invite = tables.invitations?.find((i) => i.status === "pending");

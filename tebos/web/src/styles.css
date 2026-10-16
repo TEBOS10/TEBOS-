@@ -844,3 +844,12 @@ table.table { width: 100%; border-collapse: collapse; }
   .pra * { color: #111 !important; border-color: #ccc !important; background: transparent !important; }
   .pra-confidential { color: #6b4b00 !important; }
 }
+
+/* Strategic resilience: income by stream (inside .pra) */
+.res-bars { display: grid; gap: 10px; }
+.res-bar-row { display: grid; gap: 4px; }
+.res-bar-label { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 12.5px; }
+.res-bar-label small { color: var(--pmuted); font-size: 11px; }
+.res-bar { display: flex; height: 8px; background: #1b2735; border-radius: 9px; overflow: hidden; }
+.res-bar .reliable { background: var(--pgreen); }
+.res-bar .speculative { background: repeating-linear-gradient(45deg, var(--pamber) 0 4px, #6b5732 4px 8px); }

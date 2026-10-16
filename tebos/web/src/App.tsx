@@ -41,6 +41,7 @@ import { BlogIndex, BlogPost } from "./pages/BlogPage";
 import { ReedsPage, ReedsRequestPage } from "./pages/ReedsPage";
 import { PropertyCasePage, PropertyCasesPage } from "./pages/PropertyPage";
 import { PropertyReportPage } from "./pages/PropertyReportPage";
+import { ResiliencePage } from "./pages/ResiliencePage";
 import { ShowcasePage } from "./pages/ShowcasePage";
 import { SystemsPage } from "./pages/SystemsPage";
 import { WaitlistPage } from "./pages/WaitlistPage";
@@ -73,6 +74,7 @@ const ROUTES: Array<[string, (p: Record<string, string>) => ReactNode]> = [
   ["/system", () => <SystemPage />],
   ["/reeds", () => <ReedsPage />],
   ["/reeds/:id", (p) => <ReedsRequestPage id={p.id!} />],
+  ["/resilience", () => <ResiliencePage />],
   ["/property", () => <PropertyCasesPage />],
   ["/property/:id", (p) => <PropertyCasePage id={p.id!} />],
   ["/property/:id/report", (p) => <PropertyReportPage id={p.id!} />],

@@ -25,6 +25,30 @@ keep moving when the founder is busy, and has to pay its own subscriptions. So t
 this list first (OPERATOR.md rule 2.3). **Cash first:** Tidy Capital grows money over years; it doesn't pay this
 month's bills, so earning comes before investing.
 
+**The structure (founder's drawing, 17 Oct 2026).** Tidy sits at the top, with three systems beneath it:
+- **REEDS**, the chief of staff. It manages, communicates, pairs and links, thinks and suggests, understands,
+  cleans up chaos, assesses and diagnoses, guides and aligns, protects, creates contingencies, and interviews people
+  and agents for roles. It works within the autonomy tiers: it suggests and drafts, and people decide anything
+  consequential.
+- **TEBOS**, the builder. It serves BAME and other businesses aligned with Tidy's focus on industry and asset
+  management, and it is used inside everything Tidy builds.
+- **IREKUN**, the security backbone and personal cyber security. It is never sold. The private resilience
+  organisation is IREKUN's.
+
+Two businesses sit alongside them:
+- **Tidy Capital** receives the income. It has four streams:
+  - forex trading, as software;
+  - TEBOS retainers from the businesses it helps;
+  - the real-estate agent job;
+  - Property Revenue Architect retainers from the properties it helps.
+
+  Forex income is always recorded as speculative. A retainer counts as reliable only with a signed agreement.
+- **Tidy Enterprise** builds the founder's standing as a qualified, trustworthy asset-management firm. It covers:
+  - property credentials;
+  - the asset-management portfolio;
+  - the Property Revenue Architect business, which builds credibility and relationships by helping others win;
+  - success in the real-estate agent job.
+
 1. **Property Revenue Architect, as an affordable monthly subscription** (founder, 16 Oct). *Built 16 Oct: the case
    workspace and assessment report (docs/property-revenue-architecture.md). Workstreams and the outcome scorecard
    followed the same day. Next: the monthly subscription view.* Owners of
@@ -61,7 +85,9 @@ month's bills, so earning comes before investing.
 4. **The study path.** The qualifications towards asset management (property finance, property investment and
    development, and what the FSCA requires to manage other people's money) as objectives with dates and evidence of
    completion.
-5. **The private vault.** The founder's own organisation inside TEBOS (free for now): documents stored privately,
+5. **The private vault (IREKUN).** *Started 17 Oct with Strategic Resilience slice 1 (docs/resilience/blueprint.md):
+   private organisations (one member, ever), and financial resilience (runway, income by stream and cadence).*
+   The founder's own organisation inside TEBOS (free for now): documents stored privately,
    every read audited, shared only through short-lived signed links, searchable ("REEDS, find my document").
    Built so it can move to its own Supabase project, out of the client database, once income pays for one (the
    free plan's two projects are in use: `tebos-core` and `bame-os`).

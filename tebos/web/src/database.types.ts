@@ -2004,18 +2004,21 @@ export type Database = {
           id: string
           name: string
           slug: string
+          private: boolean
         }
         Insert: {
           created_at?: string
           id?: string
           name: string
           slug: string
+          private?: boolean
         }
         Update: {
           created_at?: string
           id?: string
           name?: string
           slug?: string
+          private?: boolean
         }
         Relationships: []
       }
@@ -2885,6 +2888,69 @@ export type Database = {
         }
         Relationships: []
       }
+      res_money_items: {
+        Row: {
+          id: string
+          org_id: string
+          entity: string
+          kind: string
+          label: string
+          amount: number | null
+          cadence: string | null
+          stream: string | null
+          reliability: string | null
+          liquid: boolean | null
+          basis: string
+          evidence_ref: string | null
+          due_on: string | null
+          as_of: string
+          note: string | null
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          entity: string
+          kind: string
+          label: string
+          amount?: number | null
+          cadence?: string | null
+          stream?: string | null
+          reliability?: string | null
+          liquid?: boolean | null
+          basis?: string
+          evidence_ref?: string | null
+          due_on?: string | null
+          as_of?: string
+          note?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          entity?: string
+          kind?: string
+          label?: string
+          amount?: number | null
+          cadence?: string | null
+          stream?: string | null
+          reliability?: string | null
+          liquid?: boolean | null
+          basis?: string
+          evidence_ref?: string | null
+          due_on?: string | null
+          as_of?: string
+          note?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       property_pathways: {
         Row: {
           id: string
@@ -3212,6 +3278,10 @@ export type Database = {
         Returns: string
       }
       create_organisation: {
+        Args: { p_name: string; p_slug: string }
+        Returns: string
+      }
+      create_private_organisation: {
         Args: { p_name: string; p_slug: string }
         Returns: string
       }
