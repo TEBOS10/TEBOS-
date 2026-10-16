@@ -1,144 +1,124 @@
 # TEPOS briefing
 
-The full context for any new conversation about TEPOS, as of 16 October 2026. Attach this file or paste it at the start
-of a chat. The code lives in the repository `TEBOS10/TEBOS-`, under `tebos/`.
+Read this first in any TEPOS session. It gathers what is decided and built, with a pointer to where each fact comes
+from. Where this file and a source disagree, the source wins: fix this file.
+Sources: [`ROADMAP.md`](../ROADMAP.md), [`operator-log.md`](../operator-log.md), the root `CLAUDE.md`, and the
+code under `web/tepos/` and `web/src/tepos/`.
 
 ## What TEPOS is
 
-**TEPOS** stands for the **Tidy Enterprise Personal Operating System**. It is the founder's own, private web app, and it
-runs the founder's personal side of Tidy.
+- **TEPOS**, the Tidy Enterprise Personal Operating System, is the founder's private web app.
+- **TEBOS** is the separate, public app for clients. TEPOS work doesn't change TEBOS-only code unless the founder asks.
+- The two apps share the Supabase database (`tebos-core`, project `jjibuvqpidimckmrhlqa`) and the domain rules in
+  `tebos/src/domain`. REEDS works across both.
+- Only someone who owns a private organisation gets in. Anyone else sees "This is a private system".
+- TEPOS data lives in private organisations (`organisations.app = 'tepos'`). Private organisations are always TEPOS's
+  (migration `organisation_app`).
+- It looks like its tiles: earthy browns and beiges, with the Tidy logo in bronze (`web/tepos/public/brand`).
 
-**TEBOS** (Business Operating Systems) is a separate web app for clients. It builds and runs business operating systems
-for other businesses, such as BAME. The two are kept apart:
-- TEBOS shows nothing of TEPOS;
-- TEPOS lets in only its owner;
-- personal and client data never mix.
+## Where it fits (founder's drawing, 16 Oct 2026)
 
-| | TEPOS (personal) | TEBOS (clients) |
-|---|---|---|
-| Address | tebos-web.vercel.app (Vercel project `tebos-web`) | tebos-demo.vercel.app (Vercel project `tebos`) |
-| Who gets in | Only someone who owns a private organisation, which means the founder | Clients and TEBOS staff; invite-only |
-| Look | Earthy browns and beiges; the same TB logo in bronze; the home page is a city at dusk | Near-black and silver; the chessboard and 3D boards; client tiles in each client's own colours |
-| Code | `tebos/web/tepos/`, `tebos/web/src/tepos/`, `vite.tepos.config.ts` → `dist-tepos` | `tebos/web/src/`, `vite.config.ts` → `dist` |
+- Tidy sits at the top. Beneath it are three systems:
+  - **REEDS**, the chief of staff;
+  - **TEBOS**, the builder;
+  - **IREKUN**, the security backbone, which is never sold.
+- **Tidy Capital** receives the income. It has four streams: forex, TEBOS retainers, the real-estate agent job and
+  Property Revenue Architect retainers.
+  - Forex income always counts as speculative.
+  - A retainer counts as reliable only with a signed agreement.
+- **Tidy Enterprise** builds the founder's standing towards asset management.
+- 50% of TEBOS's profit above its running costs and a three-to-six-month buffer goes to Tidy Capital. The share is
+  revisited each quarter.
 
-The two apps share one sign-in (the same email and password), one Supabase database (project `tebos-core`, free
-plan) and the same rules. Each organisation belongs to one app (`organisations.app`), and private organisations are
-always TEPOS's. Every merge to `main` deploys both apps automatically.
-
-## The founder's structure
-
-```
-Tidy
-├── REEDS: the chief of staff. Works across TEPOS and TEBOS.
-├── TEBOS: builds operating systems for clients (separate app)
-└── IREKUN: security backbone and personal cyber security. Never sold.
-
-Tidy Capital: the reserve. It receives every income stream:
-  1. Forex trading (as software): always speculative, never counted as cash
-  2. TEBOS retainers from client businesses
-  3. The real-estate agent job (commissions)
-  4. Property Revenue Architect retainers
-
-Tidy Enterprise: building a qualified, trustworthy asset-management firm:
-  property credentials · asset-management portfolio · the Property Revenue Architect (PRA) business ·
-  success in the real-estate agent job
-
-TEBOS pays Tidy Capital 50% of its profit above running costs plus a 3–6 month buffer (reviewed quarterly).
-```
-
-**REEDS** (the chief of staff) works across both apps. Its roles: manages, communicates, pairs and links, thinks and
-suggests, understands, cleans up chaos, assesses and diagnoses, guides and aligns, protects, creates contingencies,
-and interviews people and agents for roles.
-
-## The six TEPOS portals
-
-| Portal | Status | What it holds |
-|---|---|---|
-| **Tidy Capital** | Built | The reserve. Money records by entity (Tidy, Tidy Capital, Tidy Enterprise, TEBOS, IREKUN, Personal): essential and other costs, income by stream and how often it pays, reserves (liquid or not), debts and commitments. Shows runway in months: base (reliable income continues) and downside (all income stops). |
-| **Tidy Enterprise** | Built | Property Revenue Architecture cases: intake, disposition, an evidence room, economics (rental income, occupancy, costs), pathways, execution gates, workstreams, the outcome scorecard, and the assessment report (PDF, JSON, CSV). |
-| **IREKUN** | Built | Security: two-step sign-in status and the private organisation. |
-| **Academics** | Not built yet | The study path towards asset management: qualifications, dates and evidence of completion. |
-| **Real Estate Job** | Not built yet | The agent's office: buyers, sellers, listings, appointments, and no enquiry left unanswered. |
-| **Forex** | Not built yet | A paper-trading ledger: every idea time-stamped before its outcome. No live trading. |
-
-The TEPOS home page is a city at dusk with one building per portal:
-- a fortress for IREKUN;
-- an office tower for Tidy Enterprise;
-- a bank for Tidy Capital;
-- a trading tower for Forex, a library for Academics and a row of houses for Real Estate Job, all three under
-  scaffolding because they aren't built yet.
-
-The six tiles below the city are each a different earthy shade. Opening one plays a warm "vortex" transition into
-that portal.
-
-## What protects it, all live and tested
-
-- **Private organisation (IREKUN):**
-  - It has one member, ever: the founder. The database refuses a second member, any other role and invitations,
-    by any path.
-  - It can never be made non-private.
-- **Two-step sign-in (TOTP):**
-  - The money records open only after a code from an authenticator app. A password alone reads and writes nothing;
-    this was verified live.
-  - It is set up under Account; a backup authenticator is recommended.
-- **No secrets stored:** text that looks like a password, PIN, key or token is refused in every field.
-- **Redacted audit trail:** it records who changed which fields and when, never the amounts or text. So a deleted
-  record is really gone.
-- **Honest numbers:**
-  - Unknown is not zero.
-  - Speculative income and lump sums never count as cash.
-  - Reliable income must name its signed agreement or statement.
-  - Every result is labelled by its weakest input: verified, stated or estimated.
-
-## Rules that never change
-
-- **Never invent data.** That covers figures, scans, evidence, connections, success or outcomes. If something isn't
-  connected or recorded, say so. A portal that isn't built says "Not built yet".
-- **Nothing outward-facing goes out** on the founder's behalf without approval; draft only.
-- **Money, legal, credentials and irreversible deletion are always the founder's:**
-  - never charge, refund, sign, or change prices or legal text;
-  - never rotate keys;
-  - never set or ask for passwords or keys.
-- **No surveillance:**
-  - no covert recording, spyware or tracking;
-  - no automated accusations;
-  - an AI alert alone never escalates anything.
-- **Human approval for consequential actions.**
-- **Build foundations before interface:** data model, rules, permissions and audit come first, then screens. Test
-  before claiming that something works.
-- **The creative team:**
-  - one creative proposal a week, for TEPOS or a client, within the agreed deliverables;
-  - REEDS puts each proposal to the founder (and the client, where it affects them) for a yes or no;
-  - nothing is built until it is approved.
-
-## Founder's priorities (cash first)
-
-1. Property Revenue Architect as an affordable monthly subscription. The price follows the market (decision 10).
-2. REEDS works without being asked: standing requests and a weekly money brief by income cadence.
-3. The agent's office (Real Estate Job portal).
-4. The study path (Academics portal).
-5. The private vault: document storage in IREKUN, with every read audited.
-6. Tidy Capital, honestly: paper trading and a verifiable track record (Forex portal).
-7. BAME talks to TEBOS both ways (this is TEBOS work).
-
-## Open items for the founder
-
-- **Set a password and turn on two-step sign-in.**
-  - Use "Forgot password?" on TEPOS once; Supabase's free email allows only a few messages an hour.
-  - Then turn on two-step sign-in, with a backup authenticator.
-- **Enter real figures in Tidy Capital** (none are entered yet): essential costs, liquid reserves, debts, and income
-  by stream.
-- **Resend key and a verified domain** (decision 2). This lifts the email limit.
-- **Supabase Pro**, when there's income (decision 11). TEPOS could then move to its own database project.
-- **Delete the unused Vercel projects**, if wanted: `tebos-ex3f` and `tebos-production-v2`.
-
-## Where things are in the code
+## The code and the build
 
 | What | Where |
 |---|---|
-| Money rules and runway | `tebos/src/domain/resilience.ts`, migration `20261017040000_resilience_money.sql` |
-| Two-step sign-in | `tebos/web/src/components/TwoStep.tsx`, migration `20261017100000_two_step_resilience.sql` |
-| Separating the apps | migration `20261017180000_organisation_app.sql`, `tebos/web/scripts/check-bundles.mjs` |
-| Property Revenue Architecture | `tebos/src/domain/property.ts`, `tebos/docs/property-revenue-architecture.md` |
-| Resilience design | `tebos/docs/resilience/blueprint.md` (vaults, threat model, MVP order) |
-| Roadmap and decisions | `tebos/docs/ROADMAP.md`, `tebos/docs/operator-log.md` |
+| Entry and page | `tebos/web/tepos/index.html`, `tebos/web/tepos/main.tsx` |
+| App, sign-in gate and menu | `tebos/web/src/tepos/TeposApp.tsx` |
+| The six portals and what the unbuilt ones will hold | `tebos/web/src/tepos/portals.ts` (tested by `portals.test.ts`) |
+| Home (the city) and portal pages | `TeposCity.tsx`, `TeposPage.tsx`, `tepos.css` |
+| Build config | `tebos/web/vite.tepos.config.ts` |
+| End-to-end test | `tebos/web/e2e/tepos.spec.ts` (also `resilience.spec.ts`, `property.spec.ts`, `two-step.spec.ts`) |
+
+- Build TEPOS with `npm run build:tepos` in `tebos/web`. The output goes to `dist-tepos`.
+- `npm run build` (TEBOS) must keep passing `scripts/check-bundles.mjs`, which fails if the TEBOS bundle mentions TEPOS.
+- TEPOS reuses shared pages from `web/src/pages`: property cases and their report, Resilience (Tidy Capital), REEDS,
+  account, sign-in and the second step.
+
+## Where it runs
+
+| App | Vercel project | Address | Build |
+|---|---|---|---|
+| TEPOS | `tebos-web` | tebos-web.vercel.app | Root `tebos/web`, `npm run build:tepos` → `dist-tepos` |
+| TEBOS | `tebos` | tebos-demo.vercel.app, tebos-neon.vercel.app | Root `tebos/web`, `npm run build` → `dist` |
+
+- Both projects deploy production from `main` (set up 16 Oct, night). Every merge to `main` deploys TEPOS.
+- "Live" is confirmed from the GitHub deployment named "Production – tebos-web", never from the migration job.
+- New migrations are applied live with the Supabase connector, under the migration's own name. CI's migration job
+  does not apply them.
+- Supabase Auth's Redirect URLs list both apps, so a password-reset email returns to the app it came from.
+  Supabase's built-in email sends only a few messages an hour, so repeated reset requests hit a limit.
+
+## The six portals
+
+| Portal | Opens | Organisation | Built |
+|---|---|---|---|
+| Tidy Capital | `/capital` | `irekun` | Yes: the reserve, income by stream and cadence, and how many months the money lasts |
+| Tidy Enterprise | `/property` | `tidy-enterprise` | Yes: Property Revenue Architecture cases, assessment report, workstreams, outcome scorecard |
+| IREKUN | `/irekun` | `irekun` | Yes: two-step sign-in and the private organisation |
+| Academics | `/academics` | (none yet) | No: under scaffolding (priority 4, the study path) |
+| Real Estate Job | `/agent` | (none yet) | No: under scaffolding (priority 3, the agent's office) |
+| Forex | `/forex` | (none yet) | No: under scaffolding (priority 6, paper trading only) |
+
+- The menu also has **Ask REEDS** (`/reeds`).
+- A portal that isn't built says so and lists what it will hold. It never shows invented figures.
+
+## Safeguards in place
+
+- **Private gate:** a signed-in user without a private organisation sees only "This is a private system".
+- **Two-step rule (live since 16 Oct, night; migration `two_step_resilience`):** private records need the
+  authenticator code. Checked live with a test record that was rolled back: password only shows 0 records, with the
+  code the record shows.
+- **Separation:** TEBOS's bundle check, and TEBOS's switcher no longer lists private organisations.
+- **Honest figures:** every figure is measured, stated or estimated, and labelled as such. Only measured figures are
+  shown as results.
+
+## Standing rules
+
+- Never fabricate data, evidence, connection status or outcomes.
+- Decisions about money, legal matters, credentials and irreversible deletion are the founder's.
+- Nothing outward-facing goes out without the founder's approval.
+- Foundations before interface: data model, then rules, permissions, audit and tests, and only then the screen.
+- Test before claiming anything works: `npm run typecheck`, `npm test` and `npm run test:e2e` in `tebos/web`,
+  plus the `tebos/` checks for database changes.
+- Work on a branch named `claude/tepos-<topic>`, open a pull request, and merge when CI is green.
+- Write to the founder in plain, short language. The founder speaks by voice, so names can arrive mangled:
+  "T-Post" means TEPOS, "T-Boss" means TEBOS, "Reed" means REEDS.
+
+## Priorities that touch TEPOS (ROADMAP, founder's order)
+
+1. Property Revenue Architect as a monthly subscription. Next step: the monthly subscription view.
+2. REEDS works without being asked: standing requests, then the weekly money brief.
+3. The agent's office (Real Estate Job portal).
+4. The study path (Academics portal).
+5. The private vault in IREKUN: private documents, every read audited, short-lived signed links.
+6. Tidy Capital, honestly: bring the `capital` schema into this repository, and the paper-trading ledger (Forex
+   portal).
+
+Creative ideas waiting for the founder's yes or no: day and night in the TEPOS city following Tidy Capital's runway.
+
+## Open items for the founder
+
+From the decisions table at the top of `operator-log.md`. That table is the live list.
+
+- **10:** the Property Revenue Architect monthly price, and whether there are tiers.
+- **12:** what the agency's principal allows (CRM, listing portals, WhatsApp, client data), and the one auto-reply
+  text the founder approves.
+- **11:** Supabase Pro once there's income (about USD 25 a month), so the vault and Tidy Capital get their own
+  project.
+- **9:** whether the `capital` schema (18 tables, applied 3 Oct from outside this repo) stays in TEBOS's database.
+- **8:** make the repo private, rotate database passwords, turn on leaked-password protection.
+- **2:** a sending service for email, which would also lift the password-reset limit.
+- Unused Vercel projects `tebos-ex3f` and `tebos-production-v2`: deleting them is the founder's choice.
+- The Alpha Vantage market-data key for Tidy Capital, when the founder wants it.
