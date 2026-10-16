@@ -35,7 +35,13 @@ month's bills, so earning comes before investing.
      baseline is net income (income × occupancy − costs); the gaps and opportunities are ranked by their effect on it.
    - **The monthly progress report** an owner receives: done this month, the figures then and now (only
      measured figures shown as results), next month's steps.
-   - Prices and any client-facing text are the founder's (tier 3).
+   - Prices and any client-facing text are the founder's (tier 3). **The price follows the market** (founder,
+     16 Oct): REEDS keeps a market file of cited figures (published rent indices such as PayProp's, the
+     interest rate, inflation, what managing agents charge), each with its source and date, and conflicting
+     sources shown as conflicting, never averaged away. The founder sets the price from it; owners' own answers
+     on what they would pay count as stated evidence.
+   - **WhatsApp:** connect through the WhatsApp Business Platform, or the founder's WhatsApp CRM if it offers an
+     API, never by automating a personal account. Messages in become leads; replies are drafted for approval.
 2. **REEDS works without being asked.** Standing requests: the founder sets a question once ("every Monday: how are
    my businesses doing?") and the server raises it on schedule, with the report waiting in the inbox. The rule that
    only a person can ask stays: a standing request is the founder's own request, repeated, never one the system
