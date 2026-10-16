@@ -117,7 +117,11 @@ colours, and ideas shouldn't wait for the founder.
    invents. Then the **weekly money brief**, with every income stream by how often it pays (daily, weekly, monthly, yearly, and lump sums such as commissions and trading): what TEBOS and its tools cost (subscriptions the founder records, each
    with its renewal date), what came in (recorded payments and commissions), the months the money lasts, and the
    next best earning move from the records. Nothing estimated is shown as measured.
-3. **The agent's office.** The founder's real-estate work needs volume (agents are told about 30 listings for
+3. **The agent's office.** *Started 17 Oct with slice 1 (migration `agent_office`): every listing, buyer, seller,
+   tenant and landlord with its next step and date, overdue first, and mandates about to end. Kept in the private
+   organisation behind two-step sign-in, and without personal details until the agency's principal allows them
+   (decision 12): people are references (B-001), and email addresses, phone numbers and ID numbers are refused.
+   Next: commission expected versus received, then the enquiry log.* The founder's real-estate work needs volume (agents are told about 30 listings for
    one sale a month), so TEBOS carries the load: every buyer, seller and listing with its next step and date;
    listing write-ups and marketing drafted from the property's facts for approval; documents per deal in one place;
    appointments; and **no enquiry left unanswered**. An instant acknowledgement with a booking link is the one
