@@ -25,20 +25,31 @@ keep moving when the founder is busy, and has to pay its own subscriptions. So t
 this list first (OPERATOR.md rule 2.3). **Cash first:** Tidy Capital grows money over years; it doesn't pay this
 month's bills, so earning comes before investing.
 
-1. **Property Revenue Architect: the revenue review workflow.** A property's records (type, location, units,
-   current rent or rates, occupancy, costs) with each figure labelled measured, stated by the owner, or estimated;
-   a revenue baseline; the gaps against comparable properties; the ranked opportunities, each with its evidence and
-   its assumptions; and a review report the founder can hand to an owner. Prices and any client-facing text are
-   the founder's (tier 3). How the founder assesses a property today is a founder question: build the record-keeping
-   and report first, and ask.
+1. **Property Revenue Architect, as an affordable monthly subscription** (founder, 16 Oct). Owners of
+   underperforming properties can't pay a large once-off fee, so the product is a monthly plan with practical
+   results: each month, what was fixed, what was done (a spreadsheet set up, a business registered), what is next.
+   It doesn't need the founder present for every step. Build it on what TEBOS already has: the delivery plan
+   (steps closed with a note of what was done), monthly billing and the maintainer queue.
+   - **The assessment, in the founder's words:** rental income, occupancy and costs. A property's record holds
+     those three, each labelled measured (from a statement or system), stated by the owner, or estimated; the
+     baseline is net income (income × occupancy − costs); the gaps and opportunities are ranked by their effect on it.
+   - **The monthly progress report** an owner receives: done this month, the figures then and now (only
+     measured figures shown as results), next month's steps.
+   - Prices and any client-facing text are the founder's (tier 3).
 2. **REEDS works without being asked.** Standing requests: the founder sets a question once ("every Monday: how are
    my businesses doing?") and the server raises it on schedule, with the report waiting in the inbox. The rule that
    only a person can ask stays: a standing request is the founder's own request, repeated, never one the system
-   invents. Then the **weekly money brief**: what TEBOS and its tools cost (subscriptions the founder records, each
+   invents. Then the **weekly money brief**, with every income stream by how often it pays (daily, weekly, monthly, yearly, and lump sums such as commissions and trading): what TEBOS and its tools cost (subscriptions the founder records, each
    with its renewal date), what came in (recorded payments and commissions), the months the money lasts, and the
    next best earning move from the records. Nothing estimated is shown as measured.
-3. **The agent's pipeline.** Buyers, sellers and listings for the founder's real-estate work: every lead with its
-   next step and date, follow-ups drafted for approval (never sent by TEBOS), and commission expected versus received.
+3. **The agent's office.** The founder's real-estate work needs volume (agents are told about 30 listings for
+   one sale a month), so TEBOS carries the load: every buyer, seller and listing with its next step and date;
+   listing write-ups and marketing drafted from the property's facts for approval; documents per deal in one place;
+   appointments; and **no enquiry left unanswered**. An instant acknowledgement with a booking link is the one
+   message that may go out automatically, and only from a template the founder approved (ROADMAP autonomy policy,
+   tier 2); everything else is drafted for approval. Channels: email and web first; WhatsApp Business needs a Meta
+   business account and a number (founder). The agency's own rules and POPIA consent come first: check what the
+   agency's principal allows. Commission expected versus received feeds the money brief.
 4. **The study path.** The qualifications towards asset management (property finance, property investment and
    development, and what the FSCA requires to manage other people's money) as objectives with dates and evidence of
    completion.
