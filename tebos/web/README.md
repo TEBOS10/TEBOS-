@@ -39,9 +39,10 @@ npm run dev
 
 ## Deploy (Vercel)
 
-The Vercel project **`tebos-web`** (team "Tidy") is linked to this repository. Its root directory is
-`tebos/web`, it uses the Vite preset, and the two public variables below are set for every environment.
-Every push deploys automatically. Vercel Authentication is on (the default): only members of the Vercel
+TEBOS is the Vercel project **`tebos`** (team "Tidy"; tebos-demo.vercel.app). TEPOS is **`tebos-web`**
+(tebos-web.vercel.app; Build Command `npm run build:tepos`, Output Directory `dist-tepos`). Both have their root
+directory at `tebos/web` and use the Vite preset. Both have the two public variables below for every environment,
+and both take their Production Branch from `main`, so every merge to `main` goes live. Vercel Authentication is on (the default): only members of the Vercel
 team can open deployment URLs until a custom domain is added or protection is changed.
 
 To set it up from scratch instead:

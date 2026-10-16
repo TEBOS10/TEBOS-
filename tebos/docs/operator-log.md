@@ -22,11 +22,31 @@ Update this list every run; strike items when they're done.
 | 10 | **Property Revenue Architect:** the monthly subscription price (and whether there are tiers). The assessment is settled: rental income, occupancy and costs | The first paying subscribers, priority 1 |
 | 12 | **Agent's office:** what your agency's principal allows (CRM, listing portals, WhatsApp, client data), and the one auto-reply text you approve | Never missing an enquiry, priority 3 |
 | 11 | When there's income: Supabase Pro (about USD 25 a month) so the vault and Tidy Capital can have their own project, out of the client database. Until then the vault is a private organisation inside TEBOS | Full separation of your private data |
-| 16 | **Make the live site follow `main`.** Vercel builds every merge as a preview only; production last changed on 16 Oct from a BAME branch commit (`f9de3e4`). In Vercel, open each of the projects `tebos`, `tebos-web` and `tebos-ex3f` → Settings → Git → Production Branch → set it to `main`. Keep only one of the three for TEBOS: the one serving tebos-demo.vercel.app | Everything merged since 16 Oct actually reaching the site |
-| 17 | **Give TEPOS its own Vercel project.** Vercel → Add New → Project → this repository; Root Directory `tebos/web`; Build Command `npm run build:tepos`; Output Directory `dist-tepos`; Environment Variables `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` (the same public values as TEBOS). A spare project (`tebos-web` or `tebos-ex3f`) can be reused instead | TEPOS at its own address, apart from TEBOS |
 | 18 | Each client's web app address (where TEBOS's people sign in to their department), starting with BAME's | Client tiles that open the client's web app |
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
+
+## 16 Oct 2026 (night): both apps deploy themselves from `main`
+
+The founder set this up in Vercel and Supabase, step by step from the phone:
+
+| App | Vercel project | Address | Build |
+|---|---|---|---|
+| TEBOS | `tebos` | tebos-demo.vercel.app (moved here from `tebos-web`), tebos-neon.vercel.app | Root `tebos/web`, Vite defaults (`npm run build` → `dist`) |
+| TEPOS | `tebos-web` | tebos-web.vercel.app | Root `tebos/web`, `npm run build:tepos` → `dist-tepos` |
+
+- Both projects take their Production Branch from `main`. Until now they took it from a BAME branch
+  (`claude/bame-intake-integration-s5ue43`), which is why merges only ever became previews.
+- Both projects have the two public `VITE_SUPABASE_…` variables. The `tebos` project had none before.
+- Supabase Auth:
+  - the Site URL is the TEBOS address;
+  - the Redirect URLs list both apps' addresses, so each app's password-reset email returns to that app.
+- Unused projects are left untouched; deleting them is the founder's choice:
+  - `tebos-ex3f` serves a 404 from the BAME branch;
+  - `tebos-production-v2` is an old prototype from 11 Sep, not linked to Git.
+- `bame-os` and `bame-live` (BAME's own sites) were not touched.
+- Supabase's built-in email sends only a few messages an hour. Repeated reset requests hit that limit. A sending
+  service lifts it (decision 2).
 
 ## 16 Oct 2026 (night): the two-step rule is live
 
