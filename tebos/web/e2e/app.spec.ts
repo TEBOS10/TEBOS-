@@ -324,10 +324,32 @@ test("the reset link opens a screen to choose a new password", async ({ page }) 
   await page.getByRole("textbox", { name: /^New password/ }).fill("fresh-password-456");
   await page.getByRole("textbox", { name: /^Repeat new password/ }).fill("fresh-password-456");
   await page.getByRole("button", { name: "Save new password" }).click();
-  await page.getByRole("button", { name: "Continue to TEBOS" }).click();
+  await page.getByRole("button", { name: "Continue" }).click();
   await expect(page.getByRole("heading", { name: "What do you want TEBOS to work on?" })).toBeVisible();
   expect(fake.writes.find((w) => w.table.startsWith("auth/user"))?.body).toMatchObject({ password: "fresh-password-456" });
 });
+
+// The reset email's link, as Supabase sends it: tokens and type=recovery in the address's fragment.
+function recoveryLink(base: string) {
+  const exp = Math.floor(Date.now() / 1000) + 3600;
+  const payload = Buffer.from(JSON.stringify({ sub: USER_ID, exp, role: "authenticated" })).toString("base64url");
+  return `${base}#access_token=eyJhbGciOiJIUzI1NiJ9.${payload}.fixture&expires_at=${exp}&expires_in=3600&refresh_token=fixture&token_type=bearer&type=recovery`;
+}
+
+for (const [app, base] of [["TEBOS", "http://localhost:5174"], ["TEPOS", "http://localhost:5175"]] as const) {
+  test(`${app}: a reset link that lands on the home page still asks for a new password first`, async ({ page }) => {
+    const fake = await installFakeSupabase(page, { signedIn: false });
+    // Supabase sends the link to its main address when the requested one isn't allowed: here, the home page
+    await page.goto(recoveryLink(`${base}/`));
+    await expect(page.getByRole("heading", { name: "Choose a new password" })).toBeVisible();
+    await page.getByRole("textbox", { name: /^New password/ }).fill("fresh-password-789");
+    await page.getByRole("textbox", { name: /^Repeat new password/ }).fill("fresh-password-789");
+    await page.getByRole("button", { name: "Save new password" }).click();
+    await page.getByRole("button", { name: "Continue" }).click();
+    await expect(page.getByRole("heading", { name: "Choose a new password" })).toHaveCount(0);
+    expect(fake.writes.find((w) => w.table.startsWith("auth/user"))?.body).toMatchObject({ password: "fresh-password-789" });
+  });
+}
 
 test("creating the first organisation explains what's missing instead of doing nothing", async ({ page }) => {
   const fake = await installFakeSupabase(page);

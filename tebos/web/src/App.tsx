@@ -101,8 +101,10 @@ function Routes({ routes = ROUTES }: { routes?: typeof ROUTES }) {
 }
 
 function Gate() {
-  const { state } = useSessionState();
+  const { state, recovery } = useSessionState();
   const path = usePath();
+  // a password-reset link: the new password comes first, wherever the link landed
+  if (recovery && state.phase !== "loading" && state.phase !== "signed_out" && state.phase !== "error") return <ResetPassword />;
   // An invitation link works signed out (sign in first), with no organisation yet, or signed in elsewhere.
   const invite = matchPath("/invite/:token", path);
   if (invite && (state.phase === "signed_out" || state.phase === "no_organisation" || state.phase === "ready")) return <AcceptInvite token={invite.token!} />;

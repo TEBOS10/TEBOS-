@@ -28,7 +28,16 @@ type State =
   | { phase: "two_step"; session: Session }
   | { phase: "ready"; session: Session; organisations: OrgContext["organisations"]; currentId: string; twoStep: boolean };
 
-const Ctx = createContext<{ state: State; db: Db; refresh: () => Promise<void>; switchOrganisation: (id: string) => void } | null>(null);
+const Ctx = createContext<{
+  state: State; db: Db; refresh: () => Promise<void>; switchOrganisation: (id: string) => void;
+  /** the person arrived from a password-reset email: they choose a new password before anything else */
+  recovery: boolean; endRecovery: () => void;
+} | null>(null);
+
+// A reset email's link carries type=recovery. Read it as the app loads, before the auth client tidies the address
+// away: if the link lands on a page other than /reset-password (Supabase falls back to the main address when the
+// requested one isn't on its allowed list), the person is still asked for a new password, not simply signed in.
+const RECOVERY_IN_LINK = typeof window !== "undefined" && /(^|[#&?])type=recovery(&|$)/.test(window.location.hash + "&" + window.location.search.slice(1));
 
 const ORG_KEY = "tebos.organisation";
 
@@ -59,10 +68,14 @@ const remember = (id: string) => {
 export function SessionProvider({ db, app = "tebos", children }: { db: Db; app?: App; children: ReactNode }) {
   const [state, setState] = useState<State>({ phase: "loading" });
   const [session, setSession] = useState<Session | null | undefined>(undefined);
+  const [recovery, setRecovery] = useState(RECOVERY_IN_LINK);
 
   useEffect(() => {
     db.auth.getSession().then(({ data }) => setSession(data.session));
-    const { data } = db.auth.onAuthStateChange((_event, s) => setSession(s));
+    const { data } = db.auth.onAuthStateChange((event, s) => {
+      if (event === "PASSWORD_RECOVERY") setRecovery(true);
+      setSession(s);
+    });
     return () => data.subscription.unsubscribe();
   }, [db]);
 
@@ -98,8 +111,10 @@ export function SessionProvider({ db, app = "tebos", children }: { db: Db; app?:
         remember(id);
         void load(session, id);
       },
+      recovery,
+      endRecovery: () => setRecovery(false),
     }),
-    [state, db, load, session],
+    [state, db, load, session, recovery],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
