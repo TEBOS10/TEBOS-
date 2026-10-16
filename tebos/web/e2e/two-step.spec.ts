@@ -58,7 +58,7 @@ test("after a password sign-in, the code comes first; nothing else loads until i
   await page.goto("/");
   const form = page.getByRole("form", { name: "Two-step sign-in" });
   await expect(form.getByRole("heading", { name: "Enter your code" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Resilience" })).toHaveCount(0);
+  await expect(page.getByRole("navigation", { name: "Main" })).toHaveCount(0);
   await form.getByLabel("6-digit code").fill("999999");
   await form.getByRole("button", { name: "Continue" }).click();
   await expect(form.getByRole("alert")).toContainText("Invalid TOTP code");
@@ -76,7 +76,8 @@ test("the private records say what they need when the session has no second step
   t.memberships!.push({ org_id: VAULT, user_id: USER_ID, role: "org_admin", created_at: new Date().toISOString() });
   await page.goto("/");
   await page.getByRole("combobox", { name: "Organisation" }).selectOption({ label: "IREKUN" });
-  await page.getByRole("link", { name: "Resilience" }).click();
+  await page.getByRole("group", { name: "Side" }).getByRole("link", { name: /TEPOS/ }).click();
+  await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Tidy Capital" }).click();
   await expect(page.getByRole("heading", { name: "Two-step sign-in is needed" })).toBeVisible();
   await page.getByRole("link", { name: "Set up two-step sign-in" }).click();
   await expect(page.getByTestId("two-step")).toContainText("Off.");

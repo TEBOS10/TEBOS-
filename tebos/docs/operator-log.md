@@ -22,7 +22,30 @@ Update this list every run; strike items when they're done.
 | 10 | **Property Revenue Architect:** the monthly subscription price (and whether there are tiers). The assessment is settled: rental income, occupancy and costs | The first paying subscribers, priority 1 |
 | 12 | **Agent's office:** what your agency's principal allows (CRM, listing portals, WhatsApp, client data), and the one auto-reply text you approve | Never missing an enquiry, priority 3 |
 | 11 | When there's income: Supabase Pro (about USD 25 a month) so the vault and Tidy Capital can have their own project, out of the client database. Until then the vault is a private organisation inside TEBOS | Full separation of your private data |
+| 13 | **How much of TEBOS's profit goes to Tidy Capital.** A first sketch of the maths is in ROADMAP ("TEPOS and TEBOS"); you set the share | TEBOS paying Tidy Capital without starving itself |
+| 14 | **Approve the two-step database rule** (migration `two_step_resilience`): its live apply was cancelled at the approval step on 17 Oct. Say "apply it" and approve the prompt | Your IREKUN records closed to a password alone |
+| 15 | Each client's exact colours and logo (the client map uses colours from your description), and their websites | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
+
+## 17 Oct 2026: TEPOS and TEBOS, two sides of one app (founder's drawing)
+
+- **TEPOS**, the Tidy Enterprise Personal Operating System, is the founder's personal side.
+  - Its home shows six portal tiles in earthy brown and beige: Tidy Capital, Tidy Enterprise, IREKUN, Academics,
+    Real Estate Job and Forex.
+  - Opening a tile pulls you through a warm vortex in its colours, into the organisation that holds it.
+  - Tidy Capital (the reserve and runway), Tidy Enterprise (property cases) and IREKUN (security) are built.
+  - Academics, Real Estate Job and Forex say "Not built yet" and what they will hold.
+- **TEBOS** is the client side. Its home opens with a client map: each client as a tile in its own colours, marked
+  "Not connected yet" until its systems are linked.
+- **The menu** has a TEPOS / TEBOS switch. Property cases and the money records moved to TEPOS.
+- **Clients set up** (the founder confirmed they are real clients), each with its own organisation:
+  - Grape Studios, Mmupi and Clay, Avocado OS, Vantage and K. Academy;
+  - Hospitality OS, marked "in development".
+  - BAME carries its colours.
+  - No figures are shown for any of them until measured.
+- Migration `business_brand` stores the colours and how each business relates to Tidy.
+- Tests: the new SQL test `99zh`, `test/brand.test.ts` (tile contrast), the web test `portals.test.ts`, and the e2e
+  test `tepos.spec.ts`. Older e2e tests now follow the new menu.
 
 ## 16 Oct 2026: Property Revenue Architecture, workstreams and the outcome scorecard
 

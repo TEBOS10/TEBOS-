@@ -42,6 +42,7 @@ import { ReedsPage, ReedsRequestPage } from "./pages/ReedsPage";
 import { PropertyCasePage, PropertyCasesPage } from "./pages/PropertyPage";
 import { PropertyReportPage } from "./pages/PropertyReportPage";
 import { ResiliencePage } from "./pages/ResiliencePage";
+import { TeposHome, TeposPortalPage } from "./pages/TeposPage";
 import { TwoStepChallenge } from "./components/TwoStep";
 import { ShowcasePage } from "./pages/ShowcasePage";
 import { SystemsPage } from "./pages/SystemsPage";
@@ -75,6 +76,8 @@ const ROUTES: Array<[string, (p: Record<string, string>) => ReactNode]> = [
   ["/system", () => <SystemPage />],
   ["/reeds", () => <ReedsPage />],
   ["/reeds/:id", (p) => <ReedsRequestPage id={p.id!} />],
+  ["/tepos", () => <TeposHome />],
+  ["/tepos/:portal", (p) => <TeposPortalPage portal={p.portal!} />],
   ["/resilience", () => <ResiliencePage />],
   ["/property", () => <PropertyCasesPage />],
   ["/property/:id", (p) => <PropertyCasePage id={p.id!} />],

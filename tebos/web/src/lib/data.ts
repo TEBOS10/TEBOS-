@@ -1579,3 +1579,19 @@ export async function deleteMoneyItem(db: Db, id: string) {
   const { error } = await db.from("res_money_items").delete().eq("id", id);
   if (error) throw error;
 }
+
+// ---------------------------------------------------------------------------
+// The TEBOS client map: clients (and ventures in development) in their own colours
+// ---------------------------------------------------------------------------
+
+export async function clientMap(db: Db) {
+  // row-level security limits this to the organisations the person belongs to
+  const businesses = must(await db.from("businesses").select("*").in("relationship", ["client", "in_development"]).is("archived_at", null).order("name"));
+  const connections = businesses.length
+    ? must(await db.from("connection_instances").select("org_id, status").in("org_id", [...new Set(businesses.map((b) => b.org_id))]))
+    : [];
+  return businesses.map((b) => ({
+    business: b,
+    connected: connections.some((c) => c.org_id === b.org_id && (c.status === "connected" || c.status === "degraded")),
+  }));
+}

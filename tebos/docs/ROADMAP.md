@@ -49,6 +49,25 @@ Two businesses sit alongside them:
   - the Property Revenue Architect business, which builds credibility and relationships by helping others win;
   - success in the real-estate agent job.
 
+**TEPOS and TEBOS (founder, 17 Oct 2026).** They are two sides of one app, sharing one sign-in and one database
+(free).
+- **TEPOS**, the Tidy Enterprise Personal Operating System, is the founder's side.
+  - Its portals are Tidy Capital, Tidy Enterprise, IREKUN, Academics, Real Estate Job and Forex.
+  - Each portal is a tile in its own earthy brown or beige.
+  - Its data sits in private organisations (IREKUN) or Tidy's own (Tidy Enterprise).
+- **TEBOS** is the client side: each client is a tile in its own colours (`businesses.brand_*`).
+- **REEDS works across both.**
+- Personal and client data never mix.
+
+**TEBOS pays Tidy Capital.** Tidy Capital is the reserve that every stream pays into. How much of TEBOS's profit
+goes to it is founder decision 13. The sketch to decide it from:
+- TEBOS first covers its own running costs (hosting, AI, email, payments) and keeps a buffer of three to six
+  months of those costs.
+- Only the profit above that buffer is shared: Tidy Capital receives the chosen share, and the rest stays in TEBOS
+  to grow.
+- At 5% Tidy Capital grows slowly but TEBOS stays robust; at 50% the reverse. The money records in Tidy Capital
+  show both sides' runway, so the choice can be revisited each quarter on real figures.
+
 1. **Property Revenue Architect, as an affordable monthly subscription** (founder, 16 Oct). *Built 16 Oct: the case
    workspace and assessment report (docs/property-revenue-architecture.md). Workstreams and the outcome scorecard
    followed the same day. Next: the monthly subscription view.* Owners of

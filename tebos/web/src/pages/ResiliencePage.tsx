@@ -28,11 +28,12 @@ function Tag({ tone = "", children }: { tone?: string; children: ReactNode }) {
   return <span className={`pra-tag ${tone}`}>{children}</span>;
 }
 
-export function ResiliencePage() {
+/** Tidy Capital's portal in TEPOS: the reserve. Also at /resilience. */
+export function ResiliencePage({ title = "Tidy Capital" }: { title?: string }) {
   const org = useOrg();
   if (!org.organisation.private) return <div className="pra"><PrivateOrganisation /></div>;
   if (!org.twoStep) return <div className="pra"><TwoStepRequired /></div>;
-  return <div className="pra"><Money /></div>;
+  return <div className="pra"><Money title={title} /></div>;
 }
 
 /** The database opens these records only in a session that passed two-step sign-in. */
@@ -42,7 +43,7 @@ function TwoStepRequired() {
     <>
       <header className="pra-top">
         <div>
-          <div className="pra-eyebrow">Strategic resilience · {org.organisation.name} · only you</div>
+          <div className="pra-eyebrow">TEPOS · {org.organisation.name} · only you</div>
           <h1>Two-step sign-in is needed</h1>
           <p className="pra-sub">These records open only after you sign in with your password and a code from your authenticator app. A stolen password alone opens nothing here.</p>
         </div>
@@ -80,7 +81,7 @@ function PrivateOrganisation() {
     <>
       <header className="pra-top">
         <div>
-          <div className="pra-eyebrow">Strategic resilience</div>
+          <div className="pra-eyebrow">TEPOS</div>
           <h1>Your private organisation</h1>
           <p className="pra-sub">Resilience records live only in a private organisation. You are its one member, and the database refuses anyone else, including invitations.</p>
         </div>
@@ -103,7 +104,7 @@ function PrivateOrganisation() {
   );
 }
 
-function Money() {
+function Money({ title }: { title: string }) {
   const org = useOrg();
   const q = useQuery(() => listMoneyItems(org.db, org.organisation.id), [org.organisation.id]);
   const [scope, setScope] = useState<Entity | "all">("all");
@@ -116,9 +117,9 @@ function Money() {
     <>
       <header className="pra-top">
         <div>
-          <div className="pra-eyebrow">Strategic resilience · {org.organisation.name} · only you</div>
-          <h1>Financial resilience</h1>
-          <p className="pra-sub">How many months the money lasts. Runway counts only reliable income; speculative income, trading and expected lump sums are shown but never counted as cash. An unknown amount stays unknown.</p>
+          <div className="pra-eyebrow">TEPOS · {org.organisation.name} · only you</div>
+          <h1>{title}</h1>
+          <p className="pra-sub">The reserve: every income stream, and how many months the money lasts. Runway counts only reliable income; speculative income, trading and expected lump sums are shown but never counted as cash. An unknown amount stays unknown.</p>
         </div>
         <div className="pra-actions">
           <label className="pra-field">Show
