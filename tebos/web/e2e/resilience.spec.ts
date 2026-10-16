@@ -33,20 +33,22 @@ function seedVault(fake: FakeSupabase, items: Record<string, unknown>[] = []) {
 async function openVault(page: import("@playwright/test").Page) {
   await page.goto("/");
   await page.getByRole("combobox", { name: "Organisation" }).selectOption({ label: "IREKUN" });
-  await page.getByRole("link", { name: "Resilience" }).click();
-  await expect(page.getByRole("heading", { name: "Financial resilience" })).toBeVisible();
+  await page.getByRole("group", { name: "Side" }).getByRole("link", { name: /TEPOS/ }).click();
+  await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Tidy Capital" }).click();
+  await expect(page.getByRole("heading", { name: "Tidy Capital" })).toBeVisible();
 }
 
 test("without a private organisation, the page offers to create one, and nobody else can join it", async ({ page }) => {
   const fake = await installFakeSupabase(page, TWO_STEP);
   tables(fake).platform_admins = [{ user_id: USER_ID, created_at: now() }];
   await page.goto("/");
-  await page.getByRole("link", { name: "Resilience" }).click();
+  await page.getByRole("group", { name: "Side" }).getByRole("link", { name: /TEPOS/ }).click();
+  await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Tidy Capital" }).click();
   await expect(page.getByRole("heading", { name: "Your private organisation" })).toBeVisible();
   await expect(page.getByText("the database refuses anyone else")).toBeVisible();
   await page.getByRole("button", { name: "Create private organisation" }).click();
   await expect.poll(() => fake.writes.find((w) => w.method === "RPC" && w.table === "create_private_organisation")?.body).toMatchObject({ p_name: "IREKUN" });
-  await expect(page.getByRole("heading", { name: "Financial resilience" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Tidy Capital" })).toBeVisible();
   await expect(page.getByTestId("runway-base")).toContainText("Not established");
   await expect(page.getByTestId("runway-base")).toContainText("essential costs (none recorded)");
 });

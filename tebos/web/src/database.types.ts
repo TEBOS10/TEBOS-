@@ -689,6 +689,10 @@ export type Database = {
       businesses: {
         Row: {
           archived_at: string | null
+          brand_primary: string | null
+          brand_accent: string | null
+          brand_surface: string | null
+          relationship: string | null
           business_model: string | null
           created_at: string
           created_by: string | null
@@ -706,6 +710,10 @@ export type Database = {
         }
         Insert: {
           archived_at?: string | null
+          brand_primary?: string | null
+          brand_accent?: string | null
+          brand_surface?: string | null
+          relationship?: string | null
           business_model?: string | null
           created_at?: string
           created_by?: string | null
@@ -723,6 +731,10 @@ export type Database = {
         }
         Update: {
           archived_at?: string | null
+          brand_primary?: string | null
+          brand_accent?: string | null
+          brand_surface?: string | null
+          relationship?: string | null
           business_model?: string | null
           created_at?: string
           created_by?: string | null

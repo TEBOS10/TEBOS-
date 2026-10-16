@@ -39,7 +39,8 @@ test("a case opens from the menu, and the database numbers it", async ({ page })
   seed(fake);
   (fake.tables as unknown as Record<string, unknown[]>).property_cases = [];
   await page.goto("/");
-  await page.getByRole("link", { name: "Property cases" }).click();
+  await page.getByRole("group", { name: "Side" }).getByRole("link", { name: /TEPOS/ }).click();
+  await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Tidy Enterprise" }).click();
   await expect(page.getByRole("heading", { name: "Property cases" })).toBeVisible();
   await expect(page.getByText("No cases yet.")).toBeVisible();
   const form = page.getByRole("form", { name: "Open a case" });
