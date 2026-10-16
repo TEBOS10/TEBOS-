@@ -15,6 +15,123 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_contacts: {
+        Row: {
+          id: string
+          org_id: string
+          ref: string
+          role: string
+          label: string
+          listing_id: string | null
+          source: string | null
+          stage: string
+          next_step: string | null
+          next_step_on: string | null
+          outcome: string | null
+          note: string | null
+          stage_at: string
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          ref?: string
+          role: string
+          label: string
+          listing_id?: string | null
+          source?: string | null
+          stage?: string
+          next_step?: string | null
+          next_step_on?: string | null
+          outcome?: string | null
+          note?: string | null
+          stage_at?: string
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          ref?: string
+          role?: string
+          label?: string
+          listing_id?: string | null
+          source?: string | null
+          stage?: string
+          next_step?: string | null
+          next_step_on?: string | null
+          outcome?: string | null
+          note?: string | null
+          stage_at?: string
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      agent_listings: {
+        Row: {
+          id: string
+          org_id: string
+          ref: string
+          label: string
+          deal: string
+          stage: string
+          price: number | null
+          mandate: string | null
+          mandate_ends_on: string | null
+          next_step: string | null
+          next_step_on: string | null
+          outcome: string | null
+          note: string | null
+          stage_at: string
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          ref?: string
+          label: string
+          deal?: string
+          stage?: string
+          price?: number | null
+          mandate?: string | null
+          mandate_ends_on?: string | null
+          next_step?: string | null
+          next_step_on?: string | null
+          outcome?: string | null
+          note?: string | null
+          stage_at?: string
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          ref?: string
+          label?: string
+          deal?: string
+          stage?: string
+          price?: number | null
+          mandate?: string | null
+          mandate_ends_on?: string | null
+          next_step?: string | null
+          next_step_on?: string | null
+          outcome?: string | null
+          note?: string | null
+          stage_at?: string
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       action_dependencies: {
         Row: {
           action_id: string

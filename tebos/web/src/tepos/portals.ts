@@ -27,8 +27,8 @@ export const PORTALS: readonly Portal[] = [
     shade: "#241a14", accent: "#c08a5a", monogram: "IR", org: "irekun", to: "/irekun", built: true },
   { key: "academics", name: "Academics", line: "The study path towards asset management: qualifications, dates and evidence.",
     shade: "#d9c4a5", accent: "#6b4a32", monogram: "AC", to: "/academics", built: false },
-  { key: "agent", name: "Real Estate Job", line: "Listings, buyers and sellers, appointments, and no enquiry left unanswered.",
-    shade: "#8a6a4f", accent: "#f3e6d0", monogram: "RE", to: "/agent", built: false },
+  { key: "agent", name: "Real Estate Job", line: "Listings, buyers and sellers, each with its next step and date. Nothing open is left without one.",
+    shade: "#8a6a4f", accent: "#f3e6d0", monogram: "RE", org: "irekun", to: "/agent", built: true },
   { key: "forex", name: "Forex", line: "Paper trading with every idea time-stamped before its outcome. No live trading.",
     shade: "#efe3cf", accent: "#8a5a35", monogram: "FX", to: "/forex", built: false },
 ];
@@ -38,12 +38,6 @@ export const COMING: Record<string, { priority: string; holds: string[] }> = {
   academics: { priority: "Founder's priority 4: the study path", holds: [
     "Each qualification towards asset management (property finance, property investment and development, what the FSCA requires) as an objective with a date.",
     "Evidence of completion for each: a certificate or result, never a tick on its own.",
-  ] },
-  agent: { priority: "Founder's priority 3: the agent's office", holds: [
-    "Every buyer, seller and listing with its next step and date.",
-    "Listing write-ups and marketing drafted from the property's facts, for your approval.",
-    "An instant acknowledgement for every enquiry, from a template you approved; everything else drafted for approval.",
-    "Commission expected versus received, feeding Tidy Capital.",
   ] },
   forex: { priority: "Founder's priority 6: Tidy Capital, honestly", holds: [
     "A research and paper-trading ledger: every idea time-stamped before its outcome is known.",

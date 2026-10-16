@@ -27,7 +27,7 @@ test("TEPOS: the city and the tiles; Tidy Capital opens in the private organisat
   await page.goto(`${TEPOS}/`);
   await expect(page).toHaveTitle("TEPOS");
   await expect(page.getByRole("heading", { name: "Tidy", exact: true })).toBeVisible();
-  // the city: six buildings, three of them under construction
+  // the city: six buildings, two of them under construction
   const buildings = page.getByRole("group", { name: "Portals as buildings" }).getByRole("button");
   await expect(buildings).toHaveCount(6);
   await expect(page.getByTestId("building-forex")).toHaveAttribute("aria-label", "Forex: not built yet");
