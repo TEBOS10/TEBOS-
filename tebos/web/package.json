@@ -6,11 +6,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run typecheck && vite build",
+    "build": "npm run typecheck && vite build && vite build --config vite.tepos.config.ts && node scripts/check-bundles.mjs",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json",
     "test": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "build:tebos": "npm run typecheck && vite build",
+    "build:tepos": "npm run typecheck && vite build --config vite.tepos.config.ts",
+    "dev:tepos": "vite --config vite.tepos.config.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.1",

@@ -22,12 +22,34 @@ Update this list every run; strike items when they're done.
 | 10 | **Property Revenue Architect:** the monthly subscription price (and whether there are tiers). The assessment is settled: rental income, occupancy and costs | The first paying subscribers, priority 1 |
 | 12 | **Agent's office:** what your agency's principal allows (CRM, listing portals, WhatsApp, client data), and the one auto-reply text you approve | Never missing an enquiry, priority 3 |
 | 11 | When there's income: Supabase Pro (about USD 25 a month) so the vault and Tidy Capital can have their own project, out of the client database. Until then the vault is a private organisation inside TEBOS | Full separation of your private data |
-| 13 | **How much of TEBOS's profit goes to Tidy Capital.** A first sketch of the maths is in ROADMAP ("TEPOS and TEBOS"); you set the share | TEBOS paying Tidy Capital without starving itself |
-| 14 | **Approve the two-step database rule** (migration `two_step_resilience`): its live apply was cancelled at the approval step on 17 Oct. Say "apply it" and approve the prompt | Your IREKUN records closed to a password alone |
-| 15 | Each client's exact colours and logo (the client map uses colours from your description), and their websites | Tiles that look exactly like each client |
+| 16 | **Make the live site follow `main`.** Vercel builds every merge as a preview only; production last changed on 16 Oct from a BAME branch commit (`f9de3e4`). In Vercel, open each of the projects `tebos`, `tebos-web` and `tebos-ex3f` → Settings → Git → Production Branch → set it to `main`. Keep only one of the three for TEBOS: the one serving tebos-demo.vercel.app | Everything merged since 16 Oct actually reaching the site |
+| 17 | **Give TEPOS its own Vercel project.** Vercel → Add New → Project → this repository; Root Directory `tebos/web`; Build Command `npm run build:tepos`; Output Directory `dist-tepos`; Environment Variables `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` (the same public values as TEBOS). A spare project (`tebos-web` or `tebos-ex3f`) can be reused instead | TEPOS at its own address, apart from TEBOS |
+| 18 | Each client's web app address (where TEBOS's people sign in to their department), starting with BAME's | Client tiles that open the client's web app |
+| 14 | **Approve the two-step database rule** (migration `two_step_resilience`): its live apply was cancelled at the approval step on 16 Oct. Say "apply it" and approve the prompt | Your IREKUN records closed to a password alone |
+| 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
-## 17 Oct 2026: TEPOS and TEBOS, two sides of one app (founder's drawing)
+## 16 Oct 2026 (evening): TEPOS and TEBOS are two separate web apps
+
+- **TEBOS** is the public platform for clients.
+  - It shows nothing of TEPOS. Your private organisations no longer appear in its switcher.
+  - The build fails if the TEBOS bundle mentions TEPOS.
+- **TEPOS** is your own app.
+  - It is built apart from TEBOS and lets in only someone who owns a private organisation.
+  - It uses earthy colours, with the same logo recoloured in bronze.
+  - Its home is a city of six buildings, one per portal. The three not built yet stand under scaffolding.
+- **Client tiles** open the client's own web app. A client whose address isn't recorded says so and opens nothing.
+- **Decision 13 settled:** 50% of TEBOS's profit above its costs and buffer goes to Tidy Capital.
+- **Found:** the live site hasn't been following `main` (decision 16).
+  - Merges since 16 Oct were built as previews only. Production last changed from a BAME branch commit.
+  - Earlier reports that changes had gone live were wrong. They read the migration job's "production" environment,
+    not the site. Decisions 16 and 17 fix this; from now on, "live" is reported from Vercel's own production
+    deployment.
+- Migration `organisation_app`: which app an organisation belongs to, and `businesses.app_url`.
+- Tests: SQL `99zi`, and the e2e tests `tepos.spec.ts`, `resilience.spec.ts`, `property.spec.ts` and
+  `two-step.spec.ts`, which now run against the TEPOS app on its own server.
+
+## 16 Oct 2026 (afternoon): TEPOS and TEBOS, two sides of one app (founder's drawing; superseded the same evening)
 
 - **TEPOS**, the Tidy Enterprise Personal Operating System, is the founder's personal side.
   - Its home shows six portal tiles in earthy brown and beige: Tidy Capital, Tidy Enterprise, IREKUN, Academics,

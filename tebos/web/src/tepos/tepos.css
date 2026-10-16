@@ -1,0 +1,51 @@
+/* TEPOS: the same system as TEBOS, recoloured to the portal tiles' earthy browns and beiges, with the logo in
+   bronze (tepos/public/brand/tepos-mark.png). Loaded only by the TEPOS app. */
+:root {
+  --ink: #2a1d14;
+  --ink-soft: #4e3a2b;
+  --muted: #7a6450;
+  --faint: #9c8670;
+  --line: rgba(60, 40, 24, 0.12);
+  --line-strong: rgba(60, 40, 24, 0.22);
+  --page: #f4ece0;
+  --surface: #fffaf2;
+  --surface-alt: #efe3d1;
+  --green: #4a3020;
+  --green-2: #5c3d29;
+  --lime: #e2b77a;
+  --night: #1c1510;
+  --night-2: #2a1f17;
+  --night-line: rgba(246, 230, 200, 0.1);
+  --night-text: #f1e4cf;
+  --night-muted: #b9a389;
+  --silver: linear-gradient(180deg, #fbf3e6 0%, #e8d3b2 52%, #c9a678 100%);
+}
+.brand-mark { background-color: #120c08; background-image: url("/brand/tepos-mark.png"); }
+.nav-link.active { background: rgba(226, 183, 122, 0.14); color: var(--lime); }
+.btn-primary:hover:not(:disabled) { background: #5c3d29; }
+.auth { background: radial-gradient(900px 500px at 70% -10%, #4a3424 0%, transparent 60%), var(--night); }
+
+/* the city */
+.tepos-city { margin: 0; border-radius: 18px; overflow: hidden; border: 1px solid #4a3828; box-shadow: 0 18px 40px rgba(0,0,0,.35); }
+.tepos-city svg { display: block; width: 100%; height: auto; }
+.city-building { cursor: pointer; outline: none; transition: transform .25s ease, filter .25s ease; transform-box: fill-box; transform-origin: bottom center; }
+.city-building:hover, .city-building:focus-visible { transform: translateY(-6px); filter: drop-shadow(0 0 14px rgba(246, 216, 166, .55)); }
+.city-label { fill: #f1e4cf; font: 700 15px var(--sans); letter-spacing: .02em; }
+.city-sublabel { fill: #c4a37c; font: 600 11px var(--sans); letter-spacing: .08em; text-transform: uppercase; }
+.city-monogram { font: 800 22px var(--sans); letter-spacing: .06em; }
+@media (prefers-reduced-motion: reduce) { .city-building { transition: none; } }
+@media (max-width: 600px) { .city-label { font-size: 22px; } .city-sublabel { font-size: 15px; } }
+
+/* the TEPOS pages */
+.tepos { --t-bg: #1c1510; --t-ink: #f4ead9; --t-muted: #c4b29a; --t-line: #4a3828;
+  background: radial-gradient(1100px 520px at 80% -10%, #4a3424 0%, transparent 60%), radial-gradient(800px 400px at -10% 110%, #3a2a1c 0%, transparent 60%), var(--t-bg);
+  color: var(--t-ink); border-radius: 22px; padding: clamp(18px, 3vw, 36px); display: grid; gap: 20px; min-height: 70vh; }
+.tepos a { color: #e8c896; }
+.tepos h1 { font-size: clamp(30px, 4.4vw, 48px); margin: 4px 0; letter-spacing: -.03em; color: #fff7ea; }
+.tepos h2 { font-size: 16px; margin: 0 0 8px; color: #fff7ea; }
+.tepos-head p, .tepos-muted { color: var(--t-muted); margin: 0; }
+.tepos-eyebrow { color: #d9b77e; font-size: 11px; letter-spacing: .18em; text-transform: uppercase; font-weight: 700; }
+.tepos-foot { color: var(--t-muted); font-size: 13px; margin: 0; }
+.tepos-cards { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.tepos-card { background: rgba(255,247,234,.05); border: 1px solid var(--t-line); border-radius: 18px; padding: 18px; }
+.tepos-card ul { margin: 8px 0; padding-left: 18px; display: grid; gap: 6px; }

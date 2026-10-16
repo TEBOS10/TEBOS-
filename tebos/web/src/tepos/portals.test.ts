@@ -1,6 +1,6 @@
 import { contrast, inkFor } from "@core/brand";
 import { describe, expect, it } from "vitest";
-import { COMING, isTeposPath, PORTALS } from "./portals";
+import { COMING, PORTALS } from "./portals";
 
 describe("TEPOS portals", () => {
   it("are the founder's six, each in its own shade", () => {
@@ -19,11 +19,4 @@ describe("TEPOS portals", () => {
     for (const p of PORTALS.filter((x) => !x.built)) expect(COMING[p.key]?.holds.length, p.name).toBeGreaterThan(0);
   });
 
-  it("knows which pages are TEPOS", () => {
-    expect(isTeposPath("/tepos")).toBe(true);
-    expect(isTeposPath("/tepos/capital")).toBe(true);
-    expect(isTeposPath("/property/abc")).toBe(true);
-    expect(isTeposPath("/")).toBe(false);
-    expect(isTeposPath("/businesses")).toBe(false);
-  });
 });

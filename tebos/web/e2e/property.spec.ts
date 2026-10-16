@@ -11,9 +11,16 @@ import { ORG, USER_ID } from "./fixtures";
 const CASE = "a1000000-0000-4000-8000-000000000001";
 const now = () => new Date().toISOString();
 
+// Property cases are Tidy Enterprise's, in TEPOS: the founder's separate app, open to whoever owns a private organisation.
+test.use({ baseURL: "http://localhost:5175" });
+
 function seed(fake: FakeSupabase, over: Record<string, unknown> = {}) {
   const t = fake.tables as unknown as Record<string, Record<string, unknown>[]>;
   t.platform_admins = [{ user_id: USER_ID, created_at: now() }];
+  // the fixture organisation stands in for Tidy Enterprise, a TEPOS organisation
+  for (const o of t.organisations!) if (o.id === ORG) o.app = "tepos";
+  t.organisations!.push({ id: "f1000000-0000-4000-8000-0000000000ff", name: "IREKUN", slug: "irekun", private: true, created_at: now() });
+  t.memberships!.push({ org_id: "f1000000-0000-4000-8000-0000000000ff", user_id: USER_ID, role: "org_admin", created_at: now() });
   t.property_cases = [{
     id: CASE, org_id: ORG, ref: "PA-001", label: "Client A rental (test)", property_type: "residential_multi", problem: "underperforming_income",
     objective: "improve_cash_flow", suspected_cause: "unknown", authority: "unconfirmed", authority_note: null, constraints: null, desired_outcome: null,
@@ -39,7 +46,6 @@ test("a case opens from the menu, and the database numbers it", async ({ page })
   seed(fake);
   (fake.tables as unknown as Record<string, unknown[]>).property_cases = [];
   await page.goto("/");
-  await page.getByRole("group", { name: "Side" }).getByRole("link", { name: /TEPOS/ }).click();
   await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Tidy Enterprise" }).click();
   await expect(page.getByRole("heading", { name: "Property cases" })).toBeVisible();
   await expect(page.getByText("No cases yet.")).toBeVisible();

@@ -83,7 +83,7 @@ describe.skipIf(!enabled)("REEDS: a request taken to a verified report", () => {
     expect(line("agent_runs.failed")).toMatchObject({ text: "1 automated run failed in the last 24 hours.", attention: true });
     expect(line("approvals.pending")).toMatchObject({ text: "No approvals are waiting for a decision.", attention: false });
     // Tidy Capital isn't in the test database: said so, never reported as fine
-    expect(line("capital.ingestion")).toMatchObject({ checked: false, text: "Couldn't check: Tidy Capital's data isn't in this database." });
+    expect(line("capital.ingestion")).toMatchObject({ checked: false, text: "Couldn't check: The market-data feed isn't in this database." });
     expect(r.report.summary).toMatch(/your attention\. 1 check couldn't be completed\.$/);
     // the figures are the database's, not the executor's word
     const recount = (await pool.query("select count(*)::int as n from public.maintainer_items where org_id = $1 and status = 'open'", [org])).rows[0].n;

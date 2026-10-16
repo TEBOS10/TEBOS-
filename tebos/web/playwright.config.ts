@@ -12,10 +12,19 @@ export default defineConfig({
     trace: "retain-on-failure",
     launchOptions: process.env.PLAYWRIGHT_CHROMIUM ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM } : {},
   },
-  webServer: {
-    command: "npx vite --port 5174 --strictPort",
-    url: "http://localhost:5174",
-    reuseExistingServer: false,
-    env: { VITE_SUPABASE_URL: "https://fixture.supabase.test", VITE_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_fixture" },
-  },
+  // TEBOS on 5174; TEPOS, the separate personal app, on 5175 (its specs set their own baseURL)
+  webServer: [
+    {
+      command: "npx vite --port 5174 --strictPort",
+      url: "http://localhost:5174",
+      reuseExistingServer: false,
+      env: { VITE_SUPABASE_URL: "https://fixture.supabase.test", VITE_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_fixture" },
+    },
+    {
+      command: "npx vite --config vite.tepos.config.ts --port 5175 --strictPort",
+      url: "http://localhost:5175",
+      reuseExistingServer: false,
+      env: { VITE_SUPABASE_URL: "https://fixture.supabase.test", VITE_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_fixture" },
+    },
+  ],
 });

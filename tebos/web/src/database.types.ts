@@ -690,6 +690,7 @@ export type Database = {
         Row: {
           archived_at: string | null
           brand_primary: string | null
+          app_url: string | null
           brand_accent: string | null
           brand_surface: string | null
           relationship: string | null
@@ -711,6 +712,7 @@ export type Database = {
         Insert: {
           archived_at?: string | null
           brand_primary?: string | null
+          app_url?: string | null
           brand_accent?: string | null
           brand_surface?: string | null
           relationship?: string | null
@@ -732,6 +734,7 @@ export type Database = {
         Update: {
           archived_at?: string | null
           brand_primary?: string | null
+          app_url?: string | null
           brand_accent?: string | null
           brand_surface?: string | null
           relationship?: string | null
@@ -2017,6 +2020,7 @@ export type Database = {
           name: string
           slug: string
           private: boolean
+          app: string
         }
         Insert: {
           created_at?: string
@@ -2024,6 +2028,7 @@ export type Database = {
           name: string
           slug: string
           private?: boolean
+          app?: string
         }
         Update: {
           created_at?: string
@@ -2031,6 +2036,7 @@ export type Database = {
           name?: string
           slug?: string
           private?: boolean
+          app?: string
         }
         Relationships: []
       }

@@ -2,7 +2,7 @@
 import type { Session } from "@supabase/supabase-js";
 import { can, type OrgRole, type Permission } from "@core/permissions";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { myOrganisations, type Membership, type Organisation } from "./data";
+import { myOrganisations, type App, type Membership, type Organisation } from "./data";
 import type { Db } from "./supabase";
 
 export interface OrgContext {
@@ -56,7 +56,7 @@ const remember = (id: string) => {
   }
 };
 
-export function SessionProvider({ db, children }: { db: Db; children: ReactNode }) {
+export function SessionProvider({ db, app = "tebos", children }: { db: Db; app?: App; children: ReactNode }) {
   const [state, setState] = useState<State>({ phase: "loading" });
   const [session, setSession] = useState<Session | null | undefined>(undefined);
 
@@ -73,7 +73,7 @@ export function SessionProvider({ db, children }: { db: Db; children: ReactNode 
       try {
         const level = await assurance(db);
         if (level.next === "aal2" && level.current !== "aal2") return setState({ phase: "two_step", session: s });
-        const organisations = await myOrganisations(db, s.user.id);
+        const organisations = await myOrganisations(db, s.user.id, app);
         if (organisations.length === 0) return setState({ phase: "no_organisation", session: s });
         const want = preferId ?? remembered();
         const currentId = organisations.find((o) => o.organisation.id === want)?.organisation.id ?? organisations[0]!.organisation.id;
@@ -82,7 +82,7 @@ export function SessionProvider({ db, children }: { db: Db; children: ReactNode 
         setState({ phase: "error", message: (e as Error).message ?? "Could not load your organisations" });
       }
     },
-    [db],
+    [db, app],
   );
 
   useEffect(() => {

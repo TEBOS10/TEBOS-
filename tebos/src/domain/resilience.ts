@@ -12,7 +12,7 @@
 //   * No secrets in notes: secret-shaped text (keys, tokens, passwords) is refused.
 import { fail, OK, type Check } from "./rules";
 
-/** Tidy's structure (founder, 17 Oct 2026). Personal money is kept apart from the businesses. */
+/** Tidy's structure (founder, 16 Oct 2026). Personal money is kept apart from the businesses. */
 export const ENTITIES = {
   tidy: "Tidy",
   tidy_capital: "Tidy Capital",
@@ -33,7 +33,7 @@ export const MONEY_KINDS = {
 } as const;
 export type MoneyKind = keyof typeof MONEY_KINDS;
 
-/** Tidy Capital's income streams (founder, 17 Oct 2026). */
+/** Tidy Capital's income streams (founder, 16 Oct 2026). */
 export const STREAMS = {
   forex_trading: "Forex trading (software)",
   tebos_retainer: "TEBOS retainers",

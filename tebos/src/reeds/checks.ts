@@ -149,11 +149,11 @@ export async function runCheck(db: Db, executor: string, input: CheckInput): Pro
   }
   if (executor === "check.capital_ingestion") {
     const exists = (await db.query("select to_regclass($1) is not null as ok", [CAPITAL_TABLE])).rows[0].ok as boolean;
-    if (!exists) return { available: false, reason: "Tidy Capital's data isn't in this database." };
+    if (!exists) return { available: false, reason: "The market-data feed isn't in this database." };
     const { rows } = await db.query(
       `select id::text, status, coalesce(error, '') as error, started_at from capital.ingestion_runs
         where started_at <= $1 order by started_at desc, id desc limit 1`, [input.asOf]);
-    if (!rows[0]) return { available: false, reason: "Tidy Capital has no ingestion runs yet." };
+    if (!rows[0]) return { available: false, reason: "The market-data feed has no ingestion runs yet." };
     const ok = rows[0].status === "ok";
     const when = new Date(rows[0].started_at as string).toISOString().slice(0, 16).replace("T", " ");
     return {
@@ -186,7 +186,7 @@ export async function verifyCheck(db: Db, executor: string, input: CheckInput, r
         ? { ok: true, recount: null, detail: "Confirmed: there is nothing to check." }
         : { ok: false, recount: null, detail: "The executor said it couldn't check, but runs exist." };
     }
-    if (!exists) return { ok: false, recount: null, detail: "The executor reported a run, but Tidy Capital's data isn't here." };
+    if (!exists) return { ok: false, recount: null, detail: "The executor reported a run, but the market-data feed isn't here." };
     const latest = (await db.query(
       `select r.id::text as id, (r.status = 'ok') as ok from capital.ingestion_runs r where r.started_at <= $1 order by r.started_at desc, r.id desc limit 1`,
       [input.asOf])).rows[0];

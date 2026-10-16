@@ -51,9 +51,9 @@ export const ATTENTION_TASKS: readonly TaskSpec[] = [
   { key: "outbox.failed", title: "Client emails that failed to send", executor: "count.emails_failed", scope: "platform",
     acceptance: `Count client emails that used every attempt without being sent. ${COUNT_TEST}`,
     none: "No client emails have failed.", some: (n) => `${plural(n, "client email has", "client emails have")} failed to send.` },
-  { key: "capital.ingestion", title: "Tidy Capital's latest market-data update", executor: "check.capital_ingestion", scope: "platform",
-    acceptance: "Read the latest Tidy Capital ingestion run. The verifier re-reads it; it counts as needing attention unless its status is ok.",
-    none: "Tidy Capital's latest market-data update succeeded.", some: () => "Tidy Capital's latest market-data update did not succeed." },
+  { key: "capital.ingestion", title: "The market-data feed's latest update", executor: "check.capital_ingestion", scope: "platform",
+    acceptance: "Read the latest market-data ingestion run. The verifier re-reads it; it counts as needing attention unless its status is ok.",
+    none: "The market-data feed's latest update succeeded.", some: () => "The market-data feed's latest update did not succeed." },
 ];
 
 /** "How are my businesses doing?": the organisation's objectives against their targets, and where the founder is still the only record. */
@@ -75,7 +75,7 @@ export const STATUS_TASKS: readonly TaskSpec[] = [
 export const REQUEST_KINDS: Record<RequestKind, { title: string; description: string }> = {
   attention_today: {
     title: "What needs my attention today?",
-    description: "Approvals waiting, failed runs, overdue delivery and open maintainer items; for platform admins also leads, enquiries, failed emails and Tidy Capital's data.",
+    description: "Approvals waiting, failed runs, overdue delivery and open maintainer items; for platform admins also leads, enquiries, failed emails and the market-data feed.",
   },
   business_status: {
     title: "How are my businesses doing?",

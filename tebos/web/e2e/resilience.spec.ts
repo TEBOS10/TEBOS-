@@ -10,6 +10,8 @@ import { USER_ID } from "./fixtures";
 
 // the founder's session passed two-step sign-in; two-step.spec covers sessions that didn't
 const TWO_STEP = { aal: "aal2" as const, factors: [verifiedFactor()] };
+// Tidy Capital is a TEPOS portal: the founder's separate app
+test.use({ baseURL: "http://localhost:5175" });
 const VAULT = "f1000000-0000-4000-8000-000000000001";
 const now = () => new Date().toISOString();
 const today = () => new Date().toISOString().slice(0, 10);
@@ -32,25 +34,17 @@ function seedVault(fake: FakeSupabase, items: Record<string, unknown>[] = []) {
 
 async function openVault(page: import("@playwright/test").Page) {
   await page.goto("/");
-  await page.getByRole("combobox", { name: "Organisation" }).selectOption({ label: "IREKUN" });
-  await page.getByRole("group", { name: "Side" }).getByRole("link", { name: /TEPOS/ }).click();
   await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Tidy Capital" }).click();
   await expect(page.getByRole("heading", { name: "Tidy Capital" })).toBeVisible();
+  await expect(page.getByTestId("current-org")).toHaveText("IREKUN");
 }
 
-test("without a private organisation, the page offers to create one, and nobody else can join it", async ({ page }) => {
-  const fake = await installFakeSupabase(page, TWO_STEP);
-  tables(fake).platform_admins = [{ user_id: USER_ID, created_at: now() }];
-  await page.goto("/");
-  await page.getByRole("group", { name: "Side" }).getByRole("link", { name: /TEPOS/ }).click();
-  await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Tidy Capital" }).click();
-  await expect(page.getByRole("heading", { name: "Your private organisation" })).toBeVisible();
-  await expect(page.getByText("the database refuses anyone else")).toBeVisible();
-  await page.getByRole("button", { name: "Create private organisation" }).click();
-  await expect.poll(() => fake.writes.find((w) => w.method === "RPC" && w.table === "create_private_organisation")?.body).toMatchObject({ p_name: "IREKUN" });
-  await expect(page.getByRole("heading", { name: "Tidy Capital" })).toBeVisible();
-  await expect(page.getByTestId("runway-base")).toContainText("Not established");
-  await expect(page.getByTestId("runway-base")).toContainText("essential costs (none recorded)");
+test("TEPOS is closed to anyone without a private organisation: nothing of it is shown", async ({ page }) => {
+  await installFakeSupabase(page, TWO_STEP);
+  await page.goto("/capital");
+  await expect(page.getByRole("heading", { name: "This is a private system" })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Main" })).toHaveCount(0);
+  await expect(page.getByText("Tidy Capital")).toHaveCount(0);
 });
 
 test("runway counts reliable income only; speculative income and lump sums are shown, never counted", async ({ page }) => {

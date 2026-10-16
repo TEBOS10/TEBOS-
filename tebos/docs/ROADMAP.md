@@ -25,7 +25,7 @@ keep moving when the founder is busy, and has to pay its own subscriptions. So t
 this list first (OPERATOR.md rule 2.3). **Cash first:** Tidy Capital grows money over years; it doesn't pay this
 month's bills, so earning comes before investing.
 
-**The structure (founder's drawing, 17 Oct 2026).** Tidy sits at the top, with three systems beneath it:
+**The structure (founder's drawing, 16 Oct 2026).** Tidy sits at the top, with three systems beneath it:
 - **REEDS**, the chief of staff. It manages, communicates, pairs and links, thinks and suggests, understands,
   cleans up chaos, assesses and diagnoses, guides and aligns, protects, creates contingencies, and interviews people
   and agents for roles. It works within the autonomy tiers: it suggests and drafts, and people decide anything
@@ -49,24 +49,48 @@ Two businesses sit alongside them:
   - the Property Revenue Architect business, which builds credibility and relationships by helping others win;
   - success in the real-estate agent job.
 
-**TEPOS and TEBOS (founder, 17 Oct 2026).** They are two sides of one app, sharing one sign-in and one database
-(free).
-- **TEPOS**, the Tidy Enterprise Personal Operating System, is the founder's side.
-  - Its portals are Tidy Capital, Tidy Enterprise, IREKUN, Academics, Real Estate Job and Forex.
-  - Each portal is a tile in its own earthy brown or beige.
-  - Its data sits in private organisations (IREKUN) or Tidy's own (Tidy Enterprise).
-- **TEBOS** is the client side: each client is a tile in its own colours (`businesses.brand_*`).
-- **REEDS works across both.**
-- Personal and client data never mix.
+**TEPOS and TEBOS are two separate web apps (founder, 16 Oct 2026).**
+- **TEBOS** is the public platform for clients. People register there, and it shows nothing of TEPOS: no link, no
+  route, no organisation. The build checks this: `web/scripts/check-bundles.mjs` fails if the TEBOS bundle
+  mentions TEPOS.
+  - Each client is a tile in its own colours (`businesses.brand_*`). The tile opens the client's own web app
+    (`businesses.app_url`), where TEBOS's people sign in to their own department. It never opens a page of TEBOS's
+    data about the client.
+- **TEPOS**, the Tidy Enterprise Personal Operating System, is the founder's private app.
+  - It is a separate build: `web/tepos/` and `vite.tepos.config.ts`, output `dist-tepos`.
+  - Only someone who owns a private organisation gets in. Anyone else sees "This is a private system".
+  - It looks like its tiles: earthy browns and beiges, and the same logo in bronze (`tepos/public/brand`).
+  - Its home is a city at dusk with one building per portal. Portals not built yet stand under scaffolding.
+- **Organisations belong to one app** (`organisations.app`). Private organisations are always TEPOS's.
+- **The two apps share the database (free) and the domain rules.** REEDS works across both.
 
-**TEBOS pays Tidy Capital.** Tidy Capital is the reserve that every stream pays into. How much of TEBOS's profit
-goes to it is founder decision 13. The sketch to decide it from:
-- TEBOS first covers its own running costs (hosting, AI, email, payments) and keeps a buffer of three to six
-  months of those costs.
-- Only the profit above that buffer is shared: Tidy Capital receives the chosen share, and the rest stays in TEBOS
-  to grow.
-- At 5% Tidy Capital grows slowly but TEBOS stays robust; at 50% the reverse. The money records in Tidy Capital
-  show both sides' runway, so the choice can be revisited each quarter on real figures.
+**Working in a client's web app (founder, 16 Oct 2026).** TEBOS builds and maintains every department of a
+client's system, so it holds wide access. It uses it the way a careful CEO would:
+- by default, people sign in to their own department only;
+- going into another department is a deliberate, recorded step, for a named reason;
+- nothing is ever done that disrupts or harms a department;
+- changes outside the agreed deliverables go to REEDS and to the client for a yes or no first.
+
+**The creative team (founder, 16 Oct 2026).** Both apps should look like themselves, not like copies in different
+colours, and ideas shouldn't wait for the founder.
+- Each week, the daily build run produces one creative proposal for TEPOS or a client: a visual idea, a
+  feature idea or a campaign idea.
+- Each proposal names the deliverable it serves, the cost and the risk.
+- REEDS puts it to the founder, and to the client where it affects them, for a yes or no. Nothing is built from a
+  proposal until it is approved.
+- Proposals stay inside the agreed daily, weekly and monthly deliverables. The team doesn't overextend.
+- First proposal, now built for review: the TEPOS city.
+- Next ideas to put forward:
+  - the TEBOS board seen as a district of buildings (one per department), shown alongside the chessboard;
+  - day and night in the TEPOS city following Tidy Capital's runway;
+  - a client's tile taking on its logo once the client sends it.
+
+**TEBOS pays Tidy Capital: 50% (founder, 16 Oct 2026).**
+- TEBOS first covers its own running costs (hosting, AI, email, payments) and keeps a buffer of three to six months
+  of those costs.
+- Of the profit above that buffer, 50% goes to Tidy Capital, the reserve every stream pays into. The rest stays in
+  TEBOS to grow.
+- Revisit the share each quarter on the real figures.
 
 1. **Property Revenue Architect, as an affordable monthly subscription** (founder, 16 Oct). *Built 16 Oct: the case
    workspace and assessment report (docs/property-revenue-architecture.md). Workstreams and the outcome scorecard
@@ -104,7 +128,7 @@ goes to it is founder decision 13. The sketch to decide it from:
 4. **The study path.** The qualifications towards asset management (property finance, property investment and
    development, and what the FSCA requires to manage other people's money) as objectives with dates and evidence of
    completion.
-5. **The private vault (IREKUN).** *Started 17 Oct with Strategic Resilience slice 1 (docs/resilience/blueprint.md):
+5. **The private vault (IREKUN).** *Started 16 Oct with Strategic Resilience slice 1 (docs/resilience/blueprint.md):
    private organisations (one member, ever), and financial resilience (runway, income by stream and cadence).*
    The founder's own organisation inside TEBOS (free for now): documents stored privately,
    every read audited, shared only through short-lived signed links, searchable ("REEDS, find my document").

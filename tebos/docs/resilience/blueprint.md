@@ -1,7 +1,7 @@
 # Strategic Resilience: blueprint, data model, MVP roadmap and threat model
 
 Stage 1 and 2 of the founder's *Strategic Resilience & Environmental Intelligence Dossier* (v1.0, 16 Oct 2026).
-**Built** means implemented and tested; **proposed** means designed only. Status, 17 Oct 2026: slice 1 (financial
+**Built** means implemented and tested; **proposed** means designed only. Status, 16 Oct 2026: slice 1 (financial
 resilience) is built (§7). Everything else is proposed.
 
 ## 1. One-page blueprint
@@ -96,7 +96,7 @@ material risks with an owner and review date; unresolved high-impact risks; and 
 | T9 | **Scope creep into surveillance** | Legal and ethical harm | The source registry is the only way data comes in, and each source records its authorisation. There is no capability for covert collection. Sensors show their status and can be paused |
 | T10 | **Secrets in notes** | Credential exposure | No password or key columns. A pattern check refuses secret-shaped strings in narrative fields |
 
-## 5. Questions that genuinely block the prototype (answered 17 Oct 2026)
+## 5. Questions that genuinely block the prototype (answered 16 Oct 2026)
 
 **The founder's answers:** inside TEBOS, free; only the founder; the personal vaults (A, B, G) later.
 
@@ -129,7 +129,7 @@ Before it is built, each feature states:
 
 The review sits in this folder, next to the feature's tests.
 
-## 7. Built: slice 1, financial resilience (17 Oct 2026)
+## 7. Built: slice 1, financial resilience (16 Oct 2026)
 
 | Part | Where |
 |---|---|
@@ -182,7 +182,7 @@ The rules:
   organisations, every rule, secrets refused, the redacted trail, and other people seeing nothing;
 - `web/e2e/resilience.spec.ts`.
 
-**Two-step sign-in (T2), built 17 Oct 2026.** Migration `20261017100000_two_step_resilience.sql` and
+**Two-step sign-in (T2), built 16 Oct 2026.** Migration `20261017100000_two_step_resilience.sql` and
 `web/src/components/TwoStep.tsx`.
 - **The database enforces it.** Resilience records are read and written only in a session that passed the second
   step, a code from an authenticator app (TOTP, assurance level aal2). A password alone opens nothing; the
