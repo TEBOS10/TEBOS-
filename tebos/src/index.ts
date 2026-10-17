@@ -35,5 +35,6 @@ export * from "./domain/content";
 export * from "./domain/analysis";
 export * from "./domain/staff";
 export * from "./domain/work";
+export * from "./domain/audit";
 export * from "./reeds/worker";
 // PgWorkStore and the checks (./reeds/pg-store, ./reeds/checks) are server-only.
