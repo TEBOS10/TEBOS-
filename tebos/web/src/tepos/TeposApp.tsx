@@ -1,8 +1,8 @@
 // The TEPOS app: sign-in, the second step, then the founder's portals. Only someone who owns a private
 // organisation gets in; anyone else is told this is a private system, and sees nothing of it.
 import { LayoutGrid, Landmark, KeyRound, GraduationCap, Home, LineChart, LogOut, MessageSquare, Vault } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
-import { TwoStepChallenge } from "../components/TwoStep";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { TwoStepChallenge, TwoStepSettings } from "../components/TwoStep";
 import { Loading } from "../components/ui";
 import { PeopleProvider } from "../lib/people";
 import { Link, matchPath, RouterProvider, usePath } from "../lib/router";
@@ -66,10 +66,11 @@ function Gate() {
     case "two_step":
       return <TwoStepChallenge />;
     case "no_organisation":
-      return <Private />;
+      return <TwoStepFirst><Private /></TwoStepFirst>;
     case "error":
       return <div className="auth"><div className="auth-card"><h1 className="page-title">TEPOS couldn't load your account</h1><p className="muted">{state.message}</p></div></div>;
     case "ready":
+      if (!state.twoStep) return <TwoStepFirst><Private /></TwoStepFirst>;
       return state.organisations.some((o) => o.organisation.private) ? (
         <PeopleProvider>
           <StaffProvider>
@@ -78,6 +79,31 @@ function Gate() {
         </PeopleProvider>
       ) : <Private />;
   }
+}
+
+/**
+ * TEPOS opens only after two-step sign-in: the database shows nothing of a TEPOS organisation to a session that
+ * didn't pass it (migration tepos_two_step). An account without an authenticator is asked to set one up first;
+ * a session that passed it and still sees nothing is not the owner's, and is told only that this is private.
+ */
+function TwoStepFirst({ children }: { children: ReactNode }) {
+  const { db } = useSessionState();
+  const [passed, setPassed] = useState<boolean | null>(null);
+  useEffect(() => {
+    void db.auth.mfa.getAuthenticatorAssuranceLevel().then(({ data }) => setPassed(data?.currentLevel === "aal2"));
+  }, [db]);
+  if (passed === null) return <div className="auth"><Loading label="Opening TEPOS" /></div>;
+  if (passed) return <>{children}</>;
+  return (
+    <div className="auth">
+      <div className="auth-card" data-testid="tepos-two-step-first">
+        <h1 className="page-title">Turn on two-step sign-in</h1>
+        <p className="muted">TEPOS opens only after your password and a code from an authenticator app on your phone. A stolen password alone opens nothing here.</p>
+        <TwoStepSettings active={false} />
+        <button className="btn" onClick={() => void db.auth.signOut()}>Sign out</button>
+      </div>
+    </div>
+  );
 }
 
 /** Signed in, but not the owner of TEPOS: nothing of it is shown. */
@@ -112,6 +138,7 @@ function Shell({ children }: { children: ReactNode }) {
   };
   const [menuOpen, setMenuOpen] = useState(false);
   useEffect(() => setMenuOpen(false), [path]);
+  useIdleSignOut(db);
   return (
     <div className="shell">
       <aside className={`sidebar no-print ${menuOpen ? "open" : ""}`}>
@@ -147,4 +174,25 @@ function Shell({ children }: { children: ReactNode }) {
       <main className="main">{children}</main>
     </div>
   );
+}
+
+/** Left open and unused for this long, TEPOS signs itself out, so an unattended screen doesn't stay open. */
+export const IDLE_MINUTES = 30;
+
+function useIdleSignOut(db: ReturnType<typeof useOrg>["db"]) {
+  const last = useRef(Date.now());
+  useEffect(() => {
+    const touch = () => { last.current = Date.now(); };
+    const check = () => { if (Date.now() - last.current > IDLE_MINUTES * 60_000) void db.auth.signOut(); };
+    const events = ["pointerdown", "keydown", "wheel", "touchstart"] as const;
+    for (const e of events) window.addEventListener(e, touch, { passive: true });
+    // a laptop that slept, or a tab left in the background, is checked the moment it comes back
+    document.addEventListener("visibilitychange", check);
+    const timer = window.setInterval(check, 30_000);
+    return () => {
+      for (const e of events) window.removeEventListener(e, touch);
+      document.removeEventListener("visibilitychange", check);
+      window.clearInterval(timer);
+    };
+  }, [db]);
 }

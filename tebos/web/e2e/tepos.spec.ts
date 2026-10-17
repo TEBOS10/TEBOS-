@@ -117,3 +117,14 @@ test.describe("with motion", () => {
     await expect(page.locator(".portal-vortex")).toHaveCount(0);
   });
 });
+
+test("TEPOS signs itself out after 30 minutes without use", async ({ page }) => {
+  await page.clock.install();
+  await founder(page);
+  await page.goto(`${TEPOS}/`);
+  await expect(page.getByRole("heading", { name: "Tidy", exact: true })).toBeVisible();
+  await page.clock.fastForward("29:00");
+  await expect(page.getByRole("heading", { name: "Tidy", exact: true })).toBeVisible();
+  await page.clock.fastForward("02:00");
+  await expect(page.getByRole("heading", { name: "TEPOS" })).toBeVisible();
+});
