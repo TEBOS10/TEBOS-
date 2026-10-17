@@ -26,6 +26,27 @@ Update this list every run; strike items when they're done.
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 17 Oct 2026: TEPOS security tightened ("beef up security")
+
+- **Found:** the live database shows no authenticator set up on the founder's account, and the non-private
+  TEPOS organisation (Tidy Enterprise, with its property cases) opened with a password alone.
+- **Built:**
+  - Migration `tepos_two_step`: every TEPOS organisation (`organisations.app = 'tepos'`) counts its members
+    only in a session that passed two-step sign-in. The organisation, its memberships, records and audit trail
+    are hidden from a password-only session. TEBOS organisations are unchanged.
+  - TEPOS asks for an authenticator before showing anything, and signs itself out after 30 minutes unused.
+  - Browser protection headers on TEPOS only (`tebos-web` hosts): a strict content security policy (scripts
+    only from TEPOS itself, data only to the Supabase project), no framing by other sites, no sniffing, no
+    referrer, no camera, microphone or location, HTTPS enforced, not indexed. Checked against the real build,
+    the drawn city and the 3D city: no blocked content.
+- **Reviewed:** the 20 elevated database functions Supabase's check lists. Each checks its own access (a hashed
+  one-time token, an owner check or a staff check); none is open. The 19 tables without policies are closed.
+- **Only the founder can:** set up an authenticator and a backup (TEPOS asks at sign-in), turn on
+  leaked-password protection in Supabase, make the repository private, rotate the database password, and turn
+  on two-step sign-in for GitHub, Vercel, Supabase and Gmail.
+- Tests: SQL `99zk`, `99zg` and `99zi` updated to the new rule; e2e `two-step.spec.ts`, `property.spec.ts`,
+  and a new idle sign-out test in `tepos.spec.ts`.
+
 ## 16 Oct 2026 (night): both apps deploy themselves from `main`
 
 The founder set this up in Vercel and Supabase, step by step from the phone:
