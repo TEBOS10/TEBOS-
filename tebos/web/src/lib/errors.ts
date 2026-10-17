@@ -44,6 +44,8 @@ const MESSAGES: Record<RuleCode, string> = {
   TEBOS_DESTRUCTIVE_BLOCKED: "TEBOS refused this change because it would delete recorded data. Only the founder can approve that.",
   TEBOS_WORK_UNVERIFIED: "This request can't be marked complete: not every part of it has been checked yet.",
   TEBOS_EVIDENCE_REQUIRED: "To mark this as observed, link evidence that was actually obtained. Otherwise record it as stated.",
+  TEBOS_TWO_STEP_REQUIRED: "This needs a session that passed two-step sign-in. Sign out, sign in again and enter your authenticator code.",
+  TEBOS_SECRET_REFUSED: "That looks like it contains a password, key or token. TEBOS never stores secrets: remove it and try again.",
 };
 
 export interface Explained {
