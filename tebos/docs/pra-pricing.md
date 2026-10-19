@@ -1,7 +1,7 @@
 # Property Revenue Architecture: the monthly price (decision 10)
 
-A recommendation for the founder, 19 Oct 2026. **The price is the founder's decision.** Nothing here is published,
-charged or put in a contract until the founder says so.
+**Decided by the founder, 19 Oct 2026:** the tiers below and the founding-client offer. Nothing is charged until the
+checks under "Checks before the first invoice" are done.
 
 ## What is being priced
 
@@ -74,6 +74,6 @@ That produces the stage-3 evidence the portfolio needs.
 
 ## To decide
 
-- [ ] The tiers and prices above, or changes to them.
-- [ ] The founding-client offer: yes or no.
+- [x] The tiers and prices above (accepted 19 Oct).
+- [x] The founding-client offer (accepted 19 Oct).
 - [ ] Who answers the registration question, and by when.
