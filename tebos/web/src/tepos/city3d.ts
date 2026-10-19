@@ -413,7 +413,10 @@ export function createCity(host: HTMLElement, buildings: CityBuilding[], opts: O
   const finished = built.map((x) => x.delay + x.b.final * STAGE_SECONDS);
   const total = Math.max(...finished);
   // the intro's clock runs on drawn frames: it starts when the first frame is drawn, and a slow frame
-  // counts as at most 1/20 s, so a slow device still sees every stage instead of only the end
+  // counts as at most 1/20 s, so a slow device still sees every stage instead of only the end. Without a graphics
+  // chip frames can come at two a second, which stretched the intro past a minute; there a frame counts as up to
+  // 1/4 s, still several frames per stage.
+  const maxStep = soft ? 0.25 : 0.05;
   let clock = 0;
   let last = 0;
   let lastStage = -1;
@@ -479,7 +482,7 @@ export function createCity(host: HTMLElement, buildings: CityBuilding[], opts: O
     raf = requestAnimationFrame(frame);
     if (!visible || document.hidden) return;
     const now = performance.now();
-    if (last) clock += Math.min(0.05, (now - last) / 1000);
+    if (last) clock += Math.min(maxStep, (now - last) / 1000);
     last = now;
     const seconds = still ? total : clock;
     if (!done) {

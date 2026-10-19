@@ -42,11 +42,16 @@ export function createClientBoard(host: HTMLElement, layout: BoardLayout, opts: 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color("#070a10");
   scene.fog = new THREE.Fog("#070a10", 18, 36);
-  const pmrem = new THREE.PMREMGenerator(renderer);
-  const envTex = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-  scene.environment = envTex;
-  scene.environmentIntensity = 0.42;
-  scene.add(new THREE.HemisphereLight("#c9d6ff", "#05070b", 0.35));
+  // Without a graphics chip (WebGL on the CPU), the studio reflections and the glow pass take seconds to prepare
+  // before anything is drawn, so a light version is drawn instead: brighter plain lights, no reflections, no glow.
+  const lite = isSoftwareRenderer(renderer);
+  const pmrem = lite ? null : new THREE.PMREMGenerator(renderer);
+  const envTex = pmrem ? pmrem.fromScene(new RoomEnvironment(), 0.04).texture : null;
+  if (envTex) {
+    scene.environment = envTex;
+    scene.environmentIntensity = 0.42;
+  }
+  scene.add(new THREE.HemisphereLight("#c9d6ff", "#05070b", lite ? 1.1 : 0.35));
   const key = new THREE.DirectionalLight("#ffffff", 1.5);
   key.position.set(6, 10, 4);
   scene.add(key);
@@ -55,7 +60,7 @@ export function createClientBoard(host: HTMLElement, layout: BoardLayout, opts: 
   scene.add(rim);
 
   // Without a graphics chip, draw only when something changes.
-  const still = opts.reducedMotion || isSoftwareRenderer(renderer);
+  const still = opts.reducedMotion || lite;
   const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
   camera.position.set(5.4, 6.6, 7.6);
   const controls = new OrbitControls(camera, renderer.domElement);
@@ -68,7 +73,7 @@ export function createClientBoard(host: HTMLElement, layout: BoardLayout, opts: 
   controls.maxPolarAngle = Math.PI * 0.46;
   controls.enablePan = false;
 
-  const disposables: Array<{ dispose(): void }> = [envTex, pmrem, controls];
+  const disposables: Array<{ dispose(): void }> = [controls, ...(envTex && pmrem ? [envTex, pmrem] : [])];
   const mat = <M extends THREE.Material>(m: M) => (disposables.push(m), m);
   const geo = <G extends THREE.BufferGeometry>(g: G) => (disposables.push(g), g);
 
@@ -216,11 +221,13 @@ export function createClientBoard(host: HTMLElement, layout: BoardLayout, opts: 
   });
 
   // ---------------------------------------------------------------- render
-  const composer = new EffectComposer(renderer);
-  composer.addPass(new RenderPass(scene, camera));
-  const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.65, 0.5, 0.9);
-  composer.addPass(bloom);
-  composer.addPass(new OutputPass());
+  const composer = lite ? null : new EffectComposer(renderer);
+  const bloom = lite ? null : new UnrealBloomPass(new THREE.Vector2(1, 1), 0.65, 0.5, 0.9);
+  if (composer && bloom) {
+    composer.addPass(new RenderPass(scene, camera));
+    composer.addPass(bloom);
+    composer.addPass(new OutputPass());
+  }
 
   let selected: string | null = null;
   let running = true;
@@ -249,7 +256,8 @@ export function createClientBoard(host: HTMLElement, layout: BoardLayout, opts: 
       f.curve!.getPointAt(f.t[p.k]!, p.mesh.position);
       p.mesh.visible = selected === null || selected === f.id;
     }
-    composer.render();
+    if (composer) composer.render();
+    else renderer.render(scene, camera);
     labels.render(scene, camera);
   }
 
@@ -270,8 +278,8 @@ export function createClientBoard(host: HTMLElement, layout: BoardLayout, opts: 
       renderer.domElement.style.width = `${w}px`;
       renderer.domElement.style.height = `${h}px`;
       labels.setSize(w, h);
-      composer.setSize(w, h);
-      bloom.setSize(w / 2, h / 2);
+      composer?.setSize(w, h);
+      bloom?.setSize(w / 2, h / 2);
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       dirty = true;
@@ -282,7 +290,7 @@ export function createClientBoard(host: HTMLElement, layout: BoardLayout, opts: 
       io.disconnect();
       timer.dispose();
       disposables.forEach((d) => d.dispose());
-      composer.dispose();
+      composer?.dispose();
       renderer.dispose();
       renderer.domElement.remove();
       labels.domElement.remove();
