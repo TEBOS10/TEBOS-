@@ -21,12 +21,26 @@ Update this list every run; strike items when they're done.
 | 8 | Make the repo private (first set the default branch to `main`), rotate database passwords. Leaked-password protection needs Supabase Pro | Protecting the platform from copying |
 | 19 | Enrol two-step sign-in (TEBOS → Account), with a backup device | Protecting money records; issuing any AI-client token |
 | 20 | Set the `tebos_bridge` login password in the Supabase SQL editor, then approve the bridge service on Railway (steps in `docs/bridge.md`). The migrations are applied (19 Oct) | Connecting the coding assistant to REEDS |
-| 10 | **Property Revenue Architect:** the monthly subscription price (and whether there are tiers). The assessment is settled: rental income, occupancy and costs | The first paying subscribers, priority 1 |
+| ~~10~~ | ~~**Property Revenue Architect:** the monthly price~~ **Decided 19 Oct:** Single R750, Portfolio (2–5 units) R1,950, Portfolio plus (6–15) R3,950, 16+ quoted, all excluding VAT; founding-client offer accepted (`pra-pricing.md`) | — |
+| 10b | **Before the first PRA invoice:** whether this advice needs PPRA registration (an FFC); VAT status (see 7); the client agreement (see 3) | Charging the first PRA subscriber |
 | 12 | **Agent's office:** what your agency's principal allows (CRM, listing portals, WhatsApp, client data), and the one auto-reply text you approve | Never missing an enquiry, priority 3. Until the principal allows client data, the office keeps references only (B-001), no names or numbers |
 | 11 | When there's income: Supabase Pro (about USD 25 a month) so the vault and Tidy Capital can have their own project, out of the client database. Until then the vault is a private organisation inside TEBOS | Full separation of your private data |
 | 18 | Each client's web app address (where TEBOS's people sign in to their department), starting with BAME's | Client tiles that open the client's web app |
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
+
+## 19 Oct 2026 (afternoon): the founder's decisions on creative proposals and the PRA price
+
+- **Creative proposals 1 to 5:** the founder said yes. Each is at stage 1, identified (ADR 0005), and built in the
+  suggested order after the real-estate work. Spending on a rendering tool, a data source key, and social account
+  access each still need their own decision.
+- **Decision 10, the PRA monthly price:** decided from the market recommendation in `pra-pricing.md`.
+  - Single R750, Portfolio (2–5 units) R1,950, Portfolio plus (6–15) R3,950, and 16 or more quoted. All exclude VAT.
+  - Founding-client offer: the first five clients get 40% off for six months, with written consent to use their
+    measured results anonymously.
+  - Nothing is charged until the checks in decision 10b are done.
+- **The daily run** is now a morning check and one prepared step. It is read-only on live systems, does branch-only
+  work, and never merges, deploys or applies a migration without the founder's word.
 
 ## 19 Oct 2026: the private vault, "store these documents in my office"
 
