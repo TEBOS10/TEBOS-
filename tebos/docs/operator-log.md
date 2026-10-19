@@ -70,6 +70,26 @@ matters. Nothing new is open to visitors, and no table is missing row-level secu
 - the Railway service;
 - a token, which needs two-step sign-in (decision 19).
 
+## 19 Oct 2026: the Real Estate Job portal, slice 2: documents and compliance, and the FFC path
+
+- **Asked by the founder** (relayed from the TEBOS session, then confirmed here): documents and compliance and the
+  FFC path first, "if there's no tampering with actual legal documents". Agency confirmed: Pelser Real Estate.
+- **Built** (migration `agent_compliance`, additive):
+  - Each deal's documents against the agency's own Property Check list (37 items: the deal, purchaser and seller
+    FICA, property certificates, bond and transfer, the agent's own papers, commission and closing). Each item
+    names its source.
+  - From the agency's welcome pack: while the founder is a candidate, sole mandates and offers to purchase are
+    co-signed by a full-status practitioner, or the seller can refuse the commission. Both are on every checklist.
+  - Nothing stores, edits, signs or sends a document. An entry records its status, dates, where the agency keeps
+    it (PropCtrl, Doxit, the agency file) and why it doesn't apply. Received needs a date; checked says where
+    it's kept; not applicable says why.
+  - The FFC path: steps that each name their source. One button adds the PPRA application form's five candidate
+    registration steps (section 13). Later steps (logbook, PDE, full status) are added only once the PPRA or the
+    principal confirms them. Done needs its date and where the proof is kept.
+- **Noticed:** the agency's welcome pack has a shared login with its password in plain text. Not stored or
+  repeated anywhere; the founder was told.
+- Tests: SQL `99zn`, `test/agent-compliance.test.ts`, and two new e2e tests in `agent.spec.ts`.
+
 ## 19 Oct 2026: the audit check and the Model Bridge, merged but not live
 
 Built on `claude/dossier-foundations-4mmjkk` and merged at the founder's word ("go, open the PR and merge when green").

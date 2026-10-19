@@ -72,6 +72,102 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_deal_items: {
+        Row: {
+          id: string
+          org_id: string
+          listing_id: string
+          item: string
+          status: string
+          due_on: string | null
+          received_on: string | null
+          kept_in: string | null
+          reason: string | null
+          note: string | null
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          listing_id: string
+          item: string
+          status?: string
+          due_on?: string | null
+          received_on?: string | null
+          kept_in?: string | null
+          reason?: string | null
+          note?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          listing_id?: string
+          item?: string
+          status?: string
+          due_on?: string | null
+          received_on?: string | null
+          kept_in?: string | null
+          reason?: string | null
+          note?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      agent_ffc_steps: {
+        Row: {
+          id: string
+          org_id: string
+          position: number
+          title: string
+          source: string
+          status: string
+          due_on: string | null
+          done_on: string | null
+          evidence: string | null
+          note: string | null
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          position?: number
+          title: string
+          source: string
+          status?: string
+          due_on?: string | null
+          done_on?: string | null
+          evidence?: string | null
+          note?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          position?: number
+          title?: string
+          source?: string
+          status?: string
+          due_on?: string | null
+          done_on?: string | null
+          evidence?: string | null
+          note?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       agent_listings: {
         Row: {
           id: string

@@ -42,7 +42,7 @@ TEBOS clients. Only the design moves; TEPOS data never leaves.
 
 | What | Where |
 |---|---|
-| Real Estate Job portal | `tebos/web/src/tepos/AgentOffice.tsx`, `agentData.ts`; rules in `tebos/src/domain/agent.ts` |
+| Real Estate Job portal | `tebos/web/src/tepos/AgentOffice.tsx`, `AgentCompliance.tsx`, `agentData.ts`; rules in `tebos/src/domain/agent.ts` |
 | Entry and page | `tebos/web/tepos/index.html`, `tebos/web/tepos/main.tsx` |
 | App, sign-in gate and menu | `tebos/web/src/tepos/TeposApp.tsx` |
 | The six portals and what the unbuilt ones will hold | `tebos/web/src/tepos/portals.ts` (tested by `portals.test.ts`) |
@@ -77,7 +77,7 @@ TEBOS clients. Only the design moves; TEPOS data never leaves.
 | Tidy Enterprise | `/property` | `tidy-enterprise` | Yes: Property Revenue Architecture cases, assessment report, workstreams, outcome scorecard |
 | IREKUN | `/irekun` | `irekun` | Yes: two-step sign-in and the private organisation |
 | Academics | `/academics` | (none yet) | No: under scaffolding (priority 4, the study path) |
-| Real Estate Job | `/agent` | `irekun` | Yes, slice 1: listings and people with next steps, overdue first, mandates ending. No personal details (decision 12) |
+| Real Estate Job | `/agent` | `irekun` | Yes: listings and people with next steps; each deal's documents against the agency's checklist (tracked, never stored or changed); the FFC path. No personal details (decision 12). Agency: Pelser Real Estate |
 | Forex | `/forex` | (none yet) | No: under scaffolding (priority 6, paper trading only) |
 
 - The menu also has **Ask REEDS** (`/reeds`).
@@ -112,8 +112,8 @@ TEBOS clients. Only the design moves; TEPOS data never leaves.
 
 1. Property Revenue Architect as a monthly subscription. Next step: the monthly subscription view.
 2. REEDS works without being asked: standing requests, then the weekly money brief.
-3. The agent's office (Real Estate Job portal). Slice 1 built 17 Oct; next: commission expected versus received, then
-   the enquiry log.
+3. The agent's office (Real Estate Job portal). Slices 1 and 2 built (17 and 19 Oct); next: relationships, then
+   marketing, then commission expected versus received.
 4. The study path (Academics portal).
 5. The private vault in IREKUN: private documents, every read audited, short-lived signed links.
 6. Tidy Capital, honestly: bring the `capital` schema into this repository, and the paper-trading ledger (Forex
