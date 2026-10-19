@@ -113,6 +113,16 @@ export const COUNT_CHECKS: Record<string, CountCheck> = {
     recheck: `select count(*)::int as n from public.board_steps s where s.id = any($3::uuid[]) and s.org_id = $1 and s.performer = 'founder'
                 and s.documented = false and s.retired_at is null and $2::timestamptz is not null`,
   },
+  // the weekly signal brief (ADR 0007)
+  "count.pra_overdue": {
+    list: `select id::text, count(*) over () ::int as n from public.property_workstreams
+            where org_id = $1 and status not in ('done', 'cancelled') and due_on < ($2::timestamptz at time zone 'UTC')::date
+              and created_at <= $2 order by due_on, id limit ${LIMIT}`,
+    recount: `select count(*)::int as n from public.property_workstreams w where w.org_id = $1 and w.created_at <= $2
+                and w.due_on::timestamp < date_trunc('day', $2::timestamptz at time zone 'UTC') and w.status in ('planned', 'in_progress', 'blocked')`,
+    recheck: `select count(*)::int as n from public.property_workstreams w where w.id = any($3::uuid[]) and w.org_id = $1
+                and w.status in ('planned', 'in_progress', 'blocked') and w.due_on::timestamp < date_trunc('day', $2::timestamptz at time zone 'UTC')`,
+  },
   // platform checks: $1 is still passed, and ignored
   "count.leads_to_decide": {
     list: `select id::text, count(*) over () ::int as n from public.opportunities
@@ -128,6 +138,30 @@ export const COUNT_CHECKS: Record<string, CountCheck> = {
                  and e.created_at <> $2::timestamptz - interval '7 days' and $1::uuid is not null`,
     recheck: `select count(*)::int as n from public.enquiries e where e.id = any($3::uuid[]) and e.created_at <= $2 and $1::uuid is not null`,
   },
+  "count.demand_7d": {
+    list: `with d as (
+             select id, created_at from public.enquiries where created_at > $2::timestamptz - interval '7 days' and created_at <= $2
+             union all
+             select id, created_at from public.opportunities where created_at > $2::timestamptz - interval '7 days' and created_at <= $2)
+           select id::text, count(*) over () ::int as n from d where $1::uuid is not null order by created_at desc limit ${LIMIT}`,
+    recount: `select ((select count(*) from public.enquiries e where e.created_at between $2::timestamptz - interval '7 days' and $2::timestamptz
+                         and e.created_at <> $2::timestamptz - interval '7 days')
+                    + (select count(*) from public.opportunities o where o.created_at between $2::timestamptz - interval '7 days' and $2::timestamptz
+                         and o.created_at <> $2::timestamptz - interval '7 days'))::int as n where $1::uuid is not null`,
+    recheck: `select ((select count(*) from public.enquiries e where e.id = any($3::uuid[]) and e.created_at <= $2
+                         and e.created_at > $2::timestamptz - interval '7 days')
+                    + (select count(*) from public.opportunities o where o.id = any($3::uuid[]) and o.created_at <= $2
+                         and o.created_at > $2::timestamptz - interval '7 days'))::int as n where $1::uuid is not null`,
+  },
+  "count.invoices_overdue": {
+    list: `select id::text, count(*) over () ::int as n from public.invoices
+            where status = 'open' and paid_at is null and due_on < ($2::timestamptz at time zone 'UTC')::date and created_at <= $2
+              and $1::uuid is not null order by due_on, id limit ${LIMIT}`,
+    recount: `select count(*)::int as n from public.invoices i where i.paid_at is null and i.status = 'open' and i.created_at <= $2
+                and i.due_on::timestamp < date_trunc('day', $2::timestamptz at time zone 'UTC') and $1::uuid is not null`,
+    recheck: `select count(*)::int as n from public.invoices i where i.id = any($3::uuid[]) and i.status = 'open' and i.paid_at is null
+                and i.due_on::timestamp < date_trunc('day', $2::timestamptz at time zone 'UTC') and $1::uuid is not null`,
+  },
   "count.emails_failed": {
     list: `select id::text, count(*) over () ::int as n from public.outbox_emails
             where sent_at is null and attempts >= 5 and created_at <= $2 and $1::uuid is not null order by created_at desc limit ${LIMIT}`,
@@ -138,7 +172,19 @@ export const COUNT_CHECKS: Record<string, CountCheck> = {
 
 const CAPITAL_TABLE = "capital.ingestion_runs";
 
-export const EXECUTORS = [...Object.keys(COUNT_CHECKS), "check.capital_ingestion"] as const;
+export const EXECUTORS = [...Object.keys(COUNT_CHECKS), "check.capital_ingestion", "check.audit_chain"] as const;
+
+/** The organisation's audit chain, as tebos_private.audit_verify reports it. Null when this login may not run it. */
+async function auditChain(db: Db, orgId: string): Promise<{ status: string; lastId: string | null; reason: string | null } | null> {
+  try {
+    const { rows } = await db.query(
+      "select status, last_id::text as last_id, reason from tebos_private.audit_verify(array[$1]::uuid[], false)", [orgId]);
+    if (!rows[0]) return { status: "intact", lastId: null, reason: null };
+    return { status: rows[0].status as string, lastId: (rows[0].last_id as string | null) ?? null, reason: (rows[0].reason as string | null) ?? null };
+  } catch {
+    return null;
+  }
+}
 
 /** Run a task's executor: what it found, with the records it found. */
 export async function runCheck(db: Db, executor: string, input: CheckInput): Promise<CheckResult> {
@@ -160,6 +206,13 @@ export async function runCheck(db: Db, executor: string, input: CheckInput): Pro
       available: true, count: ok ? 0 : 1, ids: [rows[0].id as string],
       detail: ok ? undefined : `Run of ${when} UTC: ${rows[0].status}${rows[0].error ? ` (${String(rows[0].error).slice(0, 160)})` : ""}.`,
     };
+  }
+  if (executor === "check.audit_chain") {
+    const chain = await auditChain(db, input.orgId);
+    if (!chain) return { available: false, reason: "This worker's login can't run the audit verifier." };
+    const intact = chain.status === "intact";
+    return { available: true, count: intact ? 0 : 1, ids: chain.lastId ? [chain.lastId] : [],
+      detail: intact ? undefined : `Status: ${chain.status}${chain.reason ? ` (${chain.reason.slice(0, 160)})` : ""}.` };
   }
   throw new Error(`no executor called ${executor}`);
 }
@@ -193,6 +246,17 @@ export async function verifyCheck(db: Db, executor: string, input: CheckInput, r
     const recount = latest ? (latest.ok ? 0 : 1) : null;
     const ok = !!latest && latest.id === result.ids[0] && recount === result.count;
     return { ok, recount, detail: ok ? "Re-read the latest run: it matches." : "The latest run doesn't match what the executor reported." };
+  }
+  if (executor === "check.audit_chain") {
+    const chain = await auditChain(db, input.orgId);
+    if (!result.available) {
+      return chain ? { ok: false, recount: null, detail: "The executor said it couldn't check, but the verifier can." }
+        : { ok: true, recount: null, detail: "Confirmed: this login can't run the audit verifier." };
+    }
+    if (!chain) return { ok: false, recount: null, detail: "The verifier couldn't run the audit verifier." };
+    const recount = chain.status === "intact" ? 0 : 1;
+    const ok = recount === result.count;
+    return { ok, recount, detail: ok ? `Re-verified the chain: ${chain.status}.` : `The executor said ${result.count ? "not intact" : "intact"}; the verifier found ${chain.status}.` };
   }
   return { ok: false, recount: null, detail: `no verifier for ${executor}` };
 }

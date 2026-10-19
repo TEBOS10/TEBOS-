@@ -78,6 +78,7 @@ test("only admins and operators can ask; everyone in the organisation can read",
   await page.goto("/reeds");
   await expect(page.getByText(/can ask TEBOS for work/)).toBeVisible();
   await expect(page.getByRole("button", { name: "Ask TEBOS" })).toHaveCount(0);
+  await expect(page.getByTestId("weekly-brief")).toHaveCount(0);
 });
 
 test("on a phone the menu folds away, opens from the Menu button, and folds after choosing a page", async ({ page }) => {
@@ -134,4 +135,24 @@ test("the second question can be asked: how are my businesses doing?", async ({ 
   await page.getByLabel(/How are my businesses doing\?/).check();
   await page.getByRole("button", { name: "Ask TEBOS" }).click();
   await expect.poll(() => fake.writes.find((w) => w.table === "work_requests" && w.method === "POST")?.body).toMatchObject({ kind: "business_status" });
+});
+
+test("the weekly signal brief is asked for like any request, or switched on to come every week", async ({ page }) => {
+  const fake = await installFakeSupabase(page);
+  await page.goto("/reeds");
+  const card = page.getByTestId("weekly-brief");
+  await expect(card).toContainText("Off: ask for it below whenever you want");
+  await card.getByRole("button", { name: "Switch on every week" }).click();
+  await expect.poll(() => fake.writes.find((w) => w.table === "reeds_standing_requests" && w.method === "POST")?.body)
+    .toEqual({ org_id: ORG, kind: "signal_brief", active: true });
+  await expect(card).toContainText("On: TEBOS files the brief once a week by itself");
+  await card.getByRole("button", { name: "Switch off" }).click();
+  await expect.poll(() => fake.writes.find((w) => w.table === "reeds_standing_requests" && w.method === "PATCH")?.body).toEqual({ active: false });
+  await expect(card).toContainText("Off:");
+
+  // and asked for once, now
+  await page.getByLabel(/The weekly signal brief/).check();
+  await page.getByRole("button", { name: "Ask TEBOS" }).click();
+  await expect.poll(() => fake.writes.find((w) => w.table === "work_requests" && w.method === "POST")?.body)
+    .toEqual({ org_id: ORG, kind: "signal_brief", note: null, status: "received" });
 });

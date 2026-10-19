@@ -7,7 +7,7 @@
 //
 // Mirrors the kind check on public.work_requests (test/schema-parity.test.ts).
 
-export type RequestKind = "attention_today" | "business_status" | "external_task";
+export type RequestKind = "attention_today" | "business_status" | "external_task" | "signal_brief";
 
 /** Who a task's figures are about: the requester's organisation, or the whole platform (platform admins only). */
 export type TaskScope = "org" | "platform";
@@ -23,6 +23,8 @@ export interface TaskSpec {
   /** The report line when nothing needs attention, and when something does. */
   none: string;
   some: (n: number) => string;
+  /** A signal whose absence is the warning (no demand this week): it needs attention when the count is zero. */
+  attentionWhenZero?: boolean;
 }
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
@@ -72,6 +74,32 @@ export const STATUS_TASKS: readonly TaskSpec[] = [
     none: "No step depends on the founder's memory alone.", some: (n) => `${plural(n, "step depends", "steps depend")} on the founder alone, with no written rule.` },
 ];
 
+/**
+ * The weekly signal brief (ADR 0007): each signal from the company's own records, with the threshold that makes
+ * it need attention. Cost, competitor and technology signals come from outside the database and are added later.
+ */
+export const SIGNAL_TASKS: readonly TaskSpec[] = [
+  { key: "signals.demand", title: "Demand: new enquiries and leads in the last 7 days", executor: "count.demand_7d", scope: "platform",
+    acceptance: `Count enquiries and opportunities created in the 7 days before the task ran; none at all is the warning. ${COUNT_TEST}`,
+    none: "Demand is quiet: no new enquiry or lead in the last 7 days. Draft the next outreach.",
+    some: (n) => `${plural(n, "new enquiry or lead", "new enquiries and leads")} in the last 7 days.`, attentionWhenZero: true },
+  { key: "signals.cash", title: "Cash: client invoices past their due date", executor: "count.invoices_overdue", scope: "platform",
+    acceptance: `Count open, unpaid invoices whose due date has passed. ${COUNT_TEST}`,
+    none: "No client invoice is overdue.", some: (n) => `${plural(n, "client invoice is", "client invoices are")} overdue: chase payment.` },
+  { key: "signals.delivery", title: "Delivery: property workstreams past their deadline", executor: "count.pra_overdue", scope: "org",
+    acceptance: `Count this organisation's open property workstreams whose deadline has passed. ${COUNT_TEST}`,
+    none: "No property workstream is past its deadline.", some: (n) => `${plural(n, "property workstream is", "property workstreams are")} past the deadline: fix these first.` },
+  { key: "signals.reliability", title: "Reliability: automated runs that failed in the last 24 hours", executor: "count.agent_runs_failed", scope: "org",
+    acceptance: `Count this organisation's agent runs that failed in the 24 hours before the task ran. ${COUNT_TEST}`,
+    none: "No automated run failed in the last 24 hours.", some: (n) => `${plural(n, "automated run", "automated runs")} failed in the last 24 hours.` },
+  { key: "signals.email", title: "Reliability: client emails that failed to send", executor: "count.emails_failed", scope: "platform",
+    acceptance: `Count client emails that used every attempt without being sent. ${COUNT_TEST}`,
+    none: "No client email has failed.", some: (n) => `${plural(n, "client email has", "client emails have")} failed to send.` },
+  { key: "signals.security", title: "Security: the audit trail", executor: "check.audit_chain", scope: "org",
+    acceptance: "Verify this organisation's audit chain with tebos_private.audit_verify. The verifier runs it again; it needs attention unless the chain is intact.",
+    none: "The audit trail is intact: no event changed, removed or reordered.", some: () => "The audit trail is not intact: investigate before anything else." },
+];
+
 export const REQUEST_KINDS: Record<RequestKind, { title: string; description: string }> = {
   attention_today: {
     title: "What needs my attention today?",
@@ -80,6 +108,10 @@ export const REQUEST_KINDS: Record<RequestKind, { title: string; description: st
   business_status: {
     title: "How are my businesses doing?",
     description: "Objectives against their targets, objectives with no measured reading or past their date, and steps that still depend on the founder alone.",
+  },
+  signal_brief: {
+    title: "The weekly signal brief",
+    description: "Demand, cash, delivery, reliability and security, each read from TEBOS's own records against its threshold. Can repeat every week by itself.",
   },
   external_task: {
     title: "Work for an AI client",
@@ -119,10 +151,12 @@ export function planRequest(kind: RequestKind, requester: { platformAdmin: boole
       return ATTENTION_TASKS.filter((t) => t.scope === "org" || requester.platformAdmin);
     case "business_status":
       return [...STATUS_TASKS];
+    case "signal_brief":
+      return SIGNAL_TASKS.filter((t) => t.scope === "org" || requester.platformAdmin);
   }
 }
 
-export const taskSpec = (key: string): TaskSpec | undefined => [...ATTENTION_TASKS, ...STATUS_TASKS].find((t) => t.key === key);
+export const taskSpec = (key: string): TaskSpec | undefined => [...ATTENTION_TASKS, ...STATUS_TASKS, ...SIGNAL_TASKS].find((t) => t.key === key);
 
 /** What an executor found. Unavailable is an honest "couldn't check", never a zero. */
 export type CheckResult =
@@ -143,7 +177,8 @@ export function reportLine(spec: TaskSpec, result: CheckResult): ReportLine {
     return { key: spec.key, title: spec.title, text: `Couldn't check: ${result.reason}`, attention: true, checked: false };
   }
   const text = result.count === 0 ? spec.none : `${spec.some(result.count)}${result.detail ? ` ${result.detail}` : ""}`;
-  return { key: spec.key, title: spec.title, text, attention: result.count > 0, checked: true };
+  const attention = spec.attentionWhenZero ? result.count === 0 : result.count > 0;
+  return { key: spec.key, title: spec.title, text, attention, checked: true };
 }
 
 export interface WorkReport {

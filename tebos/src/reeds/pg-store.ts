@@ -138,4 +138,24 @@ export class PgWorkStore implements WorkStore {
   async verify(executor: string, input: CheckInput, result: CheckResult) {
     return verifyCheck(this.pool, executor, input, result);
   }
+
+  async fileDueBrief(): Promise<string | null> {
+    const { rows } = await this.pool.query(
+      `select s.org_id, s.requested_by from public.reeds_standing_requests s
+         join public.organisations o on o.id = s.org_id
+        where s.active and s.kind = 'signal_brief' and o.app <> 'tepos'
+          and exists (select 1 from public.memberships m where m.org_id = s.org_id and m.user_id = s.requested_by
+                       and m.role in ('org_admin', 'operator'))
+          and not exists (select 1 from public.work_requests r where r.org_id = s.org_id and r.kind = 'signal_brief'
+                           and r.created_at > now() - interval '6 days')
+        order by s.created_at limit 1`);
+    const due = rows[0];
+    if (!due) return null;
+    return this.tx(async (c) => {
+      const ins = await c.query(
+        `insert into public.work_requests (org_id, kind, status, requested_by) values ($1, 'signal_brief', 'received', $2) returning id`,
+        [due.org_id, due.requested_by]);
+      return ins.rows[0].id as string;
+    });
+  }
 }

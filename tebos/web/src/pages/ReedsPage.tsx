@@ -6,7 +6,7 @@ import { REQUEST_KINDS, type RequestKind } from "@core/work";
 import { AlertTriangle, CheckCircle2, CircleDashed, Send } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { Card, Empty, ErrorNote, Field, Loading, PageHeader, StatusBadge } from "../components/ui";
-import { askExternalTask, askWorkRequest, cancelWorkRequest, getWorkRequest, inboxFor, listWorkRequests, reviewWorkTask, type WorkRequest, type WorkTask } from "../lib/data";
+import { askExternalTask, askWorkRequest, cancelWorkRequest, getWeeklyBrief, getWorkRequest, inboxFor, listWorkRequests, reviewWorkTask, setWeeklyBrief, type WorkRequest, type WorkTask } from "../lib/data";
 import { CLIENT_KINDS } from "./AiClientsPage";
 import { alertsFrom } from "../lib/inbox";
 import { usePeople } from "../lib/people";
@@ -40,6 +40,7 @@ export function ReedsPage() {
       {canAsk(org.role) ? <AskCard onAsked={(id) => navigate(`/reeds/${id}`)} /> : (
         <p className="note note-info" role="status">Admins and operators of {org.organisation.name} can ask TEBOS for work. You can read what was asked and answered.</p>
       )}
+      {canAsk(org.role) && !org.organisation.private && <WeeklyBriefCard />}
       <Inbox />
       <Card title="Requests" subtitle={`Asked in ${org.organisation.name}`}>
         {q.loading && !q.data && <Loading />}
@@ -64,6 +65,42 @@ export function ReedsPage() {
         )}
       </Card>
     </div>
+  );
+}
+
+/** The weekly signal brief: switched on once, TEBOS files it every week for the person who switched it on. */
+function WeeklyBriefCard() {
+  const org = useOrg();
+  const q = useQuery(() => getWeeklyBrief(org.db, org.organisation.id), [org.organisation.id]);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<unknown>(null);
+  const on = Boolean(q.data?.active);
+  async function toggle() {
+    setBusy(true);
+    setError(null);
+    try {
+      await setWeeklyBrief(org.db, org.organisation.id, !on, q.data ?? null);
+      await q.reload();
+    } catch (err) {
+      setError(err);
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <Card title="Weekly signal brief" subtitle="Demand, cash, delivery, reliability and security, read from your own records against their thresholds.">
+      <div className="stack" data-testid="weekly-brief">
+        <p className="muted" role="status">
+          {q.loading && !q.data ? "Checking…" : on
+            ? "On: TEBOS files the brief once a week by itself, and it appears in your requests below."
+            : "Off: ask for it below whenever you want, or switch it on to get it every week."}
+        </p>
+        <ErrorNote error={q.error ?? error} title="The weekly brief wasn't changed" />
+        <div><button type="button" className="btn" disabled={busy || (q.loading && !q.data)} onClick={() => void toggle()}>
+          {busy ? "Saving…" : on ? "Switch off" : "Switch on every week"}
+        </button></div>
+      </div>
+    </Card>
   );
 }
 

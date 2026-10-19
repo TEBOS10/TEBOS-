@@ -188,4 +188,45 @@ describe.skipIf(!enabled)("REEDS: a request taken to a verified report", () => {
     expect(r2.status).toBe("completed");
     expect(r2.report.summary).toBe("Nothing needs your attention.");
   });
+
+  it("files the weekly signal brief a person switched on, once a week, and nothing else", async () => {
+    // only an admin or operator of the organisation switches it on, and it is filed for them
+    await expect(as(OWNER, "insert into public.reeds_standing_requests (org_id, kind) values ($1, 'signal_brief')", [org])).rejects.toThrow();
+    await as(ADMIN, "insert into public.reeds_standing_requests (org_id, kind) values ($1, 'signal_brief')", [org]);
+    const standing = (await pool.query("select requested_by from public.reeds_standing_requests where org_id = $1", [org])).rows[0];
+    expect(standing.requested_by).toBe(ADMIN);
+
+    // the server may not file any other kind, nor a brief nobody switched on
+    await expect(pool.query("insert into public.work_requests (org_id, kind, status, requested_by) values ($1, 'attention_today', 'received', $2)", [org, ADMIN]))
+      .rejects.toThrow(/admin or operator/);
+    await expect(pool.query("insert into public.work_requests (org_id, kind, status, requested_by) values ($1, 'signal_brief', 'received', $2)", [org2, OWNER]))
+      .rejects.toThrow(/admin or operator/);
+
+    const worker = new WorkWorker(new PgWorkStore(pool, "reeds-worker:it"));
+    await drain(worker);
+    const briefs = (await pool.query("select id, requested_by from public.work_requests where org_id = $1 and kind = 'signal_brief'", [org])).rows;
+    expect(briefs).toHaveLength(1);
+    expect(briefs[0].requested_by).toBe(ADMIN);
+    const r = await request(briefs[0].id);
+    expect({ status: r.status, failure: r.failure_detail }).toEqual({ status: "completed", failure: null });
+    expect(r.report.title).toBe("The weekly signal brief");
+    const t = await tasks(briefs[0].id);
+    // the requester is a platform admin: the platform's signals are read too
+    expect(t.map((x) => x.key)).toEqual(["signals.demand", "signals.cash", "signals.delivery", "signals.reliability", "signals.email", "signals.security"]);
+    expect(t.every((x) => x.status === "verified")).toBe(true);
+    const line = (key: string) => r.report.lines.find((l: { key: string }) => l.key === key);
+    expect(line("signals.security").text).toMatch(/^The audit trail is intact/);
+    expect(line("signals.security").attention).toBe(false);
+
+    // a second pass within the week files nothing more, and neither may the server by hand
+    await drain(worker);
+    expect((await pool.query("select count(*)::int as n from public.work_requests where org_id = $1 and kind = 'signal_brief'", [org])).rows[0].n).toBe(1);
+    await expect(pool.query("insert into public.work_requests (org_id, kind, status, requested_by) values ($1, 'signal_brief', 'received', $2)", [org, ADMIN]))
+      .rejects.toThrow(/six days/);
+
+    // switched off: nothing is filed, even when one is due
+    await as(ADMIN, "update public.reeds_standing_requests set active = false where org_id = $1", [org]);
+    await pool.query("update public.work_requests set created_at = now() - interval '8 days' where org_id = $1 and kind = 'signal_brief'", [org]).catch(() => {});
+    expect(await new PgWorkStore(pool, "reeds-worker:it").fileDueBrief()).toBeNull();
+  });
 });

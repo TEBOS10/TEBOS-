@@ -1318,6 +1318,36 @@ export type Database = {
         Update: { [_ in never]: never }
         Relationships: []
       }
+      reeds_standing_requests: {
+        Row: {
+          id: string
+          org_id: string
+          kind: string
+          active: boolean
+          requested_by: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          kind: string
+          active?: boolean
+          requested_by?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          kind?: string
+          active?: boolean
+          requested_by?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       work_requests: {
         Row: {
           id: string

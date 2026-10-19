@@ -1429,6 +1429,19 @@ export async function getWorkRequest(db: Db, id: string) {
   return { request, tasks };
 }
 
+export type StandingRequest = Row<"reeds_standing_requests">;
+
+/** The organisation's standing weekly signal brief, if one was ever switched on. */
+export async function getWeeklyBrief(db: Db, orgId: string): Promise<StandingRequest | null> {
+  return maybe(await db.from("reeds_standing_requests").select("*").eq("org_id", orgId).eq("kind", "signal_brief").maybeSingle());
+}
+
+/** Switch the weekly signal brief on or off. It is filed for whoever switches it on. */
+export async function setWeeklyBrief(db: Db, orgId: string, active: boolean, existing: StandingRequest | null): Promise<StandingRequest> {
+  if (existing) return must(await db.from("reeds_standing_requests").update({ active }).eq("id", existing.id).select().single());
+  return must(await db.from("reeds_standing_requests").insert({ org_id: orgId, kind: "signal_brief", active }).select().single());
+}
+
 export async function askWorkRequest(db: Db, orgId: string, kind: string, note: string | null) {
   return must(await db.from("work_requests").insert({ org_id: orgId, kind, note, status: "received" }).select().single());
 }

@@ -30,6 +30,22 @@ Update this list every run; strike items when they're done.
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 20 Oct 2026: the weekly signal brief (ADR 0007)
+
+- **Built:**
+  - migration `signal_brief`: request kind `signal_brief`, and table `reeds_standing_requests`, which an admin or
+    operator switches on;
+  - the request guard lets the server file only that brief, for the person who switched it on, while they hold the
+    role, at most once in six days;
+  - six signals, each with an independent verifier: demand, cash, delivery, reliability, email, and the audit chain;
+  - the worker files due briefs;
+  - the REEDS page has a "Weekly signal brief" switch.
+- **Proved:**
+  - core: typecheck passes, and 370 unit tests;
+  - `test:db`: every SQL file passes, and 63 integration tests, including the filing rules: only that kind, only once a
+    week, and nothing once switched off;
+  - web: typecheck passes, 63 unit tests, and 125 e2e tests.
+
 ## 19 Oct 2026 (late night): earn first (ADR 0006), and the stage-1 offer drafted
 
 - **The founder's ChatGPT strategy review** is adopted as ADR 0006, which sets three stages:
