@@ -1122,6 +1122,25 @@ export type Database = {
         }
         Relationships: []
       }
+      bridge_clients: {
+        Row: {
+          id: string
+          org_id: string
+          name: string
+          client_kind: string
+          token_hint: string
+          scopes: string[]
+          expires_at: string
+          created_by: string
+          created_at: string
+          revoked_at: string | null
+          revoked_by: string | null
+          last_used_at: string | null
+        }
+        Insert: { [_ in never]: never }
+        Update: { [_ in never]: never }
+        Relationships: []
+      }
       work_requests: {
         Row: {
           id: string
@@ -1137,6 +1156,9 @@ export type Database = {
           finished_at: string | null
           created_at: string
           updated_at: string
+          task_title: string | null
+          task_acceptance: string | null
+          task_executor: string | null
         }
         Insert: {
           id?: string
@@ -1152,6 +1174,9 @@ export type Database = {
           finished_at?: string | null
           created_at?: string
           updated_at?: string
+          task_title?: string | null
+          task_acceptance?: string | null
+          task_executor?: string | null
         }
         Update: {
           id?: string
@@ -1167,6 +1192,9 @@ export type Database = {
           finished_at?: string | null
           created_at?: string
           updated_at?: string
+          task_title?: string | null
+          task_acceptance?: string | null
+          task_executor?: string | null
         }
         Relationships: []
       }
@@ -1189,6 +1217,8 @@ export type Database = {
           error: string | null
           started_at: string | null
           finished_at: string | null
+          claimed_by: string | null
+          lease_until: string | null
           created_at: string
           updated_at: string
         }
@@ -1210,6 +1240,8 @@ export type Database = {
           error?: string | null
           started_at?: string | null
           finished_at?: string | null
+          claimed_by?: string | null
+          lease_until?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -1231,6 +1263,8 @@ export type Database = {
           error?: string | null
           started_at?: string | null
           finished_at?: string | null
+          claimed_by?: string | null
+          lease_until?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -3370,6 +3404,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      issue_bridge_client: {
+        Args: { p_org: string; p_name: string; p_kind: string; p_scopes: string[]; p_days?: number }
+        Returns: { client_id: string; token: string; expires_at: string }[]
+      }
+      revoke_bridge_client: {
+        Args: { p_client: string }
+        Returns: boolean
+      }
+      review_work_task: {
+        Args: { p_task: string; p_ok: boolean; p_note?: string | null }
+        Returns: string
+      }
+      audit_chain_status: {
+        Args: Record<PropertyKey, never>
+        Returns: { org_id: string | null; status: string; events: number; first_id: number; last_id: number; last_hash: string; first_bad_id: number | null; reason: string | null; timezone_hint: string | null }[]
+      }
       approve_step_proposal: {
         Args: { p_proposal: string; p_note?: string | null }
         Returns: string

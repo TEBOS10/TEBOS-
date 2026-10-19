@@ -7,7 +7,7 @@
 //
 // Mirrors the kind check on public.work_requests (test/schema-parity.test.ts).
 
-export type RequestKind = "attention_today" | "business_status";
+export type RequestKind = "attention_today" | "business_status" | "external_task";
 
 /** Who a task's figures are about: the requester's organisation, or the whole platform (platform admins only). */
 export type TaskScope = "org" | "platform";
@@ -81,13 +81,40 @@ export const REQUEST_KINDS: Record<RequestKind, { title: string; description: st
     title: "How are my businesses doing?",
     description: "Objectives against their targets, objectives with no measured reading or past their date, and steps that still depend on the founder alone.",
   },
+  external_task: {
+    title: "Work for an AI client",
+    description: "One piece of work with your acceptance test, done by an AI client through the Model Bridge and reviewed by a person before it counts.",
+  },
 };
+
+/** The AI clients an external task can be given to (mirrors work_requests.task_executor). */
+export const EXTERNAL_EXECUTORS = ["external.coding_agent", "external.chat_assistant"] as const;
+export type ExternalExecutor = (typeof EXTERNAL_EXECUTORS)[number];
+export const isExternalExecutor = (e: string): e is ExternalExecutor => e.startsWith("external.");
+
+/** What the person asked for, for an external task. */
+export interface ExternalAsk {
+  title: string;
+  acceptance: string;
+  executor: ExternalExecutor;
+}
+
+/** What an AI client hands in. A person reviews it; it is never verified by the client. */
+export interface ExternalResult {
+  summary: string;
+  evidence?: string[];
+  needs_decision?: boolean;
+}
 
 export const isRequestKind = (k: string): k is RequestKind => k in REQUEST_KINDS;
 
 /** The plan for a request: the same request by the same kind of person always gets the same tasks. */
-export function planRequest(kind: RequestKind, requester: { platformAdmin: boolean }): TaskSpec[] {
+export function planRequest(kind: RequestKind, requester: { platformAdmin: boolean }, ask?: ExternalAsk): TaskSpec[] {
   switch (kind) {
+    case "external_task":
+      if (!ask) throw new Error("an external task needs its title, acceptance test and AI client");
+      return [{ key: "external.work", title: ask.title, executor: ask.executor, acceptance: ask.acceptance, scope: "org",
+        none: "", some: () => "" }];
     case "attention_today":
       return ATTENTION_TASKS.filter((t) => t.scope === "org" || requester.platformAdmin);
     case "business_status":
@@ -123,6 +150,12 @@ export interface WorkReport {
   title: string;
   summary: string;
   lines: ReportLine[];
+}
+
+/** The report line for reviewed AI work: what the client handed in, and the reviewer's note. */
+export function externalLine(title: string, result: ExternalResult, reviewNote: string | null): ReportLine {
+  const text = reviewNote ? `${result.summary} Reviewed: ${reviewNote}` : result.summary;
+  return { key: "external.work", title, text, attention: Boolean(result.needs_decision), checked: true };
 }
 
 export function composeReport(kind: RequestKind, lines: ReportLine[]): WorkReport {

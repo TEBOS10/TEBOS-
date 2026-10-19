@@ -246,6 +246,25 @@ function answerRpc(tables: FakeSupabase["tables"], name: string, args: Record<st
     return now;
   }
   const t = tables as Record<string, Array<Record<string, unknown>>>;
+  if (name === "issue_bridge_client") {
+    const token = `tbk_${"0".repeat(64)}`;
+    const id = crypto.randomUUID();
+    const expires_at = new Date(Date.now() + Number(args.p_days ?? 30) * 864e5).toISOString();
+    (t.bridge_clients ??= []).unshift({ id, org_id: args.p_org, name: args.p_name, client_kind: args.p_kind, token_hint: token.slice(0, 12),
+      scopes: args.p_scopes, expires_at, created_by: USER_ID, created_at: now, revoked_at: null, revoked_by: null, last_used_at: null });
+    return [{ client_id: id, token, expires_at }];
+  }
+  if (name === "revoke_bridge_client") {
+    const c = t.bridge_clients?.find((x) => x.id === args.p_client);
+    if (c) Object.assign(c, { revoked_at: now, revoked_by: USER_ID });
+    return Boolean(c);
+  }
+  if (name === "review_work_task") {
+    const task = t.work_tasks?.find((x) => x.id === args.p_task);
+    const ok = (args.p_ok as unknown) === true;
+    if (task) Object.assign(task, { status: ok ? "verified" : "rejected", verification: { ok, recount: null, detail: args.p_note ?? "Reviewed against its acceptance test and accepted.", reviewed_by: USER_ID } });
+    return ok ? "verified" : "rejected";
+  }
   if (name === "approve_step_proposal") {
     // retires the founder step and puts the new one in its place, as the database function does
     const prop = t.step_proposals?.find((x) => x.id === args.p_proposal);
