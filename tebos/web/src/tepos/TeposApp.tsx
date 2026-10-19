@@ -12,6 +12,7 @@ import { supabase } from "../lib/supabase";
 import { AccountPage } from "../pages/AccountPage";
 import { NotFound } from "../pages/NotFound";
 import { PropertyCasePage, PropertyCasesPage } from "../pages/PropertyPage";
+import { PropertyMonthPage } from "../pages/PropertyMonthPage";
 import { PropertyReportPage } from "../pages/PropertyReportPage";
 import { ReedsPage, ReedsRequestPage } from "../pages/ReedsPage";
 import { ResetPassword } from "../pages/ResetPassword";
@@ -35,6 +36,8 @@ const ROUTES: Array<[string, (p: Record<string, string>) => ReactNode]> = [
   ["/property", () => <PropertyCasesPage />],
   ["/property/:id", (p) => <PropertyCasePage id={p.id!} />],
   ["/property/:id/report", (p) => <PropertyReportPage id={p.id!} />],
+  ["/property/:id/month", (p) => <PropertyMonthPage id={p.id!} />],
+  ["/property/:id/month/:month", (p) => <PropertyMonthPage id={p.id!} month={p.month!} />],
   ["/account", () => <AccountPage />],
   ["/reeds", () => <ReedsPage />],
   ["/reeds/:id", (p) => <ReedsRequestPage id={p.id!} />],

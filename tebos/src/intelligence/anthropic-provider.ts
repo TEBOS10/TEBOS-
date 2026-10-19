@@ -13,6 +13,14 @@ import { ReasoningError, type ReasoningProvider, type StructuredRequest, type St
 
 export const DEFAULT_CLAUDE_MODEL = "claude-opus-5";
 
+/** The header that names the workspace for a key that isn't scoped to one; nothing when unset. */
+export function workspaceHeaders(workspaceId: string | undefined): Record<string, string> {
+  const id = workspaceId?.trim();
+  if (!id) return {};
+  if (!/^[A-Za-z0-9_-]{4,128}$/.test(id)) throw new Error("ANTHROPIC_WORKSPACE_ID doesn't look like a workspace ID");
+  return { "anthropic-workspace-id": id };
+}
+
 export class AnthropicProvider implements ReasoningProvider {
   readonly name = "anthropic";
   private readonly client: Anthropic;
@@ -21,8 +29,9 @@ export class AnthropicProvider implements ReasoningProvider {
     private readonly model: string = process.env.TEBOS_REASONING_MODEL || DEFAULT_CLAUDE_MODEL,
     client?: Anthropic,
   ) {
-    // Credentials come from the environment (ANTHROPIC_API_KEY); never hard-coded.
-    this.client = client ?? new Anthropic();
+    // Credentials come from the environment (ANTHROPIC_API_KEY); never hard-coded. A key that isn't
+    // scoped to a workspace must name one on every request: ANTHROPIC_WORKSPACE_ID (an ID, not a secret).
+    this.client = client ?? new Anthropic({ defaultHeaders: workspaceHeaders(process.env.ANTHROPIC_WORKSPACE_ID) });
   }
 
   async structured(request: StructuredRequest): Promise<StructuredResponse> {

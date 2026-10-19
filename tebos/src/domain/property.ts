@@ -578,6 +578,81 @@ export function scorecard(baseline: Baseline | null, reviews: Review[], asOf: st
 }
 
 // ---------------------------------------------------------------------------
+// The monthly subscription: plans, and the owner's monthly update
+// ---------------------------------------------------------------------------
+
+/** The monthly plans the founder decided on 19 Oct 2026 (docs/pra-pricing.md). Rand a month, excluding VAT. */
+export const PRA_PLANS = [
+  { key: "single", label: "Single", minUnits: 1, maxUnits: 1, monthly: 750 },
+  { key: "portfolio", label: "Portfolio", minUnits: 2, maxUnits: 5, monthly: 1950 },
+  { key: "portfolio_plus", label: "Portfolio plus", minUnits: 6, maxUnits: 15, monthly: 3950 },
+  { key: "larger", label: "Larger portfolio", minUnits: 16, maxUnits: null, monthly: null },
+] as const;
+export type PraPlan = (typeof PRA_PLANS)[number];
+/** The founding-client offer: the first five clients, with written consent to use their measured results anonymously. */
+export const FOUNDING_OFFER = { clients: 5, percentOff: 40, months: 6 } as const;
+
+/** The plan for a number of rentable units. Unknown units give no plan, never a guess. */
+export function planForUnits(units: number | null): PraPlan | null {
+  if (units === null || !Number.isInteger(units) || units < 1) return null;
+  return PRA_PLANS.find((p) => units >= p.minUnits && (p.maxUnits === null || units <= p.maxUnits)) ?? null;
+}
+
+const MONTH = /^\d{4}-(0[1-9]|1[0-2])$/;
+const monthEnd = (month: string) => {
+  const [y, m] = month.split("-").map(Number) as [number, number];
+  return new Date(Date.UTC(y, m, 0)).toISOString().slice(0, 10);
+};
+
+export interface MonthlyUpdate {
+  month: string;
+  from: string;
+  to: string;
+  plan: PraPlan | null;
+  /** Work finished this month, with its evidence. */
+  done: Array<{ title: string; owner: string; completedOn: string; evidence: string }>;
+  /** Open work, soonest deadline first. */
+  next: Array<{ title: string; owner: string; dueOn: string; status: WorkstreamStatus }>;
+  exceptions: Array<{ title: string; reason: string }>;
+  /** The latest outcome review on or before the month's end, against the frozen baseline. */
+  outcome: { reviewOn: string; cashFlowChange: Metric; vsTarget: number | null } | null;
+  /** Plain lines for the owner. Nothing in them is estimated. */
+  summary: string[];
+}
+
+/** What was done this month, what is next, and the figures then and now. Computed only from recorded work and reviews. */
+export function monthlyUpdate(input: { month: string; workstreams: Workstream[]; score: Scorecard; units: number | null; today: string }): MonthlyUpdate {
+  if (!MONTH.test(input.month)) throw new Error("A month is written YYYY-MM.");
+  const from = `${input.month}-01`;
+  const to = monthEnd(input.month);
+  const asOf = input.today.slice(0, 10) < to ? input.today.slice(0, 10) : to;
+  const done = input.workstreams
+    .filter((w) => w.status === "done" && w.completedOn !== null && w.completedOn >= from && w.completedOn <= to)
+    .sort((a, b) => a.completedOn!.localeCompare(b.completedOn!))
+    .map((w) => ({ title: w.title, owner: w.owner, completedOn: w.completedOn!, evidence: w.completionEvidence ?? "" }));
+  const next = input.workstreams
+    .filter((w) => w.status !== "done" && w.status !== "cancelled")
+    .sort((a, b) => a.dueOn.localeCompare(b.dueOn))
+    .map((w) => ({ title: w.title, owner: w.owner, dueOn: w.dueOn, status: w.status }));
+  const exceptions = workstreamExceptions(input.workstreams, asOf).map(({ title, reason }) => ({ title, reason }));
+  const row = [...input.score.rows].filter((r) => r.reviewOn <= to).at(-1) ?? null;
+  const outcome = row ? { reviewOn: row.reviewOn, cashFlowChange: row.cashFlowChange, vsTarget: row.vsTarget } : null;
+
+  const summary: string[] = [];
+  summary.push(done.length ? `${done.length} piece${done.length === 1 ? "" : "s"} of work finished this month, each with its evidence.` : "No work was finished this month.");
+  if (next[0]) summary.push(`Next: ${next[0].title} (${next[0].owner}), due ${next[0].dueOn}.`);
+  if (!input.score.baseline) summary.push("No baseline is captured yet, so results can't be measured.");
+  else if (!outcome) summary.push("No outcome review yet, so there is no measured result to report.");
+  else if (outcome.cashFlowChange.value === null) summary.push(`The review of ${outcome.reviewOn} can't be compared on cash flow: figures are missing.`);
+  else {
+    const v = outcome.cashFlowChange.value;
+    summary.push(`Cash flow is ${money(Math.abs(v))} a month ${v >= 0 ? "above" : "below"} the baseline (review of ${outcome.reviewOn}).`);
+  }
+  if (exceptions.length) summary.push(`${exceptions.length} item${exceptions.length === 1 ? " needs" : "s need"} attention.`);
+  return { month: input.month, from, to, plan: planForUnits(input.units), done, next, exceptions, outcome, summary };
+}
+
+// ---------------------------------------------------------------------------
 // The Property Opportunity Assessment report
 // ---------------------------------------------------------------------------
 
