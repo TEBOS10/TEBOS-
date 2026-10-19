@@ -21,6 +21,12 @@ the control plane itself.
 **Earn first (ADR 0006, 19 Oct):** stage 1 is one paying PRA owner within 30 days. Enterprise work (SOC 2, SSO,
 dedicated databases, marketplaces) waits for a buyer who asks for it and revenue that pays for it.
 
+**What stays valuable and how TEBOS adapts (ADR 0007, 19 Oct):**
+- **Durable assets:** the system of record, the trust layer, measured outcomes, the niche relationships.
+- **Replaceable on purpose:** models and tools.
+- **REEDS keeps a signal register:** demand, cash, delivery, reliability, cost, competitors and technology.
+- **Next:** the weekly signal brief.
+
 The founder runs several things at once: TEBOS (the builder, which also sells to outside businesses), property
 (a newly qualified agent, the Property Revenue Architect business, and property qualifications towards asset
 management), Tidy Capital (the reserve fund and investing) and the founder's own academics. The company has to
