@@ -74,7 +74,7 @@ dependency) · **Not started**.
 | Property Revenue Architecture: case workspace (intake, evidence room, labelled economics, pathways, gates, history) | Done | 16 Oct: migration `property_cases`, `src/domain/property.ts`; tests `property.test` (18), SQL `99zd`, e2e `property.spec` (6). See `docs/property-revenue-architecture.md` |
 | Property Opportunity Assessment report, JSON and CSV export | Done | Generated from stored records; verified, owner-reported and estimated kept apart |
 | Execution workstreams and outcome scorecard | Done | 16 Oct: migration `property_execution`; SQL `99ze`; `property.test` (25); e2e `property.spec` (8). The baseline is copied by the database and frozen; actuals are never estimates |
-| Monthly subscription view and pricing from a market file | Not started | Price is the founder's (decision 10) |
+| Monthly subscription view and pricing from a market file | Price decided 19 Oct (`pra-pricing.md`); view not started | First invoice waits on decision 10b |
 | Secure document upload | Not started | With the private vault |
 
 ## Housekeeping
