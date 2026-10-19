@@ -38,7 +38,7 @@ code under `web/tepos/` and `web/src/tepos/`.
 | Entry and page | `tebos/web/tepos/index.html`, `tebos/web/tepos/main.tsx` |
 | App, sign-in gate and menu | `tebos/web/src/tepos/TeposApp.tsx` |
 | The six portals and what the unbuilt ones will hold | `tebos/web/src/tepos/portals.ts` (tested by `portals.test.ts`) |
-| Home (the city) and portal pages | `TeposCity.tsx`, `TeposPage.tsx`, `tepos.css` |
+| Home (the city) and portal pages | `TeposCity3D.tsx` and `city3d.ts` (the 3D city), `TeposCity.tsx` (the drawn city, for reduced motion and devices without a graphics chip), `TeposPage.tsx`, `tepos.css` |
 | Build config | `tebos/web/vite.tepos.config.ts` |
 | End-to-end test | `tebos/web/e2e/tepos.spec.ts` (also `agent.spec.ts`, `resilience.spec.ts`, `property.spec.ts`, `two-step.spec.ts`) |
 

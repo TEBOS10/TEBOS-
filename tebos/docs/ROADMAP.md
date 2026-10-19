@@ -79,7 +79,9 @@ colours, and ideas shouldn't wait for the founder.
 - REEDS puts it to the founder, and to the client where it affects them, for a yes or no. Nothing is built from a
   proposal until it is approved.
 - Proposals stay inside the agreed daily, weekly and monthly deliverables. The team doesn't overextend.
-- First proposal, now built for review: the TEPOS city.
+- First proposal, now built for review: the TEPOS city. On 17 Oct the founder asked for it in 3D, building itself
+  like a house rising from its blueprint, and moving around: done (`web/src/tepos/city3d.ts`). Each building stops
+  where its portal really is: finished and lit, a frame with a crane, or a blueprint.
 - Next ideas to put forward:
   - the TEBOS board seen as a district of buildings (one per department), shown alongside the chessboard;
   - day and night in the TEPOS city following Tidy Capital's runway;
