@@ -64,21 +64,21 @@ not a verdict on whether they work.
 
 ## Creative systems
 
-All of these are proposals waiting for the founder's yes (`tepos/creative-proposals.md`), except the city.
+The founder said yes to proposals 1 to 5 on 19 Oct (`tepos/creative-proposals.md`), so each is at stage 1. None is built yet.
 
 | System | Stage | Note |
 |---|---|---|
-| Interactive experience | 1 | The TEPOS city (3D, merged #70) exists. "Builds as verified work progresses" is proposal 1 |
-| Content and campaign production | Not yet identified | Proposals 4 and 5 |
-| Visualisation and simulation | Not yet identified | Proposal 3. Always labelled illustrative |
-| Environmental intelligence | Not yet identified | Proposal 2. Public information only, no tracking of people |
-| Creative communications | Not yet identified | Proposals 4 and 5. Drafts only |
+| Interactive experience | 1 | The TEPOS city (3D, merged #70) exists. "Builds as verified work progresses" is proposal 1 (yes, first in order) |
+| Content and campaign production | 1 | Proposals 4 and 5 |
+| Visualisation and simulation | 1 | Proposal 3. Always labelled illustrative |
+| Environmental intelligence | 1 | Proposal 2. Public information only, no tracking of people |
+| Creative communications | 1 | Proposals 4 and 5. Drafts only |
 
 ## Industry systems
 
 | System | Where | Stage | Evidence and gap |
 |---|---|---|---|
-| Property Revenue Architecture | TEPOS (Tidy Enterprise) | Built, unused | 0 cases. Priority 1 is the monthly subscription (price: decision 10) |
+| Property Revenue Architecture | TEPOS (Tidy Enterprise) | Built, unused | 0 cases. Priority 1 is the monthly subscription. Recommended price in `pra-pricing.md`, waiting for the founder (decision 10) |
 | Real Estate Office OS | TEPOS agent office (merged) | Built slice 1 | Listings and people with next steps. Documents, FFC path, relationships and marketing are next (founder, 19 Oct) |
 | Hospitality OS | — | Not started | Client tile only |
 | Sports and Marketing OS | BAME's own app (`bame/`) | Separate app | Not a TEBOS module. Its working parts are candidates for the library |

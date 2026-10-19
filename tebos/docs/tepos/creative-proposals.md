@@ -1,20 +1,27 @@
-# Creative proposals: waiting for the founder's yes or no
+# Creative proposals: the founder said yes (19 Oct 2026)
 
 The creative team's list (ROADMAP, "The creative team"):
 - Each proposal names the deliverable it serves, its cost and its risk.
 - Nothing here is built until the founder says yes, and the client too, where it affects them.
 - Claims made in the source videos (prices, "built from a few photos") are the creators' own, not verified.
 
+**Founder's answer, 19 Oct 2026:** yes to proposals 1 to 5. Each is now at stage 1, identified (ADR 0005).
+- A yes is not a go-ahead to build everything at once. They are built in the suggested order below, after the
+  real-estate work.
+- These still need their own decision when reached: any spend on a rendering tool (3), any data source key (2), and
+  any social account access (4).
+- The day-and-night idea wasn't part of this answer, so it is still waiting.
+
 **Sources:** five short videos the founder sent (15 to 18 Oct 2026). They were reviewed from frames and on-screen captions;
 the audio wasn't transcribed.
 
 | # | Proposal | Serves | Status |
 |---|---|---|---|
-| 1 | Portals that build themselves | TEPOS city; Property Revenue Architecture | Waiting |
-| 2 | A public-awareness globe | Resilience (environmental intelligence); TEBOS world view | Waiting |
-| 3 | Labelled 3D walkthroughs of a property | Hospitality OS; Real Estate Job; Property Revenue Architecture | Waiting |
-| 4 | REEDS drafts the social calendar | TEBOS marketing; client social media (BAME, Grape Studios) | Waiting |
-| 5 | Social skills for REEDS: post, comment, reply | Same as 4 (one feature with it) | Waiting |
+| 1 | Portals that build themselves | TEPOS city; Property Revenue Architecture | Yes, 19 Oct |
+| 2 | A public-awareness globe | Resilience (environmental intelligence); TEBOS world view | Yes, 19 Oct |
+| 3 | Labelled 3D walkthroughs of a property | Hospitality OS; Real Estate Job; Property Revenue Architecture | Yes, 19 Oct |
+| 4 | REEDS drafts the social calendar | TEBOS marketing; client social media (BAME, Grape Studios) | Yes, 19 Oct |
+| 5 | Social skills for REEDS: post, comment, reply | Same as 4 (one feature with it) | Yes, 19 Oct |
 | — | Earlier: day and night in the city following Tidy Capital's runway | TEPOS city | Waiting |
 
 ## 1. Portals that build themselves
