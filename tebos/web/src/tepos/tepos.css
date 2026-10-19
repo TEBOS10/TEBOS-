@@ -73,3 +73,8 @@
 .city3d-progress { display: block; width: 220px; max-width: 100%; height: 3px; border-radius: 2px; background: rgba(241, 228, 207, .2); overflow: hidden; }
 .city3d-progress > span { display: block; height: 100%; background: #d9b77e; transition: width .6s ease; }
 @media (max-width: 600px) { .city3d-stage, .city3d-loading { height: 62vh; min-height: 340px; } .city3d-caption strong { font-size: 22px; } .city3d-label { font-size: 11px; padding: 4px 7px; } .city3d-status { font-size: 9px; } }
+
+/* The vault's lists: the agency's papers still to file, and recent openings. */
+.pra-list { list-style: none; margin: 8px 0; padding: 0; display: grid; gap: 6px; }
+.pra-list li { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 13px; }
+[data-testid="vault"] h3 { font-size: 13px; margin: 16px 0 6px; }

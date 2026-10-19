@@ -153,7 +153,10 @@ colours, and ideas shouldn't wait for the founder.
    development, and what the FSCA requires to manage other people's money) as objectives with dates and evidence of
    completion.
 5. **The private vault (IREKUN).** *Started 16 Oct with Strategic Resilience slice 1 (docs/resilience/blueprint.md):
-   private organisations (one member, ever), and financial resilience (runway, income by stream and cadence).*
+   private organisations (one member, ever), and financial resilience (runway, income by stream and cadence).
+   Documents built 19 Oct (migration `tepos_vault`): files in a private storage bucket, by folder, never changed,
+   each with its SHA-256 fingerprint; every opening logged before a one-minute link. Shown in the Real Estate Job
+   portal as "Your office files". Next: search ("REEDS, find my document").*
    The founder's own organisation inside TEBOS (free for now): documents stored privately,
    every read audited, shared only through short-lived signed links, searchable ("REEDS, find my document").
    Built so it can move to its own Supabase project, out of the client database, once income pays for one (the

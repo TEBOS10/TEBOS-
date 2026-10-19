@@ -168,6 +168,87 @@ export type Database = {
         }
         Relationships: []
       }
+      vault_documents: {
+        Row: {
+          id: string
+          org_id: string
+          folder: string
+          pack_item: string | null
+          title: string
+          file_name: string
+          mime_type: string
+          size_bytes: number
+          sha256: string
+          storage_path: string
+          stored_at: string | null
+          note: string | null
+          archived_at: string | null
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          folder: string
+          pack_item?: string | null
+          title: string
+          file_name: string
+          mime_type: string
+          size_bytes: number
+          sha256: string
+          storage_path: string
+          stored_at?: string | null
+          note?: string | null
+          archived_at?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          folder?: string
+          pack_item?: string | null
+          title?: string
+          file_name?: string
+          mime_type?: string
+          size_bytes?: number
+          sha256?: string
+          storage_path?: string
+          stored_at?: string | null
+          note?: string | null
+          archived_at?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      vault_reads: {
+        Row: {
+          id: string
+          org_id: string
+          document_id: string
+          user_id: string
+          opened_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          document_id: string
+          user_id: string
+          opened_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          document_id?: string
+          user_id?: string
+          opened_at?: string
+        }
+        Relationships: []
+      }
       agent_listings: {
         Row: {
           id: string
@@ -3500,6 +3581,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      vault_confirm: {
+        Args: { p_document: string }
+        Returns: string
+      }
+      vault_open: {
+        Args: { p_document: string }
+        Returns: string
+      }
       issue_bridge_client: {
         Args: { p_org: string; p_name: string; p_kind: string; p_scopes: string[]; p_days?: number }
         Returns: { client_id: string; token: string; expires_at: string }[]

@@ -42,6 +42,25 @@ Update this list every run; strike items when they're done.
 - **The daily run** is now a morning check and one prepared step. It is read-only on live systems, does branch-only
   work, and never merges, deploys or applies a migration without the founder's word.
 
+## 19 Oct 2026: the private vault, "store these documents in my office"
+
+- **Asked by the founder:** store the agency's papers (16: the forms, the onboarding pack, the PPRA application,
+  the employment letter, the flyer) "in my office, organised professionally". The founder chose to build the vault
+  now, in the current database, rather than wait for its own project (decision 11 still stands for later).
+- **Not in the repository:** it is public, and two of the papers carry the founder's ID number. The founder uploads
+  the files from TEPOS; nothing passes through GitHub or this session.
+- **Built** (migration `tepos_vault`, additive): a private storage bucket (PDFs and photos, up to 20 MB) and
+  `vault_documents` with six folders (licence, agency forms, onboarding, deals, marketing, personal), and the
+  agency's 16 papers listed so the screen shows what is still to file.
+  - **Never changed:** no rule lets anyone replace or remove a file; its path, size and SHA-256 fingerprint are
+    frozen. Removing one is the founder's decision, done by hand.
+  - **Stored only when it is there:** the database marks a file stored only after it sees it in storage.
+  - **Every opening logged:** `vault_open` writes the read first; the storage rule lets a link be signed only
+    within a minute of that record, and the link lasts one minute. The read log can't be changed or wiped.
+  - Only in a private organisation, for its owner, after two-step sign-in. The audit trail is redacted.
+- **Tests:** SQL `99zo_tepos_vault.sql`, `test/vault.test.ts` (rules and parity), e2e in `agent.spec.ts`.
+- **Live:** waits on the founder's yes for the migration.
+
 ## 19 Oct 2026 (later): both migrations live, and the audit trail checked: intact
 
 At the founder's word ("do it"), applied with the Supabase connector under their names: `audit_verify`, then

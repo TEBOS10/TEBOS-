@@ -16,7 +16,7 @@ function forbid(dir, pattern, why) {
   for (const f of files(dir).filter(text)) if (pattern.test(readFileSync(f, "utf8"))) problems.push(`${f}: ${why}`);
 }
 
-forbid("dist", /TEPOS|Tidy Capital|IREKUN|tepos-mark|agent_listings|agent_contacts/, "TEBOS must not contain TEPOS");
+forbid("dist", /TEPOS|Tidy Capital|IREKUN|tepos-mark|agent_listings|agent_contacts|vault_documents|tepos-vault/, "TEBOS must not contain TEPOS");
 for (const d of ["dist", "dist-tepos"]) forbid(d, /anthropic|elevenlabs|claude/i, "names a provider");
 
 if (problems.length) {

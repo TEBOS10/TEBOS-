@@ -14,6 +14,7 @@ import { Link } from "../lib/router";
 import { useOrg } from "../lib/session";
 import { useQuery } from "../lib/useQuery";
 import { checklistSummary, DealDocuments, FfcPath } from "./AgentCompliance";
+import { Vault } from "./Vault";
 import {
   deleteContact, deleteListing, listContacts, listDealItems, listListings, saveContact, saveListing, type ContactRow, type ListingRow,
 } from "./agentData";
@@ -191,6 +192,7 @@ function Office() {
       </section>
 
       <FfcPath />
+      <Vault />
     </>
   );
 }
