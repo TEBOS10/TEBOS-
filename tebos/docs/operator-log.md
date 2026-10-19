@@ -8,6 +8,7 @@ Update this list every run; strike items when they're done.
 
 | # | Decision | What it unblocks |
 |---|---|---|
+| 21 | **Railway: choose a plan (Hobby, about USD 5 a month).** The trial expired, and Railway stopped the worker at 12:06 UTC on 19 Oct. Nothing in TEBOS runs in the background until then: BAME monitoring, REEDS, analysis, payments and reminders. After the plan is chosen, TEBOS reconnects the worker to `main` itself | Everything TEBOS does on its own |
 | 0 | **Run the first real operating systems.** Pick real businesses (BAME first, then pilots) and let TEBOS lay down their blueprint | Real proof. The ten blueprints are templates, not client work; only real clients make a portfolio |
 | 1 | Paystack secret key on the worker, and the webhook `https://tebos-worker-production.up.railway.app/webhooks/paystack` | Taking the first payment, and monthly invoices |
 | 2b | **Simpler now (19 Oct):** no new key is needed. Send the **workspace ID** from console.anthropic.com → Settings → Workspaces (it looks like `wrkspc_…`; an ID, not a secret). TEBOS sets it as `ANTHROPIC_WORKSPACE_ID` on the worker, so the existing key is accepted | Findings from scans and interviews: the next product step |
@@ -41,7 +42,9 @@ Update this list every run; strike items when they're done.
   - `ANTHROPIC_WORKSPACE_ID` is sent as that header (`workspaceHeaders`, tested), so the existing key works once the
     workspace ID is set.
   - Decision 2b now asks only for that ID.
-- **Next:** redeploy the worker from `main` and confirm it is running.
+- **Then found:** Railway refuses the redeploy with "Your trial has expired". That's why the worker was stopped. A plan
+  is money, so it's the founder's (decision 21).
+- **Next:** reconnect the worker to `main` as soon as the plan is active.
 
 ## 19 Oct 2026 (night): TEBOS's own model gateway, so analysis no longer depends on one provider
 
