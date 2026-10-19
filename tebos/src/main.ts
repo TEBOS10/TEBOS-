@@ -173,7 +173,12 @@ const billing = new BillingWorker(new PgBillingStore(pool, `billing-worker:${wor
 const maintenance = new MaintenanceWorker(new PgMaintenanceStore(pool, `maintenance-worker:${workerId}`), log);
 const reeds = new WorkWorker(new PgWorkStore(pool, `reeds-worker:${workerId}`), log);
 
-const port = process.env.PORT ? Number(process.env.PORT) : null;
+// Batch mode (TEBOS_WORKER_MODE=batch) is for a scheduled run, e.g. a Railway cron service on the free plan:
+// do every pending job until a full pass finds nothing (or the time cap), then exit. No webhook server.
+const batch = process.env.TEBOS_WORKER_MODE === "batch";
+const batchDeadline = Date.now() + Number(process.env.TEBOS_BATCH_MAX_MS ?? 240_000);
+
+const port = process.env.PORT && !batch ? Number(process.env.PORT) : null;
 const server = port ? createWebhookServer(executionStore, log, paystackKey ? { paystack: { secretKey: paystackKey, store: pipelineStore } } : {}) : null;
 server?.listen(port!, () => log({ event: "webhooks.listening", port }));
 
@@ -187,6 +192,7 @@ for (const signal of ["SIGINT", "SIGTERM"] as const) {
 
 log({
   event: "worker.started",
+  mode: batch ? "batch" : "continuous",
   pollMs,
   stages: { acquisition: true, intelligence: intelligenceEnabled, execution: executionEnabled, webhooks: Boolean(server), voiceInterviews: voiceEnabled, intakeCalls: intakeVoiceEnabled, enquiryAlerts: alertsEnabled,
     pipeline: { payments: Boolean(paystackKey), clientEmails: Boolean(process.env.RESEND_API_KEY) } },
@@ -214,7 +220,12 @@ while (!stopping) {
   const billed = !stopping ? await step("billing", () => billing.runOnce()) : false;
   const maintained = !stopping ? await step("maintenance", () => maintenance.runOnce()) : false;
   const answered = !stopping ? await step("reeds", () => reeds.runOnce()) : false;
-  if (!acquired && !analysed && !executed && !interviewed && !intook && !monitored && !alerted && !piped && !billed && !maintained && !answered && !stopping) await new Promise((r) => setTimeout(r, pollMs));
+  const idle = !acquired && !analysed && !executed && !interviewed && !intook && !monitored && !alerted && !piped && !billed && !maintained && !answered;
+  if (batch && (idle || Date.now() >= batchDeadline)) {
+    log({ event: "worker.batch_done", reason: idle ? "nothing left to do" : "time cap" });
+    break;
+  }
+  if (idle && !stopping) await new Promise((r) => setTimeout(r, pollMs));
 }
 await new Promise<void>((r) => (server ? server.close(() => r()) : r()));
 await pool.end();

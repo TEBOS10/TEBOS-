@@ -8,9 +8,10 @@ Update this list every run; strike items when they're done.
 
 | # | Decision | What it unblocks |
 |---|---|---|
+| 21 | **Railway: switch to the Free plan (USD 0).** The trial expired and stopped the worker. The worker now runs every 15 minutes, does its work and stops (batch mode), which fits inside the Free plan's USD 1 monthly credit. Steps: railway.com → sign in → the yellow "trial expired" banner (or Account → Plans) → choose **Free**. Then tell TEBOS, which reconnects the worker to `main` | Everything TEBOS does on its own: BAME monitoring, REEDS, analysis, reminders |
 | 0 | **Run the first real operating systems.** Pick real businesses (BAME first, then pilots) and let TEBOS lay down their blueprint | Real proof. The ten blueprints are templates, not client work; only real clients make a portfolio |
 | 1 | Paystack secret key on the worker, and the webhook `https://tebos-worker-production.up.railway.app/webhooks/paystack` | Taking the first payment, and monthly invoices |
-| 2b | **Simpler now (19 Oct):** no new key is needed. Send the **workspace ID** from console.anthropic.com → Settings → Workspaces (it looks like `wrkspc_…`; an ID, not a secret). TEBOS sets it as `ANTHROPIC_WORKSPACE_ID` on the worker, so the existing key is accepted | Findings from scans and interviews: the next product step |
+| ~~2b~~ | ~~Workspace ID~~ **Done 19 Oct:** the founder sent it, and `ANTHROPIC_WORKSPACE_ID` is set on the worker. Analysis resumes when the worker runs again (decision 21) | — |
 | 2 | Resend key and a verified sending domain | Every client email: payment links, contracts, invoices, reminders, the next-day outline after an intake call |
 | 2c | A phone number on the voice provider, and the intake agent (`ELEVENLABS_INTAKE_AGENT_ID`, set-up in the README) | TEBOS ringing prospects from meetings |
 | 3 | A lawyer approves the contract templates (standard and company) and advises on POPIA | Signing clients |
@@ -29,6 +30,23 @@ Update this list every run; strike items when they're done.
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 19 Oct 2026 (late): the worker runs free, every 15 minutes
+
+The founder has no budget for a paid plan ("that's your job"). So the worker no longer needs to run all the time.
+
+- **Built:** batch mode (`TEBOS_WORKER_MODE=batch`) does every pending job until a full pass finds nothing (or 4
+  minutes), then exits. No webhook server is started; payment webhooks wait for the paid plan, and Paystack isn't set up
+  yet anyway.
+- **Proved:** in a local run against a freshly migrated database, the worker started, found nothing, and exited 0 in
+  3 seconds. Typecheck and unit tests pass.
+- **Railway, set by this session:**
+  - schedule `*/15 * * * *`, restart policy NEVER, no healthcheck;
+  - `TEBOS_WORKER_MODE=batch`;
+  - `ANTHROPIC_WORKSPACE_ID` set (decision 2b done).
+
+  Estimated use: well under the Free plan's USD 1 a month.
+- **Waiting on:** the Free plan being chosen (decision 21). Railway refuses new deployments until then.
+
 ## 19 Oct 2026 (night, later): the worker was stopped; the rejected key can work without a new key
 
 - **Found:**
@@ -41,7 +59,9 @@ Update this list every run; strike items when they're done.
   - `ANTHROPIC_WORKSPACE_ID` is sent as that header (`workspaceHeaders`, tested), so the existing key works once the
     workspace ID is set.
   - Decision 2b now asks only for that ID.
-- **Next:** redeploy the worker from `main` and confirm it is running.
+- **Then found:** Railway refuses the redeploy with "Your trial has expired". That's why the worker was stopped. A plan
+  is money, so it's the founder's (decision 21).
+- **Next:** reconnect the worker to `main` as soon as the plan is active.
 
 ## 19 Oct 2026 (night): TEBOS's own model gateway, so analysis no longer depends on one provider
 
