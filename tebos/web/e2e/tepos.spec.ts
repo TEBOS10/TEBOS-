@@ -131,8 +131,8 @@ test.describe("the city in 3D", () => {
     await expect(page.getByTestId("building-capital")).toHaveAttribute("aria-label", "Tidy Capital: open");
     await expect(page.getByTestId("building-forex")).toHaveAttribute("aria-label", "Forex: not built yet");
     await expect(page.getByTestId("building-enterprise")).toHaveAttribute("aria-label", "Tidy Enterprise: no access");
-    // the build ends with the city: three portals are built, and it can be built again
-    await expect(page.locator(".city3d-caption")).toContainText("3 of 6 built", { timeout: 60_000 });
+    // the build ends with the city: four portals are built, and it can be built again
+    await expect(page.locator(".city3d-caption")).toContainText("4 of 6 built", { timeout: 60_000 });
     await expect(page.getByRole("button", { name: "Build it again" })).toBeVisible();
     await page.getByTestId("building-capital").click();
     await expect(page.getByRole("heading", { name: "Tidy Capital" })).toBeVisible();
