@@ -1,13 +1,10 @@
 import { expect, test } from "@playwright/test";
 import { GOOD_CODE, installFakeSupabase, verifiedFactor } from "./fake-supabase";
-import { USER_ID } from "./fixtures";
 
 // Two-step sign-in (TOTP). Supabase verifies the codes and raises the session
 // to aal2; the database then opens the private organisation's records (core:
 // 99zg). Here: setting it up, being asked for the code after a password
-// sign-in, and the resilience page saying what it needs.
-
-const VAULT = "f1000000-0000-4000-8000-000000000002";
+// sign-in, and TEPOS asking for it before anything.
 
 test("turning it on: scan or type the key, confirm with a code; a wrong code is refused", async ({ page }) => {
   const fake = await installFakeSupabase(page);
@@ -69,14 +66,12 @@ test("after a password sign-in, the code comes first; nothing else loads until i
   expect(fake.writes.filter((w) => w.table.endsWith("/verify"))).toHaveLength(2);
 });
 
-test("in TEPOS, the private records say what they need when the session has no second step", async ({ page }) => {
-  const fake = await installFakeSupabase(page);
-  const t = fake.tables as unknown as Record<string, Record<string, unknown>[]>;
-  t.organisations!.push({ id: VAULT, name: "IREKUN", slug: "irekun", private: true, created_at: new Date().toISOString() });
-  t.memberships!.push({ org_id: VAULT, user_id: USER_ID, role: "org_admin", created_at: new Date().toISOString() });
+test("TEPOS opens only after two-step sign-in: without it, it asks for an authenticator and shows nothing else", async ({ page }) => {
+  // a password-only session; the database hides every TEPOS organisation from it (migration tepos_two_step)
+  await installFakeSupabase(page);
   await page.goto("http://localhost:5175/");
-  await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Tidy Capital" }).click();
-  await expect(page.getByRole("heading", { name: "Two-step sign-in is needed" })).toBeVisible();
-  await page.getByRole("link", { name: "Set up two-step sign-in" }).click();
+  await expect(page.getByRole("heading", { name: "Turn on two-step sign-in" })).toBeVisible();
   await expect(page.getByTestId("two-step")).toContainText("Off.");
+  await expect(page.getByRole("navigation", { name: "Main" })).toHaveCount(0);
+  await expect(page.getByText(/Tidy Capital|IREKUN/)).toHaveCount(0);
 });

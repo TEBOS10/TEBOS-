@@ -40,7 +40,7 @@ select t99zg.ok((select count(*) = 0 from public.res_money_items), 'a session wi
 select set_config('request.jwt.claims', '{"aal":"aal2"}', false);
 select t99zg.ok((select count(*) = 1 and min(amount) = 1000 from public.res_money_items), 'untouched by the password-only session');
 
--- the organisation itself stays visible, so the app can say what is needed
+-- since tepos_two_step, the organisation itself is hidden too: TEPOS asks for the second step before anything
 select set_config('request.jwt.claims', '{"aal":"aal1"}', false);
-select t99zg.ok((select count(*) = 1 from public.organisations where id = :'vault'), 'the owner still sees the organisation exists');
+select t99zg.ok((select count(*) = 0 from public.organisations where id = :'vault'), 'without it, even the organisation is hidden');
 reset role;

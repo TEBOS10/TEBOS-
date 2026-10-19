@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
-import { installFakeSupabase, type FakeSupabase } from "./fake-supabase";
+import { installFakeSupabase, verifiedFactor, type FakeSupabase } from "./fake-supabase";
 import { ORG, USER_ID } from "./fixtures";
 
 // Property Revenue Architecture: a case taken from intake to its assessment
@@ -13,6 +13,8 @@ const now = () => new Date().toISOString();
 
 // Property cases are Tidy Enterprise's, in TEPOS: the founder's separate app, open to whoever owns a private organisation.
 test.use({ baseURL: "http://localhost:5175" });
+// TEPOS opens only after two-step sign-in (migration tepos_two_step)
+const TWO_STEP = { aal: "aal2" as const, factors: [verifiedFactor()] };
 
 function seed(fake: FakeSupabase, over: Record<string, unknown> = {}) {
   const t = fake.tables as unknown as Record<string, Record<string, unknown>[]>;
@@ -42,7 +44,7 @@ async function figure(page: Page, label: string, value: string) {
 }
 
 test("a case opens from the menu, and the database numbers it", async ({ page }) => {
-  const fake = await installFakeSupabase(page);
+  const fake = await installFakeSupabase(page, TWO_STEP);
   seed(fake);
   (fake.tables as unknown as Record<string, unknown[]>).property_cases = [];
   await page.goto("/");
@@ -65,7 +67,7 @@ test("a case opens from the menu, and the database numbers it", async ({ page })
 });
 
 test("figures stay unknown until supplied, carry their basis, and are computed only when complete", async ({ page }) => {
-  const fake = await installFakeSupabase(page);
+  const fake = await installFakeSupabase(page, TWO_STEP);
   seed(fake);
   await page.goto(`/property/${CASE}`);
   await expect(page.getByTestId("m-cash")).toHaveText("Not established");
@@ -96,7 +98,7 @@ test("figures stay unknown until supplied, carry their basis, and are computed o
 });
 
 test("a verified figure needs checked evidence; evidence readiness weighs quality", async ({ page }) => {
-  const fake = await installFakeSupabase(page);
+  const fake = await installFakeSupabase(page, TWO_STEP);
   seed(fake);
   await page.goto(`/property/${CASE}`);
   await page.getByRole("button", { name: "Economics" }).click();
@@ -134,7 +136,7 @@ test("a verified figure needs checked evidence; evidence readiness weighs qualit
 });
 
 test("a disposition needs its reason; PROCEED and the evidence gate need confirmed authority; gates pass in order", async ({ page }) => {
-  const fake = await installFakeSupabase(page);
+  const fake = await installFakeSupabase(page, TWO_STEP);
   seed(fake);
   await page.goto(`/property/${CASE}`);
   await page.getByRole("button", { name: "Assessment" }).click();
@@ -165,7 +167,7 @@ test("a disposition needs its reason; PROCEED and the evidence gate need confirm
 });
 
 test("a recommendation explains itself, and the report separates facts, statements and estimates, with exports", async ({ page }) => {
-  const fake = await installFakeSupabase(page);
+  const fake = await installFakeSupabase(page, TWO_STEP);
   const t = seed(fake, { authority: "confirmed" });
   t.property_evidence = [{ id: "ev1", org_id: ORG, case_id: CASE, category: "income", kind: "rent_roll", title: "Current rent roll", source: "Agent", period_start: null,
     period_end: "2026-09-30", received_on: "2026-10-10", responsible: null, status: "checked", confidence: "high", document_ref: null, notes: null, follow_up: null, created_at: now(), updated_at: now() }];
@@ -215,7 +217,7 @@ test("a recommendation explains itself, and the report separates facts, statemen
 });
 
 test("a viewer reads the case but can't change it", async ({ page }) => {
-  const fake = await installFakeSupabase(page);
+  const fake = await installFakeSupabase(page, TWO_STEP);
   seed(fake);
   const t = fake.tables as unknown as Record<string, Record<string, unknown>[]>;
   for (const m of t.memberships ?? []) if (m.user_id === USER_ID) m.role = "viewer";
@@ -227,7 +229,7 @@ test("a viewer reads the case but can't change it", async ({ page }) => {
 });
 
 test("workstreams keep owners, dependencies, budget approvals and evidence of completion, and raise exceptions", async ({ page }) => {
-  const fake = await installFakeSupabase(page);
+  const fake = await installFakeSupabase(page, TWO_STEP);
   const t = seed(fake, { authority: "confirmed" });
   const ws = (id: string, over: Record<string, unknown>) => ({ id, org_id: ORG, case_id: CASE, title: id, owner: "Tidy", due_on: "2026-12-31", status: "planned", depends_on: null,
     budget: null, approval: "not_needed", approved_by: null, approved_on: null, completion_evidence: null, completed_on: null, note: null, created_at: now(), updated_at: now(), ...over });
@@ -271,7 +273,7 @@ test("workstreams keep owners, dependencies, budget approvals and evidence of co
 });
 
 test("the baseline is captured by the database, and the scorecard measures actuals against it", async ({ page }) => {
-  const fake = await installFakeSupabase(page);
+  const fake = await installFakeSupabase(page, TWO_STEP);
   const t = seed(fake, { authority: "confirmed" });
   const f = (key: string, value: number) => ({ id: `f-${key}`, org_id: ORG, case_id: CASE, key, value, basis: "owner_reported", evidence_id: null, as_of: "2026-10-01", note: null, recorded_by: USER_ID, created_at: now(), updated_at: now() });
   t.property_figures = [f("rent_due", 45000)];

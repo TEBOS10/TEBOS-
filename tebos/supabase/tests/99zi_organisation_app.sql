@@ -21,6 +21,8 @@ select t99zi.ok(t99zi.refused($$insert into public.organisations (name, slug, pr
 
 set role authenticated;
 select set_config('request.jwt.claim.sub', '9f7f0000-0000-0000-0000-00000000000a', false);
+-- TEPOS organisations open only after two-step sign-in (99zk)
+select set_config('request.jwt.claims', '{"aal":"aal2"}', false);
 select public.create_private_organisation('Vault 99zi', 'vault-99zi') as vault \gset
 select t99zi.ok((select app = 'tepos' and private from public.organisations where id = :'vault'), 'a private organisation is created in TEPOS');
 select t99zi.ok(t99zi.refused(format($$update public.organisations set app = 'tebos' where id = %L$$, :'vault')), 'the apps can''t move it');
