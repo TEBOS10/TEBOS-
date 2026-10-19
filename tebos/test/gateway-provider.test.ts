@@ -65,3 +65,13 @@ describe("falling back between providers", () => {
     expect(await kindOf(p.structured(request))).toBe("provider_unavailable");
   });
 });
+
+describe("naming the workspace for a key that isn't scoped to one", async () => {
+  const { workspaceHeaders } = await import("../src/intelligence/anthropic-provider");
+  it("adds the header only when an ID is set, and refuses something that isn't an ID", () => {
+    expect(workspaceHeaders(undefined)).toEqual({});
+    expect(workspaceHeaders("  ")).toEqual({});
+    expect(workspaceHeaders("wrkspc_01AbC")).toEqual({ "anthropic-workspace-id": "wrkspc_01AbC" });
+    expect(() => workspaceHeaders("not a workspace; id")).toThrow();
+  });
+});

@@ -10,7 +10,7 @@ Update this list every run; strike items when they're done.
 |---|---|---|
 | 0 | **Run the first real operating systems.** Pick real businesses (BAME first, then pilots) and let TEBOS lay down their blueprint | Real proof. The ten blueprints are templates, not client work; only real clients make a portfolio |
 | 1 | Paystack secret key on the worker, and the webhook `https://tebos-worker-production.up.railway.app/webhooks/paystack` | Taking the first payment, and monthly invoices |
-| 2b | Replace the worker's `ANTHROPIC_API_KEY` with a key **scoped to a workspace** (the key set on 8 Oct is not, so every request is rejected) | Findings from scans and interviews: the next product step |
+| 2b | **Simpler now (19 Oct):** no new key is needed. Send the **workspace ID** from console.anthropic.com → Settings → Workspaces (it looks like `wrkspc_…`; an ID, not a secret). TEBOS sets it as `ANTHROPIC_WORKSPACE_ID` on the worker, so the existing key is accepted | Findings from scans and interviews: the next product step |
 | 2 | Resend key and a verified sending domain | Every client email: payment links, contracts, invoices, reminders, the next-day outline after an intake call |
 | 2c | A phone number on the voice provider, and the intake agent (`ELEVENLABS_INTAKE_AGENT_ID`, set-up in the README) | TEBOS ringing prospects from meetings |
 | 3 | A lawyer approves the contract templates (standard and company) and advises on POPIA | Signing clients |
@@ -28,6 +28,20 @@ Update this list every run; strike items when they're done.
 | 18 | Each client's web app address (where TEBOS's people sign in to their department), starting with BAME's | Client tiles that open the client's web app |
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
+
+## 19 Oct 2026 (night, later): the worker was stopped; the rejected key can work without a new key
+
+- **Found:**
+  - Railway stopped the worker's container at 12:06 UTC today ("Stopping Container", SIGTERM), and no deployment
+    replaced it. The worker isn't running.
+  - Merges to `main` since 16 Oct haven't triggered deployments: the service's source shows no branch trigger.
+  - The provider's own error explains decision 2b: the key isn't scoped to a workspace, so each request must name one
+    in the `anthropic-workspace-id` header.
+- **Built:**
+  - `ANTHROPIC_WORKSPACE_ID` is sent as that header (`workspaceHeaders`, tested), so the existing key works once the
+    workspace ID is set.
+  - Decision 2b now asks only for that ID.
+- **Next:** redeploy the worker from `main` and confirm it is running.
 
 ## 19 Oct 2026 (night): TEBOS's own model gateway, so analysis no longer depends on one provider
 
