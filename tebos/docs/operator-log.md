@@ -30,6 +30,23 @@ Update this list every run; strike items when they're done.
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 19 Oct 2026 (late night): earn first (ADR 0006), and the stage-1 offer drafted
+
+- **The founder's ChatGPT strategy review** is adopted as ADR 0006, which sets three stages:
+  1. earn;
+  2. make it repeatable;
+  3. enterprise-ready.
+
+  Its claims were checked against the code:
+  - the audit verifier already exists;
+  - the web app holds no privileged key;
+  - its pricing table conflicts with prices already decided, so it isn't adopted;
+  - its statistics are unverified, so they aren't to be quoted.
+- **Built:** the web build now fails if a privileged database key appears in either bundle. Proved with a planted
+  key: the check exits 1, and the real bundles pass.
+- **Drafted for approval:** `pra-founding-offer-draft.md`, covering who to approach (the founder's own contacts, not
+  the agency's), the message, what month one delivers, and the founding prices.
+
 ## 19 Oct 2026 (late): the worker runs free, every 15 minutes
 
 The founder has no budget for a paid plan ("that's your job"). So the worker no longer needs to run all the time.
