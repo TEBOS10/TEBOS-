@@ -29,6 +29,24 @@ Update this list every run; strike items when they're done.
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 19 Oct 2026 (evening): the PRA monthly update, priority 1
+
+The founder asked TEBOS to act rather than ask ("you make it happen"). So this run took the first unbuilt founder
+priority without asking: the Property Revenue Architecture monthly subscription view.
+
+- **Built (no migration):**
+  - `PRA_PLANS`, `FOUNDING_OFFER` and `planForUnits` in `src/domain/property.ts`: the price decided this afternoon.
+    Unknown units give no plan, never a guess.
+  - `monthlyUpdate`: the month's finished work with its evidence, open work soonest first, exceptions, and the
+    latest outcome review against the frozen baseline. It never shows an estimate.
+  - TEPOS page `/property/:id/month/:month`, linked from the case and the report, printable.
+- **Proved:**
+  - core: typecheck and unit tests pass (new `property-monthly.test.ts`, which also checks the plans against
+    `pra-pricing.md`);
+  - web: typecheck, unit tests, and all 9 property e2e tests (a new one for the monthly update).
+- **Next:** a subscription record per owner (plan, start date, founding offer), then billing it through the
+  existing monthly invoices once decision 10b is done.
+
 ## 19 Oct 2026 (afternoon): the founder's decisions on creative proposals and the PRA price
 
 - **Creative proposals 1 to 5:** the founder said yes. Each is at stage 1, identified (ADR 0005), and built in the

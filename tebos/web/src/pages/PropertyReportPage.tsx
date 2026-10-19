@@ -58,6 +58,7 @@ export function PropertyReportPage({ id }: { id: string }) {
     <div className="pra pra-report" data-testid="property-report">
       <div className="pra-actions no-print">
         <Link to={`/property/${data.case.id}`} className="pra-btn ghost">Back to the case</Link>
+        <Link to={`/property/${data.case.id}/month`} className="pra-btn">Monthly update</Link>
         <button type="button" className="pra-btn" onClick={exportJson}>Export case JSON</button>
         <button type="button" className="pra-btn" onClick={exportCsv}>Export CSV</button>
         <button type="button" className="pra-btn primary" onClick={() => window.print()}>Print / Save PDF</button>
