@@ -25,7 +25,13 @@ dedicated databases, marketplaces) waits for a buyer who asks for it and revenue
 - **Durable assets:** the system of record, the trust layer, measured outcomes, the niche relationships.
 - **Replaceable on purpose:** models and tools.
 - **REEDS keeps a signal register:** demand, cash, delivery, reliability, cost, competitors and technology.
-- **Next:** the weekly signal brief.
+- **Built:** the weekly signal brief (20 Oct).
+
+**One infrastructure, not custom projects (ADR 0008, 20 Oct):**
+- industries are configuration of shared modules, never forks;
+- a route opens only with a paying client;
+- connect to existing tools rather than rebuild them;
+- service first, automation after delivery cost is known.
 
 The founder runs several things at once: TEBOS (the builder, which also sells to outside businesses), property
 (a newly qualified agent, the Property Revenue Architect business, and property qualifications towards asset
