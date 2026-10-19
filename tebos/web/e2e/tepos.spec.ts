@@ -118,6 +118,7 @@ test.describe("with motion", () => {
   });
 });
 
+<<<<<<< HEAD
 test("TEPOS signs itself out after 30 minutes without use", async ({ page }) => {
   await page.clock.install();
   await founder(page);
@@ -127,4 +128,25 @@ test("TEPOS signs itself out after 30 minutes without use", async ({ page }) => 
   await expect(page.getByRole("heading", { name: "Tidy", exact: true })).toBeVisible();
   await page.clock.fastForward("02:00");
   await expect(page.getByRole("heading", { name: "TEPOS" })).toBeVisible();
+=======
+test.describe("the city in 3D", () => {
+  test.use({ reducedMotion: "no-preference" });
+  test("builds itself from the blueprint up, every building stopping where its portal really is, and opens a portal", async ({ page }) => {
+    test.setTimeout(90_000);
+    await founder(page);
+    // ?force3d draws the 3D city on this test browser's software renderer too
+    await page.goto(`${TEPOS}/?force3d`);
+    const city = page.getByRole("group", { name: "Portals as buildings" });
+    await expect(page.getByTestId("city-3d")).toBeVisible();
+    await expect(city.getByRole("button")).toHaveCount(6);
+    await expect(page.getByTestId("building-capital")).toHaveAttribute("aria-label", "Tidy Capital: open");
+    await expect(page.getByTestId("building-forex")).toHaveAttribute("aria-label", "Forex: not built yet");
+    await expect(page.getByTestId("building-enterprise")).toHaveAttribute("aria-label", "Tidy Enterprise: no access");
+    // the build ends with the city: four portals are built, and it can be built again
+    await expect(page.locator(".city3d-caption")).toContainText("4 of 6 built", { timeout: 60_000 });
+    await expect(page.getByRole("button", { name: "Build it again" })).toBeVisible();
+    await page.getByTestId("building-capital").click();
+    await expect(page.getByRole("heading", { name: "Tidy Capital" })).toBeVisible();
+  });
+>>>>>>> origin/main
 });
