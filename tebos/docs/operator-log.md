@@ -45,6 +45,11 @@ Update this list every run; strike items when they're done.
   - `test:db`: every SQL file passes, and 63 integration tests, including the filing rules: only that kind, only once a
     week, and nothing once switched off;
   - web: typecheck passes, 63 unit tests, and 125 e2e tests.
+- **Live:**
+  - migration `signal_brief` applied (#86);
+  - checked: RLS is on, visitors can't read the table, and the kind check includes `signal_brief`;
+  - the worker's login may run the audit verifier and read invoices and standing requests;
+  - no brief has run yet: the worker waits on Railway's Free plan (decision 21).
 
 ## 19 Oct 2026 (late night): earn first (ADR 0006), and the stage-1 offer drafted
 
