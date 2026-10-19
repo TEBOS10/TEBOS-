@@ -29,6 +29,23 @@ Update this list every run; strike items when they're done.
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 19 Oct 2026 (night): TEBOS's own model gateway, so analysis no longer depends on one provider
+
+The founder asked to connect ChatGPT, OmniRoute, Headroom, Graphify, claude-code-setup, Gojiberry, a VPS and
+Getlayers. What each is, and where it goes, is in `docs/tooling-connections.md`.
+
+- **Built:**
+  - `GatewayProvider`: any OpenAI-compatible endpoint, with schema-constrained answers and errors mapped to the
+    worker's kinds;
+  - `FallbackProvider`: moves on only when a provider itself fails;
+  - the worker uses Claude first, then the gateway (`TEBOS_MODEL_GATEWAY_URL`), or the gateway alone.
+  - Nothing changes until that variable is set.
+- **Proved:**
+  - core: typecheck and unit tests pass (new `gateway-provider.test.ts`);
+  - no SQL change, so `test:db` wasn't needed.
+- **Next:** deploy OmniRoute (and then Headroom) as private Railway services, once the founder has provider keys to
+  put in their variables. Check OmniRoute's security advisories before deploying.
+
 ## 19 Oct 2026 (evening): the PRA monthly update, priority 1
 
 The founder asked TEBOS to act rather than ask ("you make it happen"). So this run took the first unbuilt founder

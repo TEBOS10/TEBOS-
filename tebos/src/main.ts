@@ -47,6 +47,8 @@ import { poolConfig } from "./db";
 import { PgAcquisitionStore } from "./acquisition/pg-store";
 import { AcquisitionWorker } from "./acquisition/worker";
 import { AnthropicProvider } from "./intelligence/anthropic-provider";
+import { FallbackProvider, GatewayProvider } from "./intelligence/gateway-provider";
+import type { ReasoningProvider } from "./intelligence/provider";
 import { isEmailAddress } from "./domain/email";
 import { EnquiryAlertWorker } from "./notify/enquiries";
 import { PgEnquiryStore } from "./notify/pg-store";
@@ -90,8 +92,19 @@ const acquisition = new AcquisitionWorker(new PgAcquisitionStore(pool), {
   log,
 });
 
-const intelligenceEnabled = Boolean(process.env.ANTHROPIC_API_KEY) && process.env.TEBOS_INTELLIGENCE !== "off";
-const provider = intelligenceEnabled ? new AnthropicProvider() : null;
+// Reasoning: Claude directly when ANTHROPIC_API_KEY is set, then TEBOS's own model gateway
+// (TEBOS_MODEL_GATEWAY_URL, docs/tooling-connections.md) as the fallback, or alone.
+const reasoners: ReasoningProvider[] = [];
+if (process.env.ANTHROPIC_API_KEY) reasoners.push(new AnthropicProvider());
+if (process.env.TEBOS_MODEL_GATEWAY_URL) {
+  reasoners.push(new GatewayProvider({
+    baseUrl: process.env.TEBOS_MODEL_GATEWAY_URL,
+    model: process.env.TEBOS_GATEWAY_MODEL ?? "",
+    apiKey: process.env.TEBOS_MODEL_GATEWAY_KEY,
+  }));
+}
+const intelligenceEnabled = reasoners.length > 0 && process.env.TEBOS_INTELLIGENCE !== "off";
+const provider = !intelligenceEnabled ? null : reasoners.length === 1 ? reasoners[0]! : new FallbackProvider(reasoners);
 const intelligence = provider ? new IntelligenceWorker(new PgIntelligenceStore(pool), provider, { workerId, log }) : null;
 
 const executionEnabled = process.env.TEBOS_EXECUTION !== "off";
@@ -177,7 +190,7 @@ log({
   pollMs,
   stages: { acquisition: true, intelligence: intelligenceEnabled, execution: executionEnabled, webhooks: Boolean(server), voiceInterviews: voiceEnabled, intakeCalls: intakeVoiceEnabled, enquiryAlerts: alertsEnabled,
     pipeline: { payments: Boolean(paystackKey), clientEmails: Boolean(process.env.RESEND_API_KEY) } },
-  ...(intelligenceEnabled ? {} : { note: "Findings are not generated: set ANTHROPIC_API_KEY to enable the intelligence stage" }),
+  ...(intelligenceEnabled ? {} : { note: "Findings are not generated: set ANTHROPIC_API_KEY or TEBOS_MODEL_GATEWAY_URL to enable the intelligence stage" }),
 });
 
 async function step(name: string, fn: () => Promise<unknown>): Promise<boolean> {
