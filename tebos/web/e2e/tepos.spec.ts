@@ -118,7 +118,6 @@ test.describe("with motion", () => {
   });
 });
 
-<<<<<<< HEAD
 test("TEPOS signs itself out after 30 minutes without use", async ({ page }) => {
   await page.clock.install();
   await founder(page);
@@ -128,7 +127,8 @@ test("TEPOS signs itself out after 30 minutes without use", async ({ page }) => 
   await expect(page.getByRole("heading", { name: "Tidy", exact: true })).toBeVisible();
   await page.clock.fastForward("02:00");
   await expect(page.getByRole("heading", { name: "TEPOS" })).toBeVisible();
-=======
+});
+
 test.describe("the city in 3D", () => {
   test.use({ reducedMotion: "no-preference" });
   test("builds itself from the blueprint up, every building stopping where its portal really is, and opens a portal", async ({ page }) => {
@@ -148,5 +148,4 @@ test.describe("the city in 3D", () => {
     await page.getByTestId("building-capital").click();
     await expect(page.getByRole("heading", { name: "Tidy Capital" })).toBeVisible();
   });
->>>>>>> origin/main
 });
