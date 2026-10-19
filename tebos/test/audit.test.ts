@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { AUDIT_CHAIN_STATUSES, AUDIT_CHECK_LIMITS, describeChain, isAuditChainStatus } from "../src";
 
-const migration = readFileSync(join(__dirname, "..", "supabase", "migrations", "20261017200000_audit_verify.sql"), "utf8")
+const migration = readFileSync(join(__dirname, "..", "supabase", "migrations", "20261019090000_audit_verify.sql"), "utf8")
   .replace(/--[^\n]*/g, "");
 
 describe("audit-chain statuses", () => {

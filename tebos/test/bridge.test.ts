@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { BRIDGE_CLIENT_KINDS, BRIDGE_LIMITS, BRIDGE_SCOPES, BRIDGE_TOOLS, EXTERNAL_EXECUTORS, parseBearer, planRequest } from "../src";
 import { hashToken } from "../src/bridge/server";
 
-const migration = readFileSync(join(__dirname, "..", "supabase", "migrations", "20261017220000_model_bridge.sql"), "utf8")
+const migration = readFileSync(join(__dirname, "..", "supabase", "migrations", "20261019090100_model_bridge.sql"), "utf8")
   .replace(/--[^\n]*/g, "");
 
 describe("the bridge mirrors the database", () => {

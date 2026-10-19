@@ -4,9 +4,9 @@
 The verifier recomputes every event's hash and checks each link. It only reads. It never rewrites, deletes or
 "repairs" an event.
 
-- **Migration:** `supabase/migrations/20261017200000_audit_verify.sql`.
+- **Migration:** `supabase/migrations/20261019090000_audit_verify.sql`.
 - **Tests:**
-  - `supabase/tests/99zj_audit_verify.sql`: tampering, removal, forgery, missing history, time zones, permissions;
+  - `supabase/tests/99zl_audit_verify.sql`: tampering, removal, forgery, missing history, time zones, permissions;
   - `test/integration/audit-chain-pg.test.ts`: concurrent writers;
   - `test/audit.test.ts`: the statuses mirrored in `src/domain/audit.ts`.
 

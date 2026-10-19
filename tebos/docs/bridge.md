@@ -3,9 +3,9 @@
 The bridge lets an AI client (a coding assistant first, a chat assistant later) take work from REEDS's ledger and hand
 results back. It reuses TEBOS's own requests, tasks, agent-run records and audit trail; nothing is stored anywhere else.
 
-- **Design:** `supabase/migrations/20261017220000_model_bridge.sql` (rules), `src/bridge/` (server), `src/domain/bridge.ts`.
+- **Design:** `supabase/migrations/20261019090100_model_bridge.sql` (rules), `src/bridge/` (server), `src/domain/bridge.ts`.
 - **Tests:**
-  - `supabase/tests/99zk_model_bridge.sql`;
+  - `supabase/tests/99zm_model_bridge.sql`;
   - `test/integration/bridge-pg.test.ts` (a full MCP round trip over HTTP);
   - `test/bridge.test.ts`;
   - `web/e2e/bridge.spec.ts`.
