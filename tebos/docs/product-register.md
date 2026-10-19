@@ -1,0 +1,93 @@
+# Product register
+
+The state of every capability in the TEPOS → library → TEBOS portfolio
+([ADR 0005](adr/0005-systems-portfolio.md)). REEDS reads this as the portfolio's state. Update it in the same PR as
+any change to a capability.
+
+## Stages and evidence
+
+**Stages** (full definitions in ADR 0005):
+1. Identified.
+2. Built for internal use.
+3. Validated.
+4. Productised.
+5. Deployed through TEBOS.
+
+**Evidence rule:** a stage is reached only with its evidence. "Built" means merged and tested. **"In use" needs real
+records** in the live database.
+
+**Live counts, 19 Oct 2026** (read-only):
+
+| | Count |
+|---|---|
+| Paying clients, payments, invoices | 0 |
+| Opportunities and enquiries | 0 |
+| Property Revenue Architecture cases | 0 |
+| Money records | 0 |
+| REEDS requests | 0 |
+| Findings and actions | 0 |
+| Scans | 1 |
+| Objectives | 15 (3 active) |
+| Businesses | 9 |
+| Connections | 2 |
+
+**Nothing is past stage 2 yet.** Most capabilities are built but not yet in real use.
+
+## Shared foundation
+
+| Capability | Where | Stage | Evidence and gap |
+|---|---|---|---|
+| Business diagnosis (scans, interviews, findings) | TEBOS core | Built, barely used | 1 scan, 0 interviews, 0 findings. Analysis is paused by the rejected AI key (decision 2b) |
+| Objectives and scorecards (boards, measured readings) | TEBOS core | 2 (internal) | 15 objectives, 3 active, on TEBOS's own board |
+| Tasks and accountability (actions, delivery steps) | TEBOS core | Built, unused | 0 actions, 0 delivery steps |
+| Requests and work queues (REEDS ledger) | TEBOS core | Built, unused | 0 requests |
+| Approvals and change governance | TEBOS core | Built, unused | 0 approvals |
+| Evidence and documentation | TEBOS core | Built | Used by the one scan |
+| Risk and dependency management | TEPOS (resilience) | 1, partly built | Money records built (0 in use). Asset inventory, risk register and playbooks not built |
+| Reporting (REEDS reports, PRA report) | Both | Built, unused | No reports produced yet |
+| Integrations and automation (connections, Model Bridge) | TEBOS core | Built; bridge not yet live | 2 connections. Bridge migrations live 19 Oct; service and token pending (decisions 19, 20) |
+| Audit and security (audit chain, two-step, private organisations) | Both | 2 (internal) | Audit chain verified intact live, 19 Oct. Two-step built, 0 authenticators enrolled |
+
+## Operational systems
+
+| System | Where | Stage | Evidence and gap |
+|---|---|---|---|
+| Sales and revenue | TEBOS's own pipeline and sales team | Built, unused | 0 opportunities, 0 enquiries |
+| Marketing | TEBOS content drafts, social pack (docs) | Built, unused | 0 drafts in the database. The social pack is documents |
+| Finance | TEBOS billing (its own invoices); TEPOS Tidy Capital | Built, unused | 0 invoices, 0 money records |
+| IT and digital infrastructure | Connection monitoring | Partial | Monitors 2 connections. No inventory of tools, accounts or renewals |
+| Supply chain and procurement | — | Not started | — |
+| Operations, people, customer experience, strategy | Parts of board, delivery and objectives | Proposed extensions | Not designed as modules |
+
+## Creative systems
+
+All of these are proposals waiting for the founder's yes (`tepos/creative-proposals.md`), except the city.
+
+| System | Stage | Note |
+|---|---|---|
+| Interactive experience | 1 | The TEPOS city (3D, merged #70) exists. "Builds as verified work progresses" is proposal 1 |
+| Content and campaign production | Not yet identified | Proposals 4 and 5 |
+| Visualisation and simulation | Not yet identified | Proposal 3. Always labelled illustrative |
+| Environmental intelligence | Not yet identified | Proposal 2. Public information only, no tracking of people |
+| Creative communications | Not yet identified | Proposals 4 and 5. Drafts only |
+
+## Industry systems
+
+| System | Where | Stage | Evidence and gap |
+|---|---|---|---|
+| Property Revenue Architecture | TEPOS (Tidy Enterprise) | Built, unused | 0 cases. Priority 1 is the monthly subscription (price: decision 10) |
+| Real Estate Office OS | TEPOS agent office (merged) | Built slice 1 | Listings and people with next steps. Documents, FFC path, relationships and marketing are next (founder, 19 Oct) |
+| Hospitality OS | — | Not started | Client tile only |
+| Sports and Marketing OS | BAME's own app (`bame/`) | Separate app | Not a TEBOS module. Its working parts are candidates for the library |
+| Creative Studio OS | — | Not started | — |
+| Finance and Capital OS | `capital` schema (outside the repo); Tidy Capital page | 1 | Schema unreviewed (decision 9). Paper trading only, never live |
+| Business Resilience OS | TEPOS resilience | 1, slice 1 built | Money records and two-step built. Inventory and decision log are next |
+
+## What would move the most
+
+1. **Real use in TEPOS**, so built capabilities can reach stage 2 with evidence:
+   - money records;
+   - the first property case;
+   - the first REEDS request.
+2. **A working AI key** (decision 2b), which unblocks diagnosis.
+3. **The first paying client**, the only route to stage 5.
