@@ -171,8 +171,8 @@ test("TEPOS: the vault files the agency's papers as they are, and logs every ope
   await expect(vault.getByTestId("vault-folder-agency_forms")).toContainText("Exclusive mandate");
   await expect(vault.getByTestId("vault-folder-agency_forms")).toContainText(`fingerprint ${String(record.sha256).slice(0, 12)}`);
 
-  // opening: logged first, then the link is signed and opened in a new tab (served here, as the new tab is outside the page's fake)
-  await page.context().route(/\/storage\/v1\/object\/sign\//, (r) => r.fulfill({ status: 200, contentType: "application/pdf", body: "%PDF-1.4 fixture" }));
+  // opening: logged first, then the link is signed and opened in a new tab (served here as a page: the new tab is outside the page's fake, and a headless browser downloads a PDF instead of showing it)
+  await page.context().route(/\/storage\/v1\/object\/sign\//, (r) => r.fulfill({ status: 200, contentType: "text/html", body: "<p>fixture</p>" }));
   const popup = page.waitForEvent("popup");
   await vault.getByRole("button", { name: "Open Exclusive mandate" }).click();
   const tab = await popup;
