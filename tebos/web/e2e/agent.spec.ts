@@ -182,3 +182,52 @@ test("TEPOS: the vault files the agency's papers as they are, and logs every ope
   await vault.getByText("Recent openings").click();
   await expect(vault.getByTestId("vault-reads")).toContainText("Exclusive mandate");
 });
+
+// A 2×2 PNG, so the studio has a real photo to draw.
+const PHOTO = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGP4z8Dwn4GB4T8DAwMDAwAZ7AP9tVvT4QAAAABJRU5ErkJggg==", "base64");
+
+test("TEPOS: the Listing studio draws the advert, shot list and caption from the stated facts only", async ({ page }) => {
+  const fake = await founder(page);
+  await page.goto(`${TEPOS}/agent`);
+  const studio = page.getByTestId("studio");
+  await studio.getByLabel("Listing for the studio").selectOption({ label: "L-001 3-bed house, Erf 512 Northcliff" });
+
+  // a phone number in a highlight is refused before anything is sent
+  const facts = studio.getByRole("form", { name: "Listing facts" });
+  await facts.getByLabel(/Highlights/).fill("Call 082 555 1234");
+  await facts.getByRole("button", { name: "Save the facts" }).click();
+  await expect(studio).toContainText("No phone numbers");
+  expect(fake.writes.filter((w) => w.table === "agent_listings" && w.method === "PATCH")).toHaveLength(0);
+
+  await facts.getByLabel("Kind of property").selectOption("house");
+  await facts.getByLabel("Suburb").fill("Northcliff");
+  await facts.getByLabel("City").fill("Johannesburg");
+  await facts.getByLabel("Bedrooms").fill("3");
+  await facts.getByLabel("Bathrooms").fill("2");
+  await facts.getByLabel(/Highlights/).fill("North-facing garden\nSolar geyser");
+  await facts.getByRole("button", { name: "Save the facts" }).click();
+  await expect(studio.getByRole("status")).toHaveText("Facts saved.");
+  expect(fake.writes.find((w) => w.table === "agent_listings" && w.method === "PATCH")?.body).toMatchObject({
+    property_kind: "house", suburb: "Northcliff", city: "Johannesburg", bedrooms: 3, bathrooms: 2, offices: null, highlights: ["North-facing garden", "Solar geyser"],
+  });
+
+  // only the stated rooms are filmed, and the caption carries the real price and no invented figure
+  await expect(studio.getByTestId("studio-shots")).toContainText("Bedroom 3");
+  await expect(studio.getByTestId("studio-shots")).not.toContainText("Office");
+  const text = await studio.getByTestId("studio-caption").innerText();
+  expect(text).toContain("R1 850 000");
+  expect(text).toContain("#Northcliff #Johannesburg #PelserRealEstate #ForSale");
+  expect(text).not.toMatch(/yield|%/i);
+
+  // the advert, in both sizes, downloaded with a name that says what it is
+  await studio.getByLabel("Photos").setInputFiles({ name: "front.png", mimeType: "image/png", buffer: PHOTO });
+  const canvas = studio.getByTestId("studio-canvas");
+  await expect(canvas).toHaveJSProperty("height", 1350);
+  await studio.getByLabel("Size", { exact: true }).selectOption("story");
+  await expect(canvas).toHaveJSProperty("height", 1920);
+  const download = page.waitForEvent("download");
+  await studio.getByRole("button", { name: "Download the advert" }).click();
+  expect((await download).suggestedFilename()).toBe("L-001-for-sale-story.png");
+  // nothing was posted anywhere
+  expect(fake.writes.filter((w) => !["agent_listings"].includes(w.table) && w.method !== "GET").map((w) => w.table)).not.toContain("storage");
+});

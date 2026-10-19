@@ -7,7 +7,10 @@ type Tables = Database["public"]["Tables"];
 export type ListingRow = Tables["agent_listings"]["Row"];
 export type ContactRow = Tables["agent_contacts"]["Row"];
 type Fixed = "id" | "ref" | "stage_at" | "created_by" | "created_at" | "updated_at";
-export type ListingInput = Omit<ListingRow, Fixed>;
+// The advert's facts (Listing studio) are saved on their own, so the listing form leaves them as they are.
+type FactColumns = "property_kind" | "suburb" | "city" | "bedrooms" | "bathrooms" | "offices" | "kitchens" | "parking" | "floor_m2" | "erf_m2" | "highlights";
+export type ListingInput = Omit<ListingRow, Fixed | FactColumns>;
+export type ListingFactsInput = Pick<ListingRow, FactColumns>;
 export type ContactInput = Omit<ContactRow, Fixed>;
 
 function must<R extends { data: unknown; error: unknown }>(res: R): NonNullable<R["data"]> {
@@ -26,6 +29,10 @@ export async function listContacts(db: Db, orgId: string) {
 export async function saveListing(db: Db, id: string | null, row: ListingInput) {
   if (id) return must(await db.from("agent_listings").update(row).eq("id", id).select().single());
   return must(await db.from("agent_listings").insert(row).select().single());
+}
+
+export async function saveListingFacts(db: Db, id: string, facts: ListingFactsInput) {
+  return must(await db.from("agent_listings").update(facts).eq("id", id).select().single());
 }
 
 export async function saveContact(db: Db, id: string | null, row: ContactInput) {

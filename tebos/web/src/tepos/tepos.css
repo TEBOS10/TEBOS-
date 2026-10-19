@@ -78,3 +78,11 @@
 .pra-list { list-style: none; margin: 8px 0; padding: 0; display: grid; gap: 6px; }
 .pra-list li { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 13px; }
 [data-testid="vault"] h3 { font-size: 13px; margin: 16px 0 6px; }
+
+/* The Listing studio: the advert preview scales to the screen; the shot list and caption sit side by side. */
+.studio-preview { margin: 12px 0; max-width: 420px; }
+.studio-preview canvas { width: 100%; height: auto; display: block; border-radius: 10px; box-shadow: 0 8px 30px rgba(43, 26, 28, 0.18); }
+.studio-columns { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-top: 12px; }
+.studio-columns h3 { font-size: 13px; margin: 0 0 6px; }
+.studio-shots { margin: 0; padding-left: 20px; display: grid; gap: 6px; font-size: 13px; }
+.studio-caption { white-space: pre-wrap; font: 13px/1.5 Manrope, system-ui, sans-serif; background: rgba(0, 0, 0, 0.04); padding: 12px; border-radius: 8px; margin: 0 0 8px; }
