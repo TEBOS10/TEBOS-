@@ -78,6 +78,9 @@ code under `web/tepos/` and `web/src/tepos/`.
 ## Safeguards in place
 
 - **Private gate:** a signed-in user without a private organisation sees only "This is a private system".
+- **TEPOS needs two-step sign-in throughout (migration `tepos_two_step`, 17 Oct):** every TEPOS organisation is
+  hidden from a password-only session, and the app asks for an authenticator first. It signs itself out after
+  30 minutes unused, and sends strict browser protection headers (`vercel.json`, TEPOS hosts only).
 - **Two-step rule (live since 16 Oct, night; migration `two_step_resilience`):** private records need the
   authenticator code. Checked live with a test record that was rolled back: password only shows 0 records, with the
   code the record shows.
