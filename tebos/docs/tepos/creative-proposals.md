@@ -22,6 +22,7 @@ the audio wasn't transcribed.
 | 3 | Labelled 3D walkthroughs of a property | Hospitality OS; Real Estate Job; Property Revenue Architecture | Yes, 19 Oct |
 | 4 | REEDS drafts the social calendar | TEBOS marketing; client social media (BAME, Grape Studios) | Yes, 19 Oct |
 | 5 | Social skills for REEDS: post, comment, reply | Same as 4 (one feature with it) | Yes, 19 Oct |
+| 6 | One design system for everything TEBOS shows (see `video-review-19-oct.md`) | Public site; TEBOS; TEPOS; client portals | Yes, 19 Oct |
 | — | Earlier: day and night in the city following Tidy Capital's runway | TEPOS city | Waiting |
 
 ## 1. Portals that build themselves

@@ -73,6 +73,7 @@ The founder said yes to proposals 1 to 5 on 19 Oct (`tepos/creative-proposals.md
 | Visualisation and simulation | 1 | Proposal 3. Always labelled illustrative |
 | Environmental intelligence | 1 | Proposal 2. Public information only, no tracking of people |
 | Creative communications | 1 | Proposals 4 and 5. Drafts only |
+| Design system (one visual standard everywhere) | 1 | Proposal 6 (`tepos/video-review-19-oct.md`), yes 19 Oct. Not built yet |
 
 ## Industry systems
 
@@ -83,6 +84,7 @@ The founder said yes to proposals 1 to 5 on 19 Oct (`tepos/creative-proposals.md
 | Hospitality OS | — | Not started | Client tile only |
 | Sports and Marketing OS | BAME's own app (`bame/`) | Separate app | Not a TEBOS module. Its working parts are candidates for the library |
 | Creative Studio OS | — | Not started | — |
+| Industry blueprints (11 routes, incl. education centre and gym) | `src/domain/blueprints.ts` | Built, unused | Templates only; no real client yet. Creative (music, film, editing) and corporate routes named by the founder 19 Oct, not yet templated |
 | Finance and Capital OS | `capital` schema (outside the repo); Tidy Capital page | 1 | Schema unreviewed (decision 9). Paper trading only, never live |
 | Business Resilience OS | TEPOS resilience | 1, slice 1 built | Money records and two-step built. Inventory and decision log are next |
 
