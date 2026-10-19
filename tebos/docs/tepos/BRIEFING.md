@@ -84,6 +84,9 @@ code under `web/tepos/` and `web/src/tepos/`.
 - **Two-step rule (live since 16 Oct, night; migration `two_step_resilience`):** private records need the
   authenticator code. Checked live with a test record that was rolled back: password only shows 0 records, with the
   code the record shows.
+- **The vault (migration `tepos_vault`, 19 Oct):** the founder's papers in a private storage bucket, never changed,
+  each with its SHA-256 fingerprint. Every opening is logged before a one-minute link. Personal papers never go in
+  the repository, which is public.
 - **Separation:** TEBOS's bundle check, and TEBOS's switcher no longer lists private organisations.
 - **Honest figures:** every figure is measured, stated or estimated, and labelled as such. Only measured figures are
   shown as results.
@@ -107,7 +110,7 @@ code under `web/tepos/` and `web/src/tepos/`.
 3. The agent's office (Real Estate Job portal). Slices 1 and 2 built (17 and 19 Oct); next: relationships, then
    marketing, then commission expected versus received.
 4. The study path (Academics portal).
-5. The private vault in IREKUN: private documents, every read audited, short-lived signed links.
+5. The private vault: documents built 19 Oct (in the Real Estate Job portal). Next: search.
 6. Tidy Capital, honestly: bring the `capital` schema into this repository, and the paper-trading ledger (Forex
    portal).
 

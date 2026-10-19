@@ -142,3 +142,43 @@ test("TEPOS: the FFC path holds only steps with a source, starting from the PPRA
   await form.getByRole("button", { name: "Save" }).click();
   await expect(form).toContainText("Say where this requirement comes from");
 });
+
+test("TEPOS: the vault files the agency's papers as they are, and logs every opening before a one-minute link", async ({ page }) => {
+  const fake = await founder(page);
+  await page.goto(`${TEPOS}/agent`);
+  const vault = page.getByTestId("vault");
+  await expect(vault.getByTestId("vault-pack")).toContainText("0 of 16");
+
+  // a program is refused before anything is sent
+  await vault.getByRole("button", { name: "File Exclusive mandate" }).click();
+  const form = page.getByRole("form", { name: "File a document" });
+  await expect(form.getByLabel("Title")).toHaveValue("Exclusive mandate");
+  await form.getByLabel(/The file/).setInputFiles({ name: "setup.exe", mimeType: "application/x-msdownload", buffer: Buffer.from("MZ") });
+  await form.getByRole("button", { name: "File it" }).click();
+  await expect(form).toContainText("Only PDFs and photos");
+  expect(fake.writes.filter((w) => w.table === "vault_documents" || w.table === "storage")).toHaveLength(0);
+
+  // the PDF: the record first, then the upload to its own path, then the database confirms it arrived
+  await form.getByLabel(/The file/).setInputFiles({ name: "Exclusive_Mandate.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF-1.4 mandate") });
+  await form.getByRole("button", { name: "File it" }).click();
+  await expect(form).toHaveCount(0);
+  const record = fake.writes.find((w) => w.table === "vault_documents")!.body as Record<string, unknown>;
+  expect(record).toMatchObject({ folder: "agency_forms", pack_item: "exclusive_mandate", mime_type: "application/pdf", org_id: VAULT });
+  expect(record.sha256).toMatch(/^[0-9a-f]{64}$/);
+  expect(record.storage_path).toBe(`${VAULT}/${record.id}`);
+  expect(fake.writes.map((w) => w.method)).toEqual(expect.arrayContaining(["UPLOAD", "RPC"]));
+  await expect(vault.getByTestId("vault-pack")).toContainText("1 of 16");
+  await expect(vault.getByTestId("vault-folder-agency_forms")).toContainText("Exclusive mandate");
+  await expect(vault.getByTestId("vault-folder-agency_forms")).toContainText(`fingerprint ${String(record.sha256).slice(0, 12)}`);
+
+  // opening: logged first, then the link is signed and opened in a new tab (served here, as the new tab is outside the page's fake)
+  await page.context().route(/\/storage\/v1\/object\/sign\//, (r) => r.fulfill({ status: 200, contentType: "application/pdf", body: "%PDF-1.4 fixture" }));
+  const popup = page.waitForEvent("popup");
+  await vault.getByRole("button", { name: "Open Exclusive mandate" }).click();
+  const tab = await popup;
+  await expect(tab).toHaveURL(/\/storage\/v1\/object\/sign\/tepos-vault\//);
+  const methods = fake.writes.map((w) => `${w.method}:${w.table}`);
+  expect(methods.indexOf("RPC:vault_open")).toBeLessThan(methods.indexOf("SIGN:storage"));
+  await vault.getByText("Recent openings").click();
+  await expect(vault.getByTestId("vault-reads")).toContainText("Exclusive mandate");
+});

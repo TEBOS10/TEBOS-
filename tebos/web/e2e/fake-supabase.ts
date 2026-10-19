@@ -112,6 +112,7 @@ export async function installFakeSupabase(
   const writes: FakeSupabase["writes"] = [];
   let refusal: Refusal | null = null;
   const factors: FakeFactor[] = opts.factors ?? [];
+  const storedFiles = new Set<string>();
 
   if (opts.signedIn !== false) {
     const session = fixtureSession(opts.aal, factors);
@@ -160,13 +161,30 @@ export async function installFakeSupabase(
       return route.fulfill({ status: 200, headers, body: JSON.stringify(url.pathname === "/auth/v1/user" ? fixtureUser(factors) : {}) });
     }
 
+    if (url.pathname.startsWith("/storage/v1/object/")) {
+      // the vault's bucket: upload once (never over a file), sign a link, serve the signed link
+      const signing = url.pathname.startsWith("/storage/v1/object/sign/");
+      // the path within the bucket, as the database records it
+      const rest = decodeURIComponent(url.pathname.slice(`/storage/v1/object/${signing ? "sign/" : ""}`.length)).replace(/^tepos-vault\//, "");
+      if (signing) {
+        const path = rest;
+        if (req.method() === "GET") return route.fulfill({ status: storedFiles.has(path) ? 200 : 404, headers: { "content-type": "application/pdf" }, body: "%PDF-1.4 fixture" });
+        writes.push({ method: "SIGN", table: "storage", body: path });
+        return route.fulfill({ status: 200, headers, body: JSON.stringify({ signedURL: `/object/sign/tepos-vault/${path}?token=fixture` }) });
+      }
+      writes.push({ method: "UPLOAD", table: "storage", body: rest });
+      if (storedFiles.has(rest)) return route.fulfill({ status: 400, headers, body: JSON.stringify({ statusCode: "409", error: "Duplicate", message: "The resource already exists" }) });
+      storedFiles.add(rest);
+      return route.fulfill({ status: 200, headers, body: JSON.stringify({ Key: rest, Id: crypto.randomUUID() }) });
+    }
+
     const m = /^\/rest\/v1\/(rpc\/)?([a-z_]+)$/.exec(url.pathname);
     if (!m) return route.fulfill({ status: 404, headers, body: "{}" });
     const [, rpc, name] = m;
     if (rpc) {
       const args = req.postDataJSON() ?? {};
       writes.push({ method: "RPC", table: name!, body: args });
-      return route.fulfill({ status: 200, headers, body: JSON.stringify(answerRpc(tables, name!, args)) });
+      return route.fulfill({ status: 200, headers, body: JSON.stringify(answerRpc(tables, name!, args, storedFiles)) });
     }
 
     const table = (tables[name!] ??= []);
@@ -216,8 +234,17 @@ export async function installFakeSupabase(
 }
 
 // The two invitation functions, answered from the fixture tables; any other RPC returns a fresh id.
-function answerRpc(tables: FakeSupabase["tables"], name: string, args: Record<string, string>): unknown {
+function answerRpc(tables: FakeSupabase["tables"], name: string, args: Record<string, string>, storedFiles = new Set<string>()): unknown {
   const now = new Date().toISOString();
+  if (name === "vault_confirm" || name === "vault_open") {
+    // the vault: stored only when the file is there; an opening is logged before the path is handed back
+    const t = tables as Record<string, Array<Record<string, unknown>>>;
+    const doc = t.vault_documents?.find((d) => d.id === args.p_document);
+    if (!doc || !storedFiles.has(String(doc.storage_path))) return null;
+    if (name === "vault_confirm") return (doc.stored_at ??= now);
+    (t.vault_reads ??= []).unshift({ id: crypto.randomUUID(), org_id: doc.org_id, document_id: doc.id, user_id: USER_ID, opened_at: now });
+    return doc.storage_path;
+  }
   if (name === "create_invitation") {
     (tables.invitations ??= []).unshift({ id: crypto.randomUUID(), org_id: args.p_org, email: args.p_email.toLowerCase(), role: args.p_role, status: "pending", invited_by: USER_ID, accepted_by: null, created_at: now, expires_at: new Date(Date.now() + 7 * 864e5).toISOString(), accepted_at: null });
     return "fixture-invitation-token";
@@ -351,6 +378,7 @@ const COLUMN_DEFAULTS: Record<string, Record<string, unknown>> = {
   // the references stand in for the trigger that numbers listings and contacts
   agent_listings: { ref: "L-001", stage_at: new Date().toISOString() },
   agent_contacts: { ref: "B-001", stage_at: new Date().toISOString() },
+  vault_documents: { stored_at: null, archived_at: null, note: null, pack_item: null },
   // the database copies the case's figures into a baseline; the fake leaves it empty, as a case with no figures would be refused
   property_baselines: { figures: [], captured_on: new Date().toISOString().slice(0, 10), target_note: null },
   property_workstreams: { approval: "not_needed", status: "planned" },
