@@ -18,13 +18,41 @@ Update this list every run; strike items when they're done.
 | 5 | Founder name and title for outreach and the site | Sending the outreach drafts |
 | 6 | Social accounts created, and whether to invite a marketer (Staff → Invite, role Marketing) | Publishing the social pack and approved drafts |
 | 7 | Company registration and VAT number | Invoices that are legally complete |
-| 8 | Make the repo private, rotate database passwords, turn on leaked-password protection | Protecting the platform from copying |
+| 8 | Make the repo private (first set the default branch to `main`), rotate database passwords. Leaked-password protection needs Supabase Pro | Protecting the platform from copying |
+| 19 | Enrol two-step sign-in (TEBOS → Account), with a backup device | Protecting money records; issuing any AI-client token |
+| 20 | Apply the audit-verifier and Model Bridge migrations live, set the `tebos_bridge` password, and approve the bridge service on Railway (steps in `docs/bridge.md`) | Checking the live audit trail; connecting the coding assistant to REEDS |
 | 10 | **Property Revenue Architect:** the monthly subscription price (and whether there are tiers). The assessment is settled: rental income, occupancy and costs | The first paying subscribers, priority 1 |
 | 12 | **Agent's office:** what your agency's principal allows (CRM, listing portals, WhatsApp, client data), and the one auto-reply text you approve | Never missing an enquiry, priority 3 |
 | 11 | When there's income: Supabase Pro (about USD 25 a month) so the vault and Tidy Capital can have their own project, out of the client database. Until then the vault is a private organisation inside TEBOS | Full separation of your private data |
 | 18 | Each client's web app address (where TEBOS's people sign in to their department), starting with BAME's | Client tiles that open the client's web app |
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
+
+## 19 Oct 2026: the audit check and the Model Bridge, merged but not live
+
+Built on `claude/dossier-foundations-4mmjkk` and merged at the founder's word ("go, open the PR and merge when green").
+
+- **The audit-chain check.** `tebos_private.audit_verify` and `public.audit_chain_status` read the audit trail and report,
+  per chain, whether it is intact, or the first event where it breaks, was changed, or starts part-way. It never edits
+  history. See `docs/audit/audit-chain-verification.md`.
+  - Found, not fixed: an event's hash depends on the writing session's time zone, and empty fields are skipped when it
+    is built. The fix is a versioned writer for new events.
+- **The Model Bridge.** AI clients take work from REEDS's own ledger through an MCP endpoint and hand results back; a
+  person reviews every result. Tokens are issued only by an admin in a two-step session, never for private or TEPOS
+  organisations, and stored as a hash. The bridge's own database login can read no table. See `docs/bridge.md`.
+- **TEPOS creative brief.** Five proposals from the founder's videos, all waiting for a yes or no:
+  `docs/tepos/creative-proposals.md`.
+- **Renumbered.** These migrations and tests were renumbered (`20261019…`, `99zl`/`99zm`) so the TEPOS agent-office
+  branch can merge in either order. A trial merge of both passed the database and web checks.
+- **Not live.**
+  - The two migrations are not applied (decision 20).
+  - The bridge service doesn't exist yet.
+  - CI's migration job can't log in (stale secret), so merging applied nothing.
+  - The live audit trail stays "not yet verified" until the check runs live and its result is recorded here.
+- **Tests:**
+  - core: 333 unit, 62 database/integration (one is a full MCP round trip over HTTP);
+  - web: 63 unit;
+  - browser: 114 of 115. The one failure was the 3D board under full-suite load, unrelated, and it passed on rerun.
 
 ## 17 Oct 2026: TEPOS security tightened ("beef up security")
 

@@ -109,7 +109,12 @@ code under `web/tepos/` and `web/src/tepos/`.
 6. Tidy Capital, honestly: bring the `capital` schema into this repository, and the paper-trading ledger (Forex
    portal).
 
-Creative ideas waiting for the founder's yes or no: day and night in the TEPOS city following Tidy Capital's runway.
+Creative ideas waiting for the founder's yes or no are listed in [`creative-proposals.md`](creative-proposals.md):
+- portals that build themselves, stage by stage;
+- a public-awareness globe;
+- labelled 3D walkthroughs of a property;
+- REEDS drafting the social calendar and replies;
+- day and night in the TEPOS city following Tidy Capital's runway.
 
 ## Open items for the founder
 
