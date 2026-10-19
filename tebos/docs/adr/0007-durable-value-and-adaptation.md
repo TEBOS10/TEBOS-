@@ -98,6 +98,34 @@ The loop for each signal:
 - Cost, competitor and technology signals come from outside the database. They are added next, through the connected
   research platforms.
 
+### Signal discipline (from the founder's strategy research, 20 Oct)
+
+Adopted from the research:
+- **Every alert says which assumption it challenges.**
+  - The first assumptions: owners will pay R750 a month for measured improvement; demand comes from the founder's
+    network first; free tiers cover running costs until revenue.
+  - A signal that touches none of these is dropped.
+- **An alert must persist, or be confirmed, before it changes the plan.** One quiet week is a note. Two in a row, or
+  quiet demand confirmed by an empty pipeline, is a decision.
+- **Retire or recalibrate an alert that hasn't led to a decision in six weeks.**
+- **REEDS tracks:**
+  - signal-to-action time (from brief to decision);
+  - the share of alerts that led to a decision;
+  - experiments run per quarter, and how many passed their measure.
+- **Horizons:**
+  - horizon 1 is the PRA plan and the TEBOS diagnostic;
+  - horizon 2 is the repeatable industry routes;
+  - horizon 3 (the gateway, the bridge, autonomy) gets only time-boxed tests until horizons 1–2 pay for it.
+
+Not adopted:
+- data lakes, fine-tuned models, and owning capacity or infrastructure: stage 3 at the earliest (ADR 0006);
+- blockchain;
+- the examples about rental networks, amenities and guest beds, which don't describe this company;
+- quotes attributed to consultancies, which came without sources and aren't repeated as fact.
+
+**Data used to learn** (the research's "proprietary data feedback loops") is only clients' own records, used for their
+results and, anonymised, with their written consent (the founding offer). POPIA applies.
+
 ## 3. How we build an advantage without exhausting capital
 
 | Sell now (no new spend) | Build when evidence asks | Avoid until there is demand |
