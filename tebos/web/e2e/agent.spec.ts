@@ -91,6 +91,7 @@ test("TEPOS: a listing is added with its next step; personal details and open-en
 test("TEPOS: without two-step sign-in, the office stays closed", async ({ page }) => {
   await founder(page, "aal1");
   await page.goto(`${TEPOS}/agent`);
-  await expect(page.getByTestId("two-step-required")).toBeVisible();
+  // all of TEPOS asks for the second step first (migration tepos_two_step)
+  await expect(page.getByTestId("tepos-two-step-first")).toBeVisible();
   await expect(page.getByTestId("agenda")).toHaveCount(0);
 });
