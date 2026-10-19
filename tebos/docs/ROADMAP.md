@@ -71,6 +71,15 @@ client's system, so it holds wide access. It uses it the way a careful CEO would
 - nothing is ever done that disrupts or harms a department;
 - changes outside the agreed deliverables go to REEDS and to the client for a yes or no first.
 
+**One systems portfolio (founder, 19 Oct 2026).**
+- TEPOS proves each capability on the founder's own operations, the library makes it reusable, and TEBOS configures it
+  for clients whose diagnosed problems need it. One codebase, never a copy per client.
+- Three portfolios: operational, creative and industry systems. Each capability moves through five stages, with
+  evidence at each.
+- See [ADR 0005](adr/0005-systems-portfolio.md) and the [product register](product-register.md). Nothing is past
+  stage 2 yet.
+- This doesn't start development across every category. The order below stands.
+
 **The creative team (founder, 16 Oct 2026).** Both apps should look like themselves, not like copies in different
 colours, and ideas shouldn't wait for the founder.
 - Each week, the daily build run produces one creative proposal for TEPOS or a client: a visual idea, a
