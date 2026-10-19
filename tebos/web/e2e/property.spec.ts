@@ -314,3 +314,28 @@ test("the baseline is captured by the database, and the scorecard measures actua
   const report = page.getByTestId("property-report");
   await expect(report.locator(".pra-report-section").filter({ has: page.getByRole("heading", { name: "Outcome scorecard" }) })).toContainText("Baseline captured 2026-09-01");
 });
+
+test("the monthly update shows the plan, the work finished this month with its evidence, what is next, and never an unmeasured result", async ({ page }) => {
+  const fake = await installFakeSupabase(page, TWO_STEP);
+  const t = seed(fake, { authority: "confirmed" });
+  const today = new Date().toISOString().slice(0, 10);
+  const month = today.slice(0, 7);
+  const ws = (id: string, over: Record<string, unknown>) => ({ id, org_id: ORG, case_id: CASE, title: id, owner: "Tidy", due_on: "2099-12-31", status: "planned", depends_on: null,
+    budget: null, approval: "not_needed", approved_by: null, approved_on: null, completion_evidence: null, completed_on: null, note: null, created_at: now(), updated_at: now(), ...over });
+  t.property_workstreams = [
+    ws("Register the rental business", { status: "done", completed_on: today, completion_evidence: "Registration certificate", due_on: today }),
+    ws("Re-let unit 2", { status: "in_progress", due_on: "2099-01-15" }),
+  ];
+  t.property_figures = [{ id: "f-units", org_id: ORG, case_id: CASE, key: "units", value: 3, basis: "verified", evidence_id: null, as_of: today, note: null, recorded_by: USER_ID, created_at: now(), updated_at: now() }];
+  await page.goto(`/property/${CASE}`);
+  await page.getByRole("link", { name: "Monthly update" }).click();
+  const m = page.getByTestId("property-month");
+  await expect(m.getByLabel("Month")).toHaveValue(month);
+  await expect(m).toContainText("Plan: Portfolio, R1 950 a month excluding VAT.");
+  const section = (name: string) => m.locator(".pra-report-section").filter({ has: page.getByRole("heading", { name, exact: true }) });
+  await expect(section("What was done")).toContainText("Registration certificate");
+  await expect(section("What is next")).toContainText("Re-let unit 2");
+  await expect(section("What is next")).not.toContainText("Register the rental business");
+  await expect(section("Figures then and now")).toContainText("No baseline has been captured");
+  await expect(section("This month in brief")).toContainText("1 piece of work finished this month");
+});

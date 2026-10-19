@@ -111,7 +111,9 @@ colours, and ideas shouldn't wait for the founder.
 
 1. **Property Revenue Architect, as an affordable monthly subscription** (founder, 16 Oct). *Built 16 Oct: the case
    workspace and assessment report (docs/property-revenue-architecture.md). Workstreams and the outcome scorecard
-   followed the same day. Next: the monthly subscription view.* Owners of
+   followed the same day. The monthly update (19 Oct): each month, what was finished with its evidence, what is
+   next, what needs attention, and the measured result against the baseline, with the decided plan. Next: a
+   subscription record per owner, then billing it through TEBOS's monthly invoices once decision 10b is done.* Owners of
    underperforming properties can't pay a large once-off fee, so the product is a monthly plan with practical
    results: each month, what was fixed, what was done (a spreadsheet set up, a business registered), what is next.
    It doesn't need the founder present for every step. Build it on what TEBOS already has: the delivery plan

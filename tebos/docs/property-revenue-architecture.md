@@ -134,7 +134,14 @@ same rules, so they hold however the data arrives. `test/property.test.ts` check
 - **Documents aren't uploaded:** the evidence register records where a document is kept. Secure upload comes with
   the private vault (founder's priority 5).
 - **No AI document analysis.** Any future extraction will be shown as fallible, cite its source and need a person's review.
-- **The monthly subscription view** (what was done this month, figures then and now) builds on these cases next.
+- **The monthly update** (`/property/:id/month/:month`, built 19 Oct) is the subscription's monthly page:
+  - the decided plan, from the number of rentable units (`PRA_PLANS`, `planForUnits`);
+  - work finished that month, with its evidence;
+  - what is next, and what needs attention;
+  - the latest outcome review against the frozen baseline.
+
+  It is computed by `monthlyUpdate` in `src/domain/property.ts`, from recorded work and reviews only. Nothing on it is
+  estimated, and an unmeasured month says so.
 - **Prices aren't in the product:** the R2,800 assessment in the dossier is a working price for the founder to confirm.
 - Nothing here is a valuation, legal opinion, credit decision or financing approval. South African legal, tax,
   property-practitioner, privacy and financial-services requirements must be confirmed with professionals.

@@ -186,6 +186,7 @@ export function PropertyCasePage({ id }: { id: string }) {
         <div className="pra-actions">
           <Tag tone={DISPOSITION_TONE[c.disposition as Disposition]}>{DISPOSITIONS[c.disposition as Disposition].label}</Tag>
           <Link to={`/property/${c.id}/report`} className="pra-btn primary">Assessment report</Link>
+          <Link to={`/property/${c.id}/month`} className="pra-btn">Monthly update</Link>
         </div>
       </header>
       <nav className="pra-tabs" aria-label="Case sections">
