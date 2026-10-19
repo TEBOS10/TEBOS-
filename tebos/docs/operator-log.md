@@ -20,13 +20,55 @@ Update this list every run; strike items when they're done.
 | 7 | Company registration and VAT number | Invoices that are legally complete |
 | 8 | Make the repo private (first set the default branch to `main`), rotate database passwords. Leaked-password protection needs Supabase Pro | Protecting the platform from copying |
 | 19 | Enrol two-step sign-in (TEBOS → Account), with a backup device | Protecting money records; issuing any AI-client token |
-| 20 | Apply the audit-verifier and Model Bridge migrations live, set the `tebos_bridge` password, and approve the bridge service on Railway (steps in `docs/bridge.md`) | Checking the live audit trail; connecting the coding assistant to REEDS |
+| 20 | Set the `tebos_bridge` login password in the Supabase SQL editor, then approve the bridge service on Railway (steps in `docs/bridge.md`). The migrations are applied (19 Oct) | Connecting the coding assistant to REEDS |
 | 10 | **Property Revenue Architect:** the monthly subscription price (and whether there are tiers). The assessment is settled: rental income, occupancy and costs | The first paying subscribers, priority 1 |
 | 12 | **Agent's office:** what your agency's principal allows (CRM, listing portals, WhatsApp, client data), and the one auto-reply text you approve | Never missing an enquiry, priority 3. Until the principal allows client data, the office keeps references only (B-001), no names or numbers |
 | 11 | When there's income: Supabase Pro (about USD 25 a month) so the vault and Tidy Capital can have their own project, out of the client database. Until then the vault is a private organisation inside TEBOS | Full separation of your private data |
 | 18 | Each client's web app address (where TEBOS's people sign in to their department), starting with BAME's | Client tiles that open the client's web app |
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
+
+## 19 Oct 2026 (later): both migrations live, and the audit trail checked: intact
+
+At the founder's word ("do it"), applied with the Supabase connector under their names: `audit_verify`, then
+`model_bridge`. Both were applied as merged in #72, apart from shortened header comments.
+
+**The live audit check** ran read-only at 09:33 UTC. All 12 chains (4,059 events) are **intact**. There's no broken link,
+no changed event, and no chain that starts part-way.
+
+Each chain's head, for comparing later from outside the database:
+
+| Chain | Last event | Last hash |
+|---|---|---|
+| (platform) | 1605 | `149cac6587718f4735c1536a4044030b27fa0aa15d11dad8e9ed490e31fe0fcf` |
+| avocado-os | 3484 | `cd77c0bf4f09d76d264d65f9cdce5a21ec9824b6b6fb3a43cfa9e1277393ceb3` |
+| bame | 4073 | `9fef2b60f238cd40a7877a05a75d505435845a65ddac12745e798c5eb762fef7` |
+| grape-studios | 3482 | `e49ebd57bfb7c6f96abe88acea98820ce7644158c75a0010284d2e400b400bb4` |
+| hospitality-os | 3487 | `79ef759867875e88156541208fa91c965798933157b3790c0b3f331149ce75f2` |
+| irekun | 3496 | `5db888161c36787d6819d7a5ea133b0870f2a848c4d05a43d85ee8ffd89525bb` |
+| k-academy | 3486 | `f6df6fdcfac2ebae4656ae60f7cc622fc0c95d3cef7ace663dcb4a34c6e8c21e` |
+| mmupi-and-clay | 3483 | `561c7118a7b1730c415c23bbf5fa1bfebc463e512cb640c563f35192443c5f53` |
+| rocomamas | 2628 | `a8438fdc1aa781019ad4d818d14e93eb07f90664bbb19c7b56580c52f40f243f` |
+| tebos | 4070 | `2fbeca4bfda79f795c08e084b33d24d5fe3622c43a230f554f83eed1d5624025` |
+| tidy-enterprise | 3497 | `200ecef91efe4e07f1730952d3b25a749f4b1236c9537eb5cc1b7e0a4e5e4d6b` |
+| vantage | 3485 | `0837b870e057c4cee62794c00f2869cc29f74d72655656d6ddbbda100efe1718` |
+
+**The bridge, checked live** (read-only):
+- The `tebos_bridge` role exists. It can't log in yet, doesn't bypass row-level security, and can read no table
+  (`work_tasks` and `bridge_clients` were both checked). It can run its own functions.
+- Visitors can't issue tokens. Signed-in people can't read token hashes.
+- An unknown token is refused.
+- There are 0 AI clients.
+- After the migration, the platform chain is still intact.
+
+**Security advisors:** the four new functions people can call (`issue_bridge_client`, `revoke_bridge_client`,
+`review_work_task`, `audit_chain_status`) are listed, as expected. Each checks sign-in, role, and two-step where it
+matters. Nothing new is open to visitors, and no table is missing row-level security.
+
+**Not yet:**
+- the bridge's login password (the founder's, decision 20);
+- the Railway service;
+- a token, which needs two-step sign-in (decision 19).
 
 ## 19 Oct 2026: the audit check and the Model Bridge, merged but not live
 
