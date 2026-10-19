@@ -5,6 +5,8 @@ import { defineConfig } from "@playwright/test";
 export default defineConfig({
   testDir: "e2e",
   timeout: 30_000,
+  // on CI each failing test is reported as an annotation on the pull request, readable without the log
+  reporter: process.env.CI ? [["github"], ["list"]] : "list",
   use: {
     baseURL: "http://localhost:5174",
     viewport: { width: 1440, height: 1000 },
