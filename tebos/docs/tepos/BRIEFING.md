@@ -34,12 +34,13 @@ code under `web/tepos/` and `web/src/tepos/`.
 
 | What | Where |
 |---|---|
+| Real Estate Job portal | `tebos/web/src/tepos/AgentOffice.tsx`, `agentData.ts`; rules in `tebos/src/domain/agent.ts` |
 | Entry and page | `tebos/web/tepos/index.html`, `tebos/web/tepos/main.tsx` |
 | App, sign-in gate and menu | `tebos/web/src/tepos/TeposApp.tsx` |
 | The six portals and what the unbuilt ones will hold | `tebos/web/src/tepos/portals.ts` (tested by `portals.test.ts`) |
 | Home (the city) and portal pages | `TeposCity.tsx`, `TeposPage.tsx`, `tepos.css` |
 | Build config | `tebos/web/vite.tepos.config.ts` |
-| End-to-end test | `tebos/web/e2e/tepos.spec.ts` (also `resilience.spec.ts`, `property.spec.ts`, `two-step.spec.ts`) |
+| End-to-end test | `tebos/web/e2e/tepos.spec.ts` (also `agent.spec.ts`, `resilience.spec.ts`, `property.spec.ts`, `two-step.spec.ts`) |
 
 - Build TEPOS with `npm run build:tepos` in `tebos/web`. The output goes to `dist-tepos`.
 - `npm run build` (TEBOS) must keep passing `scripts/check-bundles.mjs`, which fails if the TEBOS bundle mentions TEPOS.
@@ -68,7 +69,7 @@ code under `web/tepos/` and `web/src/tepos/`.
 | Tidy Enterprise | `/property` | `tidy-enterprise` | Yes: Property Revenue Architecture cases, assessment report, workstreams, outcome scorecard |
 | IREKUN | `/irekun` | `irekun` | Yes: two-step sign-in and the private organisation |
 | Academics | `/academics` | (none yet) | No: under scaffolding (priority 4, the study path) |
-| Real Estate Job | `/agent` | (none yet) | No: under scaffolding (priority 3, the agent's office) |
+| Real Estate Job | `/agent` | `irekun` | Yes, slice 1: listings and people with next steps, overdue first, mandates ending. No personal details (decision 12) |
 | Forex | `/forex` | (none yet) | No: under scaffolding (priority 6, paper trading only) |
 
 - The menu also has **Ask REEDS** (`/reeds`).
@@ -103,7 +104,8 @@ code under `web/tepos/` and `web/src/tepos/`.
 
 1. Property Revenue Architect as a monthly subscription. Next step: the monthly subscription view.
 2. REEDS works without being asked: standing requests, then the weekly money brief.
-3. The agent's office (Real Estate Job portal).
+3. The agent's office (Real Estate Job portal). Slice 1 built 17 Oct; next: commission expected versus received, then
+   the enquiry log.
 4. The study path (Academics portal).
 5. The private vault in IREKUN: private documents, every read audited, short-lived signed links.
 6. Tidy Capital, honestly: bring the `capital` schema into this repository, and the paper-trading ledger (Forex

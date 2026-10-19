@@ -348,6 +348,9 @@ const COLUMN_DEFAULTS: Record<string, Record<string, unknown>> = {
   // the database's defaults; the reference stands in for the trigger that numbers cases
   property_cases: { ref: "PA-001", disposition: "hold_optimise", suspected_cause: "unknown", authority: "unconfirmed", disposition_at: new Date().toISOString() },
   property_pathways: { specialists: [] },
+  // the references stand in for the trigger that numbers listings and contacts
+  agent_listings: { ref: "L-001", stage_at: new Date().toISOString() },
+  agent_contacts: { ref: "B-001", stage_at: new Date().toISOString() },
   // the database copies the case's figures into a baseline; the fake leaves it empty, as a case with no figures would be refused
   property_baselines: { figures: [], captured_on: new Date().toISOString().slice(0, 10), target_note: null },
   property_workstreams: { approval: "not_needed", status: "planned" },

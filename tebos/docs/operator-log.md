@@ -22,7 +22,7 @@ Update this list every run; strike items when they're done.
 | 19 | Enrol two-step sign-in (TEBOS → Account), with a backup device | Protecting money records; issuing any AI-client token |
 | 20 | Apply the audit-verifier and Model Bridge migrations live, set the `tebos_bridge` password, and approve the bridge service on Railway (steps in `docs/bridge.md`) | Checking the live audit trail; connecting the coding assistant to REEDS |
 | 10 | **Property Revenue Architect:** the monthly subscription price (and whether there are tiers). The assessment is settled: rental income, occupancy and costs | The first paying subscribers, priority 1 |
-| 12 | **Agent's office:** what your agency's principal allows (CRM, listing portals, WhatsApp, client data), and the one auto-reply text you approve | Never missing an enquiry, priority 3 |
+| 12 | **Agent's office:** what your agency's principal allows (CRM, listing portals, WhatsApp, client data), and the one auto-reply text you approve | Never missing an enquiry, priority 3. Until the principal allows client data, the office keeps references only (B-001), no names or numbers |
 | 11 | When there's income: Supabase Pro (about USD 25 a month) so the vault and Tidy Capital can have their own project, out of the client database. Until then the vault is a private organisation inside TEBOS | Full separation of your private data |
 | 18 | Each client's web app address (where TEBOS's people sign in to their department), starting with BAME's | Client tiles that open the client's web app |
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
@@ -53,6 +53,22 @@ Built on `claude/dossier-foundations-4mmjkk` and merged at the founder's word ("
   - core: 333 unit, 62 database/integration (one is a full MCP round trip over HTTP);
   - web: 63 unit;
   - browser: 114 of 115. The one failure was the 3D board under full-suite load, unrelated, and it passed on rerun.
+
+## 17 Oct 2026: the Real Estate Job portal opens (the agent's office, slice 1)
+
+- **Asked by the founder:** the real-estate job first, starting with deals and next steps. The agency's
+  principal hasn't been asked about client data yet (decision 12), so no personal details are kept.
+- **Built** (migration `agent_office`, additive):
+  - Listings (L-001, ...) and people (buyers B-, sellers S-, tenants T-, landlords O-), each with a stage.
+  - Nothing open is left without a next step and its date; anything closed says how it ended.
+  - Email addresses, South African phone numbers and ID numbers are refused in every text field, as are
+    secrets. People are described by what they need, never by who they are.
+  - Only in the private organisation (IREKUN), only for its owner, only after two-step sign-in. The audit
+    trail is redacted, so a deleted record is really gone.
+  - The portal: next steps soonest first (overdue, today, this week), mandates ending within two weeks,
+    and the listings and people. The city's Real Estate Job building is now open.
+- Tests: SQL `99zj`, `test/agent.test.ts`, and the e2e test `agent.spec.ts`.
+- Next: commission expected versus received (feeding Tidy Capital), then the enquiry log.
 
 ## 17 Oct 2026: TEPOS security tightened ("beef up security")
 

@@ -25,7 +25,7 @@ const NAV: Array<{ to: string; label: string; icon: typeof Vault; exact: boolean
   { to: "/property", label: "Tidy Enterprise", icon: Landmark, exact: false, org: "tidy-enterprise" },
   { to: "/irekun", label: "IREKUN", icon: KeyRound, exact: true, org: "irekun" },
   { to: "/academics", label: "Academics", icon: GraduationCap, exact: true },
-  { to: "/agent", label: "Real Estate Job", icon: Home, exact: true },
+  { to: "/agent", label: "Real Estate Job", icon: Home, exact: true, org: "irekun" },
   { to: "/forex", label: "Forex", icon: LineChart, exact: true },
   { to: "/reeds", label: "Ask REEDS", icon: MessageSquare, exact: false },
 ];
