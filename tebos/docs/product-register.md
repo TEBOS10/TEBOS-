@@ -73,7 +73,7 @@ The founder said yes to proposals 1 to 5 on 19 Oct (`tepos/creative-proposals.md
 | Visualisation and simulation | 1 | Proposal 3. Always labelled illustrative |
 | Environmental intelligence | 1 | Proposal 2. Public information only, no tracking of people |
 | Creative communications | 1 | Proposals 4 and 5. Drafts only |
-| Design system (one visual standard everywhere) | Not yet identified | Proposal 6 (`tepos/video-review-19-oct.md`), waiting for the founder's yes |
+| Design system (one visual standard everywhere) | 1 | Proposal 6 (`tepos/video-review-19-oct.md`), yes 19 Oct. Not built yet |
 
 ## Industry systems
 

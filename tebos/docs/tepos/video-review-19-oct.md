@@ -35,7 +35,7 @@ and run by a team that can deliver at large scale.
   - foundations first, so it is applied to working features, not used to dress up unfinished ones.
 - **Cost:** build time. A reference tool or paid template only with the founder's approval.
 - **Risk:** low. The main risk is spending effort on looks before the underlying feature is used.
-- **Status:** waiting for the founder's yes.
+- **Status:** the founder said yes, 19 Oct. It is at stage 1, applied in stages after the real-estate work.
 
 ## The founder's model of the catalogue
 
