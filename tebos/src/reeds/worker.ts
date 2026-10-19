@@ -7,8 +7,9 @@
 //            or fail it (naming the task that failed); never "completed" otherwise
 //   plan     a received request: its tasks, each with an acceptance test
 //
-// Nothing here can create a request: only a signed-in person can (the
-// database enforces it), so work never delegates more work.
+// Nothing here creates work of its own accord: a request comes from a signed-in person, or is a weekly signal
+// brief that a person set up as a standing request (the database enforces both), and a brief never asks for
+// more work, so work never delegates more work.
 
 import { composeReport, externalLine, isRequestKind, planRequest, reportLine, taskSpec, type CheckResult, type ExternalAsk, type ExternalResult, type RequestKind, type TaskSpec, type WorkReport } from "../domain/work";
 import type { CheckInput, Verification } from "./checks";
@@ -58,13 +59,19 @@ export interface WorkStore {
   complete(requestId: string, report: WorkReport): Promise<void>;
   run(executor: string, input: CheckInput): Promise<CheckResult>;
   verify(executor: string, input: CheckInput, result: CheckResult): Promise<Verification>;
+  /**
+   * File one weekly signal brief that a person set up as a standing request and that is due (none in the last
+   * six days). The database decides whether it may be filed; returns the new request, or null.
+   */
+  fileDueBrief(): Promise<string | null>;
 }
 
 export type WorkReportEvent =
   | { step: "plan"; requestId: string; tasks: number }
   | { step: "run"; taskId: string; outcome: "done" | "retry" | "failed"; detail?: string }
   | { step: "verify"; taskId: string; ok: boolean }
-  | { step: "close"; requestId: string; outcome: "completed" | "failed" };
+  | { step: "close"; requestId: string; outcome: "completed" | "failed" }
+  | { step: "file"; requestId: string };
 
 export class WorkWorker {
   constructor(
@@ -74,7 +81,15 @@ export class WorkWorker {
   ) {}
 
   async runOnce(): Promise<WorkReportEvent | null> {
-    return (await this.verify()) ?? (await this.runTask()) ?? (await this.close()) ?? (await this.plan());
+    return (await this.verify()) ?? (await this.runTask()) ?? (await this.close()) ?? (await this.plan()) ?? (await this.file());
+  }
+
+  /** A standing weekly brief that is due becomes a request, filed for the person who set it up. */
+  private async file(): Promise<WorkReportEvent | null> {
+    const id = await this.store.fileDueBrief();
+    if (!id) return null;
+    this.log({ event: "reeds.filed_weekly_brief", requestId: id });
+    return { step: "file", requestId: id };
   }
 
   private async plan(): Promise<WorkReportEvent | null> {

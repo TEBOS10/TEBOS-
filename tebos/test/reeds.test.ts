@@ -1,7 +1,7 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { ATTENTION_TASKS, composeReport, planRequest, REQUEST_KINDS, reportLine, STATUS_TASKS, taskSpec } from "../src/domain/work";
+import { ATTENTION_TASKS, composeReport, planRequest, REQUEST_KINDS, reportLine, SIGNAL_TASKS, STATUS_TASKS, taskSpec } from "../src/domain/work";
 import { COUNT_CHECKS, EXECUTORS } from "../src/reeds/checks";
 
 const sql = readdirSync(join(__dirname, "..", "supabase", "migrations")).sort()
@@ -23,12 +23,29 @@ describe("REEDS plans", () => {
     expect(planRequest("business_status", { platformAdmin: true })).toEqual(member);
     expect(member.every((t) => t.scope === "org")).toBe(true);
     // keys are unique across request kinds, so a task's spec is never ambiguous
-    const keys = [...ATTENTION_TASKS, ...STATUS_TASKS].map((t) => t.key);
+    const keys = [...ATTENTION_TASKS, ...STATUS_TASKS, ...SIGNAL_TASKS].map((t) => t.key);
     expect(new Set(keys).size).toBe(keys.length);
   });
 
+  it("plans the weekly signal brief: the organisation's own signals for anyone, the platform's only for platform admins", () => {
+    const member = planRequest("signal_brief", { platformAdmin: false });
+    expect(member.map((t) => t.key)).toEqual(["signals.delivery", "signals.reliability", "signals.security"]);
+    const admin = planRequest("signal_brief", { platformAdmin: true });
+    expect(admin.map((t) => t.key)).toEqual(["signals.demand", "signals.cash", "signals.delivery", "signals.reliability", "signals.email", "signals.security"]);
+    expect(admin.length).toBeLessThanOrEqual(12);
+  });
+
+  it("treats quiet demand as the warning, not as good news", () => {
+    const demand = taskSpec("signals.demand")!;
+    expect(reportLine(demand, { available: true, count: 0, ids: [] })).toMatchObject({ attention: true, checked: true });
+    expect(reportLine(demand, { available: true, count: 3, ids: ["a", "b", "c"] })).toMatchObject({ attention: false, text: "3 new enquiries and leads in the last 7 days." });
+    const cash = taskSpec("signals.cash")!;
+    expect(reportLine(cash, { available: true, count: 0, ids: [] }).attention).toBe(false);
+    expect(reportLine(cash, { available: true, count: 1, ids: ["x"] }).attention).toBe(true);
+  });
+
   it("gives every task an executor that exists, a verifiable acceptance test and a valid key", () => {
-    for (const t of [...ATTENTION_TASKS, ...STATUS_TASKS]) {
+    for (const t of [...ATTENTION_TASKS, ...STATUS_TASKS, ...SIGNAL_TASKS]) {
       expect(EXECUTORS, t.key).toContain(t.executor);
       expect(t.acceptance.length).toBeGreaterThanOrEqual(10);
       expect(t.key).toMatch(/^[a-z][a-z0-9_.]{1,60}$/);

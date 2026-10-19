@@ -84,8 +84,19 @@ The loop for each signal:
 - the daily check covers reliability and security;
 - the live counts cover demand and delivery, roughly.
 
-**Next to build (stage 1 sized):** a weekly signal brief, generated from the records above. It goes into REEDS as a
-report. A signal over its threshold becomes a REEDS request with the proposed response.
+**Built (20 Oct): the weekly signal brief.**
+- A REEDS request, "The weekly signal brief". Each signal is read from TEBOS's own records, counted, recounted
+  independently, and reported against its threshold:
+  - demand: no new enquiry or lead in 7 days is the warning;
+  - cash: overdue client invoices;
+  - delivery: property workstreams past their deadline;
+  - reliability: failed runs and failed emails;
+  - security: the audit chain.
+- An admin or operator switches it on once (REEDS → Weekly signal brief). The worker then files it every week for
+  them. The database allows the server to file only this one kind, at most once in six days, and only while that
+  person still holds the role.
+- Cost, competitor and technology signals come from outside the database. They are added next, through the connected
+  research platforms.
 
 ## 3. How we build an advantage without exhausting capital
 
