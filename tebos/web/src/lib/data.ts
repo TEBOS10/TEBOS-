@@ -1433,6 +1433,41 @@ export async function askWorkRequest(db: Db, orgId: string, kind: string, note: 
   return must(await db.from("work_requests").insert({ org_id: orgId, kind, note, status: "received" }).select().single());
 }
 
+/** A piece of work for an AI client: the person writes the title and the acceptance test it is reviewed against. */
+export async function askExternalTask(db: Db, orgId: string, task: { title: string; acceptance: string; executor: string }) {
+  return must(await db.from("work_requests").insert({
+    org_id: orgId, kind: "external_task", status: "received", note: null,
+    task_title: task.title, task_acceptance: task.acceptance, task_executor: task.executor,
+  }).select().single());
+}
+
+/** A person accepts or rejects an AI client's result (two-step session; approver or admin). */
+export async function reviewWorkTask(db: Db, taskId: string, ok: boolean, note: string | null) {
+  return must(await db.rpc("review_work_task", { p_task: taskId, p_ok: ok, p_note: note }));
+}
+
+// ---------------------------------------------------------------------------
+// AI clients (the Model Bridge). Tokens are issued by the database and shown
+// once; only their hint is ever readable again.
+// ---------------------------------------------------------------------------
+
+export type BridgeClient = Row<"bridge_clients">;
+
+export async function listBridgeClients(db: Db, orgId: string) {
+  return must(await db.from("bridge_clients")
+    .select("id, org_id, name, client_kind, token_hint, scopes, expires_at, created_by, created_at, revoked_at, revoked_by, last_used_at")
+    .eq("org_id", orgId).order("created_at", { ascending: false }));
+}
+
+export async function issueBridgeClient(db: Db, orgId: string, name: string, kind: string, scopes: string[], days: number) {
+  const rows = must(await db.rpc("issue_bridge_client", { p_org: orgId, p_name: name, p_kind: kind, p_scopes: scopes, p_days: days }));
+  return rows[0]!;
+}
+
+export async function revokeBridgeClient(db: Db, id: string) {
+  return must(await db.rpc("revoke_bridge_client", { p_client: id }));
+}
+
 export async function cancelWorkRequest(db: Db, id: string) {
   return must(await db.from("work_requests").update({ status: "cancelled" }).eq("id", id).select().single());
 }

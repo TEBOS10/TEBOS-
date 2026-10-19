@@ -10,7 +10,7 @@
 // Nothing here can create a request: only a signed-in person can (the
 // database enforces it), so work never delegates more work.
 
-import { composeReport, isRequestKind, planRequest, reportLine, taskSpec, type CheckResult, type RequestKind, type TaskSpec, type WorkReport } from "../domain/work";
+import { composeReport, externalLine, isRequestKind, planRequest, reportLine, taskSpec, type CheckResult, type ExternalAsk, type ExternalResult, type RequestKind, type TaskSpec, type WorkReport } from "../domain/work";
 import type { CheckInput, Verification } from "./checks";
 
 export interface ReceivedRequest {
@@ -18,6 +18,8 @@ export interface ReceivedRequest {
   orgId: string;
   kind: string;
   requestedBy: string;
+  /** Set for an external task: what the person asked for. */
+  ask?: ExternalAsk;
 }
 
 export interface ClaimedTask {
@@ -34,7 +36,7 @@ export interface ClaimedTask {
 export interface ClosableRequest {
   id: string;
   kind: string;
-  tasks: Array<{ key: string; status: string; result: CheckResult | null; error: string | null; verification: Verification | null }>;
+  tasks: Array<{ key: string; title?: string; status: string; result: CheckResult | null; error: string | null; verification: Verification | null }>;
 }
 
 export interface WorkStore {
@@ -82,7 +84,11 @@ export class WorkWorker {
       await this.store.failRequest(r.id, `TEBOS doesn't know how to handle a "${r.kind}" request yet.`);
       return { step: "close", requestId: r.id, outcome: "failed" };
     }
-    const tasks = planRequest(r.kind, { platformAdmin: await this.store.isPlatformAdmin(r.requestedBy) });
+    if (r.kind === "external_task" && !r.ask) {
+      await this.store.failRequest(r.id, "This external task has no title, acceptance test or AI client.");
+      return { step: "close", requestId: r.id, outcome: "failed" };
+    }
+    const tasks = planRequest(r.kind, { platformAdmin: await this.store.isPlatformAdmin(r.requestedBy) }, r.ask);
     await this.store.plan(r.id, r.orgId, tasks, this.now().toISOString());
     this.log({ event: "reeds.planned", requestId: r.id, kind: r.kind, tasks: tasks.length });
     return { step: "plan", requestId: r.id, tasks: tasks.length };
@@ -125,13 +131,16 @@ export class WorkWorker {
       const why = !bad
         ? "The request had no checkable tasks."
         : bad.status === "rejected"
-          ? `"${taskSpec(bad.key)?.title ?? bad.key}" didn't pass its check: ${bad.verification?.detail ?? "no detail"}`
-          : `"${taskSpec(bad.key)?.title ?? bad.key}" ${bad.status === "failed" ? `failed: ${bad.error ?? "no detail"}` : `ended ${bad.status}`}`;
+          ? `"${bad.title ?? taskSpec(bad.key)?.title ?? bad.key}" didn't pass its check: ${bad.verification?.detail ?? "no detail"}`
+          : `"${bad.title ?? taskSpec(bad.key)?.title ?? bad.key}" ${bad.status === "failed" ? `failed: ${bad.error ?? "no detail"}` : `ended ${bad.status}`}`;
       await this.store.failRequest(r.id, why);
       this.log({ event: "reeds.failed", requestId: r.id, detail: why });
       return { step: "close", requestId: r.id, outcome: "failed" };
     }
     const lines = r.tasks.map((t) => {
+      if (r.kind === "external_task") {
+        return externalLine(t.title ?? "External task", t.result as unknown as ExternalResult, t.verification?.detail ?? null);
+      }
       const spec = taskSpec(t.key);
       if (!spec || !t.result) throw new Error(`task ${t.key} has no spec or result`);
       return reportLine(spec, t.result);

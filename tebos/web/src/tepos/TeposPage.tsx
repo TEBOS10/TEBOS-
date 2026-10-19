@@ -7,6 +7,7 @@ import { Link, navigate } from "../lib/router";
 import { useOrg } from "../lib/session";
 import { useQuery } from "../lib/useQuery";
 import { ResiliencePage } from "../pages/ResiliencePage";
+import { AgentOffice } from "./AgentOffice";
 import { COMING, PORTALS, type Portal } from "./portals";
 import { TeposCity } from "./TeposCity";
 import { use3d } from "../world/support";
@@ -60,6 +61,7 @@ export function TeposHome() {
 export function TeposPortalPage({ portal }: { portal: string }) {
   if (portal === "capital") return <ResiliencePage />;
   if (portal === "irekun") return <Irekun />;
+  if (portal === "agent") return <AgentOffice />;
   const p = PORTALS.find((x) => x.key === portal);
   const coming = COMING[portal];
   if (!p || !coming) return <div className="tepos"><h1>Not found</h1><p><Link to="/">Back to TEPOS</Link></p></div>;

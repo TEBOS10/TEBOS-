@@ -86,6 +86,12 @@ colours, and ideas shouldn't wait for the founder.
   - the TEBOS board seen as a district of buildings (one per department), shown alongside the chessboard;
   - day and night in the TEPOS city following Tidy Capital's runway;
   - a client's tile taking on its logo once the client sends it.
+- Waiting for a yes or no (19 Oct, from the founder's videos), each with what it serves, its cost and its risk:
+  [`tepos/creative-proposals.md`](tepos/creative-proposals.md).
+  - portals that build themselves, stage by stage;
+  - a public-awareness globe, never tracking people;
+  - labelled 3D walkthroughs of a property;
+  - REEDS drafting the social calendar, posts and replies, with nothing sent without approval.
 
 **TEBOS pays Tidy Capital: 50% (founder, 16 Oct 2026).**
 - TEBOS first covers its own running costs (hosting, AI, email, payments) and keeps a buffer of three to six months
@@ -119,7 +125,11 @@ colours, and ideas shouldn't wait for the founder.
    invents. Then the **weekly money brief**, with every income stream by how often it pays (daily, weekly, monthly, yearly, and lump sums such as commissions and trading): what TEBOS and its tools cost (subscriptions the founder records, each
    with its renewal date), what came in (recorded payments and commissions), the months the money lasts, and the
    next best earning move from the records. Nothing estimated is shown as measured.
-3. **The agent's office.** The founder's real-estate work needs volume (agents are told about 30 listings for
+3. **The agent's office.** *Started 17 Oct with slice 1 (migration `agent_office`): every listing, buyer, seller,
+   tenant and landlord with its next step and date, overdue first, and mandates about to end. Kept in the private
+   organisation behind two-step sign-in, and without personal details until the agency's principal allows them
+   (decision 12): people are references (B-001), and email addresses, phone numbers and ID numbers are refused.
+   Next: commission expected versus received, then the enquiry log.* The founder's real-estate work needs volume (agents are told about 30 listings for
    one sale a month), so TEBOS carries the load: every buyer, seller and listing with its next step and date;
    listing write-ups and marketing drafted from the property's facts for approval; documents per deal in one place;
    appointments; and **no enquiry left unanswered**. An instant acknowledgement with a booking link is the one

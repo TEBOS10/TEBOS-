@@ -6,7 +6,8 @@ import { REQUEST_KINDS, type RequestKind } from "@core/work";
 import { AlertTriangle, CheckCircle2, CircleDashed, Send } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { Card, Empty, ErrorNote, Field, Loading, PageHeader, StatusBadge } from "../components/ui";
-import { askWorkRequest, cancelWorkRequest, getWorkRequest, inboxFor, listWorkRequests, type WorkRequest, type WorkTask } from "../lib/data";
+import { askExternalTask, askWorkRequest, cancelWorkRequest, getWorkRequest, inboxFor, listWorkRequests, reviewWorkTask, type WorkRequest, type WorkTask } from "../lib/data";
+import { CLIENT_KINDS } from "./AiClientsPage";
 import { alertsFrom } from "../lib/inbox";
 import { usePeople } from "../lib/people";
 import { ago, RISK_LABEL, when } from "../lib/format";
@@ -21,6 +22,7 @@ interface ReportLine { key: string; title: string; text: string; attention: bool
 interface Report { title: string; summary: string; lines: ReportLine[] }
 const reportOf = (r: WorkRequest) => (r.report as unknown as Report | null) ?? null;
 const kindTitle = (k: string) => (REQUEST_KINDS as Record<string, { title: string }>)[k]?.title ?? k;
+const requestTitle = (r: WorkRequest) => (r.kind === "external_task" && r.task_title ? r.task_title : kindTitle(r.kind));
 const canAsk = (role: string) => role === "org_admin" || role === "operator";
 
 export function ReedsPage() {
@@ -33,6 +35,7 @@ export function ReedsPage() {
       <PageHeader eyebrow="REEDS" title="Ask TEBOS">
         Ask for something, and TEBOS plans it, does it, checks every result independently, and reports back. A request shows as done only
         when every part has passed its check.
+        {!org.organisation.private && <>{" "}<Link to="/ai-clients">AI clients</Link> can take work too; a person reviews what they hand in.</>}
       </PageHeader>
       {canAsk(org.role) ? <AskCard onAsked={(id) => navigate(`/reeds/${id}`)} /> : (
         <p className="note note-info" role="status">Admins and operators of {org.organisation.name} can ask TEBOS for work. You can read what was asked and answered.</p>
@@ -47,7 +50,7 @@ export function ReedsPage() {
             {q.data.map((r) => (
               <li key={r.id}>
                 <div className="list-main">
-                  <Link to={`/reeds/${r.id}`} className="list-title">{kindTitle(r.kind)}</Link>
+                  <Link to={`/reeds/${r.id}`} className="list-title">{requestTitle(r)}</Link>
                   <span className="list-meta">
                     {ago(r.created_at)}
                     {r.status === "completed" && reportOf(r) ? ` · ${reportOf(r)!.summary}` : ""}
@@ -68,6 +71,9 @@ function AskCard({ onAsked }: { onAsked: (id: string) => void }) {
   const org = useOrg();
   const [kind, setKind] = useState<RequestKind>(KINDS[0]![0]);
   const [note, setNote] = useState("");
+  const [title, setTitle] = useState("");
+  const [acceptance, setAcceptance] = useState("");
+  const [executor, setExecutor] = useState("external.coding_agent");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
 
@@ -76,7 +82,9 @@ function AskCard({ onAsked }: { onAsked: (id: string) => void }) {
     setBusy(true);
     setError(null);
     try {
-      const r = await askWorkRequest(org.db, org.organisation.id, kind, note.trim() || null);
+      const r = kind === "external_task"
+        ? await askExternalTask(org.db, org.organisation.id, { title: title.trim(), acceptance: acceptance.trim(), executor })
+        : await askWorkRequest(org.db, org.organisation.id, kind, note.trim() || null);
       onAsked(r.id);
     } catch (err) {
       setError(err);
@@ -97,9 +105,25 @@ function AskCard({ onAsked }: { onAsked: (id: string) => void }) {
             </label>
           ))}
         </fieldset>
-        <Field label="Note (optional)" hint="For your own record: TEBOS doesn't act on it yet.">
-          <input className="input" value={note} maxLength={2000} onChange={(e) => setNote(e.target.value)} placeholder="e.g. before the Monday meeting" />
-        </Field>
+        {kind === "external_task" ? (
+          <>
+            <Field label="What should be done">
+              <input className="input" required minLength={3} maxLength={200} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Write the guide to issuing AI tokens" />
+            </Field>
+            <Field label="Acceptance test" hint="What must be true for you to accept the result. You review it against this.">
+              <textarea className="input" required minLength={10} maxLength={1000} rows={3} value={acceptance} onChange={(e) => setAcceptance(e.target.value)} />
+            </Field>
+            <Field label="Which AI client">
+              <select className="input" value={executor} onChange={(e) => setExecutor(e.target.value)}>
+                {Object.entries(CLIENT_KINDS).map(([k, v]) => <option key={k} value={`external.${k}`}>{v.split(" (")[0]}</option>)}
+              </select>
+            </Field>
+          </>
+        ) : (
+          <Field label="Note (optional)" hint="For your own record: TEBOS doesn't act on it yet.">
+            <input className="input" value={note} maxLength={2000} onChange={(e) => setNote(e.target.value)} placeholder="e.g. before the Monday meeting" />
+          </Field>
+        )}
         <ErrorNote error={error} title="The request wasn't sent" />
         <div><button type="submit" className="btn btn-primary" disabled={busy}><Send size={15} aria-hidden /> {busy ? "Sending…" : "Ask TEBOS"}</button></div>
       </form>
@@ -137,7 +161,7 @@ export function ReedsRequestPage({ id }: { id: string }) {
 
   return (
     <div className="stack">
-      <PageHeader eyebrow={<Link to="/reeds">REEDS</Link>} title={kindTitle(r.kind)}
+      <PageHeader eyebrow={<Link to="/reeds">REEDS</Link>} title={requestTitle(r)}
         actions={open && canAsk(org.role) ? <button type="button" className="btn" onClick={cancel}>Cancel request</button> : undefined}>
         Asked {when(r.created_at)}{r.note ? ` · “${r.note}”` : ""}
       </PageHeader>
@@ -173,7 +197,7 @@ export function ReedsRequestPage({ id }: { id: string }) {
       <Card title="How it was done" subtitle="Each task, the test it had to pass, and what the independent check found.">
         {tasks.length === 0 ? <Empty>Not planned yet.</Empty> : (
           <ul className="list" data-testid="reeds-tasks">
-            {tasks.map((t) => <TaskItem key={t.id} t={t} />)}
+            {tasks.map((t) => <TaskItem key={t.id} t={t} onReviewed={q.reload} />)}
           </ul>
         )}
       </Card>
@@ -181,19 +205,67 @@ export function ReedsRequestPage({ id }: { id: string }) {
   );
 }
 
-function TaskItem({ t }: { t: WorkTask }) {
+function TaskItem({ t, onReviewed }: { t: WorkTask; onReviewed: () => void }) {
   const v = t.verification as { ok?: boolean; detail?: string } | null;
+  const external = t.executor.startsWith("external.");
+  const result = external ? (t.result as { summary?: string; evidence?: string[]; needs_decision?: boolean; submitted_by?: string } | null) : null;
   return (
     <li>
       <div className="list-main">
         <span className="list-title">{t.title}</span>
         <span className="list-meta">Test: {t.acceptance}</span>
-        {v?.detail && <span className="list-meta">Check: {v.detail}</span>}
+        {external && t.status === "queued" && <span className="list-meta">Waiting for an AI client to take it.</span>}
+        {external && t.status === "running" && <span className="list-meta">An AI client is working on it{t.lease_until ? ` (until ${when(t.lease_until)})` : ""}.</span>}
+        {result?.summary && (
+          <span className="list-meta" data-testid="external-result">
+            Handed in{result.submitted_by ? ` by ${result.submitted_by}` : ""}: {result.summary}
+            {result.evidence?.length ? ` · Evidence: ${result.evidence.join(", ")}` : ""}
+            {result.needs_decision ? " · It asks you to decide something." : ""}
+          </span>
+        )}
+        {v?.detail && <span className="list-meta">{external ? "Review" : "Check"}: {v.detail}</span>}
         {t.error && <span className="list-meta">Error: {t.error}</span>}
         {t.attempts > 1 && <span className="list-meta">{t.attempts} attempts</span>}
+        {external && t.status === "done" && <Review t={t} onReviewed={onReviewed} />}
       </div>
       <StatusBadge status={t.status} />
     </li>
+  );
+}
+
+/** A person accepts or rejects what an AI client handed in. Nothing counts until they do. */
+function Review({ t, onReviewed }: { t: WorkTask; onReviewed: () => void }) {
+  const org = useOrg();
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<unknown>(null);
+  if (org.role !== "org_admin" && org.role !== "approver") return <span className="list-meta">Waiting for an approver or admin to review it.</span>;
+  if (!org.twoStep) return <span className="list-meta">Reviewing needs a session that passed two-step sign-in. <Link to="/account">Turn it on</Link>.</span>;
+
+  async function decide(ok: boolean) {
+    setBusy(true);
+    setError(null);
+    try {
+      await reviewWorkTask(org.db, t.id, ok, note.trim() || null);
+      onReviewed();
+    } catch (err) {
+      setError(err);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="stack" data-testid="external-review" style={{ marginTop: 8 }}>
+      <Field label="Review note" hint="Required to reject: say what doesn't meet the test.">
+        <input className="input" value={note} maxLength={1000} onChange={(e) => setNote(e.target.value)} />
+      </Field>
+      <ErrorNote error={error} title="The review wasn't saved" />
+      <div className="row" style={{ gap: 8 }}>
+        <button type="button" className="btn btn-primary btn-sm" disabled={busy} onClick={() => decide(true)}>Accept: it meets the test</button>
+        <button type="button" className="btn btn-sm" disabled={busy || note.trim().length < 3} onClick={() => decide(false)}>Reject</button>
+      </div>
+    </div>
   );
 }
 

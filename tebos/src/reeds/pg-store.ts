@@ -38,8 +38,14 @@ export class PgWorkStore implements WorkStore {
 
   async nextReceived(): Promise<ReceivedRequest | null> {
     const { rows } = await this.pool.query(
-      "select id, org_id, kind, requested_by from public.work_requests where status = 'received' order by created_at limit 1");
-    return rows[0] ? { id: rows[0].id, orgId: rows[0].org_id, kind: rows[0].kind, requestedBy: rows[0].requested_by } : null;
+      `select id, org_id, kind, requested_by, task_title, task_acceptance, task_executor
+         from public.work_requests where status = 'received' order by created_at limit 1`);
+    const r = rows[0];
+    if (!r) return null;
+    const ask = r.task_title && r.task_acceptance && r.task_executor
+      ? { title: r.task_title, acceptance: r.task_acceptance, executor: r.task_executor }
+      : undefined;
+    return { id: r.id, orgId: r.org_id, kind: r.kind, requestedBy: r.requested_by, ask };
   }
 
   async isPlatformAdmin(userId: string) {
@@ -71,7 +77,8 @@ export class PgWorkStore implements WorkStore {
 
   async nextDone(): Promise<ClaimedTask | null> {
     const { rows } = await this.pool.query(
-      "select * from public.work_tasks where status = 'done' order by finished_at, position limit 1");
+      // an AI client's work is reviewed by a person, never by this worker
+      "select * from public.work_tasks where status = 'done' and executor not like 'external.%' order by finished_at, position limit 1");
     return rows[0] ? toTask(rows[0]) : null;
   }
 
@@ -80,7 +87,7 @@ export class PgWorkStore implements WorkStore {
       const { rows } = await c.query(
         `update public.work_tasks set status = 'running'
           where id = (select t.id from public.work_tasks t join public.work_requests r on r.id = t.request_id
-                       where t.status = 'queued' and r.status = 'running'
+                       where t.status = 'queued' and r.status = 'running' and t.executor not like 'external.%'
                        order by r.created_at, t.position limit 1 for update of t skip locked)
           returning *`);
       return rows[0] ? toTask(rows[0]) : null;
@@ -112,7 +119,7 @@ export class PgWorkStore implements WorkStore {
         order by r.created_at limit 1`);
     if (!rows[0]) return null;
     const tasks = (await this.pool.query(
-      "select key, status, result, error, verification from public.work_tasks where request_id = $1 order by position", [rows[0].id])).rows;
+      "select key, title, status, result, error, verification from public.work_tasks where request_id = $1 order by position", [rows[0].id])).rows;
     return { id: rows[0].id, kind: rows[0].kind, tasks };
   }
 
