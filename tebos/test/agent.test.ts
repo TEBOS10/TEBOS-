@@ -94,7 +94,7 @@ describe("agent's office: the agenda", () => {
 });
 
 describe("agent's office: the domain mirrors the database", () => {
-  const sql = readFileSync(join(__dirname, "..", "supabase", "migrations", "20261017220000_agent_office.sql"), "utf8");
+  const sql = readFileSync(join(__dirname, "..", "supabase", "migrations", "20261019100000_agent_office.sql"), "utf8");
   const values = (col: string, table: string) => {
     const body = sql.split(`create table public.${table}`)[1]!.split(");\n")[0]!;
     const line = body.split("\n").find((l) => l.trim().startsWith(col + " "))!;

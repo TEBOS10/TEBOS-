@@ -1,7 +1,7 @@
 // The agent's office (TEPOS, Real Estate Job portal; ROADMAP priority 3), slice 1: every listing, buyer and
 // seller with its next step and date, and what is overdue (founder, 17 Oct 2026).
 //
-// The rules (mirrored in migration 20261017220000_agent_office.sql):
+// The rules (mirrored in migration 20261019100000_agent_office.sql):
 //   * Nothing open is left without a next step and its date; anything closed says how it ended.
 //   * No personal details until the agency's principal allows them (operator log, decision 12): people are
 //     references (B-001, S-001, ...), and email addresses, phone numbers and ID numbers are refused.
