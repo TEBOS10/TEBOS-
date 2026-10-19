@@ -84,6 +84,12 @@ colours, and ideas shouldn't wait for the founder.
   - the TEBOS board seen as a district of buildings (one per department), shown alongside the chessboard;
   - day and night in the TEPOS city following Tidy Capital's runway;
   - a client's tile taking on its logo once the client sends it.
+- Waiting for a yes or no (19 Oct, from the founder's videos), each with what it serves, its cost and its risk:
+  [`tepos/creative-proposals.md`](tepos/creative-proposals.md).
+  - portals that build themselves, stage by stage;
+  - a public-awareness globe, never tracking people;
+  - labelled 3D walkthroughs of a property;
+  - REEDS drafting the social calendar, posts and replies, with nothing sent without approval.
 
 **TEBOS pays Tidy Capital: 50% (founder, 16 Oct 2026).**
 - TEBOS first covers its own running costs (hosting, AI, email, payments) and keeps a buffer of three to six months
