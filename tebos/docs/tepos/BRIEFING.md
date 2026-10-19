@@ -30,6 +30,14 @@ code under `web/tepos/` and `web/src/tepos/`.
 - 50% of TEBOS's profit above its running costs and a three-to-six-month buffer goes to Tidy Capital. The share is
   revisited each quarter.
 
+## The systems portfolio (founder, 19 Oct 2026)
+
+TEPOS is the proving ground. A capability is built and used here first, then made reusable, then configured for
+TEBOS clients. Only the design moves; TEPOS data never leaves.
+- **Read:** [`../adr/0005-systems-portfolio.md`](../adr/0005-systems-portfolio.md).
+- **Record:** each capability's stage, with its evidence, in [`../product-register.md`](../product-register.md), in the
+  same PR as the change.
+
 ## The code and the build
 
 | What | Where |
