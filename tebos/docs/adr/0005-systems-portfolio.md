@@ -74,12 +74,14 @@ systems that make a company run, and from discussion with ChatGPT) set the model
 | Stage | Means | Evidence needed to enter it |
 |---|---|---|
 | 1 Identified | A documented problem and a reason to solve it | The problem, written down, with who has it |
-| 2 Built for internal use | Working in TEPOS (or TEBOS's own company), tested | Merged, tested, live, and actually used |
+| 2 Built for internal use | Working in TEPOS (or TEBOS's own company), tested, and used for a real need | Merged, tested and live (that is *built*), plus real records from an actual workflow (that is *used*). Passing tests show it is built, never that it is used |
 | 3 Validated and generalised | Shown to help; personal data and assumptions separated from the reusable part | A measured outcome from real use |
 | 4 Productised | Scope, configuration, permissions, delivery cost, support and price defined | A delivery cost, plus a price decided by the founder |
-| 5 Deployed through TEBOS | Used by a client whose diagnosed problem justifies it, and assessed against the outcome | A paying client, and a measured result |
+| 5 Deployed through TEBOS | Used by a client whose diagnosed problem justifies it, and assessed against the outcome | A client using it under an agreement, recorded separately from the measured result. **5a** = deployed. **5b** = repeatable commercial success: more than one paying client, a measured outcome, and a known delivery cost |
 
 **Gating rules:**
+- No records doesn't mean a capability is broken. It means it hasn't yet shown real use. Status follows evidence in both
+  directions.
 - Working for the founder isn't enough to sell it. Demand, willingness to pay, delivery cost, data isolation and
   maintenance must be shown first.
 - A creative or industry proposal enters stage 1 only with the founder's yes. It is scored first on the problem it

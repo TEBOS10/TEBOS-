@@ -13,8 +13,10 @@ any change to a capability.
 4. Productised.
 5. Deployed through TEBOS.
 
-**Evidence rule:** a stage is reached only with its evidence. "Built" means merged and tested. **"In use" needs real
-records** in the live database.
+**Evidence rule:** a stage is reached only with its evidence.
+- "Built" means merged and tested.
+- **"In use" needs real records** from an actual workflow in the live database.
+- A count of 0 means *not yet used*, never *broken*. Tests show it works as written; only use shows it helps.
 
 **Live counts, 19 Oct 2026** (read-only):
 
@@ -31,7 +33,8 @@ records** in the live database.
 | Businesses | 9 |
 | Connections | 2 |
 
-**Nothing is past stage 2 yet.** Most capabilities are built but not yet in real use.
+**Nothing is past stage 2 yet.** Most capabilities are built but haven't shown real use. That reflects the evidence,
+not a verdict on whether they work.
 
 ## Shared foundation
 
@@ -90,4 +93,9 @@ All of these are proposals waiting for the founder's yes (`tepos/creative-propos
    - the first property case;
    - the first REEDS request.
 2. **A working AI key** (decision 2b), which unblocks diagnosis.
-3. **The first paying client**, the only route to stage 5.
+3. **A first client using a capability under an agreement** reaches stage 5a, deployed. Repeatable commercial success
+   (5b) needs more than one paying client, a measured outcome and a known delivery cost.
+
+**The first TEPOS test should be a workflow the founder already needs to finish,** not a feature built to fill this
+register. For example, tracking the real-estate registration requirements, deadlines and proof of completion in the
+accountability system, once that system is confirmed ready for that information.
