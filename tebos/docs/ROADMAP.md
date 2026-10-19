@@ -127,7 +127,10 @@ colours, and ideas shouldn't wait for the founder.
    tenant and landlord with its next step and date, overdue first, and mandates about to end. Kept in the private
    organisation behind two-step sign-in, and without personal details until the agency's principal allows them
    (decision 12): people are references (B-001), and email addresses, phone numbers and ID numbers are refused.
-   Next: commission expected versus received, then the enquiry log.* The founder's real-estate work needs volume (agents are told about 30 listings for
+   Slice 2 on 19 Oct (migration `agent_compliance`): each deal's documents against the
+   agency's own checklist, tracked but never stored or changed, and the FFC path with a source for every step.
+   Next: relationships (investors, landlords, practitioners), then marketing, then commission expected versus
+   received.* The founder's real-estate work needs volume (agents are told about 30 listings for
    one sale a month), so TEBOS carries the load: every buyer, seller and listing with its next step and date;
    listing write-ups and marketing drafted from the property's facts for approval; documents per deal in one place;
    appointments; and **no enquiry left unanswered**. An instant acknowledgement with a booking link is the one

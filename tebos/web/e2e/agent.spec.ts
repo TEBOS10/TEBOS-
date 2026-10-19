@@ -94,3 +94,50 @@ test("TEPOS: without two-step sign-in, the office stays closed", async ({ page }
   await expect(page.getByTestId("two-step-required")).toBeVisible();
   await expect(page.getByTestId("agenda")).toHaveCount(0);
 });
+
+test("TEPOS: a deal's documents follow the agency's checklist; nothing is stored, only where it is kept", async ({ page }) => {
+  const fake = await founder(page);
+  const t = fake.tables as unknown as Record<string, Record<string, unknown>[]>;
+  t.agent_deal_items = [];
+  t.agent_ffc_steps = [];
+  await page.goto(`${TEPOS}/agent`);
+  await page.getByRole("button", { name: "Documents for L-001" }).click();
+  const docs = page.getByTestId("deal-documents");
+  await expect(docs).toContainText("Pelser Real Estate, Property Check list (Office use)");
+  await expect(docs.getByTestId("documents-deal")).toContainText("co-signed by a full-status practitioner");
+  await expect(page.getByTestId("deal-documents-summary")).toContainText("0 of 37");
+
+  // not applicable needs a reason
+  await docs.getByRole("button", { name: "Update Gas certificate" }).click();
+  const form = page.getByRole("form", { name: "Update Gas certificate" });
+  await form.getByLabel("Status").selectOption("not_applicable");
+  await form.getByRole("button", { name: "Save" }).click();
+  await expect(form).toContainText("Say why it doesn't apply");
+  await form.getByLabel("Why it doesn't apply").fill("No gas installation");
+  await form.getByRole("button", { name: "Save" }).click();
+  await expect(form).toHaveCount(0);
+  expect(fake.writes.find((w) => w.table === "agent_deal_items")!.body).toMatchObject({
+    org_id: VAULT, listing_id: "a1000000-0000-4000-8000-000000000001", item: "gas_certificate", status: "not_applicable", reason: "No gas installation",
+  });
+  await expect(page.getByTestId("deal-documents-summary")).toContainText("0 of 36");
+});
+
+test("TEPOS: the FFC path holds only steps with a source, starting from the PPRA's own form", async ({ page }) => {
+  const fake = await founder(page);
+  const t = fake.tables as unknown as Record<string, Record<string, unknown>[]>;
+  t.agent_deal_items = [];
+  t.agent_ffc_steps = [];
+  await page.goto(`${TEPOS}/agent`);
+  const ffc = page.getByTestId("ffc-path");
+  await ffc.getByRole("button", { name: "Add the PPRA's candidate registration steps (5)" }).click();
+  await expect(ffc.getByTestId("ffc-steps").getByRole("row")).toHaveCount(5);
+  const added = fake.writes.find((w) => w.table === "agent_ffc_steps")!.body as Array<Record<string, unknown>>;
+  expect(added.map((r) => r.source)).toEqual([13.1, "13.2.1", "13.2.2", "13.2.3", "13.2.4"].map((n) => `PPRA application for a Fidelity Fund Certificate (natural person), section 13, ${n}`));
+
+  // a step without a source is refused before anything is sent
+  await ffc.getByRole("button", { name: "Add a step" }).click();
+  const form = page.getByRole("form", { name: "Add a step" });
+  await form.getByLabel("Step").fill("Pass the PDE exam");
+  await form.getByRole("button", { name: "Save" }).click();
+  await expect(form).toContainText("Say where this requirement comes from");
+});

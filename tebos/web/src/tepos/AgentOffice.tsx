@@ -13,8 +13,9 @@ import { ErrorNote, Loading } from "../components/ui";
 import { Link } from "../lib/router";
 import { useOrg } from "../lib/session";
 import { useQuery } from "../lib/useQuery";
+import { checklistSummary, DealDocuments, FfcPath } from "./AgentCompliance";
 import {
-  deleteContact, deleteListing, listContacts, listListings, saveContact, saveListing, type ContactRow, type ListingRow,
+  deleteContact, deleteListing, listContacts, listDealItems, listListings, saveContact, saveListing, type ContactRow, type ListingRow,
 } from "./agentData";
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -74,6 +75,8 @@ function Office() {
   const org = useOrg();
   const lq = useQuery(() => listListings(org.db, org.organisation.id), [org.organisation.id]);
   const cq = useQuery(() => listContacts(org.db, org.organisation.id), [org.organisation.id]);
+  const dq = useQuery(() => listDealItems(org.db, org.organisation.id), [org.organisation.id]);
+  const [documentsFor, setDocumentsFor] = useState<string | null>(null);
   const [editing, setEditing] = useState<Editing>(null);
   const [showClosed, setShowClosed] = useState(false);
   const listings = useMemo(() => (lq.data ?? []).map(toListing), [lq.data]);
@@ -139,6 +142,11 @@ function Office() {
         )}
       </section>
 
+      {documentsFor && byId.get(documentsFor) && (
+        <DealDocuments listing={byId.get(documentsFor)!} rows={(dq.data ?? []).filter((r) => r.listing_id === documentsFor)}
+          onChanged={dq.reload} onClose={() => setDocumentsFor(null)} />
+      )}
+
       <section className="pra-card" aria-label="Listings">
         <div className="pra-head"><div><h2>Listings</h2><p>Changes are audited: who changed which fields, and when, never the content.</p></div>
           {closedCount > 0 && <label className="pra-field"><span><input type="checkbox" checked={showClosed} onChange={(e) => setShowClosed(e.target.checked)} /> Show closed ({closedCount})</span></label>}
@@ -146,13 +154,14 @@ function Office() {
         {shownListings.length === 0 ? <p className="pra-empty">No {showClosed ? "" : "open "}listings.</p> : (
           <div className="pra-table-wrap">
             <table className="pra-table" data-testid="listings">
-              <thead><tr><th>Listing</th><th>Stage</th><th>Price</th><th>Next step</th><th /></tr></thead>
+              <thead><tr><th>Listing</th><th>Stage</th><th>Price</th><th>Next step</th><th>Documents</th><th /></tr></thead>
               <tbody>{shownListings.map((l) => (
                 <tr key={l.id}>
                   <td><strong>{l.ref}</strong> {l.label}<br /><small className="pra-note">{DEALS[l.deal]}{l.mandate ? ` · ${MANDATES[l.mandate]} mandate` : ""}{l.mandateEndsOn ? ` to ${l.mandateEndsOn}` : ""}</small></td>
                   <td><Tag>{LISTING_STAGES[l.stage]}</Tag></td>
                   <td>{l.price === null ? <Tag tone="amber">Unknown</Tag> : `${money(l.price)}${l.deal === "rental" ? " a month" : ""}`}</td>
                   <td>{l.nextStep ? <>{l.nextStep}<br /><small className="pra-note">{l.nextStepOn}</small></> : <small className="pra-note">{l.outcome}</small>}</td>
+                  <td><button className="pra-btn" aria-label={`Documents for ${l.ref}`} onClick={() => setDocumentsFor(l.id)}>{checklistSummary((dq.data ?? []).filter((r) => r.listing_id === l.id))}</button></td>
                   <td><button className="pra-btn" onClick={() => setEditing({ kind: "listing", item: l })}>Edit</button></td>
                 </tr>
               ))}</tbody>
@@ -180,6 +189,8 @@ function Office() {
           </div>
         )}
       </section>
+
+      <FfcPath />
     </>
   );
 }
