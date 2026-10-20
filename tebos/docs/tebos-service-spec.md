@@ -9,55 +9,72 @@ must fit.
 **The principle:** a client buys a defined level of TEBOS. That never includes unlimited access to the founder,
 unlimited custom development or unlimited advice.
 
-## 1. Will businesses pay R2,500 or R7,500 a month?
+## 1. Why not price like an AI subscription?
 
-**Unknown.** There are 0 paying TEBOS clients, so there is no evidence either way. What is known:
-- SA small businesses already pay monthly retainers for services they understand. For example, a published monthly
-  accounting package starts at R1,990 (companypartners.co.za, checked 20 Oct). So R2,500 isn't an outlandish amount
-  for a small business.
-- **The harder problem is the category, not the number.** "An operating diagnostic subscription" is something a buyer
-  has never bought. They pay for a result they recognise:
-  - fewer missed enquiries;
-  - knowing where money leaks;
-  - a team that doesn't need the owner for every step.
+**TEBOS can have a tier at that level.** It just can't be today's R2,500 package at that price.
+- **AI subscriptions are cheap because no person works on each account.** Claude Pro is $20 a month ($17 a month
+  billed annually), and Max starts at $100 (claude.com/pricing, checked 20 Oct). Millions of people talk to the
+  product directly, within usage limits.
+- **Today's TEBOS packages include people's time:** a diagnostic interview, reviews and a named maintainer. That time
+  is what costs R2,500 and more.
 
-**The answer: don't make the monthly fee the first thing anyone buys.**
+**So the ladder has a self-serve tier at the bottom.**
+- The business talks to TEBOS directly, as you would to an AI assistant.
+- TEBOS answers from that business's own records, and does only what the plan allows.
+- No founder time is included.
+- The tiers above add people's time, and are priced for it.
 
-1. **Lead with property, where the problem is already concrete (ADR 0009).** The PRA assessment is for owners who can
-   see the empty months and late rent. TEBOS's business packages come second.
-2. **Make the first TEBOS purchase a single fixed-price diagnostic, not a subscription.**
-   - Plans already has this pattern for larger companies: the R15,000 Company Diagnostic first.
-   - Apply it to small businesses too: one Small Business Diagnostic at a single price, delivered as a written findings
-     report plus their operating board.
-   - The monthly plan is offered only once the findings show work worth paying for each month.
-   - The diagnostic's price is decision 27. A starting test: R2,500 once, so it equals the first month of the current
-     plan.
-3. **BAME is the reference case.** An equity partner pays no fees (`EQUITY_SHARE`). Its measured results (fewer
-   missed leads, faster responses, recorded on its board) are what the next buyer is shown, with BAME's written
-   permission.
-4. **Test the price in conversations before publishing it:**
-   - ask a business owner what the problem costs them each month;
-   - quote only after they have named the cost.
-5. **Kill rules, written before the test:**
-   - 10 qualified business conversations by 30 Nov and 0 diagnostics bought means change the segment or the scope,
-     not the price alone;
-   - a diagnostic bought and no monthly plan after it means the monthly scope is wrong, not the buyer.
-6. **Not done:**
-   - discounting to "free" (a free pilot proves nothing about willingness to pay);
-   - promising results;
-   - inventing testimonials or statistics.
+**Will businesses pay?** There is no evidence yet: 0 paying TEBOS clients. What is known:
+- SA small businesses already pay monthly for services they understand. For example, a published accounting package
+  starts at R1,990 a month (companypartners.co.za, checked 20 Oct).
+- **The risk is the category, not the number.** Buyers pay for a result they recognise, such as fewer missed
+  enquiries or a better website. "An operating system" is something they've never bought.
 
-## 2. The packages: what each one is, and isn't
+**What follows from that:**
+- the one-off diagnostic is the first purchase;
+- the self-serve tier is the low-risk monthly entry;
+- BAME is the reference case, with its written permission.
 
-| | Diagnostic (R2,500/month) | Architecture & Operations (R7,500/month) | Company (scoped, from R25,000/month after a R15,000 diagnostic) |
-|---|---|---|---|
-| Included | Monthly website scan; quarterly diagnostic interview; operating board; founder-dependency map; findings with evidence; up to 3 users | All of the Diagnostic; rules, owners and handovers; read-only integrations where authorised; approved-change record; objectives on real numbers; monthly interview | All of A&O across departments; a named maintainer; a monthly leadership review |
-| **Not included** | Building software; implementing recommendations; integrations; managing the team; unlimited live consulting | Bespoke development; write access to connected systems; guaranteed performance; implementing every recommendation | Unlimited custom work: every implementation is scoped, priced and delivered separately |
-| Over the limit | Offer an upgrade or a quoted engagement | Offer the Company plan or a quoted engagement | A new scoped proposal |
-| Changing plan | Upgrade at any time; downgrade or exit at the end of the month (to confirm with the lawyer) | As left | Per the contract |
+**Kill rules, written before the test:**
+- 10 qualified business conversations by 30 Nov and 0 purchases means change who we sell to, or what, not the price
+  alone;
+- diagnostics bought but none converted to monthly means the monthly scope is wrong.
 
-**Fix to the current plan text:** A&O says "unlimited team members". That conflicts with the rule that every package
-has limits. It becomes "users within the agreed usage limits" (decision 27, with the price).
+**Not done:**
+- free pilots (they prove nothing about willingness to pay);
+- promised results;
+- invented testimonials or statistics.
+
+## 2. Three ways to buy: once-off, monthly, annually (proposed, decision 27)
+
+**Prices are the founder's decision.** The figures marked *new* are proposals. The others are the current prices in
+`src/domain/plans.ts`.
+
+| Option | Plan | Price | What's included | Limits |
+|---|---|---|---|---|
+| **Once-off** | Business Diagnostic *(new)* | R2,500 once | A website and operations scan; one diagnostic interview (an AI call or written); findings with the evidence behind each; a first operating board | One business, one report, delivered within 10 working days |
+| Once-off | Build project *(new)* | Fixed quote | A defined build, such as a new website, an industry operating system set up from a template, or an integration | Only what the quote lists; changes are re-quoted; maintenance is a monthly plan |
+| **Monthly** | Essentials *(new, self-serve)* | R499 a month | Talk to TEBOS about your own business; your operating board; a monthly website scan; reminders on your objectives | 2 users; 30 questions and 2 configuration changes a month; read-only; no people's time |
+| Monthly | Diagnostic | R2,500 a month | All of Essentials; a quarterly interview; the founder-dependency map; findings with evidence | 3 users; 100 questions and 5 changes a month |
+| Monthly | Architecture & Operations | R7,500 a month | All of Diagnostic; rules, owners and handovers; read-only integrations where authorised; the approved-change record; objectives on real numbers; a monthly interview | 15 users (replacing "unlimited"); 300 questions and 15 changes a month |
+| Monthly | Company | Scoped, from R25,000 a month after a R15,000 diagnostic | All of A&O across departments; a named maintainer; a monthly leadership review | Per the contract |
+| **Annually** | Any monthly plan *(new)* | 10 months' price for 12 | The same as monthly | The same as monthly. Paid up front, renewed yearly |
+
+**What every plan excludes:**
+- bespoke development;
+- write access to connected systems;
+- guaranteed results;
+- unlimited founder time.
+
+**What happens at a limit:** a request beyond the plan is never quietly done. TEBOS says which limit was reached and
+offers the next plan or a quote.
+
+**Annual plans:**
+- Two months free is in line with AI subscriptions: Claude's annual discount is about 15%.
+- Cancelling an annual plan early needs a written rule (decision 3).
+
+**The usage numbers are starting limits, not costs.** The cost of a question (AI usage) is measured in the November
+tests, and each limit is set so that the plan's price covers it.
 
 ## 3. The entitlement record each client needs
 
@@ -137,7 +154,67 @@ or any right to REEDS, TEPOS, IREKUN, or the founder's private data.
 
 **Review.** A South African attorney who knows technology and equity agreements reviews both (decision 28).
 
-## 7. Timeline (from the founder's plan, 20 Oct)
+## 8. BAME talking to TEBOS directly (the next build)
+
+**The gap.** BAME works smoothly, but a change still goes through the founder.
+
+**What already exists.** "Ask TEBOS" (REEDS requests) lets a client organisation's admin or operator ask TEBOS for
+work. It is guarded, verified and audited. It has four request kinds, and none of them is "change something for us".
+
+**The build**, in the CLAUDE.md order:
+1. **Data model:**
+   - `plan_entitlements`: per plan and billing option, the users allowed, and the questions and configuration changes
+     allowed each month;
+   - each client organisation's active plan and period, taken from its billing account.
+2. **A new request kind, `change_request`:**
+   - a client admin or operator describes the change;
+   - the database counts this month's requests against the plan before accepting it;
+   - over the limit, it's refused with `TEBOS_OUT_OF_PLAN` and the plan that would cover it.
+3. **Within the plan:**
+   - REEDS plans the change using only executors the plan allows (configuration in TEBOS, never code or outside
+     systems);
+   - it runs, verifies and reports as today.
+   - Development work (BAME's own site in `bame/`) becomes a quote for the founder to approve, never an automatic
+     change.
+4. **Failure states and audit:**
+   - a refusal, a failed change and an exception each become a record;
+   - nothing is reported as done unless it was verified.
+5. **Tests:**
+   - in scope, over the limit, the wrong role, a downgrade mid-month, and a lapsed payment;
+   - plus the schema-parity mirror.
+6. **Interface:** a "Request a change" box on BAME's Ask TEBOS page, showing what's left this month.
+
+**Needs first:** BAME's plan (decision 28). An equity partner pays no fees, so the agreement must say which plan's
+limits BAME has.
+
+## 9. First new lead: a tutoring academy (20 Oct)
+
+**The lead.** A teacher who runs a tutoring business. Her website is weak, she wants TEBOS to diagnose it and make it
+exceptional, and she likes interactive sites in the Getlayers style.
+
+**It fits without custom work.** TEBOS already has the "Education centre operating system" blueprint
+(`src/domain/blueprints.ts`, education-centre: private school or tutoring centre). If she pays, this is the paying
+client who opens that route (ADR 0008 rule 2).
+
+**The offer, in order:**
+1. **Business Diagnostic (once-off):** her website and operations scanned, with findings. Nothing is built before
+   she pays.
+2. **Build project (fixed quote):**
+   - a new interactive website;
+   - her academy's operating system set up from the education-centre template: enrolments, sessions, tutors, parents.
+3. **Monthly or annual plan** for the operating system, with its limits.
+
+**The design.** We study what she likes about the Getlayers style (motion, interactivity) and design our own. We
+never copy their designs, code or assets (proposal 6 rules).
+
+**Needs from the founder:**
+- her website address;
+- her permission to scan it;
+- her business name.
+
+She can also enter these herself through TEBOS's meeting form, which records her as an opportunity.
+
+## 10. Timeline (from the founder's plan, 20 Oct)
 
 | Dates | Result |
 |---|---|

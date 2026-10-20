@@ -4,6 +4,11 @@ The state of every capability in the TEPOS → library → TEBOS portfolio
 ([ADR 0005](adr/0005-systems-portfolio.md)). REEDS reads this as the portfolio's state. Update it in the same PR as
 any change to a capability.
 
+**Names (founder, 20 Oct):**
+- **TEBOS** is the independent platform that businesses subscribe to (BAME first).
+- **TEPOS and REEDS** are the founder's own system and chief of staff. They build and run the Property Revenue
+  Architect firm with TEBOS's technology.
+
 ## Stages and evidence
 
 **Stages** (full definitions in ADR 0005):

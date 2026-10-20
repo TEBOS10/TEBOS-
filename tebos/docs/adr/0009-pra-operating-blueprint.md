@@ -8,7 +8,7 @@ all three. This ADR records what it adds, what it changes, and what was checked.
 
 ## The decision
 
-Build the Property Revenue Architect (PRA) firm first. Real cases prove the approach; REEDS, TEPOS and TEBOS serve the
+Build the Property Revenue Architect (PRA) firm first. Real cases prove the approach; TEPOS and REEDS build and run the firm, using TEBOS's technology. They serve the
 firm, and never compete with it for time or money.
 
 The order is:
@@ -29,8 +29,15 @@ The order is:
 | The founder | Trust, discovery, judgement, approving recommendations | The person remembering every deadline |
 | REEDS | Prioritise, coordinate, monitor, escalate | An unsupervised agent making binding commitments |
 | TEPOS | The founder's own priorities, time, money, training and commitments | Another dashboard that needs constant upkeep |
-| TEBOS | Standardise and automate the work that repeats | A large build before demand is proven |
+| TEBOS's technology (used, not run, by the firm) | The case workspace, evidence, calculations and reports that make the firm's delivery repeatable | A large build before demand is proven |
 | The agency and specialists | Regulated transaction work and specialist expertise, within their actual appointments | Names on a list who haven't agreed to take part |
+
+**The names, as the founder set them (20 Oct):**
+- **TEPOS and REEDS** build and run the PRA firm. TEPOS is the founder's own operating system, and REEDS is its chief of
+  staff. They use TEBOS's technology.
+- **TEBOS is its own independent platform.** It sells to businesses (BAME is the first) under its own subscriptions
+  (`tebos-service-spec.md`).
+- The PRA firm is never a TEBOS client package, and TEBOS's sales don't depend on the PRA firm.
 
 **This fits the current architecture.** No migration is needed:
 - ADR 0005 already defines TEPOS as the founder's own operating environment;
