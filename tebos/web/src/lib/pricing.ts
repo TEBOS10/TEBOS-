@@ -16,38 +16,37 @@ export interface Plan {
   cta: string;
 }
 
-const monthly = (k: "starter" | "growth") => formatRand(PLAN_TERMS[k].monthlyCents!);
+const monthly = (k: "starter" | "growth" | "company") => formatRand(PLAN_TERMS[k].monthlyCents!);
 
-// The plans follow the TEBOS lifecycle (ADR 0003): a Diagnostic, then
-// Architecture & Operations. The keys stay "starter" and "growth": they are
-// what enquiries store.
+// Three tiers by the size of the business (tebos-service-spec.md §2). The keys stay "starter", "growth" and
+// "company": they are what enquiries store.
 export const PLANS: Plan[] = [
   {
     key: "starter",
     name: PLAN_TERMS.starter.name,
     price: monthly("starter"),
     cadence: "per month",
-    pitch: "Map how the business really runs, and where it still runs through you.",
+    pitch: "For a business that knows how it runs and needs its website and system brought up to standard.",
     features: PLAN_TERMS.starter.deliverables,
-    cta: "Start with a diagnostic",
+    cta: "Start with Small",
   },
   {
     key: "growth",
     name: PLAN_TERMS.growth.name,
     price: monthly("growth"),
     cadence: "per month",
-    pitch: "Design how the business should run, connect what you already use, and run it against your objectives.",
+    pitch: "For a business with a team: roles, handovers and the tools you already use, run against your objectives.",
     features: PLAN_TERMS.growth.deliverables,
-    cta: "Get started",
+    cta: "Start with Medium",
   },
   {
     key: "company",
     name: PLAN_TERMS.company.name,
-    price: formatRand(PLAN_TERMS.company.monthlyFromCents!),
-    cadence: `per month and up, after a ${formatRand(PLAN_TERMS.company.firstPaymentCents!)} Company Diagnostic`,
-    pitch: "For established companies: every department architected, measured and run, with a proposal scoped to you.",
+    price: monthly("company"),
+    cadence: "per month",
+    pitch: "For companies with several departments: every department built, measured and run.",
     features: PLAN_TERMS.company.deliverables,
-    cta: "Start with a Company Diagnostic",
+    cta: "Start with Company",
   },
   {
     key: "equity",

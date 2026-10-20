@@ -73,9 +73,9 @@ test("a salesperson without an organisation sells from the staff workspace: play
   // the playbook, with prices from the plan terms
   await page.getByRole("link", { name: "Sales playbook" }).click();
   await expect(page.getByRole("heading", { name: "Sales playbook" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Diagnostic: R2,500 a month, excluding VAT" })).toBeVisible();
-  await expect(page.getByText("Everything in the Diagnostic")).toHaveCount(0);
-  await expect(page.getByText(/Map: your operating board/)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Small: R500 a month, excluding VAT" })).toBeVisible();
+  await expect(page.getByText("Everything in Small")).toHaveCount(0);
+  await expect(page.getByText(/Your operating board: objectives/)).toBeVisible();
   await expect(page.getByText("{{")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Edit" })).toHaveCount(0); // only admins edit
 });

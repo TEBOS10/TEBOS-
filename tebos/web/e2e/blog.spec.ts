@@ -35,7 +35,7 @@ test("text links render only for this site or https, never script links", async 
 test("the privacy policy and terms are public and linked from the site and the enquiry form", async ({ page }) => {
   await installFakeSupabase(page, { signedIn: false });
   await page.goto("/pricing");
-  await page.getByRole("button", { name: "Start with a diagnostic" }).click();
+  await page.getByRole("button", { name: "Start with Small" }).click();
   await expect(page.getByText("We use your details only to reply about TEBOS.")).toBeVisible();
   await page.getByRole("link", { name: "privacy policy" }).click();
   await expect(page.getByRole("heading", { name: "Privacy policy" })).toBeVisible();

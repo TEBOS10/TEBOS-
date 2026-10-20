@@ -7,8 +7,8 @@ export const CONTRACT_PLACEHOLDERS: Array<[string, string]> = [
   ["business", "The client business's name"],
   ["contact_name", "The person accepting for the client"],
   ["email", "Their email address"],
-  ["plan_name", "Diagnostic, Architecture & Operations, or Company Operating Architecture"],
-  ["monthly_fee", "The fee terms, e.g. R2,500 per month, excluding VAT (or the Company Diagnostic fee)"],
+  ["plan_name", "Small, Medium or Company"],
+  ["monthly_fee", "The fee terms, e.g. R500 per month, excluding VAT, for at least 6 months; or the yearly price"],
   ["deliverables", "The plan's deliverables, one per line"],
   ["date", "The date the agreement is sent"],
   ["reference", "TEBOS's reference for this client"],
@@ -30,11 +30,11 @@ TEBOS builds the operating structure of your business: its objectives, how work 
 
 ## 2. Fees and payment
 
-The fee is {{monthly_fee}}, payable monthly in advance. The first month has been paid before this agreement was sent. Later months are billed at the start of each month. If a payment is more than 14 days late, TEBOS may pause the service until it is paid.
+The fee is {{monthly_fee}}. It is payable monthly in advance, or yearly in advance on an annual plan. The first payment has been made before this agreement was sent. Later months are billed at the start of each month. If a payment is more than 14 days late, TEBOS may pause the service until it is paid.
 
 ## 3. Term and ending the agreement
 
-The agreement runs month to month from the date you accept it. Either side may end it with 30 days' written notice (email is enough). Fees already paid for a month that has started are not refunded.
+The agreement runs for at least six months from the date you accept it (twelve on an annual plan), then month to month. After that minimum, either side may end it with 30 days' written notice (email is enough). Fees already paid for a month that has started are not refunded.
 
 ## 4. Your responsibilities
 
@@ -63,13 +63,7 @@ Neither side is liable for indirect or consequential loss. Except where the law 
 This agreement is governed by the laws of the Republic of South Africa. It is the whole agreement between the parties for this service. Changes must be agreed in writing (email is enough). The client accepts this agreement electronically, and the parties agree that this acceptance is valid and binding.
 `;
 
-/** The company plan's draft: the same agreement, with the fee clause for a one-off Company Diagnostic. */
-export const DRAFT_COMPANY_AGREEMENT = DRAFT_AGREEMENT.replace(
-  /## 2\. Fees and payment\n\n[^\n]+\n/,
-  `## 2. Fees and payment
-
-The fee is {{monthly_fee}}. The Company Diagnostic has been paid before this agreement was sent. After the Company Diagnostic, TEBOS gives the client a written proposal for ongoing work, with a fixed monthly fee; ongoing work starts only once both sides have agreed that proposal in writing. If a payment is more than 14 days late, TEBOS may pause the service until it is paid.
-`,
-);
+/** The Company plan uses the same agreement since 20 Oct 2026 (no separate diagnostic fee). */
+export const DRAFT_COMPANY_AGREEMENT = DRAFT_AGREEMENT;
 
 export const draftFor = (plan: string) => (plan === "company" ? DRAFT_COMPANY_AGREEMENT : DRAFT_AGREEMENT);

@@ -106,13 +106,13 @@ describe.skipIf(!enabled)("client pipeline against the TEBOS schema", () => {
 
     // payment page, emailed from the outbox
     expect(await worker.runOnce()).toMatchObject({ step: "payment", outcome: "linked" });
-    expect(gateway.requests[0]).toMatchObject({ email: "thandi@northwind.co.za", amountCents: 250000, reference: `tebos-${id}`, callbackUrl: "https://tebos.test/paid" });
+    expect(gateway.requests[0]).toMatchObject({ email: "thandi@northwind.co.za", amountCents: 50000, reference: `tebos-${id}`, callbackUrl: "https://tebos.test/paid" });
     expect(await status(id)).toBe("awaiting_payment");
     expect(await worker.runOnce()).toMatchObject({ step: "email", outcome: "sent" });
     expect(email.sends[0]!.input.text).toContain(`https://checkout.paystack.test/tebos-${id}`);
 
     // nothing moves on a forged confirmation; a signed one records the payment and marks it paid
-    const body = JSON.stringify({ event: "charge.success", data: { id: 1, reference: `tebos-${id}`, status: "success", amount: 250000, currency: "ZAR", paid_at: new Date().toISOString() } });
+    const body = JSON.stringify({ event: "charge.success", data: { id: 1, reference: `tebos-${id}`, status: "success", amount: 50000, currency: "ZAR", paid_at: new Date().toISOString() } });
     expect((await handlePaystackWebhook(store, SECRET, "a".repeat(128), body)).status).toBe(401);
     expect(await status(id)).toBe("awaiting_payment");
     const sig = createHmac("sha512", SECRET).update(body).digest("hex");
@@ -134,7 +134,7 @@ describe.skipIf(!enabled)("client pipeline against the TEBOS schema", () => {
     const token = linkIn("agreement").split("/contract/")[1]!;
     const shown = (await as(null, "select * from public.contract_for_token($1)", [token])).rows[0];
     expect(shown.body).toContain("between TEBOS and Northwind Studio, for Thandi Mokoena");
-    expect(shown.body).toContain("R2,500 per month, excluding VAT");
+    expect(shown.body).toContain("R500 per month, excluding VAT, for at least 6 months");
     await as(null, "select public.accept_contract($1, 'Thandi Mokoena', $2)", [token, sha256(shown.body)]);
     expect(await status(id)).toBe("contracted");
 
@@ -207,22 +207,22 @@ describe.skipIf(!enabled)("client pipeline against the TEBOS schema", () => {
     expect(row).toEqual({ source: "sales", owner_id: SALES, status: "screened" });
   });
 
-  it("charges a company the one-off Company Diagnostic, and asks for it by name", async () => {
+  it("charges a company its first month, and asks for it by name", async () => {
     await as(null, "insert into public.enquiries (plan, name, business, email, website) values ('company', 'Naledi', 'Big Co', 'naledi@bigco.co.za', 'bigco.co.za')");
     const id = ((await worker.runOnce()) as { id: string }).id;
     await as(SALES, "update public.opportunities set status = 'approved' where id = $1", [id]);
     expect(await worker.runOnce()).toMatchObject({ step: "payment", outcome: "linked" });
-    expect(gateway.requests.at(-1)).toMatchObject({ amountCents: 1500000, reference: `tebos-${id}` });
+    expect(gateway.requests.at(-1)).toMatchObject({ amountCents: 750000, reference: `tebos-${id}` });
     expect(await worker.runOnce()).toMatchObject({ step: "email", outcome: "sent" });
-    expect(email.sends.at(-1)!.input.text).toContain("please pay the Company Diagnostic here:");
+    expect(email.sends.at(-1)!.input.text).toContain("To start your Company for Big Co, please pay the first month here:");
   });
 
   it("bills an onboarded client monthly: invoice on its date, a payment link, reminders, and paid only on Paystack's confirmation", async () => {
     const onboarded = onboardedId;
     expect(onboarded).not.toBe("");
     const acct = (await pool.query("select id, status, monthly_cents, next_invoice_on::text as next, anchor_day from public.billing_accounts where opportunity_id = $1", [onboarded])).rows[0];
-    // opened at onboarding: active, R2,500, a month after the first payment
-    expect(acct).toMatchObject({ status: "active", monthly_cents: 250000 });
+    // opened at onboarding: active, R500 (Small), a month after the first payment
+    expect(acct).toMatchObject({ status: "active", monthly_cents: 50000 });
     const paid = (await pool.query("select (min(paid_at)::date + interval '1 month')::date::text as next from public.payments where opportunity_id = $1", [onboarded])).rows[0].next;
     expect(acct.next).toBe(paid);
 
@@ -231,9 +231,9 @@ describe.skipIf(!enabled)("client pipeline against the TEBOS schema", () => {
     const billing = new BillingWorker(new PgBillingStore(pool, "billing-worker:it"), gateway, { siteUrl: "https://tebos.test" });
     expect(await billing.runOnce()).toMatchObject({ step: "issue" });
     const inv = (await pool.query("select id, number, status, amount_cents from public.invoices where billing_account_id = $1", [acct.id])).rows[0];
-    expect(inv).toMatchObject({ status: "open", amount_cents: 250000 });
+    expect(inv).toMatchObject({ status: "open", amount_cents: 50000 });
     expect(await billing.runOnce()).toMatchObject({ step: "link", outcome: "linked" });
-    expect(gateway.requests.at(-1)).toMatchObject({ amountCents: 250000, reference: `tebos-inv-${inv.id}` });
+    expect(gateway.requests.at(-1)).toMatchObject({ amountCents: 50000, reference: `tebos-inv-${inv.id}` });
     expect(await billing.runOnce()).toBeNull(); // nothing more today: not late, next month not due
     // the invoice email goes out through the same outbox
     expect(await worker.runOnce()).toMatchObject({ step: "email", outcome: "sent" });
@@ -249,7 +249,7 @@ describe.skipIf(!enabled)("client pipeline against the TEBOS schema", () => {
     expect(await late(11).runOnce()).toBeNull();
 
     // Paystack confirms: paid, once
-    const body = JSON.stringify({ event: "charge.success", data: { id: 7, reference: `tebos-inv-${inv.id}`, status: "success", amount: 250000, currency: "ZAR", paid_at: new Date().toISOString() } });
+    const body = JSON.stringify({ event: "charge.success", data: { id: 7, reference: `tebos-inv-${inv.id}`, status: "success", amount: 50000, currency: "ZAR", paid_at: new Date().toISOString() } });
     const sig = createHmac("sha512", SECRET).update(body).digest("hex");
     expect(await handlePaystackWebhook(store, SECRET, sig, body)).toEqual({ status: 200, body: "invoice paid" });
     expect(await handlePaystackWebhook(store, SECRET, sig, body)).toEqual({ status: 200, body: "already recorded" });
