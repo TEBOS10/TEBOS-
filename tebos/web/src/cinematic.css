@@ -1,0 +1,241 @@
+/* TEBOS cinematic theme (founder, 20 Oct 2026: "my platform looks ugly"). Loaded after styles.css and overrides it:
+   near-black surfaces with soft moving light, light-weight large type (Geist), glass panels with hairline borders,
+   and pill buttons with an inner highlight. Our own design: no other product's code, assets or layouts are used.
+   Printing (reports, monthly updates) switches back to black on white. */
+:root {
+  --ink: #ededee;
+  --ink-soft: #c9cacd;
+  --muted: #9a9ca2;
+  --faint: #6f7177;
+  --line: rgba(255, 255, 255, 0.07);
+  --line-strong: rgba(255, 255, 255, 0.13);
+  --page: #060607;
+  --surface: rgba(255, 255, 255, 0.028);
+  --surface-alt: rgba(255, 255, 255, 0.06);
+  --green: #0a0a0b;   /* the deep tone: dark panels, and text on light pills */
+  --green-2: #141416;
+  --lime: #8fb8ff;
+  --night: #060607;
+  --night-2: rgba(255, 255, 255, 0.05);
+  --night-line: rgba(255, 255, 255, 0.07);
+  --night-text: #ededee;
+  --night-muted: #9a9ca2;
+  --soft: rgba(255, 255, 255, 0.04);
+
+  --good-bg: rgba(74, 222, 128, 0.1); --good-fg: #86efac;
+  --warn-bg: rgba(251, 191, 36, 0.1); --warn-fg: #fcd34d;
+  --bad-bg: rgba(248, 113, 113, 0.1); --bad-fg: #fca5a5;
+  --info-bg: rgba(143, 184, 255, 0.1); --info-fg: #b9d2ff;
+  --neutral-bg: rgba(255, 255, 255, 0.06); --neutral-fg: #c9cacd;
+
+  --radius: 20px;
+  --radius-sm: 12px;
+  --shadow: none;
+  --glass: rgba(255, 255, 255, 0.028);
+  --glass-edge: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --pill-light: inset 0 1px 0 rgba(255, 255, 255, 0.9), inset 0 -10px 18px -12px rgba(0, 0, 0, 0.35), 0 8px 24px -14px rgba(190, 210, 255, 0.55);
+  --pill-dark: inset 0 1px 1px rgba(255, 255, 255, 0.14), inset 0 -14px 24px -16px rgba(255, 255, 255, 0.14);
+  --sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --mono: "Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
+  color-scheme: dark;
+}
+
+body { background: var(--page); color: var(--ink); font-size: 14.5px; letter-spacing: -0.005em; }
+body::before {
+  /* the faint light that sits behind every screen */
+  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(60% 45% at 85% -5%, rgba(143, 184, 255, 0.09), transparent 70%),
+    radial-gradient(50% 40% at 0% 100%, rgba(200, 170, 255, 0.05), transparent 70%);
+}
+#root { position: relative; z-index: 1; }
+a { color: var(--ink); text-decoration-color: rgba(255, 255, 255, 0.3); text-underline-offset: 3px; }
+::selection { background: rgba(143, 184, 255, 0.35); }
+
+/* Headings: large, light, tight */
+.page-title, .lp-title, .hero h1, .pr-plan h2, .lp-section-title, .card-title, .stat-value, .confidence-score { letter-spacing: -0.025em; }
+.page-title { font-size: 34px; font-weight: 500; line-height: 1.1; }
+.card-title { font-size: 15px; font-weight: 600; }
+.stat-value, .confidence-score { font-weight: 500; }
+.eyebrow, .nav-heading, .lp-kicker, .table th, .principle, .role { letter-spacing: 0.14em; font-weight: 500; }
+.eyebrow { color: var(--muted); }
+.list-title, .field-label, .stat-label, .evidence-fact, .org-name { font-weight: 600; }
+
+/* Shell: one dark canvas; the sidebar is a glass column */
+.shell { background: transparent; }
+.sidebar { background: rgba(255, 255, 255, 0.018); border-right: 1px solid var(--line); backdrop-filter: blur(18px); }
+.brand-name { font-weight: 600; letter-spacing: 0.12em; }
+.nav-link { color: var(--muted); font-weight: 500; border-radius: 999px; padding: 8px 14px; }
+.nav-link:hover { background: rgba(255, 255, 255, 0.05); color: var(--ink); }
+.nav-link.active { background: rgba(255, 255, 255, 0.08); color: var(--ink); box-shadow: var(--pill-dark); }
+.org-select { background: rgba(255, 255, 255, 0.04); border-radius: 999px; }
+.main { padding: 36px 44px 72px; }
+
+/* Glass panels */
+.card, .lp-step, .lp-compare-col, .pr-plan, .next-step, .fieldset, .evidence {
+  background: var(--glass); border: 1px solid var(--line); box-shadow: var(--glass-edge); backdrop-filter: blur(12px);
+}
+.card { border-radius: var(--radius); padding: 22px 24px; }
+.hero { background: linear-gradient(160deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)); border: 1px solid var(--line-strong); box-shadow: var(--glass-edge); color: var(--ink); }
+.hero h1 { font-weight: 500; }
+.hero p, .hero .eyebrow, .hero-rules { color: var(--muted); }
+.excerpt, .email-preview, .transcript li { background: rgba(255, 255, 255, 0.04); color: var(--ink-soft); }
+.transcript li.from-user { background: rgba(143, 184, 255, 0.12); }
+.evidence.missing { background: var(--warn-bg); }
+.chain-dot { background: rgba(255, 255, 255, 0.06); color: var(--ink); }
+
+.glance { background: linear-gradient(160deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015)); border: 1px solid var(--line-strong); box-shadow: var(--glass-edge); }
+.glance-card { background: rgba(255, 255, 255, 0.025); border-color: var(--line); }
+.glance-title h2 { font-weight: 500; letter-spacing: -0.02em; }
+.glance-head .eyebrow { color: var(--muted); }
+.glance-link, .glance-more, .glance-empty a { font-weight: 500; }
+
+/* Pill buttons with an inner highlight */
+.btn, .lp-watch, .lp-links .lp-signin, .pr-chip, .tab {
+  border-radius: 999px; font-weight: 500; letter-spacing: -0.005em;
+}
+.btn { background: #121214; color: var(--ink); border: 1px solid var(--line-strong); box-shadow: var(--pill-dark); padding: 9px 16px; }
+.btn:hover:not(:disabled) { background: #19191c; }
+.btn-primary, .btn-lime, .btn-accent, .pr-btn, .lp-cta {
+  background: linear-gradient(180deg, #ffffff, #e4e5e8); color: #0a0a0b; border-color: transparent; box-shadow: var(--pill-light);
+}
+.btn-primary:hover:not(:disabled), .btn-lime:hover:not(:disabled), .btn-accent:hover:not(:disabled), .pr-btn:hover:not(:disabled) { background: #fff; }
+.btn-danger { color: var(--bad-fg); border-color: rgba(248, 113, 113, 0.3); }
+.btn-link { color: var(--ink); }
+.lp-watch { background: rgba(255, 255, 255, 0.04); border: 1px solid var(--line-strong); box-shadow: var(--pill-dark); font-weight: 500; }
+.lp-watch:hover { background: rgba(255, 255, 255, 0.08); }
+
+/* Inputs */
+.input, select.input, textarea.input, .card input:not([type="checkbox"]):not([type="radio"]), .card textarea, .card select,
+.pr-form input:not([type="checkbox"]):not([type="radio"]), .pr-form textarea, .pr-form select, .auth-card input {
+  background: rgba(255, 255, 255, 0.035); border: 1px solid var(--line-strong); border-radius: 14px; color: var(--ink); padding: 10px 13px;
+}
+.input:focus, .card input:focus, .card textarea:focus, .card select:focus, .pr-form input:focus, .pr-form textarea:focus, .auth-card input:focus {
+  outline: none; border-color: rgba(143, 184, 255, 0.6); box-shadow: 0 0 0 3px rgba(143, 184, 255, 0.15);
+}
+input::placeholder, textarea::placeholder { color: var(--faint); }
+select option { background: #121214; color: var(--ink); }
+
+/* Badges, notes, labels */
+.badge { font-weight: 500; border: 1px solid rgba(255, 255, 255, 0.06); }
+.note { border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 14px; }
+.lifecycle .step { background: rgba(255, 255, 255, 0.05); }
+.lifecycle .step.current { background: var(--ink); color: #0a0a0b; }
+.label-fact { color: #86efac; background: rgba(74, 222, 128, 0.08); }
+.label-interpretation { color: #b9d2ff; background: rgba(143, 184, 255, 0.08); }
+.label-hypothesis { color: #fcd34d; background: rgba(251, 191, 36, 0.08); }
+.label-recommendation { color: #ededee; background: rgba(255, 255, 255, 0.08); }
+.label-user { color: #d8c4ff; background: rgba(200, 170, 255, 0.08); }
+.bar { background: rgba(255, 255, 255, 0.07); }
+.bar > span { background: linear-gradient(90deg, #8fb8ff, #e8eeff); }
+.demo-banner { background: rgba(143, 184, 255, 0.07); border: 1px solid rgba(143, 184, 255, 0.25); border-left: 1px solid rgba(143, 184, 255, 0.25); color: var(--ink); border-radius: 16px; }
+.demo-steps a { color: #b9d2ff; }
+
+/* Sign-in */
+.auth { background: transparent; }
+.auth-card { background: rgba(14, 14, 16, 0.75); border: 1px solid var(--line-strong); box-shadow: var(--glass-edge), 0 40px 120px -40px rgba(0, 0, 0, 0.9); backdrop-filter: blur(20px); border-radius: 28px; }
+.tabs { background: rgba(255, 255, 255, 0.04); border-radius: 999px; }
+.tab.active { background: rgba(255, 255, 255, 0.1); color: var(--ink); box-shadow: var(--pill-dark); }
+
+/* The public site */
+.lp { background: transparent; }
+.lp-nav { max-width: 1280px; }
+.lp-brand { font-weight: 600; }
+.lp-links { gap: 4px; padding: 5px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255, 255, 255, 0.025); backdrop-filter: blur(14px); }
+.lp-links a { color: var(--muted); font-weight: 500; padding: 7px 12px; border-radius: 999px; }
+.lp-links a:hover { color: var(--ink); background: rgba(255, 255, 255, 0.05); text-decoration: none; }
+.lp-links .lp-signin { border: 1px solid var(--line-strong); color: var(--ink); box-shadow: var(--pill-dark); background: #121214; }
+.lp-kicker {
+  display: inline-block; color: var(--ink-soft); font-size: 12px; text-transform: none; letter-spacing: 0.01em;
+  padding: 6px 12px; border: 1px solid var(--line-strong); border-radius: 999px; background: rgba(255, 255, 255, 0.03);
+}
+.lp-title { font-weight: 400; font-size: clamp(38px, 5.4vw, 76px); line-height: 1.02; letter-spacing: -0.04em; color: #f4f4f5; }
+.lp-sub { color: var(--muted); font-size: 17px; }
+.lp-section-title { font-weight: 400; font-size: clamp(28px, 3vw, 44px); }
+.lp-step h2, .lp-step h3, .lp-compare-col h2 { font-weight: 500; }
+.lp-step-icon { background: rgba(255, 255, 255, 0.06); color: var(--ink); border-radius: 12px; }
+.lp-step-n { color: var(--faint); font-weight: 500; }
+.lp-compare-after { border-color: rgba(143, 184, 255, 0.3); background: rgba(143, 184, 255, 0.05); }
+.lp-band { background: linear-gradient(160deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)); border: 1px solid var(--line-strong); color: var(--ink); box-shadow: var(--glass-edge); border-radius: 28px; }
+.lp-band .btn-lime { background: linear-gradient(180deg, #ffffff, #e4e5e8); color: #0a0a0b; box-shadow: var(--pill-light); }
+.lp-video-wrap { border-radius: 24px; box-shadow: 0 50px 120px -40px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.08); }
+
+/* The cinematic stage: a framed panel with slow-moving light and film grain, behind a page's opening */
+.cine {
+  position: relative; isolation: isolate; overflow: hidden; border-radius: 28px; border: 1px solid var(--line-strong);
+  box-shadow: var(--glass-edge), 0 40px 120px -50px rgba(0, 0, 0, 0.95); background: #08080a;
+}
+.cine-light { position: absolute; inset: -20%; z-index: -2; filter: blur(60px) saturate(115%); opacity: 0.9; }
+.cine-light span { position: absolute; border-radius: 50%; mix-blend-mode: screen; animation: cine-drift 26s ease-in-out infinite alternate; }
+.cine-light span:nth-child(1) { width: 55%; height: 60%; left: 5%; top: 10%; background: radial-gradient(circle, rgba(170, 175, 190, 0.55), transparent 65%); }
+.cine-light span:nth-child(2) { width: 45%; height: 55%; right: 0; top: 0; background: radial-gradient(circle, rgba(120, 160, 255, 0.45), transparent 65%); animation-duration: 32s; animation-delay: -8s; }
+.cine-light span:nth-child(3) { width: 50%; height: 50%; left: 35%; bottom: -5%; background: radial-gradient(circle, rgba(215, 205, 235, 0.35), transparent 65%); animation-duration: 38s; animation-delay: -15s; }
+.cine-grain {
+  position: absolute; inset: 0; z-index: -1; opacity: 0.16; mix-blend-mode: overlay; pointer-events: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+.cine::after { /* darken the middle so text stays readable on the light */
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: radial-gradient(70% 70% at 50% 50%, rgba(6, 6, 7, 0.55), rgba(6, 6, 7, 0.1) 70%);
+}
+@keyframes cine-drift {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(8%, -6%, 0) scale(1.15); }
+  100% { transform: translate3d(-6%, 5%, 0) scale(0.95); }
+}
+@media (prefers-reduced-motion: reduce) { .cine-light span { animation: none; } }
+
+.lp-hero.lp-hero-plain { display: block; max-width: 1280px; padding: 8px 20px 40px; }
+.lp-hero-plain .cine { padding: clamp(56px, 9vw, 120px) clamp(20px, 5vw, 72px); text-align: center; }
+.lp-hero-plain .lp-copy { max-width: 920px; margin: 0 auto; }
+.lp-hero-plain .lp-title { margin-top: 18px; }
+.lp-hero-plain .lp-sub { margin: 22px auto 0; max-width: 680px; }
+.lp-hero-plain .lp-ctas { justify-content: center; margin-top: 34px; }
+
+/* Pricing */
+.pr-head { max-width: 1280px; }
+.pr-head .cine { padding: clamp(44px, 7vw, 96px) clamp(20px, 5vw, 72px); text-align: center; }
+.pr-head .lp-sub { margin-left: auto; margin-right: auto; max-width: 680px; }
+.pr-plan { border-radius: 24px; padding: 26px; gap: 14px; }
+.pr-plan h2 { font-weight: 500; color: var(--ink); }
+.pr-plan-featured { border-color: rgba(255, 255, 255, 0.22); background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02)); }
+.pr-plan-equity { background: var(--glass); border-color: var(--line); }
+.pr-badge { background: linear-gradient(180deg, #ffffff, #e4e5e8); color: #0a0a0b; font-weight: 600; box-shadow: var(--pill-light); }
+.pr-price strong { font-weight: 400; font-size: 46px; letter-spacing: -0.04em; color: var(--ink); }
+.pr-price span { font-weight: 400; }
+.pr-plan li { color: var(--ink-soft); font-size: 14.5px; }
+.pr-plan li svg { color: var(--ink); opacity: 0.7; }
+.pr-form, .pr-sent { background: rgba(14, 14, 16, 0.8); color: var(--ink); border: 1px solid var(--line-strong); box-shadow: var(--glass-edge); border-radius: 28px; }
+.pr-chip { background: rgba(255, 255, 255, 0.04); color: var(--ink-soft); border-color: var(--line-strong); font-weight: 500; }
+.pr-chip.on { background: var(--ink); color: #0a0a0b; border-color: var(--ink); }
+.pr-small { color: var(--faint); }
+
+/* The client channel: TEBOS's messages on a lit glass, the client's plain */
+.msg-tebos { border-left: 0; padding: 12px 14px; border-radius: 16px; background: rgba(143, 184, 255, 0.07); border: 1px solid rgba(143, 184, 255, 0.18); }
+
+@media (max-width: 820px) {
+  .sidebar { background: rgba(6, 6, 7, 0.92); }
+  .main { padding: 22px 16px 56px; }
+  .page-title { font-size: 28px; }
+  .lp-links { border-radius: 20px; flex-wrap: wrap; }
+}
+
+/* Paper stays paper: printed reports are black on white */
+@media print {
+  :root {
+    --ink: #13161b; --ink-soft: #3a414b; --muted: #5f6773; --faint: #858c97; --line: rgba(18, 22, 28, 0.1);
+    --line-strong: rgba(18, 22, 28, 0.18); --page: #fff; --surface: #fff; --surface-alt: #eceef2; --green: #0b0f16;
+    --good-bg: #e3f6ea; --good-fg: #11683b; --warn-bg: #fdf1d6; --warn-fg: #8a5a00; --bad-bg: #fde4e1; --bad-fg: #a1261b;
+    --info-bg: #e2f1f8; --info-fg: #0f5a78; --neutral-bg: #eceef1; --neutral-fg: #4b525c; color-scheme: light;
+  }
+  body::before { display: none; }
+  .card, .evidence, .fieldset { background: #fff; backdrop-filter: none; box-shadow: none; }
+  .label-fact { color: #1d6b3a; background: #e8f5ec; }
+  .label-interpretation { color: #1f4f8a; background: #e9f0fa; }
+  .label-hypothesis { color: #8a5a00; background: #fdf3de; }
+  .label-recommendation { color: #0b0f16; background: #d9e7ff; }
+  .label-user { color: #5b3f8c; background: #f1ecfa; }
+}
+
+/* Illustrations of light things (a browser, a contract) keep dark text */
+.xp-browser, .contract-card { color: #13161b; }

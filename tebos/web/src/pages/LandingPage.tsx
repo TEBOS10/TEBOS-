@@ -5,6 +5,7 @@
 // reduced motion, the same story is told as plain cards.
 import { Cable, Compass, FileSearch, LayoutGrid, LineChart, Play, ShieldCheck, Stamp, Volume2, Workflow } from "lucide-react";
 import { lazy, Suspense, useRef, useState } from "react";
+import { CineLight } from "../components/CineLight";
 import { use3d } from "../world/support";
 
 const BoardWorldView = lazy(() => import("../world/BoardWorldView"));
@@ -81,7 +82,10 @@ export function LandingPage() {
       ) : (
         <>
           <section className="lp-hero lp-hero-plain">
-            <div className="lp-copy"><Hero onWatch={playWithSound} /></div>
+            <div className="cine">
+              <CineLight />
+              <div className="lp-copy"><Hero onWatch={playWithSound} /></div>
+            </div>
           </section>
           <section className="lp-section" aria-labelledby="lp-stages">
             <h2 id="lp-stages" className="lp-section-title">From diagnosis to an operating system, in seven stages</h2>

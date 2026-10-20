@@ -6,6 +6,7 @@ import { useState, type FormEvent } from "react";
 import { ErrorNote, Field } from "../components/ui";
 import { submitEnquiry } from "../lib/data";
 import { ANNUAL_MONTHS_CHARGED, MIN_TERM_MONTHS, RUNNING_COSTS } from "@core/plans";
+import { CineLight } from "../components/CineLight";
 import { EQUITY_SHARE, PLANS, type PlanKey } from "../lib/pricing";
 import { supabase } from "../lib/supabase";
 
@@ -63,9 +64,12 @@ export function PricingPage() {
       </header>
 
       <section className="pr-head">
-        <p className="lp-kicker">Pricing</p>
-        <h1 className="lp-title">One system, sized to your business.</h1>
-        <p className="lp-sub">Every plan includes the build: a website made for your business and an operating system from your industry's template, then changes each month through your TEBOS channel. Choose by the size of your business; we recommend a diagnostic first, so the plan fits what your business actually needs.</p>
+        <div className="cine">
+          <CineLight />
+          <p className="lp-kicker">Pricing</p>
+          <h1 className="lp-title">One system, sized to your business.</h1>
+          <p className="lp-sub">Every plan includes the build: a website made for your business and an operating system from your industry's template, then changes each month through your TEBOS channel. Choose by the size of your business; we recommend a diagnostic first, so the plan fits what your business actually needs.</p>
+        </div>
       </section>
 
       <section className="pr-plans" aria-label="Plans">
