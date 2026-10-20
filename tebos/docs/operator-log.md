@@ -9,6 +9,8 @@ Update this list every run; strike items when they're done.
 | # | Decision | What it unblocks |
 |---|---|---|
 | 21 | **Railway: switch to the Free plan (USD 0).** The trial expired and stopped the worker. The worker now runs every 15 minutes, does its work and stops (batch mode), which fits inside the Free plan's USD 1 monthly credit. Steps: railway.com → sign in → the yellow "trial expired" banner (or Account → Plans) → choose **Free**. Then tell TEBOS, which reconnects the worker to `main` | Everything TEBOS does on its own: BAME monitoring, REEDS, analysis, reminders |
+| 22 | **Switch on the weekly signal brief:** TEBOS → Ask TEBOS → Weekly signal brief → "Switch on every week". One click; the worker then files it weekly for you (after decision 21) | REEDS reporting demand, cash, delivery, reliability and security each week |
+| 23 | **Send the PRA founding offer** (`docs/pra-founding-offer-draft.md`) to five owners you know personally, not the agency's contacts. You approve the text and send it yourself | Stage 1: the first paying owner (the 30-day objective, ADR 0006) |
 | 0 | **Run the first real operating systems.** Pick real businesses (BAME first, then pilots) and let TEBOS lay down their blueprint | Real proof. The ten blueprints are templates, not client work; only real clients make a portfolio |
 | 1 | Paystack secret key on the worker, and the webhook `https://tebos-worker-production.up.railway.app/webhooks/paystack` | Taking the first payment, and monthly invoices |
 | ~~2b~~ | ~~Workspace ID~~ **Done 19 Oct:** the founder sent it, and `ANTHROPIC_WORKSPACE_ID` is set on the worker. Analysis resumes when the worker runs again (decision 21) | — |
@@ -29,6 +31,21 @@ Update this list every run; strike items when they're done.
 | 18 | Each client's web app address (where TEBOS's people sign in to their department), starting with BAME's | Client tiles that open the client's web app |
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
+
+## 20 Oct 2026 (morning run): healthy apart from the stopped worker
+
+- **Main CI** on c37ab05 (#88): Core and database, Web and the migration apply all passed.
+- **Railway worker:** still stopped. No deployment since the trial expired on 19 Oct (decision 21).
+- **Supabase advisors:** the same findings as before, nothing new. 19 tables have row-level security with no policy,
+  which means nobody can read them through the API; 18 of these are the `capital` schema (decision 9). The others:
+  `pg_net` sits in `public`, the SECURITY DEFINER functions are callable by design, each checking its own caller, and
+  leaked-password protection needs Pro.
+- **Audit trail:** checked read-only at 03:50 UTC. All 12 chains are **intact**. Every head recorded on 19 Oct is
+  unchanged, and since then bame has grown to event 4093 and tebos to event 4086.
+- **Live counts:** unchanged, all zero apart from 1 scan, 15 objectives (3 active) and 2 connections. No standing
+  weekly brief yet (decision 22).
+- **Open PRs:** #77 (TEPOS Listing studio) only, untouched.
+- **Prepared step:** decisions 22 (switch on the weekly brief) and 23 (send the founding offer) added to the table.
 
 ## 20 Oct 2026: the weekly signal brief (ADR 0007)
 

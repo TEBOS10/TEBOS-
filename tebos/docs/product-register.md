@@ -18,7 +18,7 @@ any change to a capability.
 - **"In use" needs real records** from an actual workflow in the live database.
 - A count of 0 means *not yet used*, never *broken*. Tests show it works as written; only use shows it helps.
 
-**Live counts, 19 Oct 2026** (read-only):
+**Live counts, 20 Oct 2026** (read-only):
 
 | | Count |
 |---|---|
@@ -27,6 +27,7 @@ any change to a capability.
 | Property Revenue Architecture cases | 0 |
 | Money records | 0 |
 | REEDS requests | 0 |
+| Standing weekly briefs | 0 |
 | Findings and actions | 0 |
 | Scans | 1 |
 | Objectives | 15 (3 active) |
