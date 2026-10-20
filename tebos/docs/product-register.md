@@ -4,6 +4,11 @@ The state of every capability in the TEPOS → library → TEBOS portfolio
 ([ADR 0005](adr/0005-systems-portfolio.md)). REEDS reads this as the portfolio's state. Update it in the same PR as
 any change to a capability.
 
+**Names (founder, 20 Oct):**
+- **TEBOS** is the independent platform that businesses subscribe to (BAME first).
+- **TEPOS and REEDS** are the founder's own system and chief of staff. They build and run the Property Revenue
+  Architect firm with TEBOS's technology.
+
 ## Stages and evidence
 
 **Stages** (full definitions in ADR 0005):
@@ -18,7 +23,7 @@ any change to a capability.
 - **"In use" needs real records** from an actual workflow in the live database.
 - A count of 0 means *not yet used*, never *broken*. Tests show it works as written; only use shows it helps.
 
-**Live counts, 19 Oct 2026** (read-only):
+**Live counts, 20 Oct 2026** (read-only):
 
 | | Count |
 |---|---|
@@ -27,6 +32,7 @@ any change to a capability.
 | Property Revenue Architecture cases | 0 |
 | Money records | 0 |
 | REEDS requests | 0 |
+| Standing weekly briefs | 0 |
 | Findings and actions | 0 |
 | Scans | 1 |
 | Objectives | 15 (3 active) |
@@ -79,7 +85,7 @@ The founder said yes to proposals 1 to 5 on 19 Oct (`tepos/creative-proposals.md
 
 | System | Where | Stage | Evidence and gap |
 |---|---|---|---|
-| Property Revenue Architecture | TEPOS (Tidy Enterprise) | Built, unused | 0 cases. Priority 1 is the monthly subscription. Price decided 19 Oct (`pra-pricing.md`). Monthly update built 19 Oct. First invoice waits on decision 10b |
+| Property Revenue Architecture | TEPOS (Tidy Enterprise) | Built, unused | 0 cases. Priority 1. First offer: the assessment (ADR 0009, price is decision 26), then the monthly plan (decided 19 Oct, `pra-pricing.md`). Monthly update built 19 Oct. First invoice waits on decision 10b |
 | Real Estate Office OS | TEPOS agent office (merged) | Built slice 1 | Listings and people with next steps. Documents, FFC path, relationships and marketing are next (founder, 19 Oct) |
 | Hospitality OS | — | Not started | Client tile only |
 | Sports and Marketing OS | BAME's own app (`bame/`) | Separate app | Not a TEBOS module. Its working parts are candidates for the library |

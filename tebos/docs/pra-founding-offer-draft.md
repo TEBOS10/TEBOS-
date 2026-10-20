@@ -1,6 +1,6 @@
 # DRAFT: the PRA founding-client offer (stage 1, ADR 0006)
 
-**Status: draft for the founder's approval.**
+**Status: draft for the founder's approval.** Version A may be sent now; version B waits on decision 10b (ADR 0009).
 - Nothing here is sent or published by TEBOS. The founder approves the text and sends it personally.
 - Before the first invoice, the three checks in decision 10b are done:
   - PPRA registration;
@@ -19,7 +19,19 @@
   could breach the founder's terms with the agency.
 - **The aim is five conversations, for one yes.** The first five who say yes get the founding offer.
 
-## The message (WhatsApp or email, short)
+## Version A: discovery, send now (ADR 0009)
+
+No price, no firm name, no offer. It asks to hear about the property, which is customer research, not marketing a
+service. Record each conversation: the problem, the evidence the owner has, objections, and whether they'd pay.
+
+> Hi [name], I'm studying how owners of rental properties decide what to do when a property isn't paying its way:
+> keep and improve it, restructure, or sell. Would you be open to a 20-minute chat about your property this week?
+> I'm not selling anything; I'd like to understand what you're dealing with.
+
+## Version B: the priced founding offer, only once decision 10b is answered
+
+Send this only after the PPRA's answer, the agency arrangement and the client agreement (`pra-compliance-checklist.md`)
+are in place. The firm name and any agency name must then follow the PPRA's rules on trading names.
 
 > Hi [name], I've started a small service for property owners: Property Revenue Architecture. Each month I look at
 > what your rental actually brings in against what it costs, find where money is leaking (empty months, late rent,

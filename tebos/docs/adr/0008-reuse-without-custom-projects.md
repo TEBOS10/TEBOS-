@@ -49,7 +49,7 @@ strategy, and we don't follow it.
   WhatsApp). Record those facts; don't force a new workflow. The PRA evidence register already accepts owner-reported
   facts.
 - **Decision triggers:**
-  - no paying client by day 60 means re-examine the offer, not build more;
+  - no paying client by day 60 means re-examine the offer, not build more (*ADR 0009: by 28 Feb 2027*);
   - every proposed feature names the paying client who asked for it.
 - **Investor and owner visibility** (live figures, not quarterly PDFs): the PRA monthly update is the start.
 

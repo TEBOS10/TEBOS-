@@ -9,6 +9,14 @@ Update this list every run; strike items when they're done.
 | # | Decision | What it unblocks |
 |---|---|---|
 | 21 | **Railway: switch to the Free plan (USD 0).** The trial expired and stopped the worker. The worker now runs every 15 minutes, does its work and stops (batch mode), which fits inside the Free plan's USD 1 monthly credit. Steps: railway.com → sign in → the yellow "trial expired" banner (or Account → Plans) → choose **Free**. Then tell TEBOS, which reconnects the worker to `main` | Everything TEBOS does on its own: BAME monitoring, REEDS, analysis, reminders |
+| 22 | **Switch on the weekly signal brief:** TEBOS → Ask TEBOS → Weekly signal brief → "Switch on every week". One click; the worker then files it weekly for you (after decision 21) | REEDS reporting demand, cash, delivery, reliability and security each week |
+| 24 | **Your registration route without a matric:** ask your principal about candidate registration, ask two NQF 4 providers whether they accept your schooling or RPL, and send the PPRA questions (`pra-compliance-checklist.md`). The 12 Nov exam isn't open to you yet (it needs an FFC and NQF 4 first). Decide on the adult matric by Jan (registration closes 5 Feb 2027) | Your own registration, so you can practise and earn commission legally |
+| 25 | **Put the agency arrangement in writing** with your principals: status, permitted work, mandates and adverts, the firm named to clients, commission split, and any separate assessment fee (draft message in `pra-compliance-checklist.md`) | Working with owners without regulatory risk; path B revenue |
+| 26 | **The assessment's price** (the Property Income & Options Assessment, ADR 0009), once 10b allows a fee | Path A revenue: the first paid case |
+| 23 | **Talk to owners you know personally:** send version A of `docs/pra-founding-offer-draft.md` (no price) to them now, not to the agency's contacts. Aim for 10 conversations by 30 Nov. Version B, the priced offer, waits on 10b | Customer evidence for the first paid case (ADR 0009) |
+| ~~27~~ | ~~TEBOS tiers~~ **Decided 20 Oct:** Small R500, Medium R2,500, Company R7,500 a month, for every industry; 5 / 15 / 40 change requests a month; 6-month minimum or annual (10 months' price for 12); one-off quoted and not recommended; hosting and client-only running costs paid by the client, disclosed first; the diagnostic recommended before choosing (`tebos-service-spec.md` §2–2c). **Still yours:** confirm the allowances, if you meant otherwise | — |
+| 28 | **BAME: 5% or 5.1%?** BAME's tier is decided: Medium. Settle the figure (needed for its direct channel to TEBOS, §7), and have an attorney draft two agreements: services (package, limits) and equity (percentage, vesting, exit, IP) (`tebos-service-spec.md` §6) | A BAME arrangement that can't be read as unlimited service |
+| 29 | **The tutoring academy lead:** her website address, her permission to scan it, and her business name (or ask her to use TEBOS's meeting form) | A first paying client for the education-centre route (§8) |
 | 0 | **Run the first real operating systems.** Pick real businesses (BAME first, then pilots) and let TEBOS lay down their blueprint | Real proof. The ten blueprints are templates, not client work; only real clients make a portfolio |
 | 1 | Paystack secret key on the worker, and the webhook `https://tebos-worker-production.up.railway.app/webhooks/paystack` | Taking the first payment, and monthly invoices |
 | ~~2b~~ | ~~Workspace ID~~ **Done 19 Oct:** the founder sent it, and `ANTHROPIC_WORKSPACE_ID` is set on the worker. Analysis resumes when the worker runs again (decision 21) | — |
@@ -29,6 +37,57 @@ Update this list every run; strike items when they're done.
 | 18 | Each client's web app address (where TEBOS's people sign in to their department), starting with BAME's | Client tiles that open the client's web app |
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
+
+## 20 Oct 2026 (later): no matric, and whether businesses will pay
+
+- **Correction to ADR 0009:** the 12 Nov PDE isn't open to the founder yet. The PPRA requires a valid FFC and NQF 4
+  first, and the new pathway needs a matric.
+- **The route found:**
+  - the candidate route, where the PPRA lists no matric requirement (each NQF 4 provider's entry rules, or RPL, must
+    be confirmed);
+  - an adult matric alongside it (registration closes 5 Feb 2027, as reported by the Department of Basic Education).
+  - Details are in `pra-compliance-checklist.md`, and decision 24 is rewritten.
+- **Willingness to pay:**
+  - there is no evidence yet, because there are 0 clients;
+  - `tebos-service-spec.md` makes the first TEBOS purchase a one-off diagnostic, with BAME as the reference case and
+    kill rules written before the test (decision 27).
+- **Service spec v0:**
+  - packages with exclusions;
+  - the entitlement record;
+  - controls against what exists (entitlement enforcement and usage limits are the gaps);
+  - the BAME services/equity split (decision 28).
+
+## 20 Oct 2026: the PRA operating blueprint (ADR 0009)
+
+- **Adopted:** the founder's "Operating Blueprint v1". The order is compliance first, then customer evidence, then the
+  first paid case. The phases end on 31 Oct, 30 Nov, the first week of December (funding) and 28 Feb 2027.
+- **Checked against PPRA sources:**
+  - the competency-based pathway (from 1 Aug 2026) and the "powered by" communique (22 Sep 2026) are confirmed;
+  - the 12 Nov PDE sitting and its enrolment deadline (30 Oct) are reported from the PPRA calendar;
+  - the court report wasn't checked, and isn't relied on.
+- **Changed:**
+  - the founding-offer message is split into version A (discovery, no price, may go now) and version B (the priced
+    offer, after 10b);
+  - the first offer is the existing PRA assessment, and its price is decision 26;
+  - ADR 0006's 30-day objective is replaced by the phase dates.
+- **Added:** `pra-compliance-checklist.md` (questions for the PPRA, the agreement points for your principals, and a
+  draft message), plus decisions 24–26.
+- **Built:** nothing new. The blueprint's first TEBOS components already exist in the PRA case workspace.
+
+## 20 Oct 2026 (morning run): healthy apart from the stopped worker
+
+- **Main CI** on c37ab05 (#88): Core and database, Web and the migration apply all passed.
+- **Railway worker:** still stopped. No deployment since the trial expired on 19 Oct (decision 21).
+- **Supabase advisors:** the same findings as before, nothing new. 19 tables have row-level security with no policy,
+  which means nobody can read them through the API; 18 of these are the `capital` schema (decision 9). The others:
+  `pg_net` sits in `public`, the SECURITY DEFINER functions are callable by design, each checking its own caller, and
+  leaked-password protection needs Pro.
+- **Audit trail:** checked read-only at 03:50 UTC. All 12 chains are **intact**. Every head recorded on 19 Oct is
+  unchanged, and since then bame has grown to event 4093 and tebos to event 4086.
+- **Live counts:** unchanged, all zero apart from 1 scan, 15 objectives (3 active) and 2 connections. No standing
+  weekly brief yet (decision 22).
+- **Open PRs:** #77 (TEPOS Listing studio) only, untouched.
+- **Prepared step:** decisions 22 (switch on the weekly brief) and 23 (send the founding offer) added to the table.
 
 ## 20 Oct 2026: the weekly signal brief (ADR 0007)
 
