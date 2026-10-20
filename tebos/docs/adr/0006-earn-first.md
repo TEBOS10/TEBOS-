@@ -37,7 +37,7 @@ Live state on 19 Oct:
 - the price was decided on 19 Oct;
 - the monthly update is built.
 
-**The 30-day objective** is one paying owner, with the result measured in the monthly update.
+**The 30-day objective** was one paying owner, with the result measured in the monthly update. *Replaced 20 Oct by ADR 0009's phases: compliance first, then a first paid case by 28 Feb 2027.*
 
 **Rules:**
 - Don't build another product line, portfolio or architecture layer because the current one isn't yet what we
