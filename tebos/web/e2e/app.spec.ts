@@ -478,16 +478,20 @@ test("a business with a connected platform shows its live operations, read-only,
   await expect(page.getByText("Every lead is assigned to a department.")).toHaveCount(0); // only the latest reading per metric
 });
 
-test("pricing shows the diagnostic, architecture & operations and the equity partnership, and records an application", async ({ page }) => {
+test("pricing shows Small, Medium and Company with their terms, and the equity partnership, and records an application", async ({ page }) => {
   const fake = await installFakeSupabase(page, { signedIn: false });
   await page.goto("/");
   await page.getByRole("link", { name: "Pricing" }).first().click();
   await expect(page).toHaveURL(/\/pricing$/);
-  await expect(page.getByRole("heading", { name: "Diagnostic", exact: true })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Architecture & Operations", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Small", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Medium", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Company", exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Equity partnership", exact: true })).toBeVisible();
-  await expect(page.getByText("R2,500")).toBeVisible();
-  await expect(page.getByText("R7,500")).toBeVisible();
+  await expect(page.getByText("R500", { exact: true })).toBeVisible();
+  await expect(page.getByText("R2,500", { exact: true })).toBeVisible();
+  await expect(page.getByText("R7,500", { exact: true })).toBeVisible();
+  await expect(page.getByTestId("plan-terms")).toContainText("at least 6 months; or pay yearly, 10 months' fee for 12");
+  await expect(page.getByTestId("plan-terms")).toContainText("charged at cost");
   await expect(page.getByText(/nothing on this page is an offer/)).toBeVisible();
   await snap(page, "10-pricing");
 
@@ -508,14 +512,14 @@ test("pricing shows the diagnostic, architecture & operations and the equity par
   });
 });
 
-test("established companies see a Company plan that starts with a paid diagnostic, and can enquire for it", async ({ page }) => {
+test("companies see the Company plan with its monthly price and change requests, and can enquire for it", async ({ page }) => {
   const fake = await installFakeSupabase(page, { signedIn: false });
   await page.goto("/pricing");
-  const company = page.locator("article", { has: page.getByRole("heading", { name: "Company Operating Architecture", exact: true }) });
-  await expect(company).toContainText("R25,000 per month and up");
-  await expect(company).toContainText("after a R15,000 Company Diagnostic");
+  const company = page.locator("article", { has: page.getByRole("heading", { name: "Company", exact: true }) });
+  await expect(company).toContainText("R7,500 per month");
+  await expect(company).toContainText("40 change requests a month");
   await expect(page.getByTestId("international")).toContainText("Outside South Africa? Every plan is available.");
-  await company.getByRole("button", { name: "Start with a Company Diagnostic" }).click();
+  await company.getByRole("button", { name: "Start with Company" }).click();
   await page.getByLabel("Your name").fill("Naledi");
   await page.getByLabel("Business name").fill("Big Co");
   await page.getByLabel("Email").fill("naledi@bigco.example");

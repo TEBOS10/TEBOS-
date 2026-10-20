@@ -34,20 +34,20 @@ describe("screening an enquiry", () => {
 });
 
 describe("plans", () => {
-  it("prices in Rand from one source", () => {
-    expect(formatRand(PLAN_TERMS.starter.monthlyCents!)).toBe("R2,500");
-    expect(formatRand(PLAN_TERMS.growth.monthlyCents!)).toBe("R7,500");
+  it("prices in Rand from one source: Small, Medium and Company", () => {
+    expect(formatRand(PLAN_TERMS.starter.monthlyCents!)).toBe("R500");
+    expect(formatRand(PLAN_TERMS.growth.monthlyCents!)).toBe("R2,500");
+    expect(formatRand(PLAN_TERMS.company.monthlyCents!)).toBe("R7,500");
     expect(PLAN_TERMS.equity.monthlyCents).toBeNull();
   });
 
-  it("takes the first month from small businesses, and a one-off Company Diagnostic from companies", () => {
-    expect(PLAN_TERMS.starter.firstPaymentCents).toBe(PLAN_TERMS.starter.monthlyCents);
-    expect(PLAN_TERMS.growth.firstPaymentCents).toBe(PLAN_TERMS.growth.monthlyCents);
-    expect(formatRand(PLAN_TERMS.company.firstPaymentCents!)).toBe("R15,000");
-    expect(PLAN_TERMS.company.monthlyCents).toBeNull(); // scoped in a proposal
+  it("takes the first month from every tier, with a six-month minimum or a yearly price, and running costs at cost", () => {
+    for (const k of ["starter", "growth", "company"] as const) expect(PLAN_TERMS[k].firstPaymentCents).toBe(PLAN_TERMS[k].monthlyCents);
     expect(PLAN_TERMS.equity.firstPaymentCents).toBeNull();
-    expect(feeTerms("starter")).toBe("R2,500 per month, excluding VAT");
-    expect(feeTerms("company")).toBe("R15,000 once, excluding VAT, for the Company Diagnostic; the monthly fee after it (from R25,000 per month) is agreed in a written proposal");
+    expect(feeTerms("starter")).toBe(
+      "R500 per month, excluding VAT, for at least 6 months; or R5,000 a year, excluding VAT, paid up front. Hosting and any service that runs only for you (a domain, a phone number, a paid map) are charged at cost, and listed with their price before anything is set up",
+    );
+    expect(feeTerms("company")).toContain("R7,500 per month");
     expect(feeTerms("equity")).toBe("no fees");
   });
 });
@@ -60,8 +60,8 @@ describe("contracts", () => {
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     expect(r.body).toContain("Agreement opp-1 between TEBOS and Northwind (Thandi, t@nw.co.za), 2026-09-29.");
-    expect(r.body).toContain("Architecture & Operations: R7,500 per month, excluding VAT");
-    expect(r.body).toContain("- Integrate: read-only connections");
+    expect(r.body).toContain("Medium: R2,500 per month, excluding VAT, for at least 6 months");
+    expect(r.body).toContain("- Read-only connections to the tools you already use");
     expect(r.hash).toBe(sha256(r.body));
   });
 

@@ -13,8 +13,10 @@ const seed = () =>
 
 describe("sales playbook", () => {
   it("fills prices and deliverables from the plan terms", () => {
-    expect(fillPlaybook("{{starter_name}}: {{starter_fee}}")).toBe("Diagnostic: R2,500 a month, excluding VAT");
-    expect(fillPlaybook("{{growth_deliverables}}")).toContain("- Everything in the Diagnostic");
+    expect(fillPlaybook("{{starter_name}}: {{starter_fee}}")).toBe("Small: R500 a month, excluding VAT");
+    expect(fillPlaybook("{{company_name}}: {{company_fee}}")).toBe("Company: R7,500 a month, excluding VAT");
+    expect(fillPlaybook("{{growth_deliverables}}")).toContain("- Everything in Small");
+    expect(fillPlaybook("{{min_term}}; {{annual}}")).toBe("6 months; 10 months' fee for 12, paid up front");
     expect(fillPlaybook("{{equity_share}}")).toBe("5%");
   });
 
@@ -31,13 +33,14 @@ describe("sales playbook", () => {
   });
 });
 
-describe("company contract draft", () => {
-  it("replaces only the fee clause, with one for a one-off Company Diagnostic", async () => {
-    const { DRAFT_AGREEMENT, DRAFT_COMPANY_AGREEMENT } = await import("./contract-drafts");
-    expect(DRAFT_COMPANY_AGREEMENT).not.toBe(DRAFT_AGREEMENT);
-    expect(DRAFT_COMPANY_AGREEMENT).toContain("The Company Diagnostic has been paid before this agreement was sent.");
-    expect(DRAFT_COMPANY_AGREEMENT).not.toContain("The first month has been paid");
-    expect(DRAFT_COMPANY_AGREEMENT).toContain("## 3. Term and ending the agreement");
+describe("contract draft", () => {
+  it("has a six-month minimum, a yearly option, and the same agreement for every tier", async () => {
+    const { DRAFT_AGREEMENT, DRAFT_COMPANY_AGREEMENT, draftFor } = await import("./contract-drafts");
+    expect(DRAFT_COMPANY_AGREEMENT).toBe(DRAFT_AGREEMENT);
+    expect(draftFor("company")).toBe(draftFor("starter"));
+    expect(DRAFT_AGREEMENT).toContain("at least six months from the date you accept it (twelve on an annual plan)");
+    expect(DRAFT_AGREEMENT).toContain("or yearly in advance on an annual plan");
+    expect(DRAFT_AGREEMENT).not.toContain("Company Diagnostic");
   });
 });
 

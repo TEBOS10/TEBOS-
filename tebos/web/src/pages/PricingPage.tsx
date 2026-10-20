@@ -5,6 +5,7 @@ import { Check, ShieldCheck } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { ErrorNote, Field } from "../components/ui";
 import { submitEnquiry } from "../lib/data";
+import { ANNUAL_MONTHS_CHARGED, MIN_TERM_MONTHS, RUNNING_COSTS } from "@core/plans";
 import { EQUITY_SHARE, PLANS, type PlanKey } from "../lib/pricing";
 import { supabase } from "../lib/supabase";
 
@@ -63,8 +64,8 @@ export function PricingPage() {
 
       <section className="pr-head">
         <p className="lp-kicker">Pricing</p>
-        <h1 className="lp-title">Pay monthly, or grow together.</h1>
-        <p className="lp-sub">Small businesses start with a diagnostic of how the business runs, and move to architecture and operations when they're ready. Established companies start with a Company Diagnostic and a proposal scoped to them. Or, if you can't pay upfront yet, grow together through an equity partnership.</p>
+        <h1 className="lp-title">One system, sized to your business.</h1>
+        <p className="lp-sub">Every plan includes the build: a website made for your business and an operating system from your industry's template, then changes each month through your TEBOS channel. Choose by the size of your business; we recommend a diagnostic first, so the plan fits what your business actually needs.</p>
       </section>
 
       <section className="pr-plans" aria-label="Plans">
@@ -82,7 +83,10 @@ export function PricingPage() {
         ))}
       </section>
       <p className="pr-small" data-testid="international">
-        Outside South Africa? Every plan is available. You pay by card on a secure Paystack page, in Rand; Company proposals can be quoted in US dollars, euros or pounds.
+        Outside South Africa? Every plan is available. You pay by card on a secure Paystack page, in Rand; written quotes can be in US dollars, euros or pounds.
+      </p>
+      <p className="pr-small" data-testid="plan-terms">
+        Monthly plans run for at least {MIN_TERM_MONTHS} months; or pay yearly, {ANNUAL_MONTHS_CHARGED} months' fee for 12. {RUNNING_COSTS}. Larger organisations get a written quote.
       </p>
       <p className="pr-small">Prices exclude VAT. The equity partnership is subject to a fit assessment, a valuation and a signed shareholder agreement; nothing on this page is an offer or a commitment by either side.</p>
 
