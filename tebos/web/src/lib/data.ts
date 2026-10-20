@@ -1442,6 +1442,52 @@ export async function setWeeklyBrief(db: Db, orgId: string, active: boolean, exi
   return must(await db.from("reeds_standing_requests").insert({ org_id: orgId, kind: "signal_brief", active }).select().single());
 }
 
+// ---------------------------------------------------------------------------
+// The client channel: a conversation with TEBOS, and change requests within the plan's monthly allowance.
+// The database decides who may write, sizes nothing on the client's word, and refuses a request over the allowance.
+// ---------------------------------------------------------------------------
+export type ClientMessage = Row<"client_messages">;
+export type ChangeRequest = Row<"change_requests">;
+export interface ChangeAllowance { plan: string | null; allowance: number; used: number; period: string; resets_on: string }
+
+export async function listClientMessages(db: Db, orgId: string): Promise<ClientMessage[]> {
+  return must(await db.from("client_messages").select("*").eq("org_id", orgId).order("created_at", { ascending: true }).limit(500));
+}
+
+/** A message in the organisation's channel; asTebos only for TEBOS's maintainers (the database checks). */
+export async function sendClientMessage(db: Db, orgId: string, body: string, asTebos = false): Promise<ClientMessage> {
+  return must(await db.from("client_messages").insert({ org_id: orgId, body, from_tebos: asTebos }).select().single());
+}
+
+export async function listChangeRequests(db: Db, orgId: string): Promise<ChangeRequest[]> {
+  return must(await db.from("change_requests").select("*").eq("org_id", orgId).order("created_at", { ascending: false }).limit(200));
+}
+
+export async function getChangeAllowance(db: Db, orgId: string): Promise<ChangeAllowance | null> {
+  const rows = must(await db.rpc("change_allowance", { p_org: orgId })) as ChangeAllowance[];
+  return rows[0] ?? null;
+}
+
+export async function askChange(db: Db, orgId: string, title: string, detail: string | null): Promise<ChangeRequest> {
+  return must(await db.from("change_requests").insert({ org_id: orgId, title, detail }).select().single());
+}
+
+/** The client withdraws a request before work starts; TEBOS's maintainers move it on, size it, and close it with a note. */
+export async function updateChange(db: Db, id: string, patch: { status?: string; units?: number; outcome_note?: string | null }): Promise<ChangeRequest> {
+  return must(await db.from("change_requests").update(patch).eq("id", id).select().single());
+}
+
+/** For TEBOS's maintainers: the client organisations with a channel, newest activity first. */
+export async function listChannelOrganisations(db: Db): Promise<Array<{ id: string; name: string; last: string }>> {
+  const msgs = must(await db.from("client_messages").select("org_id, created_at").order("created_at", { ascending: false }).limit(1000));
+  const reqs = must(await db.from("change_requests").select("org_id, created_at").order("created_at", { ascending: false }).limit(1000));
+  const last = new Map<string, string>();
+  for (const r of [...msgs, ...reqs]) if (!last.has(r.org_id) || last.get(r.org_id)! < r.created_at) last.set(r.org_id, r.created_at);
+  const orgs = last.size ? must(await db.from("organisations").select("id, name").in("id", [...last.keys()])) : [];
+  const names = new Map(orgs.map((o) => [o.id, o.name]));
+  return [...last.entries()].sort((a, b) => b[1].localeCompare(a[1])).map(([id, at]) => ({ id, name: names.get(id) ?? "A client", last: at }));
+}
+
 export async function askWorkRequest(db: Db, orgId: string, kind: string, note: string | null) {
   return must(await db.from("work_requests").insert({ org_id: orgId, kind, note, status: "received" }).select().single());
 }

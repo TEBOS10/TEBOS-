@@ -241,6 +241,72 @@ work. It is guarded, verified and audited. It has four request kinds, and none o
 **Needs first:** BAME's tier (decision 28). It is probably Medium, given its integrations. An equity partner pays no
 fees, so the agreement must say which tier's allowance BAME has.
 
+## 7a. BAME's first two requests (20 Oct)
+
+### 1. A media library, built (not yet live)
+
+**What it is.** Staff keep the website's images in one place: Staff → **Media**.
+- Each image records:
+  - what it's for: player, gallery, event, partner, home-page banner or other;
+  - optionally, the player in it;
+  - the uploader's confirmation that BAME may publish it, with the consent of anyone in it (a parent or guardian for
+    a minor).
+- **"Use as player photo"** updates the player's profile and public portfolio at once.
+- Other sections use an image by naming it in a change request.
+
+**The rules, in the database** (`bame/supabase/migrations/20261020130000_media_library.sql`):
+- only staff can read or add images;
+- each person uploads only into their own folder;
+- only the uploader or an admin removes an image;
+- no image can be recorded without the publishing confirmation;
+- visitors can't list the library.
+
+**Images are viewable by link,** because the website must show them. The page says so, and tells staff never to upload
+contracts or private documents (those stay in the contracts bucket).
+
+**How it counts:** one change request from BAME's 15 for the month.
+
+### 2. A specialist agent that helps close deals by phone (designed, not built)
+
+**Why it's worth building.** BAME's staff lose deals at the closing stage. Closing is a shared problem across
+industries, so this is built once as a TEBOS module and offered to every tier that includes it (ADR 0008 rule 1).
+BAME is the client that opens it.
+
+**What the agent does:**
+- it phones a prospect who has asked to be contacted, or who is already in BAME's pipeline with consent;
+- it says at the start that it is an AI assistant calling for BAME;
+- it follows up on the proposal and answers questions from BAME's approved facts;
+- it handles common objections with an approved script;
+- it asks for the decision;
+- on a yes, it sends the approved contract or payment link, which the prospect signs or pays themselves;
+- it books a call with a person for anything else.
+
+**What it never does:**
+- agree a price, a discount or terms outside BAME's approved offer;
+- promise results;
+- sign for BAME;
+- call anyone who has opted out or never consented;
+- call outside permitted hours.
+
+These limits follow REEDS's rules: it never commits money or terms. The South African direct-marketing and POPIA rules
+on consent and opt-out are checked by the lawyer before the first call (decision 3).
+
+**What staff get after every call:** an outcome (agreed, follow-up, declined, no answer), a summary and the next step,
+recorded in BAME's pipeline. A coaching note shows what moved the prospect.
+
+**Built from what exists:** the intake call agent (it already dials and records outcomes), the voice provider, contract
+acceptance and payment links.
+
+**Its running costs are BAME's** (the phone number and call minutes), disclosed with their prices first (§2).
+
+**Needs first:**
+- a phone number on the voice provider (decision 2c);
+- BAME's approved offer, price list and objection answers;
+- the lawyer's check.
+
+**How it counts:** a new feature counts as several requests. It is BAME's build for its first months, and its
+allowance starts after it.
+
 ## 8. First new lead: a tutoring academy (20 Oct)
 
 **The lead.** A teacher who runs a tutoring business. Her website is weak, she wants TEBOS to diagnose it and make it

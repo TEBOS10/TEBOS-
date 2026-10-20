@@ -46,6 +46,7 @@ const MESSAGES: Record<RuleCode, string> = {
   TEBOS_EVIDENCE_REQUIRED: "To mark this as observed, link evidence that was actually obtained. Otherwise record it as stated.",
   TEBOS_TWO_STEP_REQUIRED: "This needs a session that passed two-step sign-in. Sign out, sign in again and enter your authenticator code.",
   TEBOS_SECRET_REFUSED: "That looks like it contains a password, key or token. TEBOS never stores secrets: remove it and try again.",
+  TEBOS_OUT_OF_PLAN: "This month's change requests are used, or there's no active plan yet. New requests open on the 1st, or a larger plan covers more.",
 };
 
 export interface Explained {

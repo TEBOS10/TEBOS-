@@ -20,6 +20,8 @@ export interface PlanTerms {
   firstPaymentCents: number | null;
   /** What that first payment is for, e.g. "the first month". */
   firstPaymentFor: string;
+  /** Change requests a client may make each month through the client channel (mirrors plan_change_allowance). */
+  changeRequestsPerMonth: number;
   deliverables: string[];
 }
 
@@ -32,6 +34,7 @@ export const PLAN_TERMS: Record<PlanKey, PlanTerms> = {
     monthlyCents: 250_000,
     firstPaymentCents: 250_000,
     firstPaymentFor: "the first month",
+    changeRequestsPerMonth: 5,
     deliverables: [
       "Assess: a website scan every month and a diagnostic interview each quarter (AI call or written)",
       "Map: your operating board of objectives, pieces and flows",
@@ -46,6 +49,7 @@ export const PLAN_TERMS: Record<PlanKey, PlanTerms> = {
     monthlyCents: 750_000,
     firstPaymentCents: 750_000,
     firstPaymentFor: "the first month",
+    changeRequestsPerMonth: 15,
     deliverables: [
       "Everything in the Diagnostic",
       "Architect: rules, owners and handovers for each flow",
@@ -63,6 +67,7 @@ export const PLAN_TERMS: Record<PlanKey, PlanTerms> = {
     monthlyFromCents: 2_500_000,
     firstPaymentCents: 1_500_000,
     firstPaymentFor: "the Company Diagnostic",
+    changeRequestsPerMonth: 40,
     deliverables: [
       "For companies of roughly 20 to 200 people",
       "Company Diagnostic first: interviews with your leadership and teams, a scan of your systems, and your full operating board",
@@ -77,6 +82,7 @@ export const PLAN_TERMS: Record<PlanKey, PlanTerms> = {
     monthlyCents: null,
     firstPaymentCents: null,
     firstPaymentFor: "nothing: equity partners pay no fees",
+    changeRequestsPerMonth: 0,
     deliverables: [
       "Everything in Architecture & Operations",
       "No monthly fees",

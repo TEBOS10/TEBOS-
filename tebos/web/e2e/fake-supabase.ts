@@ -334,6 +334,17 @@ function answerRpc(tables: FakeSupabase["tables"], name: string, args: Record<st
     }
     return { blueprint: tag, pieces: pieces.length, flows: bp.flows.length, steps };
   }
+  if (name === "change_allowance") {
+    // the plan's monthly allowance and what this month used, as the database computes it
+    const t = tables as unknown as Record<string, Array<Record<string, unknown>>>;
+    const plan = (t.billing_accounts ?? []).find((b) => b.org_id === args.p_org && b.status === "active")?.plan as string | undefined;
+    const allowance = ({ starter: 5, growth: 15, company: 40 } as Record<string, number>)[plan ?? ""] ?? 0;
+    const used = (t.change_requests ?? []).filter((c) => c.org_id === args.p_org && c.status !== "cancelled").reduce((n, c) => n + Number(c.units ?? 1), 0);
+    const d = new Date();
+    const period = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1)).toISOString().slice(0, 10);
+    const resets = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1)).toISOString().slice(0, 10);
+    return [{ plan: plan ?? null, allowance, used, period, resets_on: resets }];
+  }
   if (name === "staff_directory") {
     const roles = new Map<string, string[]>();
     for (const a of t.platform_admins ?? []) roles.set(String(a.user_id), ["admin"]);
@@ -383,9 +394,12 @@ const COLUMN_DEFAULTS: Record<string, Record<string, unknown>> = {
   property_baselines: { figures: [], captured_on: new Date().toISOString().slice(0, 10), target_note: null },
   property_workstreams: { approval: "not_needed", status: "planned" },
   interview_sessions: { transcript: null, extraction_status: "pending", extraction_detail: null, failure_detail: null, duration_seconds: null, provider: null, provider_reference: null, started_at: null, ended_at: null },
+  // the client channel: the database sizes a new request at 1, with no outcome yet
+  change_requests: { units: 1, outcome_note: null, finished_at: null, period: new Date().toISOString().slice(0, 8) + "01" },
+  client_messages: { from_tebos: false, author_id: "00000000-0000-4000-8000-000000000001" },
   connection_instances: { business_id: null, granted_scopes: [], credential_ref_id: null, webhook_credential_ref_id: null, last_verified_at: null, last_success_at: null, last_failure_at: null, failure_detail: null, verification_requested_at: null },
 };
 
 function defaultStatus(table: string): string | undefined {
-  return { scans: "queued", actions: "proposed", approvals: "pending", action_runs: "queued", findings: "draft", connection_instances: "configured" }[table];
+  return { scans: "queued", actions: "proposed", approvals: "pending", action_runs: "queued", findings: "draft", connection_instances: "configured", change_requests: "received" }[table];
 }

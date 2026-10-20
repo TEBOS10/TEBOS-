@@ -46,6 +46,7 @@ export const RULE_CODES = [
   "TEBOS_WORK_UNVERIFIED",
   "TEBOS_TWO_STEP_REQUIRED",
   "TEBOS_SECRET_REFUSED",
+  "TEBOS_OUT_OF_PLAN",
 ] as const;
 export type RuleCode = (typeof RULE_CODES)[number];
 
