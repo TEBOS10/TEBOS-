@@ -22,9 +22,9 @@ unlimited custom development or unlimited advice.
 - **The tier follows the business's scale, not a wish to charge more.** Small businesses must be able to afford it.
   The founder's test: "people starting a business aren't trying to pay R2,000."
 
-## 2. The tiers (prices decided by the founder, 20 Oct; allowances proposed)
+## 2. The tiers (decided by the founder, 20 Oct)
 
-| Tier | For | Monthly | What TEBOS builds | Change requests a month (proposed) |
+| Tier | For | Monthly | What TEBOS builds | Change requests a month |
 |---|---|---|---|---|
 | **Small** | A business that already knows how it runs and needs its website and system brought up to standard: the tutoring academy, a salon, a sole trader | **R500** | The exceptional website; the operating system from its industry template; an assistant for its owner; its board and reminders | 5 |
 | **Medium** | Several employees, more workflows and integrations (BAME's level of system) | **R2,500** | All of Small, plus team roles and handovers; read-only integrations with the tools it uses; objectives on real numbers | 15 |
@@ -48,9 +48,20 @@ unlimited custom development or unlimited advice.
 - guaranteed business results;
 - unlimited founder time.
 
-**The risk at R500, and how it's handled.** The first build costs more effort than one month pays. So the monthly
-plan has a **minimum term** (proposed: 6 months), or the client pays annually. Without one, a client could take the
-build and cancel after a month. The term length is decision 27.
+**Minimum term: 6 months** for monthly plans (founder, 20 Oct), or pay annually. The first build costs more than one
+month pays.
+
+**Running costs are the client's, and disclosed before signing** (founder, 20 Oct):
+- **Included:** the build and the tools TEBOS already pays for.
+- **Paid by the client at cost:** hosting, domain names, and any outside service that runs only for that client, such
+  as a sending domain, SMS or a paid map. TEBOS lists each one with its price in the proposal before anything is set
+  up, and never pays a client's running costs from its own funds.
+
+**One-off is available but not recommended.**
+- A business can buy its system once, without the monthly changes.
+- It is quoted, priced by size, and costs more than the subscription's first year, because there is no ongoing
+  relationship to spread the build over.
+- A one-off enterprise-scale system is a large quote.
 
 **Replaces** the earlier proposal in this spec (a separate diagnostic first, self-serve Essentials at R499, build
 projects quoted), and the current prices in `src/domain/plans.ts`:
@@ -59,6 +70,65 @@ projects quoted), and the current prices in `src/domain/plans.ts`:
 - Company from R25,000.
 
 The code changes in the next build.
+
+## 2a. Every industry, three sizes, chosen by diagnosis (founder, 20 Oct)
+
+**Each industry has its own Small, Medium and Company tier,** at the same prices: a small, medium or enterprise
+agency; the same for academies, gyms, practices and the rest. The industries are TEBOS's blueprints
+(`src/domain/blueprints.ts`):
+- marketing agency;
+- plumbing and construction;
+- sports agency;
+- medical or dental practice;
+- restaurant or hospitality;
+- real estate agency;
+- online retail;
+- accounting and bookkeeping;
+- logistics and courier;
+- private school or tutoring centre;
+- gym or fitness studio.
+
+**The diagnostic comes first, and is strongly recommended.**
+- It finds the business's industry (or that it's outside them all), its size, what is actually wrong, and how that
+  compares with what the owner wants it to become.
+- TEBOS then recommends the tier: "from what we see, you're a small business, and this is what it needs to reach
+  the next level". Like a doctor, the owner's own view of the problem is heard, but the diagnosis may find something
+  else.
+- **A client may still choose a tier without it.** The sign-up page says plainly that the diagnostic is recommended,
+  and why.
+- A business in no blueprint industry is diagnosed before any tier is offered, never fitted to the nearest template.
+
+**Ambition is respected, and sequenced.** A small business that wants an enterprise system is shown the steps to
+get there. It isn't sold Company scope it can't yet use.
+
+## 2b. The showcase: categories, then the businesses inside them (founder, 20 Oct)
+
+**The client map changes from businesses to categories.** It currently shows each business as a coloured tile;
+instead, each industry becomes a coloured category. Opening a category shows the businesses TEBOS has built for in
+that industry, and what was built for each, so a visitor can say "I want that for mine".
+
+**Rules:**
+- **A real business appears only with its written permission,** and with its real results from its own records.
+  Nothing is invented, and no template is shown as a client.
+- **An industry with no client yet shows its blueprint, labelled as a template,** never as a client's work.
+- **BAME** would sit under sports agency once it agrees.
+
+## 2c. What changes in the system (the next build, in order)
+
+1. **Plans:**
+   - `src/domain/plans.ts` and a migration get the tiers Small R500, Medium R2,500 and Company R7,500;
+   - annual billing at 10 months' price;
+   - a 6-month minimum term;
+   - the once-off quote;
+   - each with its change-request allowance.
+   - The prices are enforced in the database today (`client_pipeline`, `company_plan`, `monthly_billing`), so this is
+     a live migration with tests.
+2. **The change-request allowance** (section 7): BAME first, as Medium, with 15 requests a month.
+3. **The diagnostic's recommendation:** the industry, the size, and the recommended tier with its reasons, recorded on
+   the diagnostic.
+4. **Sign-up:** choose an industry and a size, with the diagnostic recommended.
+5. **Running costs:** each client's pass-through costs listed on their proposal and invoice.
+6. **The category showcase** on the client map, last, once there is a client who has given permission to be shown.
 
 ## 3. The entitlement record each client needs
 
