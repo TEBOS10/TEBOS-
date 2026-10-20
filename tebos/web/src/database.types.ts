@@ -1351,6 +1351,78 @@ export type Database = {
         Update: { [_ in never]: never }
         Relationships: []
       }
+      client_messages: {
+        Row: {
+          id: string
+          org_id: string
+          from_tebos: boolean
+          author_id: string | null
+          body: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          from_tebos?: boolean
+          author_id?: string | null
+          body: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          from_tebos?: boolean
+          author_id?: string | null
+          body?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      change_requests: {
+        Row: {
+          id: string
+          org_id: string
+          requested_by: string
+          title: string
+          detail: string | null
+          units: number
+          status: string
+          outcome_note: string | null
+          period: string
+          created_at: string
+          updated_at: string
+          finished_at: string | null
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          requested_by?: string
+          title: string
+          detail?: string | null
+          units?: number
+          status?: string
+          outcome_note?: string | null
+          period?: string
+          created_at?: string
+          updated_at?: string
+          finished_at?: string | null
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          requested_by?: string
+          title?: string
+          detail?: string | null
+          units?: number
+          status?: string
+          outcome_note?: string | null
+          period?: string
+          created_at?: string
+          updated_at?: string
+          finished_at?: string | null
+        }
+        Relationships: []
+      }
       reeds_standing_requests: {
         Row: {
           id: string
@@ -3663,6 +3735,10 @@ export type Database = {
       review_work_task: {
         Args: { p_task: string; p_ok: boolean; p_note?: string | null }
         Returns: string
+      }
+      change_allowance: {
+        Args: { p_org: string }
+        Returns: { plan: string | null; allowance: number; used: number; period: string; resets_on: string }[]
       }
       audit_chain_status: {
         Args: Record<PropertyKey, never>

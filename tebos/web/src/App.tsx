@@ -49,6 +49,7 @@ import { LegalPage } from "./pages/LegalPage";
 import { SelfCheckPage, SelfCheckShared } from "./pages/SelfCheckPage";
 import { DeliveryQueuePage } from "./pages/DeliveryPage";
 import { BillingPage } from "./pages/BillingPage";
+import { ChannelPage, StaffChannelsPage } from "./pages/ChannelPage";
 import { StaffProvider, useStaff } from "./lib/staff";
 import { TeamPage } from "./pages/TeamPage";
 
@@ -72,6 +73,7 @@ const ROUTES: Array<[string, (p: Record<string, string>) => ReactNode]> = [
   ["/connections", () => <ConnectionsPage />],
   ["/system", () => <SystemPage />],
   ["/reeds", () => <ReedsPage />],
+  ["/channel", () => <ChannelPage />],
   ["/ai-clients", () => <AiClientsPage />],
   ["/reeds/:id", (p) => <ReedsRequestPage id={p.id!} />],
   ...staffRoutes(),
@@ -85,6 +87,8 @@ function staffRoutes(): Array<[string, (p: Record<string, string>) => ReactNode]
     ["/pipeline/team", () => <StaffTeamPage />],
     ["/pipeline/queue", () => <DeliveryQueuePage />],
     ["/pipeline/billing", () => <BillingPage />],
+    ["/pipeline/channel", () => <StaffChannelsPage />],
+    ["/pipeline/channel/:org", (p) => <StaffChannelsPage orgId={p.org!} />],
     ["/pipeline/:id", (p) => <OpportunityPage id={p.id!} />],
     ["/sales", () => <SalesPlaybookPage />],
     ["/marketing", () => <MarketingPage />],

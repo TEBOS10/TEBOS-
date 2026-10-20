@@ -2,6 +2,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { PUBLIC_LIMITS, RULE_CODES, transitionTable } from "../src";
+import { PLAN_TERMS } from "../src/domain/plans";
 
 const migrationsDir = join(__dirname, "..", "supabase", "migrations");
 const sql = readdirSync(migrationsDir)
@@ -43,5 +44,14 @@ describe("domain mirrors the database", () => {
       [...sql.matchAll(/tebos_private\.throttle\('([a-z_]+)', (\d+), (\d+)\)/g)].map((m) => [m[1], { perSource: Number(m[2]), total: Number(m[3]) }]),
     );
     expect(fromSql).toEqual(PUBLIC_LIMITS);
+  });
+
+  it("each plan's monthly change requests match the database's allowance", () => {
+    const body = sql.split("function tebos_private.plan_change_allowance")[1]!.split("$$")[1]!;
+    const fromSql = Object.fromEntries([...body.matchAll(/when '([a-z]+)' then (\d+)/g)].map((m) => [m[1], Number(m[2])]));
+    const fromTs = Object.fromEntries(
+      Object.values(PLAN_TERMS).filter((p) => p.changeRequestsPerMonth > 0).map((p) => [p.key, p.changeRequestsPerMonth]),
+    );
+    expect(fromSql).toEqual(fromTs);
   });
 });

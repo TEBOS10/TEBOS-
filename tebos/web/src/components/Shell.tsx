@@ -1,4 +1,4 @@
-import { BookOpen, Briefcase, Clapperboard, Eye, Building2, CheckSquare, Download, Gauge, Home, ListChecks, LogOut, Megaphone, Menu, MessageSquare, PhoneCall, Plug, Receipt, ScanSearch, ShieldCheck, Sparkles, Stamp, Users } from "lucide-react";
+import { BookOpen, Briefcase, Clapperboard, Eye, Building2, CheckSquare, Download, Gauge, Home, ListChecks, LogOut, Megaphone, Menu, MessageSquare, MessagesSquare, PhoneCall, Plug, Receipt, ScanSearch, ShieldCheck, Sparkles, Stamp, Users } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { DEMO_BUSINESS } from "../demo/data";
 import { exitDemo, isDemo } from "../demo/mode";
@@ -10,6 +10,7 @@ import { useInstallPrompt } from "../lib/install";
 const NAV = [
   { to: "/", label: "Home", icon: Home, exact: true },
   { to: "/reeds", label: "Ask TEBOS", icon: MessageSquare },
+  { to: "/channel", label: "TEBOS channel", icon: MessagesSquare },
   { to: "/businesses", label: "Businesses", icon: Building2 },
   { to: "/scans", label: "Scans", icon: ScanSearch },
   { to: "/findings", label: "Findings", icon: Sparkles },
@@ -43,7 +44,7 @@ export function Shell({ children }: { children: ReactNode }) {
        { to: "/marketing", label: "Marketing", icon: Megaphone, exact: true },
        { to: "/marketing/playbook", label: "Marketing playbook", icon: BookOpen, exact: true },
        ...(access?.sales ? [{ to: "/meet", label: "Meeting mode", icon: PhoneCall, exact: true }] : []),
-       ...(access?.maintainer ? [{ to: "/pipeline/queue", label: "Maintainer queue", icon: ListChecks, exact: true }] : []),
+       ...(access?.maintainer ? [{ to: "/pipeline/queue", label: "Maintainer queue", icon: ListChecks, exact: true }, { to: "/pipeline/channel", label: "Client channels", icon: MessagesSquare, exact: false }] : []),
        ...(access?.admin ? [{ to: "/pipeline/billing", label: "Billing", icon: Receipt, exact: true }] : [])]
     : base;
   return (

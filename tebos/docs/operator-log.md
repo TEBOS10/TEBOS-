@@ -38,6 +38,32 @@ Update this list every run; strike items when they're done.
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 20 Oct 2026 (evening): the client channel, and BAME's first requests
+
+- **Built: the client channel** (migration `client_channel`; TEBOS → TEBOS channel; staff → Client channels).
+  - A client organisation writes to TEBOS, and TEBOS's maintainers answer as TEBOS.
+  - Every message is kept as sent: no edits or deletions.
+  - Secrets are refused, and private (TEPOS) organisations have no channel.
+- **Change requests within the plan:** Small 5, Medium 15, Company 40 a month.
+  - The allowance comes from the organisation's active billing account. With no active plan, there are no change
+    requests, though messages still work.
+  - Over the allowance, a request is refused, with the date new requests open. A request withdrawn before work starts
+    gives its place back.
+  - A maintainer sizes a request that is really several changes before work starts (checked against the allowance),
+    and closes it with what was done or why it was declined.
+  - The allowances are mirrored in `plans.ts` and checked by the parity test.
+- **Proved:**
+  - core: typecheck, 378 unit tests, and `test:db` (every SQL file, including `99zq_client_channel`, and 63
+    integration tests);
+  - web: typecheck, 63 unit tests, all 129 e2e tests (3 new), and the build with its bundle checks.
+- **Not yet live:** the migration waits for the PR's merge and the founder's word to apply it.
+- **BAME:**
+  - media library built in `bame/` (not applied to bame-os: the dry run was cancelled, and nothing changed);
+  - the calling assistant designed (`tebos-service-spec.md` §7a);
+  - the 1 November notice rewritten without equity, Medium at R2,500 a month, to be posted in BAME's channel once it's
+    live and approved;
+  - PR #89 merged.
+
 ## 20 Oct 2026 (later): no matric, and whether businesses will pay
 
 - **Correction to ADR 0009:** the 12 Nov PDE isn't open to the founder yet. The PPRA requires a valid FFC and NQF 4

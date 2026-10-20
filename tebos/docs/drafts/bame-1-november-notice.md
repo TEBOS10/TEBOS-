@@ -1,10 +1,11 @@
 # DRAFT: message to BAME about how TEBOS works from 1 November 2026
 
 **Status: draft for the founder's approval. Not sent.**
-- TEBOS doesn't yet have a chat channel to clients. The "Request a change" channel is designed (`tebos-service-spec.md`
-  §7) but not built.
-- Until it is, the founder sends this personally (WhatsApp or email).
+- It goes to BAME in its TEBOS channel (TEBOS → TEBOS channel), posted by a maintainer as TEBOS, once the channel is
+  live and the founder approves this text.
 - Fill in the [brackets] before sending.
+- **Equity isn't mentioned (founder, 20 Oct).** It is a personal matter between the founder and BAME. TEBOS bills BAME
+  by subscription, like every client.
 
 ---
 
@@ -17,7 +18,7 @@ As TEBOS grows to serve more businesses, we are making how we work clearer and f
 2026**, BAME will work with TEBOS in the following way.
 
 **1. Requests go through TEBOS, not through me personally**
-- Your team will send changes and updates to TEBOS directly, from your TEBOS account.
+- Your team will send changes and updates to TEBOS directly, from this channel in your TEBOS account.
 - Each request is recorded, so you can see what was asked, what was done and when.
 - This means nothing depends on catching me on a call, and your team always knows where a request stands.
 
@@ -26,10 +27,11 @@ As TEBOS grows to serve more businesses, we are making how we work clearer and f
   and Company (R7,500 a month).
 - Given everything BAME's system includes, BAME sits in **Medium**. That plan includes 15 change requests each
   month, such as new photos, page updates or a changed price list.
-- Requests beyond that roll into the following month, or can be covered by moving up a plan.
+- Requests beyond that wait for the following month, or can be covered by moving up a plan.
 - Hosting and any services that run only for BAME (for example a phone number for calls) are charged at cost and
   always listed with their price before anything is set up.
-- [Billing detail: how BAME's plan relates to our equity agreement. See the note to the founder below.]
+- From 1 November, BAME's Medium plan is billed at **R2,500 a month** (excluding VAT), by monthly invoice, with a
+  minimum term of 6 months. Paying annually instead costs 10 months' price for 12.
 
 **3. Applying on the platform**
 - So that BAME's account, plan and requests are all on record in the same way as every other client, I'd ask you to
@@ -55,16 +57,10 @@ Tidy Enterprise · TEBOS
 
 ## Note to the founder, before sending
 
-1. **The equity agreement.** BAME is an equity partner. The plans in the code and the contract templates say equity
-   partners pay no fees (`EQUITY_SHARE`, 5%). Telling BAME it will be billed from 1 November may change what that
-   agreement says, and changing contract terms is a founder decision that needs the attorney (decision 28).
-   - Pick one before sending:
-     - **(a)** "BAME's plan is covered by our equity agreement, so there's no monthly charge; the plan sets what's
-       included each month."
-     - **(b)** "From 1 November, BAME's plan is billed at R2,500 a month, as agreed in the updated services agreement
-       we'll send you to sign." Use this only if you and BAME agree, in writing, to change the equity terms.
-2. **The application link.** TEBOS's sign-up and pricing pages still show the old plans (R2,500 / R7,500 / from
-   R25,000). The new Small, Medium and Company plans are the next build. The link should go out once that is live, or
-   the message should say the link will follow.
+1. **The application link.** TEBOS's sign-up and pricing pages still show the old plans (R2,500 / R7,500 / from
+   R25,000). The new Small, Medium and Company plans are the next build. The message goes out once they're live, or the
+   link line says it will follow.
+2. **The client agreement.** The 6-month minimum term and the annual option need wording in the client agreement
+   (decision 3) before the first invoice.
 3. **The dates.** "From 1 November" works for the requests and the plan. The calling assistant needs a phone number,
    BAME's approved script and the lawyer's check first, so the message doesn't promise a start date for it.

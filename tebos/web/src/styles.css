@@ -886,3 +886,7 @@ table.table { width: 100%; border-collapse: collapse; }
 @keyframes portal-open { 70% { left: 0; top: 0; width: 100vw; height: 100vh; border-radius: 0; } 100% { left: 0; top: 0; width: 100vw; height: 100vh; border-radius: 0; opacity: .96; } }
 @keyframes portal-spin { from { transform: rotate(0deg) scale(.6); } to { transform: rotate(540deg) scale(1.6); } }
 @media (prefers-reduced-motion: reduce) { .portal-tile, .portal-tile::after { transition: none; } }
+
+/* The client channel: TEBOS's messages stand apart from the client's */
+.msg-tebos { border-left: 3px solid var(--green); padding-left: 10px; }
+.btn-link { background: none; border: 0; padding: 0; color: var(--green); text-decoration: underline; cursor: pointer; }

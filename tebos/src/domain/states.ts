@@ -223,6 +223,19 @@ export const workTaskMachine = machine({
   },
 });
 
+// The client channel: a change a client asks for, carried out by TEBOS within the plan's allowance
+// (migration client_channel). The client may cancel only before work starts.
+export const changeRequestMachine = machine({
+  initial: ["received"],
+  transitions: {
+    received: ["in_progress", "declined", "cancelled"],
+    in_progress: ["done", "declined"],
+    done: [],
+    declined: [],
+    cancelled: [],
+  },
+});
+
 export const MACHINES = {
   scan: scanMachine,
   scan_target: scanTargetMachine,
@@ -240,6 +253,7 @@ export const MACHINES = {
   invoice: invoiceMachine,
   work_request: workRequestMachine,
   work_task: workTaskMachine,
+  change_request: changeRequestMachine,
 } as const;
 
 export type MachineName = keyof typeof MACHINES;
@@ -258,6 +272,7 @@ export type ObjectiveStatus = StatesOf<typeof objectiveMachine>;
 export type OpportunityStatus = StatesOf<typeof opportunityMachine>;
 export type WorkRequestStatus = StatesOf<typeof workRequestMachine>;
 export type WorkTaskStatus = StatesOf<typeof workTaskMachine>;
+export type ChangeRequestStatus = StatesOf<typeof changeRequestMachine>;
 
 export function canTransition<M extends MachineName>(
   name: M,
