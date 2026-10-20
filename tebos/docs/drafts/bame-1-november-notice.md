@@ -1,6 +1,6 @@
 # DRAFT: message to BAME about how TEBOS works from 1 November 2026
 
-**Status: draft for the founder's approval. Not sent.**
+**Status: approved by the founder and posted in BAME's TEBOS channel, 20 Oct 2026, 22:06 UTC, as "The TEBOS team"** (plain text: no headings or bold, "we" instead of "I", the pricing link filled in). The text below is the draft it came from.
 - It goes to BAME in its TEBOS channel (TEBOS → TEBOS channel), posted by a maintainer as TEBOS, once the channel is
   live and the founder approves this text.
 - Fill in the [brackets] before sending.

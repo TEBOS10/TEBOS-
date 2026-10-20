@@ -38,6 +38,23 @@ Update this list every run; strike items when they're done.
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 20 Oct 2026 (night): live: the channel, the tiers, BAME's library, and the notice
+
+- **Merged #90 and #91** (founder: "merge it"); the Vercel production deploys of both are ready, including BAME's site.
+  The live pages weren't opened from here: the session's network doesn't reach them.
+- **Applied live:**
+  - tebos-core `client_channel`: RLS on, visitors have no access, 6 transitions, BAME's allowance 0 (no plan yet);
+  - tebos-core `tebos_tiers`: the playbook has the new plans and no "month to month";
+  - bame-os `media_library`: checked in a rolled-back transaction. Staff can add; an upload without the publishing
+    confirmation is refused, as is one in another person's folder; a non-staff user sees nothing; visitors have no
+    access. Nothing was left behind.
+- **Posted:** the 1 November notice in BAME's TEBOS channel, as The TEBOS team (audited as
+  `founder-approved:bame-1-november-notice`).
+- **Still blocking BAME's billing:**
+  - there is no approved contract template live (decision 3: the lawyer). A paid application stops at the contract
+    step until one is approved.
+  - BAME's organisation has one member in TEBOS. BAME's team needs TEBOS accounts (Team → Invite) to read the channel.
+
 ## 20 Oct 2026 (evening): the client channel, and BAME's first requests
 
 - **Built: the client channel** (migration `client_channel`; TEBOS → TEBOS channel; staff → Client channels).
