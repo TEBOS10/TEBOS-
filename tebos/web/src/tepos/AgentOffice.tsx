@@ -14,6 +14,7 @@ import { Link } from "../lib/router";
 import { useOrg } from "../lib/session";
 import { useQuery } from "../lib/useQuery";
 import { checklistSummary, DealDocuments, FfcPath } from "./AgentCompliance";
+import { ListingStudio } from "./ListingStudio";
 import { Vault } from "./Vault";
 import {
   deleteContact, deleteListing, listContacts, listDealItems, listListings, saveContact, saveListing, type ContactRow, type ListingRow,
@@ -170,6 +171,8 @@ function Office() {
           </div>
         )}
       </section>
+
+      <ListingStudio listings={lq.data ?? []} onChanged={() => lq.reload()} />
 
       <section className="pra-card" aria-label="People">
         <div className="pra-head"><div><h2>Buyers, sellers, tenants and landlords</h2><p>References only. Their names and contact details stay in the agency's system.</p></div></div>

@@ -136,6 +136,26 @@ priority without asking: the Property Revenue Architecture monthly subscription 
 - **Next:** a subscription record per owner (plan, start date, founding offer), then billing it through the
   existing monthly invoices once decision 10b is done.
 
+## 19 Oct 2026 (evening): the Listing studio
+
+- **Asked by the founder:** "dump images and info in my office" and have the listing work and content done, in the
+  style of an agent they admire (on-camera room-by-room walkthroughs, Just Sold posts, one clear niche), with a
+  brand that looks "modern, sophisticated and valuable". Bio chosen: "Real Estate Professional | Property Value
+  Creation".
+- **Built** (migration `agent_listing_studio`, additive): a listing's advert facts (kind, suburb, city, rooms,
+  offices, parking, sizes, up to six highlights), all optional and stated by the founder; no contact details, ID
+  numbers or secrets.
+- **The studio** (Real Estate Job portal): from those facts and the founder's photos it draws the Pelser-branded
+  advert (post 4:5 and story 9:16; For sale or To let, Just listed, Under offer, Just sold or Just let), the
+  walkthrough shot list with an opening line, and the caption with hashtags.
+  - It shows only what was stated. An empty fact is left out, a missing price reads "Price on request", and no
+    income or value figure is ever written.
+  - Photos stay on the device; the logo comes from the office files (a logged read); the founder's name and
+    contact details stay on the device. Nothing is posted: the advert is downloaded or filed in the office.
+  - A line for what every advert must show is left for the principal's wording (asked 20 Oct).
+- **Not yet:** AI-written captions and the weekly plan wait on the worker's AI key (decision 2b).
+- **Tests:** SQL `99zp_listing_studio.sql`, `test/studio.test.ts`, e2e in `agent.spec.ts`.
+
 ## 19 Oct 2026 (afternoon): the founder's decisions on creative proposals and the PRA price
 
 - **Creative proposals 1 to 5:** the founder said yes. Each is at stage 1, identified (ADR 0005), and built in the

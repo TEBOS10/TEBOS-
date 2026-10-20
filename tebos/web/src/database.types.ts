@@ -268,6 +268,17 @@ export type Database = {
           created_by: string | null
           created_at: string
           updated_at: string
+          property_kind: string | null
+          suburb: string | null
+          city: string | null
+          bedrooms: number | null
+          bathrooms: number | null
+          offices: number | null
+          kitchens: number | null
+          parking: number | null
+          floor_m2: number | null
+          erf_m2: number | null
+          highlights: string[]
         }
         Insert: {
           id?: string
@@ -287,6 +298,17 @@ export type Database = {
           created_by?: string | null
           created_at?: string
           updated_at?: string
+          property_kind?: string | null
+          suburb?: string | null
+          city?: string | null
+          bedrooms?: number | null
+          bathrooms?: number | null
+          offices?: number | null
+          kitchens?: number | null
+          parking?: number | null
+          floor_m2?: number | null
+          erf_m2?: number | null
+          highlights?: string[]
         }
         Update: {
           id?: string
@@ -306,6 +328,17 @@ export type Database = {
           created_by?: string | null
           created_at?: string
           updated_at?: string
+          property_kind?: string | null
+          suburb?: string | null
+          city?: string | null
+          bedrooms?: number | null
+          bathrooms?: number | null
+          offices?: number | null
+          kitchens?: number | null
+          parking?: number | null
+          floor_m2?: number | null
+          erf_m2?: number | null
+          highlights?: string[]
         }
         Relationships: []
       }
