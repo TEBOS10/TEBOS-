@@ -154,7 +154,7 @@ or any right to REEDS, TEPOS, IREKUN, or the founder's private data.
 
 **Review.** A South African attorney who knows technology and equity agreements reviews both (decision 28).
 
-## 8. BAME talking to TEBOS directly (the next build)
+## 7. BAME talking to TEBOS directly (the next build)
 
 **The gap.** BAME works smoothly, but a change still goes through the founder.
 
@@ -187,7 +187,7 @@ work. It is guarded, verified and audited. It has four request kinds, and none o
 **Needs first:** BAME's plan (decision 28). An equity partner pays no fees, so the agreement must say which plan's
 limits BAME has.
 
-## 9. First new lead: a tutoring academy (20 Oct)
+## 8. First new lead: a tutoring academy (20 Oct)
 
 **The lead.** A teacher who runs a tutoring business. Her website is weak, she wants TEBOS to diagnose it and make it
 exceptional, and she likes interactive sites in the Getlayers style.
@@ -214,7 +214,7 @@ never copy their designs, code or assets (proposal 6 rules).
 
 She can also enter these herself through TEBOS's meeting form, which records her as an opportunity.
 
-## 10. Timeline (from the founder's plan, 20 Oct)
+## 9. Timeline (from the founder's plan, 20 Oct)
 
 | Dates | Result |
 |---|---|
