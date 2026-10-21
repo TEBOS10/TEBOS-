@@ -492,6 +492,8 @@ test("pricing shows Small, Medium and Company with their terms, and the equity p
   await expect(page.getByText("R7,500", { exact: true })).toBeVisible();
   await expect(page.getByTestId("plan-terms")).toContainText("at least 6 months; or pay yearly, 10 months' fee for 12");
   await expect(page.getByTestId("plan-terms")).toContainText("charged at cost");
+  // without a graphics chip the opening keeps the soft light; the 3D structure is never forced on a visitor
+  await expect(page.getByTestId("cine-stage")).toHaveAttribute("data-scene", "light");
   await expect(page.getByText(/nothing on this page is an offer/)).toBeVisible();
   await snap(page, "10-pricing");
 
