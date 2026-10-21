@@ -43,4 +43,32 @@ test("the public page shows eleven operating systems as blueprints, with outline
   await expect(sports).toContainText("Opportunity to signed deal · Media request to appearance");
   // the written rules are the product: they stay inside TEBOS
   await expect(page.getByText("Use the outreach templates")).toHaveCount(0);
+  // each system is tailored by kind of business, and comes in the three plan sizes
+  await expect(page.getByTestId("system").filter({ hasText: "Private school or tutoring centre" }).getByTestId("kinds")).toContainText("Music academy");
+  await expect(page.getByTestId("editions")).toContainText("Medium: The core system; The team module");
+  await expect(page.getByTestId("editions")).toContainText("a larger system needs the larger plan");
+});
+
+test("the blueprint is tailored to the kind of business and sized to the plan, and the plan's ceiling is shown", async ({ page }) => {
+  const fake = await installFakeSupabase(page);
+  const t = fake.tables as unknown as Record<string, Record<string, unknown>[]>;
+  t.board_components = [];
+  t.board_flows = [];
+  t.board_steps = [];
+  t.billing_accounts = [{ id: "b1", org_id: "10000000-0000-4000-8000-000000000001", plan: "growth", status: "active", created_at: new Date().toISOString() }];
+  await page.goto(`/businesses/${BIZ}/board`);
+  const card = page.locator(".card", { has: page.getByRole("heading", { name: "Start from an operating-system blueprint" }) });
+  await expect(page.getByTestId("blueprint-edition")).toContainText("On the Medium plan");
+  await expect(page.getByTestId("blueprint-edition")).toContainText("up to 10 flows and 30 pieces");
+  await card.getByLabel("Blueprint").selectOption({ label: "Private school or tutoring centre" });
+  await card.getByLabel("What kind exactly").selectOption({ label: "Music academy" });
+  const preview = page.getByTestId("blueprint-preview");
+  await expect(preview).toContainText("Education centre operating system · Music academy · Medium");
+  await expect(preview).toContainText("Company adds the company module");
+  await card.getByRole("button", { name: "Apply blueprint" }).click();
+  await expect.poll(() => fake.writes.some((w) => w.table === "apply_blueprint")).toBe(true);
+  const body = fake.writes.find((w) => w.table === "apply_blueprint")!.body as { p_blueprint: { pieces: { name: string }[]; flows: { name: string }[] } };
+  expect(body.p_blueprint.pieces.map((x) => x.name)).toContain("Instrument and room schedule");
+  expect(body.p_blueprint.flows.map((x) => x.name)).toContain("Weekly numbers to decisions");
+  expect(body.p_blueprint.flows.map((x) => x.name)).not.toContain("Monthly leadership review");
 });

@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { PUBLIC_LIMITS, RULE_CODES, transitionTable } from "../src";
 import { PLAN_TERMS } from "../src/domain/plans";
+import { BOARD_LIMITS } from "../src/domain/editions";
 
 const migrationsDir = join(__dirname, "..", "supabase", "migrations");
 const sql = readdirSync(migrationsDir)
@@ -53,5 +54,16 @@ describe("domain mirrors the database", () => {
       Object.values(PLAN_TERMS).filter((p) => p.changeRequestsPerMonth > 0).map((p) => [p.key, p.changeRequestsPerMonth]),
     );
     expect(fromSql).toEqual(fromTs);
+  });
+
+  it("each plan's board ceiling matches the database's", () => {
+    const body = sql.split("function tebos_private.plan_board_limit")[1]!.split("$$")[1]!;
+    const [flows, pieces] = body.split("else case p_plan");
+    const read = (part: string) => ({
+      growth: Number(/'growth' then (\d+)/.exec(part)![1]), company: Number(/'company' then (\d+)/.exec(part)![1]), other: Number(/else (\d+)/.exec(part)![1]),
+    });
+    const f = read(flows!), p = read("else" + pieces!);
+    expect({ starter: { flows: f.other, pieces: p.other }, growth: { flows: f.growth, pieces: p.growth }, company: { flows: f.company, pieces: p.company } })
+      .toEqual(BOARD_LIMITS);
   });
 });

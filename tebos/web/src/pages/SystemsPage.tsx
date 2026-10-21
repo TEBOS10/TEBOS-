@@ -3,6 +3,7 @@
 // of the work runs on written rules. The rules themselves are the product and
 // stay inside TEBOS (nothing of value before payment).
 import { BLUEPRINTS, blueprintCoverage } from "@core/blueprints";
+import { EDITION_ADDS, TIER_NAMES, TIERS, VARIANTS } from "@core/editions";
 import { useEffect } from "react";
 import { SiteFrame } from "./BlogPage";
 
@@ -23,6 +24,13 @@ export function SystemsPage() {
         through, and a written rule for each step so it no longer waits for the founder. We then fit it to how your business
         actually works, with you. These are blueprints, not client case studies.
       </p>
+      <section className="system-card" data-testid="editions" aria-label="What each plan includes">
+        <h2 className="blog-card-title">Every system comes in three sizes</h2>
+        <ul className="plain-list">
+          {TIERS.map((t) => <li key={t}><strong>{TIER_NAMES[t]}:</strong> {EDITION_ADDS[t].join("; ")}.</li>)}
+        </ul>
+        <p className="blog-meta">Each plan's size is a firm limit on the system: a larger system needs the larger plan. We recommend the diagnostic first, so the size fits what your business needs.</p>
+      </section>
       <ul className="blog-list" data-testid="systems">
         {BLUEPRINTS.map((b) => {
           const c = blueprintCoverage(b);
@@ -31,6 +39,9 @@ export function SystemsPage() {
               <p className="blog-meta">{b.industry}</p>
               <h2 className="blog-card-title">{b.name}</h2>
               <p>{b.promise}</p>
+              {(VARIANTS[b.key] ?? []).length > 0 && (
+                <p className="blog-meta" data-testid="kinds">Tailored for: {(VARIANTS[b.key] ?? []).map((v) => v.label).join(" · ")}</p>
+              )}
               <p className="blog-meta">
                 {b.flows.map((f) => f.name).join(" · ")}
               </p>
