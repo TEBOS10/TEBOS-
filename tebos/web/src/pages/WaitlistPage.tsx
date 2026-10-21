@@ -2,6 +2,7 @@
 // from then on TEBOS takes it from payment to a draft operating system on the
 // business's board without being asked, starting from the blueprint for the
 // kind of business they name here.
+import { CineStage } from "../components/CineStage";
 import { BLUEPRINTS } from "@core/blueprints";
 import { planForSize, SIZE_BANDS, type SizeBand } from "@core/selfcheck";
 import { useState, type FormEvent } from "react";
@@ -46,12 +47,14 @@ export function WaitlistPage() {
 
   return (
     <SiteFrame>
-      <p className="lp-kicker">Waiting list</p>
-      <h1 className="lp-title">Get your operating system in 3 days</h1>
-      <p className="lp-sub">
-        TEBOS takes on a limited number of businesses at a time. Join the list. When we accept your business, TEBOS starts
-        straight away: your draft operating system is on your board on day 1, and confirmed with you by day 3.
-      </p>
+      <CineStage className="cine-left">
+        <p className="lp-kicker">Waiting list</p>
+        <h1 className="lp-title">Get your operating system in 3 days</h1>
+        <p className="lp-sub">
+          TEBOS takes on a limited number of businesses at a time. Join the list. When we accept your business, TEBOS starts
+          straight away: your draft operating system is on your board on day 1, and confirmed with you by day 3.
+        </p>
+      </CineStage>
       {sent ? (
         <div className="system-card" role="status" style={{ marginTop: 24 }}>
           <h2 className="blog-card-title">You're on the list.</h2>

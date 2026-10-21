@@ -38,6 +38,21 @@ Update this list every run; strike items when they're done.
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 21 Oct 2026 (morning run): healthy apart from the stopped worker
+
+- **Main CI** on the #92 merge: Core and database, Web, and the migration apply all passed.
+- **Railway worker:** still stopped. There's no deployment since the trial expired on 19 Oct (decision 21).
+- **Supabase advisors:** one new finding, which is by design. `public.change_allowance` is a SECURITY DEFINER function
+  signed-in users can call; it refuses anyone who isn't a member of the organisation or a maintainer. The rest are as
+  before.
+- **Audit trail:** checked read-only at 03:49 UTC. All 12 chains are **intact**, and every head recorded on 19 Oct is
+  unchanged. Since the last check, the platform chain has grown to event 4095 and bame to 4096.
+- **Live counts:**
+  - 1 client message (the 1 November notice) and 0 change requests;
+  - everything else unchanged: no clients, payments or cases.
+- **Open PRs:** #93 (the 3D structure). Green, and waiting on the founder's "merge it".
+- **Prepared step:** none. The branch carries #93, and adding work would widen it.
+
 ## 20 Oct 2026 (night): live: the channel, the tiers, BAME's library, and the notice
 
 - **Merged #90 and #91** (founder: "merge it"); the Vercel production deploys of both are ready, including BAME's site.

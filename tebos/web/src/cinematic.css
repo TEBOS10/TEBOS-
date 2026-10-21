@@ -239,3 +239,17 @@ select option { background: #121214; color: var(--ink); }
 
 /* Illustrations of light things (a browser, a contract) keep dark text */
 .xp-browser, .contract-card { color: #13161b; }
+
+/* The 3D structure behind a stage's words; fades in once its first frame is drawn */
+.cine-3d { position: absolute; inset: 0; z-index: -1; opacity: 0; transition: opacity 1.6s ease; }
+.cine-3d.on { opacity: 1; }
+.cine-3d canvas { display: block; width: 100%; height: 100%; }
+.cine-left::after, .cine-stage-left::after { background: linear-gradient(90deg, rgba(6, 6, 7, 0.75) 0%, rgba(6, 6, 7, 0.35) 45%, rgba(6, 6, 7, 0) 70%); }
+.cine-left .lp-title { max-width: 640px; }
+.cine-left .lp-sub { max-width: 540px; }
+.cine-left { text-align: left; padding: clamp(40px, 6vw, 80px) clamp(20px, 5vw, 64px); margin-bottom: 28px; }
+.pr-head .cine.cine-left { text-align: left; }
+.pr-head .cine-left .lp-sub { margin-left: 0; }
+@media (max-width: 820px) {
+  .cine-left::after { background: radial-gradient(90% 70% at 50% 35%, rgba(6, 6, 7, 0.7), rgba(6, 6, 7, 0.2) 75%); }
+}

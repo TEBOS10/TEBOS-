@@ -23,7 +23,7 @@ any change to a capability.
 - **"In use" needs real records** from an actual workflow in the live database.
 - A count of 0 means *not yet used*, never *broken*. Tests show it works as written; only use shows it helps.
 
-**Live counts, 20 Oct 2026** (read-only):
+**Live counts, 21 Oct 2026** (read-only):
 
 | | Count |
 |---|---|
@@ -33,6 +33,7 @@ any change to a capability.
 | Money records | 0 |
 | REEDS requests | 0 |
 | Standing weekly briefs | 0 |
+| Client channel messages / change requests | 1 / 0 |
 | Findings and actions | 0 |
 | Scans | 1 |
 | Objectives | 15 (3 active) |

@@ -61,3 +61,21 @@ test("a client's board is drawn in 3D from its own records, one flow at a time",
   await expect(card.getByTestId("board-3d")).toHaveCount(0);
   expect(errors).toEqual([]);
 });
+
+test("pricing opens on the 3D structure beside the words on a wide screen, and keeps the light with reduced motion", async ({ page, browser }) => {
+  test.setTimeout(60_000);
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await installFakeSupabase(page, { signedIn: false });
+  await page.goto("/pricing?force3d");
+  const stage = page.getByTestId("cine-stage");
+  await expect(stage.locator(".cine-3d canvas")).toHaveCount(1, { timeout: 30_000 });
+  await expect(stage).toHaveAttribute("data-scene", "3d", { timeout: 30_000 });
+  await expect(page.getByRole("heading", { name: "One system, sized to your business." })).toBeVisible();
+
+  const calm = await browser.newPage({ reducedMotion: "reduce", viewport: { width: 1280, height: 800 } });
+  await installFakeSupabase(calm, { signedIn: false });
+  await calm.goto("/pricing?force3d");
+  await expect(calm.getByTestId("cine-stage")).toHaveAttribute("data-scene", "light");
+  await expect(calm.locator(".cine-3d")).toHaveCount(0);
+  await calm.close();
+});
