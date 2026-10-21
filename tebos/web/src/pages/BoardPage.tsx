@@ -23,6 +23,7 @@ import {
   type ProposalPerformer,
 } from "@core/board";
 import { BLUEPRINTS, blueprintCoverage } from "@core/blueprints";
+import { BOARD_LIMITS, EDITION_ADDS, edition, tierOf, TIER_NAMES, TIERS, VARIANTS } from "@core/editions";
 import type { ObjectiveStatus } from "@core/states";
 import { lazy, Suspense, useMemo, useState, type FormEvent } from "react";
 import { layoutBoard } from "../world/layout";
@@ -35,6 +36,7 @@ import {
   addFlow,
   addStep,
   applyBlueprint,
+  getChangeAllowance,
   closeObjective,
   confirmComponent,
   confirmFlow,
@@ -681,9 +683,16 @@ function NewFlow({ businessId, objectives, onCreated }: { businessId: string; ob
 function BlueprintCard({ businessId, onApplied }: { businessId: string; onApplied: () => void }) {
   const org = useOrg();
   const [key, setKey] = useState("");
+  const [kind, setKind] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
-  const chosen = BLUEPRINTS.find((b) => b.key === key);
+  // the organisation's plan decides the edition: the database holds the board to the same ceiling
+  const plan = useQuery(() => getChangeAllowance(org.db, org.organisation.id), [org.organisation.id]);
+  const tier = tierOf(plan.data?.plan);
+  const base = BLUEPRINTS.find((b) => b.key === key);
+  const kinds = base ? VARIANTS[base.key] ?? [] : [];
+  const chosen = base ? edition(base, tier, kind || undefined) : undefined;
+  const above = TIERS.slice(TIERS.indexOf(tier) + 1);
 
   async function apply() {
     if (!chosen) return;
@@ -702,15 +711,31 @@ function BlueprintCard({ businessId, onApplied }: { businessId: string; onApplie
   return (
     <Card title="Start from an operating-system blueprint" subtitle="Lay down a complete draft operating system for this kind of business in one step: its pieces, its flows, and who does each step under what rule. Everything arrives as proposed; confirm, change or remove each piece with the owner.">
       <div className="form">
-        <Field label="Kind of business">
-          <select className="input" value={key} onChange={(e) => setKey(e.target.value)} aria-label="Blueprint">
-            <option value="">Choose…</option>
-            {BLUEPRINTS.map((b) => <option key={b.key} value={b.key}>{b.industry}</option>)}
-          </select>
-        </Field>
+        <div className="form-row">
+          <Field label="Kind of business">
+            <select className="input" value={key} onChange={(e) => { setKey(e.target.value); setKind(""); }} aria-label="Blueprint">
+              <option value="">Choose…</option>
+              {BLUEPRINTS.map((b) => <option key={b.key} value={b.key}>{b.industry}</option>)}
+            </select>
+          </Field>
+          {kinds.length > 0 && (
+            <Field label="What kind exactly?">
+              <select className="input" value={kind} onChange={(e) => setKind(e.target.value)} aria-label="What kind exactly">
+                <option value="">General</option>
+                {kinds.map((v) => <option key={v.key} value={v.key}>{v.label}</option>)}
+              </select>
+            </Field>
+          )}
+        </div>
+        <p className="list-meta" data-testid="blueprint-edition">
+          {plan.data?.plan ? `On the ${TIER_NAMES[tier]} plan` : "No active plan yet, so the Small edition"}: {EDITION_ADDS[tier].join("; ")}. This
+          board holds up to {BOARD_LIMITS[tier].flows} flows and {BOARD_LIMITS[tier].pieces} pieces.
+        </p>
         {chosen && (
           <p className="list-meta" data-testid="blueprint-preview">
-            {chosen.promise} {chosen.pieces.length} pieces · {chosen.flows.length} flows · {blueprintCoverage(chosen).steps} steps, {blueprintCoverage(chosen).stepsWithRules} with a written rule.
+            <strong>{chosen.name}.</strong> {chosen.promise} {chosen.pieces.length} pieces · {chosen.flows.length} flows · {blueprintCoverage(chosen).steps} steps,{" "}
+            {blueprintCoverage(chosen).stepsWithRules} with a written rule.
+            {above.length > 0 && <> {above.map((t) => `${TIER_NAMES[t]} adds ${EDITION_ADDS[t].at(-1)!.toLowerCase()}`).join("; ")}.</>}
           </p>
         )}
         <ErrorNote error={error} title="Blueprint not applied" />
