@@ -38,6 +38,22 @@ Update this list every run; strike items when they're done.
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 23 Oct 2026: board ceilings live, and a call sheet for the first clients
+
+- **Merged PR #94 and applied `tier_board_limits` live** (founder: "merge it and apply it"). Checked live: the `guard_board_tier`
+  trigger is on `board_flows` and `board_components`, and the ceilings read Small 4 flows / 10 pieces, Medium 30 pieces,
+  Company 40 flows.
+- **Audit chains:** all 12 intact; the platform chain still ends at 4095 and BAME's at 4096, as on 21 Oct. Nothing recorded
+  is gone.
+- **The morning runs of 22 and 23 Oct** were queued while the session was idle and ran together here.
+- **Call sheet** (founder: "I need a call sheet so that I can get clients"): 31 small Johannesburg-area businesses
+  (tutoring, music, dance, driving schools, gyms, salons, physios, plumbers, two agencies, one estate agency). Each number
+  was copied from the business's own site or page on 23 Oct, with the link beside it; 10 rows are marked "check". It also
+  holds a 3-minute script for the Small plan and the calling rules: no promised results, no client named, no payment
+  before the lawyer's template, CPA calling hours, "don't call" is final. It lives in `outreach/` (not committed: it holds
+  third parties' contact details) and as a private page for the founder.
+- **Not done:** the Railway worker is still stopped (decision 21); the Railway connector needs signing in again.
+
 ## 21 Oct 2026 (morning run): healthy apart from the stopped worker
 
 - **Main CI** on the #92 merge: Core and database, Web, and the migration apply all passed.
