@@ -89,13 +89,10 @@ update public.worker_heartbeats set last_beat_at = now() - interval '6 days', st
 set role authenticated;
 select t99zv.ok((select state = 'stopped' from public.worker_status()), 'a six-day-old beat is stopped');
 
--- the newest worker decides, and workers silent for 30 days are pruned on the next beat
+-- the newest worker decides
 reset role;
-insert into public.worker_heartbeats (worker_id, mode, started_at, last_beat_at) values ('ancient', 'continuous', now() - interval '40 days', now() - interval '40 days');
 set role service_role;
 select public.worker_beat('w2', 'continuous', now(), 0, null, '{}');
-reset role;
-select t99zv.ok((select count(*) = 0 from public.worker_heartbeats where worker_id = 'ancient'), 'old workers are pruned');
 set role authenticated;
 select t99zv.ok((select state = 'running' and mode = 'continuous' and last_pass_errors = 0 from public.worker_status()), 'the newest beat decides');
 

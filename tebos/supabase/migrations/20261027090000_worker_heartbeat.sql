@@ -27,6 +27,8 @@ create table public.worker_heartbeats (
   check ((last_error is null) = (last_error_at is null)),
   check (last_beat_at >= started_at)
 );
+-- one row per worker ID (a fixed TEBOS_WORKER_ID reuses its row); the newest beat is found by this index
+create index worker_heartbeats_last_beat_idx on public.worker_heartbeats (last_beat_at desc);
 alter table public.worker_heartbeats enable row level security;
 -- no policies: clients never read or write it directly
 revoke all on public.worker_heartbeats from anon, authenticated;
@@ -60,8 +62,6 @@ begin
     last_error    = coalesce(excluded.last_error, h.last_error),
     last_error_at = case when excluded.last_error is not null then now() else h.last_error_at end,
     stages        = excluded.stages;
-  -- a restart gets a new worker ID: old ones go after 30 days so the table stays small
-  delete from public.worker_heartbeats where last_beat_at < now() - interval '30 days';
 end $$;
 revoke all on function public.worker_beat(text, text, timestamptz, integer, text, jsonb) from public, anon, authenticated;
 grant execute on function public.worker_beat(text, text, timestamptz, integer, text, jsonb) to service_role;
