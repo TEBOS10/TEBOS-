@@ -30,6 +30,8 @@
 //                   approvals waiting (raised, refreshed and resolved automatically)
 //   reeds         — a person's request: planned into tasks, each run, verified independently,
 //                   and reported only when every task passed (src/reeds)
+//   sources       — REEDS intake from connected sources, at most every 10 minutes: the Outlook inbox when
+//                   OUTLOOK_CLIENT_ID, OUTLOOK_REFRESH_TOKEN and REEDS_ORG_ID are set (src/sources)
 // When PORT is set (Railway sets it), an HTTP server also receives provider
 // webhooks at /webhooks/resend/<connection id> and /webhooks/paystack, and
 // answers /health.
@@ -74,6 +76,8 @@ import { PgMaintenanceStore } from "./maintenance/pg-store";
 import { MaintenanceWorker } from "./maintenance/worker";
 import { PgWorkStore } from "./reeds/pg-store";
 import { WorkWorker } from "./reeds/worker";
+import { OutlookAdapter, outlookConfigFromEnv } from "./sources/outlook";
+import { SourceSyncWorker } from "./sources/worker";
 
 const url = process.env.TEBOS_DATABASE_URL;
 if (!url) {
@@ -172,6 +176,9 @@ const billing = new BillingWorker(new PgBillingStore(pool, `billing-worker:${wor
 }, log);
 const maintenance = new MaintenanceWorker(new PgMaintenanceStore(pool, `maintenance-worker:${workerId}`), log);
 const reeds = new WorkWorker(new PgWorkStore(pool, `reeds-worker:${workerId}`), log);
+const outlook = outlookConfigFromEnv();
+const reedsOrg = process.env.REEDS_ORG_ID?.trim();
+const sources = reedsOrg && outlook ? new SourceSyncWorker(pool, reedsOrg, [new OutlookAdapter(outlook)], log) : null;
 
 // Batch mode (TEBOS_WORKER_MODE=batch) is for a scheduled run, e.g. a Railway cron service on the free plan:
 // do every pending job until a full pass finds nothing (or the time cap), then exit. No webhook server.
@@ -220,7 +227,8 @@ while (!stopping) {
   const billed = !stopping ? await step("billing", () => billing.runOnce()) : false;
   const maintained = !stopping ? await step("maintenance", () => maintenance.runOnce()) : false;
   const answered = !stopping ? await step("reeds", () => reeds.runOnce()) : false;
-  const idle = !acquired && !analysed && !executed && !interviewed && !intook && !monitored && !alerted && !piped && !billed && !maintained && !answered;
+  const synced = sources && !stopping ? await step("sources", () => sources.runOnce()) : false;
+  const idle = !acquired && !analysed && !executed && !interviewed && !intook && !monitored && !alerted && !piped && !billed && !maintained && !answered && !synced;
   if (batch && (idle || Date.now() >= batchDeadline)) {
     log({ event: "worker.batch_done", reason: idle ? "nothing left to do" : "time cap" });
     break;
