@@ -379,6 +379,16 @@ function answerRpc(tables: FakeSupabase["tables"], name: string, args: Record<st
     if (health) health.imported = Number(health.imported) + 1;
     return { source_event_id: ev.id, duplicate: false, created, conflicts, skipped };
   }
+  if (name === "worker_status") {
+    // the worker's heartbeat: a test seeds tables.worker_heartbeats; none means "never"
+    const beats = ((tables as unknown as Record<string, Array<Record<string, unknown>>>).worker_heartbeats ?? [])
+      .slice().sort((a, b) => String(b.last_beat_at).localeCompare(String(a.last_beat_at)));
+    const last = beats[0];
+    if (!last) return [{ state: "never", last_beat_at: null, minutes_since: null, mode: null, last_pass_errors: 0, last_error: null, last_error_at: null }];
+    const min = Math.floor((Date.now() - Date.parse(String(last.last_beat_at))) / 60_000);
+    return [{ state: min <= 30 ? "running" : min <= 120 ? "late" : "stopped", last_beat_at: last.last_beat_at, minutes_since: min, mode: last.mode,
+      last_pass_errors: last.last_pass_errors ?? 0, last_error: last.last_error ?? null, last_error_at: last.last_error_at ?? null }];
+  }
   if (name === "tepos_open_week") {
     // the week board: the template copied in once; opening again adds only template items not yet in the week
     const t = tables as unknown as Record<string, Array<Record<string, unknown>>>;

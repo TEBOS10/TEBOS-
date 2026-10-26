@@ -2,6 +2,7 @@
 // captured twice is one record, a disagreeing source becomes a conflict, done needs evidence, and connection health
 // comes only from a sync that really ran. These calls only read and write.
 import { SOURCE_TYPES, type SourceType } from "@core/reeds-intake";
+import type { WorkerState } from "@core/worker-health";
 import type { Database, Json } from "../database.types";
 import type { Db } from "../lib/supabase";
 
@@ -73,4 +74,11 @@ export async function resolveConflict(db: Db, conflict: ConflictRow, take: boole
     must(await db.from("reeds_commitments").update({ due_on: conflict.reported_value, due_basis: "reported" }).eq("id", conflict.commitment_id).select("id"));
   }
   return must(await db.from("reeds_conflicts").update({ resolution: take ? "took_reported" : "kept_recorded" }).eq("id", conflict.id).select().single());
+}
+
+/** Whether the worker is running, from its heartbeat (migration worker_heartbeat). The database decides the state. */
+export async function loadWorkerStatus(db: Db) {
+  const rows = must(await db.rpc("worker_status"));
+  const r = rows[0];
+  return r ? { state: r.state as WorkerState, minutesSince: r.minutes_since, lastPassErrors: r.last_pass_errors, lastError: r.last_error } : null;
 }

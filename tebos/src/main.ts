@@ -78,6 +78,7 @@ import { PgWorkStore } from "./reeds/pg-store";
 import { WorkWorker } from "./reeds/worker";
 import { OutlookAdapter, outlookConfigFromEnv } from "./sources/outlook";
 import { SourceSyncWorker } from "./sources/worker";
+import { Heartbeat } from "./heartbeat";
 
 const url = process.env.TEBOS_DATABASE_URL;
 if (!url) {
@@ -206,11 +207,19 @@ log({
   ...(intelligenceEnabled ? {} : { note: "Findings are not generated: set ANTHROPIC_API_KEY or TEBOS_MODEL_GATEWAY_URL to enable the intelligence stage" }),
 });
 
+// The heartbeat: each pass is reported (at most once a minute, and always at the end of a batch run), so the founder
+// sees "running", "late" or "stopped" instead of silence.
+const heartbeat = new Heartbeat(pool, workerId, batch ? "batch" : "continuous", {
+  intelligence: intelligenceEnabled, execution: executionEnabled, voiceInterviews: voiceEnabled, intakeCalls: intakeVoiceEnabled,
+  enquiryAlerts: alertsEnabled, payments: Boolean(paystackKey), clientEmails: Boolean(process.env.RESEND_API_KEY), sources: Boolean(sources),
+}, log);
+
 async function step(name: string, fn: () => Promise<unknown>): Promise<boolean> {
   try {
     return (await fn()) !== null;
   } catch (err) {
     log({ event: `${name}.error`, detail: (err as Error).message });
+    heartbeat.failed(name, (err as Error).message);
     return false;
   }
 }
@@ -229,6 +238,7 @@ while (!stopping) {
   const answered = !stopping ? await step("reeds", () => reeds.runOnce()) : false;
   const synced = sources && !stopping ? await step("sources", () => sources.runOnce()) : false;
   const idle = !acquired && !analysed && !executed && !interviewed && !intook && !monitored && !alerted && !piped && !billed && !maintained && !answered && !synced;
+  await heartbeat.beat(batch && (idle || Date.now() >= batchDeadline));
   if (batch && (idle || Date.now() >= batchDeadline)) {
     log({ event: "worker.batch_done", reason: idle ? "nothing left to do" : "time cap" });
     break;

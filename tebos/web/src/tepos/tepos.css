@@ -167,3 +167,10 @@
 .reeds-brief { display: grid; gap: 8px; border-color: #8fb4e8; }
 .reeds-priorities { margin: 0; padding-left: 20px; display: grid; gap: 8px; }
 .reeds-counts { margin: 0; font-size: 13px; color: var(--t-ink); }
+
+/* the worker's heartbeat: quiet when running, loud when it isn't */
+.worker-strip { margin: 0 0 12px; padding: 8px 12px; border-radius: 8px; border: 1px solid #3a4a5e; font-size: .92rem; }
+.worker-strip strong { margin-right: 6px; }
+.worker-running { border-color: #2f5e45; }
+.worker-late { border-color: #b8893a; background: rgba(184, 137, 58, .12); }
+.worker-stopped, .worker-never { border-color: #c4604a; background: rgba(196, 96, 74, .12); }

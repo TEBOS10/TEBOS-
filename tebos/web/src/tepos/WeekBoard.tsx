@@ -23,7 +23,8 @@ import { useOrg } from "../lib/session";
 import { useQuery } from "../lib/useQuery";
 import { dailyBrief, OWNER_LABEL, SOURCE_LABEL, type SourceType } from "@core/reeds-intake";
 import { asCommitment } from "./IntakePage";
-import { loadIntake } from "./intakeData";
+import { loadIntake, loadWorkerStatus } from "./intakeData";
+import { workerSummary } from "@core/worker-health";
 import { closeDay, ensurePlan, loadSignals, openWeek, updateTask, type Signals, type WeekDayRow, type WeekTaskRow } from "./weekData";
 
 const STATUSES: WeekTaskStatus[] = ["not_started", "in_progress", "done", "blocked", "deferred", "skipped"];
@@ -52,6 +53,7 @@ export function WeekBoard() {
   }, [orgId, weekStart]);
   const signals = useQuery(async () => (orgId ? loadSignals(org.db, orgId, weekStart) : null), [orgId, weekStart]);
   const intake = useQuery(async () => (orgId ? loadIntake(org.db, orgId) : null), [orgId]);
+  const worker = useQuery(async () => loadWorkerStatus(org.db), []);
 
   const [tasks, setTasks] = useState<WeekTaskRow[]>([]);
   const [days, setDays] = useState<WeekDayRow[]>([]);
@@ -81,6 +83,14 @@ export function WeekBoard() {
         {firstDay && <p className="tepos-muted" data-testid="week-starts-now">The weekly plan starts now. Nothing earlier today is marked done: you say what happened.</p>}
         <p className="tepos-muted">Time estimates are planning blocks, not the agency's hours. Pelser's appointments come first.</p>
       </header>
+
+      {worker.data && (
+        <p className={`worker-strip worker-${worker.data.state}`} data-testid="worker-status" role={worker.data.state === "running" ? undefined : "status"}>
+          <strong>Worker</strong> {workerSummary(worker.data)}
+          {worker.data.state !== "running" && worker.data.state !== "never" && worker.data.lastError ? <span className="tepos-muted"> Last error: {worker.data.lastError}</span> : null}
+        </p>
+      )}
+      {worker.error ? <p className="worker-strip worker-unknown tepos-muted" data-testid="worker-status">Worker: couldn't check its status.</p> : null}
 
       <section className="week-next" aria-label="Next best action" data-testid="next-action">
         <div className="tepos-eyebrow">Next best action</div>
