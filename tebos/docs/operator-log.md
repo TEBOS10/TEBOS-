@@ -38,6 +38,63 @@ Update this list every run; strike items when they're done.
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 26 Oct 2026: the template catalogue, and the blueprint reconciled
+
+- **Founder's decisions (26 Oct):** TEBOS stays **monthly** (build included, change requests each month, 6-month
+  minimum); Company stays **R7,500**. The master blueprint's one-time R500 / R2,500 / R7,200 pricing is not adopted.
+  This repo is the one TEBOS; the Floot build and the other Vercel projects named in the blueprint are not it.
+- **Prepared on this branch (not merged, not applied live): the template catalogue** (blueprint §5, §7.2).
+  - Migration `20261026090000_template_catalogue.sql`:
+    - `template_catalogue`: one archetype at one version, with each tier's workflow and part counts held inside the
+      plan's ceilings, the customer, buyer, problem and success measure, and the evidence;
+    - its states: Draft → Ready for QA → Approved internal template → Available for sale → Deprecated, or Blocked
+      (blocker named) and back to Draft;
+    - the gates: QA needs the problem, customer, buyer and measure; only a signed-in platform admin approves, sells or
+      deprecates (REEDS and the server never can); approval needs the test report, setup steps, limitations and
+      rollback; a sale needs `evidence_backed` with the evidence written down; an approved template is fixed, so a
+      change is a new version;
+    - `factory_runs`: one record per template per day, written once, dated by the database (no back-dating);
+      "completed" needs evidence and a template that has reached QA; "blocked" names the blocker;
+    - both audited; staff (maintainers) only, clients see neither.
+  - Domain mirror `src/domain/catalogue.ts` (gates, counts from each blueprint's editions, a speculative draft from a
+    blueprint), unit tests `test/catalogue.test.ts`, parity for the states, validation states and outcomes, SQL test
+    `99zs_template_catalogue.sql`.
+  - Proven: typecheck; 392 unit tests; `test:db` all 63 pass, 99zs included. All 11 blueprints' editions fit their
+    ceilings.
+  - **Next, after the founder's "merge it and apply it":** the catalogue page for staff, and seeding one draft per
+    blueprint (speculative, with customer and buyer left empty until real conversations fill them).
+
+## 26 Oct 2026 (morning run): healthy; nothing new prepared
+
+- **Branch:** the fresh container had checked out another session's BAME branch (`claude/bame-intake-integration-s5ue43`)
+  under this branch's name. Those commits are safe on their own remote branch; this branch was pointed back at its own
+  history (main plus the 23 Oct log entry). Nothing was force-pushed.
+- **main:** Core and database, Web, Vercel and the migration apply all green on the PR #94 merge (47b2d0f). No open PRs.
+- **Audit chains:** all 12 intact, unchanged since 21 Oct (platform 4095, BAME 4096). Nothing recorded is gone.
+- **Advisors:** no new findings. The definer-function warnings are the known public entry points; `capital.*` has no
+  client policies by design (server-only, paper trading).
+- **Counts:** 6 businesses marked `client` (only BAME really is; the fix waits on the showcase answers), 1 channel
+  message, 0 change requests, 15 objectives, 0 enquiries, 0 opportunities, 0 billing accounts.
+- **Railway:** not checked; the connector needs signing in again, and the worker is stopped (decision 21).
+- **Prepared:** nothing. The next step (the showcase and the `client` labels) needs the founder's answers on BAME being
+  shown publicly and on real brand names.
+
+## 23 Oct 2026: board ceilings live, and a call sheet for the first clients
+
+- **Merged PR #94 and applied `tier_board_limits` live** (founder: "merge it and apply it"). Checked live: the `guard_board_tier`
+  trigger is on `board_flows` and `board_components`, and the ceilings read Small 4 flows / 10 pieces, Medium 30 pieces,
+  Company 40 flows.
+- **Audit chains:** all 12 intact; the platform chain still ends at 4095 and BAME's at 4096, as on 21 Oct. Nothing recorded
+  is gone.
+- **The morning runs of 22 and 23 Oct** were queued while the session was idle and ran together here.
+- **Call sheet** (founder: "I need a call sheet so that I can get clients"): 31 small Johannesburg-area businesses
+  (tutoring, music, dance, driving schools, gyms, salons, physios, plumbers, two agencies, one estate agency). Each number
+  was copied from the business's own site or page on 23 Oct, with the link beside it; 10 rows are marked "check". It also
+  holds a 3-minute script for the Small plan and the calling rules: no promised results, no client named, no payment
+  before the lawyer's template, CPA calling hours, "don't call" is final. It lives in `outreach/` (not committed: it holds
+  third parties' contact details) and as a private page for the founder.
+- **Not done:** the Railway worker is still stopped (decision 21); the Railway connector needs signing in again.
+
 ## 21 Oct 2026 (morning run): healthy apart from the stopped worker
 
 - **Main CI** on the #92 merge: Core and database, Web, and the migration apply all passed.

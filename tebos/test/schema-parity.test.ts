@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { PUBLIC_LIMITS, RULE_CODES, transitionTable } from "../src";
 import { PLAN_TERMS } from "../src/domain/plans";
 import { BOARD_LIMITS } from "../src/domain/editions";
+import { FACTORY_OUTCOMES, VALIDATION_STATES } from "../src/domain/catalogue";
 
 const migrationsDir = join(__dirname, "..", "supabase", "migrations");
 const sql = readdirSync(migrationsDir)
@@ -65,5 +66,11 @@ describe("domain mirrors the database", () => {
     const f = read(flows!), p = read("else" + pieces!);
     expect({ starter: { flows: f.other, pieces: p.other }, growth: { flows: f.growth, pieces: p.growth }, company: { flows: f.company, pieces: p.company } })
       .toEqual(BOARD_LIMITS);
+  });
+
+  it("the catalogue's validation states and factory outcomes match the database's", () => {
+    const list = (re: RegExp) => [...re.exec(sql)![1]!.matchAll(/'([a-z_]+)'/g)].map((m) => m[1]);
+    expect(list(/check \(validation_state in \(([^)]*)\)\)/)).toEqual([...VALIDATION_STATES]);
+    expect(list(/check \(outcome in \(([^)]*)\)\)/)).toEqual([...FACTORY_OUTCOMES]);
   });
 });

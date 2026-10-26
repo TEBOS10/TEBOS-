@@ -15,6 +15,7 @@ export * from "./domain/board";
 export * from "./domain/throttle";
 export * from "./domain/blueprints";
 export * from "./domain/editions";
+export * from "./domain/catalogue";
 export * from "./security/url-safety";
 export * from "./acquisition/fetcher";
 export * from "./acquisition/extract";

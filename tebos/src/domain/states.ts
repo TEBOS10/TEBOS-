@@ -236,6 +236,20 @@ export const changeRequestMachine = machine({
   },
 });
 
+// The template catalogue (migration template_catalogue): approval, sale and retirement are a signed-in
+// platform admin's; a blocked template names its blocker and goes back to draft.
+export const catalogueTemplateMachine = machine({
+  initial: ["draft"],
+  transitions: {
+    draft: ["ready_for_qa", "blocked"],
+    ready_for_qa: ["approved_internal", "draft", "blocked"],
+    blocked: ["draft"],
+    approved_internal: ["available_for_sale", "deprecated"],
+    available_for_sale: ["deprecated"],
+    deprecated: [],
+  },
+});
+
 export const MACHINES = {
   scan: scanMachine,
   scan_target: scanTargetMachine,
@@ -254,6 +268,7 @@ export const MACHINES = {
   work_request: workRequestMachine,
   work_task: workTaskMachine,
   change_request: changeRequestMachine,
+  catalogue_template: catalogueTemplateMachine,
 } as const;
 
 export type MachineName = keyof typeof MACHINES;
@@ -273,6 +288,7 @@ export type OpportunityStatus = StatesOf<typeof opportunityMachine>;
 export type WorkRequestStatus = StatesOf<typeof workRequestMachine>;
 export type WorkTaskStatus = StatesOf<typeof workTaskMachine>;
 export type ChangeRequestStatus = StatesOf<typeof changeRequestMachine>;
+export type CatalogueTemplateStatus = StatesOf<typeof catalogueTemplateMachine>;
 
 export function canTransition<M extends MachineName>(
   name: M,
