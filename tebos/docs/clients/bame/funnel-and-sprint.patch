@@ -1,0 +1,313 @@
+diff --git a/bame/src/app/page.tsx b/bame/src/app/page.tsx
+index 1d57f3c..e8532fa 100644
+--- a/bame/src/app/page.tsx
++++ b/bame/src/app/page.tsx
+@@ -280,8 +280,11 @@ export default function Home() {
+               ))}
+             </div>
+             <Link href="/intake" className="mt-8 inline-block rounded-full bg-[var(--bame-accent)] px-6 py-3 text-sm font-semibold text-[#1a1608]">
+-              Take the two-minute diagnostic
++              Start the full diagnostic
+             </Link>
++            <p className="mt-3 text-xs text-[var(--bame-muted)]">
++              It is detailed: up to 16 short sections, depending on your path. Your answers stay on this device until you send them.
++            </p>
+           </div>
+         </section>
+ 
+diff --git a/bame/src/app/sprint/SprintEnquiry.tsx b/bame/src/app/sprint/SprintEnquiry.tsx
+new file mode 100644
+index 0000000..6003be4
+--- /dev/null
++++ b/bame/src/app/sprint/SprintEnquiry.tsx
+@@ -0,0 +1,82 @@
++"use client";
++// The sprint preview's enquiry: the same short lead as the home page, marked with the sprint as its focus so the
++// experiment's enquiries can be counted in the leads table.
++import { useEffect, useState } from "react";
++import { funnel } from "@/lib/funnel";
++
++export const SPRINT_FOCUS = "Sponsor-ready sprint (pilot)";
++
++export default function SprintEnquiry() {
++  const [kind, setKind] = useState<"club" | "event">("club");
++  const [state, setState] = useState<{ kind: "idle" | "sending" | "sent" | "error"; message?: string }>({ kind: "idle" });
++
++  useEffect(() => funnel("sprint_viewed"), []);
++
++  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
++    e.preventDefault();
++    const form = new FormData(e.currentTarget);
++    const payload = {
++      contact_type: kind,
++      full_name: String(form.get("full_name") || "").trim(),
++      email: String(form.get("email") || "").trim(),
++      phone: String(form.get("phone") || "").trim(),
++      sport: String(form.get("sport") || "").trim(),
++      location: String(form.get("location") || "").trim(),
++      primary_focus: SPRINT_FOCUS,
++      goal: String(form.get("goal") || "").trim(),
++      consent: form.get("consent") === "on",
++    };
++    if (!payload.full_name || !payload.email || !payload.consent) {
++      setState({ kind: "error", message: "Please give your name, email and consent." });
++      return;
++    }
++    setState({ kind: "sending" });
++    try {
++      const res = await fetch("/api/lead", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
++      const json = await res.json();
++      if (!res.ok || !json.ok) throw new Error(json.error || "Not sent.");
++      funnel("sprint_enquiry_submitted", { contact_type: kind });
++      setState({ kind: "sent" });
++    } catch (err) {
++      setState({ kind: "error", message: err instanceof Error ? err.message : "Not sent." });
++    }
++  }
++
++  if (state.kind === "sent") {
++    return (
++      <div role="status">
++        <p className="bame-eyebrow">Received</p>
++        <p className="mt-2">Thank you. BAME will contact you to arrange the short call. Nothing is agreed until you approve a written scope and price.</p>
++      </div>
++    );
++  }
++
++  const input = "w-full rounded-xl border border-[var(--bame-line)] bg-transparent px-3 py-2 text-sm";
++  return (
++    <form onSubmit={onSubmit} className="grid gap-4">
++      <h2 className="text-lg">Ask about the sprint</h2>
++      <div className="flex gap-2" role="group" aria-label="I run">
++        {(["club", "event"] as const).map((k) => (
++          <button key={k} type="button" aria-pressed={kind === k} onClick={() => setKind(k)}
++            className={`rounded-full border px-4 py-1.5 text-sm ${kind === k ? "border-[var(--bame-accent)] bg-[var(--bame-accent)] text-[#1a1608]" : "border-[var(--bame-line)]"}`}>
++            {k === "club" ? "A club or academy" : "A sports event"}
++          </button>
++        ))}
++      </div>
++      <label className="grid gap-1 text-sm">Your name *<input name="full_name" className={input} required autoComplete="name" /></label>
++      <label className="grid gap-1 text-sm">Email *<input name="email" type="email" className={input} required autoComplete="email" /></label>
++      <label className="grid gap-1 text-sm">Phone<input name="phone" type="tel" className={input} autoComplete="tel" /></label>
++      <label className="grid gap-1 text-sm">Sport<input name="sport" className={input} /></label>
++      <label className="grid gap-1 text-sm">Where you are<input name="location" className={input} /></label>
++      <label className="grid gap-1 text-sm">What would a sponsor need to see from you?<textarea name="goal" rows={3} className={input} /></label>
++      <label className="flex gap-2 text-xs text-[var(--bame-muted)]">
++        <input type="checkbox" name="consent" required />
++        I agree that BAME keeps these details to answer this enquiry. Nothing is agreed or priced at this stage.
++      </label>
++      {state.kind === "error" && <p role="alert" className="text-sm text-red-400">{state.message}</p>}
++      <button className="rounded-full bg-[var(--bame-accent)] px-6 py-3 text-sm font-semibold text-[#1a1608]" disabled={state.kind === "sending"}>
++        {state.kind === "sending" ? "Sending…" : "Ask about the sprint"}
++      </button>
++    </form>
++  );
++}
+diff --git a/bame/src/app/sprint/page.tsx b/bame/src/app/sprint/page.tsx
+new file mode 100644
+index 0000000..c23d7c7
+--- /dev/null
++++ b/bame/src/app/sprint/page.tsx
+@@ -0,0 +1,76 @@
++// Experiment preview (TEBOS commercial diagnostic, 26 Oct 2026): a bounded sponsor-ready sprint for clubs,
++// academies and events, tested against the open-ended athlete retainers. Not linked from the site and not indexed;
++// it goes live only on the founder's and BAME's approval, and is removed by deleting this folder.
++import Header from "@/components/site/Header";
++import Footer from "@/components/site/Footer";
++import SprintEnquiry from "./SprintEnquiry";
++
++export const metadata = {
++  title: "Sponsor-ready sprint (pilot) — BAME",
++  robots: { index: false, follow: false },
++};
++
++const STEPS = [
++  ["Baseline", "Where your sponsorship stands today: current partners, open conversations, what each is worth, and how enquiries are followed up."],
++  ["One proposition", "One clear reason a local business should back you, with what they get in return, written up as a one-page partner pack."],
++  ["A target list, built with you", "Businesses near you that fit your audience, agreed with you before anyone is contacted."],
++  ["Outreach, tracked", "Approaches made in your name, with your approval, and every reply recorded so nothing is left without a follow-up."],
++  ["A report, not a promise", "At the end: who was approached, who replied, which meetings were booked and what was agreed. Nothing more is claimed."],
++];
++
++export default function SprintPage() {
++  return (
++    <>
++      <Header />
++      <main className="flex-1">
++        <section className="mx-auto max-w-3xl px-5 py-14">
++          <p className="bame-eyebrow">Pilot · for clubs, academies and events</p>
++          <h1 className="mt-3 text-3xl md:text-4xl">Sponsor-ready sprint.</h1>
++          <p className="mt-4 text-[var(--bame-muted)]">
++            A fixed, short piece of work with one aim: get your club or event in front of the right local sponsors, with a
++            proposition worth backing, and track every conversation it starts.
++          </p>
++
++          <ol className="mt-10 grid gap-4">
++            {STEPS.map(([title, desc], i) => (
++              <li key={title} className="rounded-2xl border border-[var(--bame-line)] bg-[var(--bame-panel)] p-5">
++                <p className="bame-eyebrow">{String(i + 1).padStart(2, "0")}</p>
++                <h2 className="mt-1 text-lg">{title}</h2>
++                <p className="mt-2 text-sm text-[var(--bame-muted)]">{desc}</p>
++              </li>
++            ))}
++          </ol>
++
++          <div className="mt-10 grid gap-4 md:grid-cols-2">
++            <div className="rounded-2xl border border-[var(--bame-line)] p-5">
++              <h2 className="text-lg">What you provide</h2>
++              <ul className="mt-3 grid gap-2 text-sm text-[var(--bame-muted)]">
++                <li>Your audience: members, players, attendance or reach, as you know them.</li>
++                <li>Your current sponsors and anything already promised to them.</li>
++                <li>One person who can approve the proposition and each approach.</li>
++                <li>Photos or video you are allowed to use.</li>
++              </ul>
++            </div>
++            <div className="rounded-2xl border border-[var(--bame-line)] p-5">
++              <h2 className="text-lg">What it does not include</h2>
++              <ul className="mt-3 grid gap-2 text-sm text-[var(--bame-muted)]">
++                <li>Guaranteed sponsorship or income. Sponsors decide; the report shows what happened.</li>
++                <li>Contracts with sponsors: those are yours, reviewed by your own adviser.</li>
++                <li>Ongoing social media or production, which are separate services.</li>
++              </ul>
++            </div>
++          </div>
++
++          <p className="mt-8 text-sm text-[var(--bame-muted)]">
++            The price is fixed and agreed in writing before anything starts, after a short call about your club or event.
++          </p>
++
++          <div className="mt-8 rounded-3xl border border-[var(--bame-line)] bg-[var(--bame-panel)] p-6 md:p-8">
++            <SprintEnquiry />
++          </div>
++        </section>
++      </main>
++      <Footer />
++    </>
++  );
++}
+diff --git a/bame/src/components/intake/IntakeWizard.tsx b/bame/src/components/intake/IntakeWizard.tsx
+index 45ceff8..280e520 100644
+--- a/bame/src/components/intake/IntakeWizard.tsx
++++ b/bame/src/components/intake/IntakeWizard.tsx
+@@ -3,6 +3,7 @@
+ import { useEffect, useMemo, useState } from "react";
+ import Link from "next/link";
+ import { INTAKE_SECTIONS, type IntakeField } from "@/lib/intake-schema";
++import { funnel, PREFILL_KEY } from "@/lib/funnel";
+ 
+ const STORAGE_KEY = "bame_intake_draft_v1";
+ 
+@@ -199,6 +200,22 @@ export default function IntakeWizard({ initialValues }: { initialValues: Values
+   const [status, setStatus] = useState<{ kind: "idle" | "success" | "error"; message?: string }>({ kind: "idle" });
+   const [submitting, setSubmitting] = useState(false);
+ 
++  useEffect(() => {
++    funnel("intake_viewed", { contact_type: String(initialValues.contact_type ?? "unknown") });
++    try {
++      const handoff = sessionStorage.getItem(PREFILL_KEY);
++      if (handoff) {
++        sessionStorage.removeItem(PREFILL_KEY);
++        const h = JSON.parse(handoff) as Record<string, string>;
++        // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hand-off from the short form
++        setValues((v) => ({ ...v, ...(h.full_name ? { full_name: h.full_name, athlete_full_name: h.full_name } : {}), ...(h.email ? { email: h.email } : {}), ...(h.phone ? { phone: h.phone } : {}) }));
++      }
++    } catch {
++      // ignore
++    }
++    // eslint-disable-next-line react-hooks/exhaustive-deps -- measured once, when the diagnostic opens
++  }, []);
++
+   useEffect(() => {
+     try {
+       const saved = localStorage.getItem(STORAGE_KEY);
+@@ -244,6 +261,7 @@ export default function IntakeWizard({ initialValues }: { initialValues: Values
+       return;
+     }
+     setStatus({ kind: "idle" });
++    funnel("intake_step", { step: step + 1, of: visibleSections.length, section: section.id });
+     setStep((s) => Math.min(s + 1, visibleSections.length - 1));
+   }
+ 
+@@ -269,8 +287,10 @@ export default function IntakeWizard({ initialValues }: { initialValues: Values
+       const json = await res.json();
+       if (!res.ok || !json.ok) throw new Error(json.error || "Submission failed.");
+       localStorage.removeItem(STORAGE_KEY);
++      funnel("intake_submitted", { contact_type: String(values.contact_type ?? "unknown"), sections: visibleSections.length });
+       setStatus({ kind: "success", message: `Diagnostic received. Reference: ${json.id}.` });
+     } catch (e) {
++      funnel("intake_failed", { contact_type: String(values.contact_type ?? "unknown") });
+       setStatus({ kind: "error", message: e instanceof Error ? e.message : "Submission failed." });
+     } finally {
+       setSubmitting(false);
+diff --git a/bame/src/components/site/QuickLeadForm.tsx b/bame/src/components/site/QuickLeadForm.tsx
+index 6e76c90..dbdad83 100644
+--- a/bame/src/components/site/QuickLeadForm.tsx
++++ b/bame/src/components/site/QuickLeadForm.tsx
+@@ -2,6 +2,7 @@
+ 
+ import { useState } from "react";
+ import { useRouter } from "next/navigation";
++import { funnel, PREFILL_KEY } from "@/lib/funnel";
+ 
+ const CAREER_STAGES = [
+   "Academy / student athlete",
+@@ -57,16 +58,20 @@ export default function QuickLeadForm() {
+         body: JSON.stringify(payload),
+       });
+       const json = await res.json();
++      funnel(res.ok && json.ok ? "lead_submitted" : "lead_failed", { contact_type: contactType });
++      try {
++        sessionStorage.setItem(PREFILL_KEY, JSON.stringify({ full_name: payload.full_name, email: payload.email, phone: payload.phone }));
++      } catch {
++        // without session storage the diagnostic simply asks again
++      }
+       const params = new URLSearchParams({
+         contact_type: contactType,
+-        full_name: payload.full_name,
+-        email: payload.email,
+-        phone: payload.phone,
+-        sport: payload.sport,
++        ...(payload.sport ? { sport: payload.sport } : {}),
+         ...(json.id ? { lead_id: json.id } : {}),
+       });
+       router.push(`/intake?${params.toString()}`);
+     } catch {
++      funnel("lead_failed", { contact_type: contactType });
+       setError("Something went wrong. Please try again.");
+       setSubmitting(false);
+     }
+diff --git a/bame/src/lib/funnel.ts b/bame/src/lib/funnel.ts
+new file mode 100644
+index 0000000..c42249e
+--- /dev/null
++++ b/bame/src/lib/funnel.ts
+@@ -0,0 +1,29 @@
++// The enquiry journey's measuring points (TEBOS commercial diagnostic, 26 Oct 2026). Each event names a step and
++// carries only non-personal context (path, step number, section); never a name, email or phone number. The site
++// already uses cookieless Vercel Web Analytics (see the privacy page); custom events need a Vercel plan that
++// includes them, and are silently dropped otherwise — so the leads and diagnostics tables stay the source of truth.
++import { track } from "@vercel/analytics";
++
++export const FUNNEL_EVENTS = [
++  "lead_submitted", // the home page's short form was sent
++  "lead_failed",
++  "intake_viewed", // the diagnostic opened
++  "intake_step", // a section was completed
++  "intake_submitted",
++  "intake_failed",
++  "sprint_viewed", // the sponsor-ready sprint preview opened
++  "sprint_enquiry_submitted",
++] as const;
++export type FunnelEvent = (typeof FUNNEL_EVENTS)[number];
++
++export function funnel(event: FunnelEvent, props: Record<string, string | number> = {}) {
++  try {
++    track(event, props);
++  } catch {
++    // measurement never breaks the journey
++  }
++}
++
++// The short form hands its answers to the diagnostic through this tab's session storage, not the address bar:
++// a name, email or phone number in a URL ends up in browser history, server logs and analytics.
++export const PREFILL_KEY = "bame-intake-prefill";

@@ -207,7 +207,14 @@ export async function installFakeSupabase(
       let result: Array<Record<string, unknown>>;
       if (req.method() === "POST") {
         const now = new Date().toISOString();
-        result = (Array.isArray(body) ? body : [body]).map((r: Record<string, unknown>) => ({ id: crypto.randomUUID(), created_at: now, updated_at: now, status: r.status ?? defaultStatus(name!), ...COLUMN_DEFAULTS[name!], ...r }));
+        let incoming = (Array.isArray(body) ? body : [body]) as Array<Record<string, unknown>>;
+        // an upsert that ignores duplicates, as the database does on its unique key
+        const conflict = url.searchParams.get("on_conflict");
+        if (conflict && prefer.includes("resolution=ignore-duplicates")) {
+          const keys = conflict.split(",");
+          incoming = incoming.filter((r) => !table.some((x) => keys.every((k) => x[k] === r[k])));
+        }
+        result = incoming.map((r: Record<string, unknown>) => ({ id: crypto.randomUUID(), created_at: now, updated_at: now, status: r.status ?? defaultStatus(name!), ...COLUMN_DEFAULTS[name!], ...r }));
         table.push(...result);
       } else {
         result = table.filter((r) => matches(r, url.searchParams));
@@ -334,6 +341,66 @@ function answerRpc(tables: FakeSupabase["tables"], name: string, args: Record<st
     }
     return { blueprint: tag, pieces: pieces.length, flows: bp.flows.length, steps };
   }
+  if (name === "reeds_capture") {
+    // REEDS intake as the database does it: the same source once; a later source that disagrees becomes a conflict
+    const t = tables as unknown as Record<string, Array<Record<string, unknown>>>;
+    const a = args as unknown as Record<string, unknown>;
+    const key = `${a.p_source_type}:${a.p_source_ref ? String(a.p_source_ref).trim() : String(a.p_summary).trim().replace(/\s+/g, " ").toLowerCase()}`;
+    const found = (t.reeds_source_events ??= []).find((e) => e.org_id === a.p_org && e.dedupe_key === key);
+    const health = (t.reeds_integrations ?? []).find((x) => x.org_id === a.p_org && x.source_type === a.p_source_type);
+    if (found) { if (health) health.duplicates = Number(health.duplicates) + 1; return { source_event_id: found.id, duplicate: true, created: 0, conflicts: 0, skipped: 0 }; }
+    const items = (a.p_items ?? []) as Array<Record<string, string>>;
+    const ev = { id: crypto.randomUUID(), org_id: a.p_org, source_type: a.p_source_type, source_ref: a.p_source_ref ?? null, source_link: a.p_source_link ?? null,
+      received_at: a.p_received_at, sender_label: a.p_sender ?? null, summary: a.p_summary, dedupe_key: key, triage: a.p_triage, workspace: a.p_workspace,
+      status: items.length ? "actioned" : "triaged", error: null, attempts: 0, created_by: USER_ID, created_at: now, updated_at: now };
+    t.reeds_source_events.push(ev);
+    let created = 0, conflicts = 0, skipped = 0;
+    for (const i of items) {
+      if (i.kind === "decision") {
+        (t.reeds_decisions ??= []).push({ id: crypto.randomUUID(), org_id: a.p_org, source_event_id: ev.id, question: i.title, options: null, recommendation: i.recommendation || null,
+          evidence: null, decide_by: i.due_on || null, status: "open", decision: null, rationale: null, decided_at: null, decided_by: null, created_at: now, updated_at: now });
+        created++; continue;
+      }
+      const same = (t.reeds_commitments ??= []).find((c) => c.org_id === a.p_org && String(c.title).toLowerCase() === i.title.toLowerCase() && !["done", "cancelled"].includes(String(c.status)));
+      if (same) {
+        if (i.due_on && same.due_on !== i.due_on) {
+          (t.reeds_conflicts ??= []).push({ id: crypto.randomUUID(), org_id: a.p_org, commitment_id: same.id, field: "due_on", recorded_value: same.due_on, reported_value: i.due_on,
+            source_event_id: ev.id, resolution: null, resolved_at: null, created_at: now });
+          conflicts++;
+        } else skipped++;
+        continue;
+      }
+      t.reeds_commitments.push({ id: crypto.randomUUID(), org_id: a.p_org, source_event_id: ev.id, title: i.title, expected_outcome: null, owner: i.owner || "founder", owner_label: null,
+        due_on: i.due_on || null, due_basis: i.due_on ? (i.due_basis || "reported") : "unknown", priority: i.priority || "normal", priority_reason: null, workspace: a.p_workspace,
+        next_action: i.next_action || null, approval: i.approval === "required" ? "required" : "not_needed", status: i.next_action ? "ready" : "captured",
+        blocked_reason: null, completion_evidence: null, completed_at: null, completed_by: null, created_at: now, updated_at: now });
+      created++;
+    }
+    if (health) health.imported = Number(health.imported) + 1;
+    return { source_event_id: ev.id, duplicate: false, created, conflicts, skipped };
+  }
+  if (name === "tepos_open_week") {
+    // the week board: the template copied in once; opening again adds only template items not yet in the week
+    const t = tables as unknown as Record<string, Array<Record<string, unknown>>>;
+    const start = String(args.p_week_start);
+    const addDays = (n: number) => { const d = new Date(`${start}T00:00:00Z`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+    let week = (t.tepos_weeks ??= []).find((w) => w.org_id === args.p_org && w.week_start === start);
+    if (!week) { week = { id: crypto.randomUUID(), org_id: args.p_org, week_start: start, timezone: "Africa/Johannesburg", created_at: now }; t.tepos_weeks.push(week); }
+    for (const d of (t.tepos_plan_days ?? []).filter((x) => x.org_id === args.p_org)) {
+      if ((t.tepos_week_days ??= []).some((x) => x.week_id === week!.id && x.weekday === d.weekday)) continue;
+      t.tepos_week_days.push({ id: crypto.randomUUID(), org_id: args.p_org, week_id: week.id, weekday: d.weekday, local_date: addDays(Number(d.weekday) - 1),
+        scene: d.scene, focus: d.focus, lens: d.lens, deliverable: d.deliverable, saved_to: d.saved_to, outcomes: null, blockers: null, learning: null, carried_forward: null,
+        closed_at: null, created_at: now, updated_at: now });
+    }
+    for (const i of (t.tepos_plan_items ?? []).filter((x) => x.org_id === args.p_org && x.active !== false)) {
+      const day = t.tepos_week_days.find((x) => x.week_id === week!.id && x.weekday === i.weekday)!;
+      if ((t.tepos_week_tasks ??= []).some((x) => x.day_id === day.id && x.plan_item_id === i.id)) continue;
+      t.tepos_week_tasks.push({ id: crypto.randomUUID(), org_id: args.p_org, week_id: week.id, day_id: day.id, plan_item_id: i.id, local_date: day.local_date,
+        position: i.position, title: i.title, lens: i.lens, action: i.action, definition_of_done: i.definition_of_done, est_minutes: i.est_minutes, status: "not_started",
+        status_reason: null, defer_until: null, owner_label: null, evidence_note: null, output_link: null, completed_at: null, completed_by: null, created_at: now, updated_at: now });
+    }
+    return week.id;
+  }
   if (name === "change_allowance") {
     // the plan's monthly allowance and what this month used, as the database computes it
     const t = tables as unknown as Record<string, Array<Record<string, unknown>>>;
@@ -397,6 +464,8 @@ const COLUMN_DEFAULTS: Record<string, Record<string, unknown>> = {
   // the client channel: the database sizes a new request at 1, with no outcome yet
   change_requests: { units: 1, outcome_note: null, finished_at: null, period: new Date().toISOString().slice(0, 8) + "01" },
   client_messages: { from_tebos: false, author_id: "00000000-0000-4000-8000-000000000001" },
+  tepos_plan_items: { active: true },
+  reeds_integrations: { state: "not_connected", detail: null, last_success_at: null, last_failure_at: null, last_error: null, imported: 0, duplicates: 0 },
   connection_instances: { business_id: null, granted_scopes: [], credential_ref_id: null, webhook_credential_ref_id: null, last_verified_at: null, last_success_at: null, last_failure_at: null, failure_detail: null, verification_requested_at: null },
 };
 

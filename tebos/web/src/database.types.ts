@@ -168,6 +168,555 @@ export type Database = {
         }
         Relationships: []
       }
+      factory_runs: {
+        Row: {
+          id: string
+          run_on: string
+          template_id: string
+          reason: string
+          outcome: string
+          evidence: string | null
+          blocker: string | null
+          next_action: string
+          created_by: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          run_on: string
+          template_id: string
+          reason: string
+          outcome: string
+          evidence?: string | null
+          blocker?: string | null
+          next_action: string
+          created_by?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          run_on?: string
+          template_id?: string
+          reason?: string
+          outcome?: string
+          evidence?: string | null
+          blocker?: string | null
+          next_action?: string
+          created_by?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      reeds_source_events: {
+        Row: {
+          id: string
+          org_id: string
+          source_type: string
+          source_ref: string | null
+          source_link: string | null
+          received_at: string
+          sender_label: string | null
+          summary: string
+          dedupe_key: string
+          triage: string
+          workspace: string
+          status: string
+          error: string | null
+          attempts: number
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          source_type: string
+          source_ref?: string | null
+          source_link?: string | null
+          received_at: string
+          sender_label?: string | null
+          summary: string
+          dedupe_key: string
+          triage?: string
+          workspace?: string
+          status?: string
+          error?: string | null
+          attempts?: number
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          source_type?: string
+          source_ref?: string | null
+          source_link?: string | null
+          received_at?: string
+          sender_label?: string | null
+          summary?: string
+          dedupe_key?: string
+          triage?: string
+          workspace?: string
+          status?: string
+          error?: string | null
+          attempts?: number
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      reeds_commitments: {
+        Row: {
+          id: string
+          org_id: string
+          source_event_id: string
+          title: string
+          expected_outcome: string | null
+          owner: string
+          owner_label: string | null
+          due_on: string | null
+          due_basis: string
+          priority: string
+          priority_reason: string | null
+          workspace: string
+          next_action: string | null
+          approval: string
+          status: string
+          blocked_reason: string | null
+          completion_evidence: string | null
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          source_event_id: string
+          title: string
+          expected_outcome?: string | null
+          owner?: string
+          owner_label?: string | null
+          due_on?: string | null
+          due_basis: string
+          priority?: string
+          priority_reason?: string | null
+          workspace?: string
+          next_action?: string | null
+          approval?: string
+          status?: string
+          blocked_reason?: string | null
+          completion_evidence?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          source_event_id?: string
+          title?: string
+          expected_outcome?: string | null
+          owner?: string
+          owner_label?: string | null
+          due_on?: string | null
+          due_basis?: string
+          priority?: string
+          priority_reason?: string | null
+          workspace?: string
+          next_action?: string | null
+          approval?: string
+          status?: string
+          blocked_reason?: string | null
+          completion_evidence?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      reeds_decisions: {
+        Row: {
+          id: string
+          org_id: string
+          source_event_id: string | null
+          question: string
+          options: string | null
+          recommendation: string | null
+          evidence: string | null
+          decide_by: string | null
+          status: string
+          decision: string | null
+          rationale: string | null
+          decided_at: string | null
+          decided_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          source_event_id?: string | null
+          question: string
+          options?: string | null
+          recommendation?: string | null
+          evidence?: string | null
+          decide_by?: string | null
+          status?: string
+          decision?: string | null
+          rationale?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          source_event_id?: string | null
+          question?: string
+          options?: string | null
+          recommendation?: string | null
+          evidence?: string | null
+          decide_by?: string | null
+          status?: string
+          decision?: string | null
+          rationale?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      reeds_conflicts: {
+        Row: {
+          id: string
+          org_id: string
+          commitment_id: string
+          field: string
+          recorded_value: string | null
+          reported_value: string | null
+          source_event_id: string
+          resolution: string | null
+          resolved_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          commitment_id: string
+          field: string
+          recorded_value?: string | null
+          reported_value?: string | null
+          source_event_id: string
+          resolution?: string | null
+          resolved_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          commitment_id?: string
+          field?: string
+          recorded_value?: string | null
+          reported_value?: string | null
+          source_event_id?: string
+          resolution?: string | null
+          resolved_at?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      reeds_integrations: {
+        Row: {
+          id: string
+          org_id: string
+          source_type: string
+          state: string
+          detail: string | null
+          last_success_at: string | null
+          last_failure_at: string | null
+          last_error: string | null
+          imported: number
+          duplicates: number
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          source_type: string
+          state?: string
+          detail?: string | null
+          last_success_at?: string | null
+          last_failure_at?: string | null
+          last_error?: string | null
+          imported?: number
+          duplicates?: number
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          source_type?: string
+          state?: string
+          detail?: string | null
+          last_success_at?: string | null
+          last_failure_at?: string | null
+          last_error?: string | null
+          imported?: number
+          duplicates?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tepos_plan_days: {
+        Row: {
+          id: string
+          org_id: string
+          weekday: number
+          scene: string
+          focus: string
+          lens: string
+          deliverable: string
+          saved_to: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          weekday: number
+          scene: string
+          focus: string
+          lens: string
+          deliverable: string
+          saved_to: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          weekday?: number
+          scene?: string
+          focus?: string
+          lens?: string
+          deliverable?: string
+          saved_to?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tepos_plan_items: {
+        Row: {
+          id: string
+          org_id: string
+          weekday: number
+          position: number
+          title: string
+          lens: string
+          action: string
+          definition_of_done: string
+          est_minutes: number
+          active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          weekday: number
+          position: number
+          title: string
+          lens: string
+          action: string
+          definition_of_done: string
+          est_minutes: number
+          active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          weekday?: number
+          position?: number
+          title?: string
+          lens?: string
+          action?: string
+          definition_of_done?: string
+          est_minutes?: number
+          active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tepos_weeks: {
+        Row: {
+          id: string
+          org_id: string
+          week_start: string
+          timezone: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          week_start: string
+          timezone?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          week_start?: string
+          timezone?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      tepos_week_days: {
+        Row: {
+          id: string
+          org_id: string
+          week_id: string
+          weekday: number
+          local_date: string
+          scene: string
+          focus: string
+          lens: string
+          deliverable: string
+          saved_to: string
+          outcomes: string | null
+          blockers: string | null
+          learning: string | null
+          carried_forward: string | null
+          closed_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          week_id: string
+          weekday: number
+          local_date: string
+          scene: string
+          focus: string
+          lens: string
+          deliverable: string
+          saved_to: string
+          outcomes?: string | null
+          blockers?: string | null
+          learning?: string | null
+          carried_forward?: string | null
+          closed_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          week_id?: string
+          weekday?: number
+          local_date?: string
+          scene?: string
+          focus?: string
+          lens?: string
+          deliverable?: string
+          saved_to?: string
+          outcomes?: string | null
+          blockers?: string | null
+          learning?: string | null
+          carried_forward?: string | null
+          closed_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tepos_week_tasks: {
+        Row: {
+          id: string
+          org_id: string
+          week_id: string
+          day_id: string
+          plan_item_id: string | null
+          local_date: string
+          position: number
+          title: string
+          lens: string
+          action: string | null
+          definition_of_done: string
+          est_minutes: number | null
+          status: string
+          status_reason: string | null
+          defer_until: string | null
+          owner_label: string | null
+          evidence_note: string | null
+          output_link: string | null
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          week_id: string
+          day_id: string
+          plan_item_id?: string | null
+          local_date: string
+          position?: number
+          title: string
+          lens: string
+          action?: string | null
+          definition_of_done: string
+          est_minutes?: number | null
+          status?: string
+          status_reason?: string | null
+          defer_until?: string | null
+          owner_label?: string | null
+          evidence_note?: string | null
+          output_link?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          week_id?: string
+          day_id?: string
+          plan_item_id?: string | null
+          local_date?: string
+          position?: number
+          title?: string
+          lens?: string
+          action?: string | null
+          definition_of_done?: string
+          est_minutes?: number | null
+          status?: string
+          status_reason?: string | null
+          defer_until?: string | null
+          owner_label?: string | null
+          evidence_note?: string | null
+          output_link?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       vault_documents: {
         Row: {
           id: string
@@ -3734,6 +4283,14 @@ export type Database = {
       }
       review_work_task: {
         Args: { p_task: string; p_ok: boolean; p_note?: string | null }
+        Returns: string
+      }
+      reeds_capture: {
+        Args: { p_org: string; p_source_type: string; p_source_ref: string | null; p_source_link: string | null; p_received_at: string; p_sender: string | null; p_summary: string; p_triage: string; p_workspace: string; p_items?: Json }
+        Returns: Json
+      }
+      tepos_open_week: {
+        Args: { p_org: string; p_week_start: string }
         Returns: string
       }
       change_allowance: {
