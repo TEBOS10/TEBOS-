@@ -38,6 +38,32 @@ Update this list every run; strike items when they're done.
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 26 Oct 2026 (late night): the week board and REEDS intake are live; the Outlook reader is ready
+
+- **Merged PR #96.** Applied `tepos_week` and `reeds_intake` live (founder: "merge it and apply it").
+- **Checked live:**
+  - all ten tables have row security and the owner policy;
+  - 21, 23 and 7 state transitions are in;
+  - in a block that rolled itself back: a capture is recorded and its repeat is recognised; a missing date stays
+    unknown; done without evidence is refused; opening the week twice gives one set of tasks; the server can't tick
+    a task;
+  - afterwards: nothing left behind, and every audit chain intact.
+- **Railway:** the founder switched to the Free plan. It couldn't be confirmed from here: the Railway connector isn't
+  signed in, and this sandbox can't reach the worker. The last write from the worker was 19 Oct, which is also what an
+  idle worker looks like.
+- **Outlook (the founder's choice):** a read-only Microsoft Graph reader, `src/sources/outlook.ts`.
+  - It runs every 10 minutes on the worker once `OUTLOOK_CLIENT_ID`, `OUTLOOK_REFRESH_TOKEN` and `REEDS_ORG_ID` are
+    set.
+  - It keeps the message ID, link, time, sender's name and subject; never the body or the sender's address.
+  - The founder grants access once with `scripts/outlook-consent.mjs`. Tests pass; not tested against a real mailbox
+    yet.
+- **WhatsApp:** the founder gave a number for the Business Platform. It is not stored anywhere in the repository.
+- **Repository settings:**
+  - left public: CI used about 350 wall minutes last week, which as a private repo would exceed GitHub's free 2,000
+    minutes a month and stop merges;
+  - the default branch change to `main` was refused by this session's permissions: the founder makes it in GitHub
+    Settings.
+
 ## 26 Oct 2026 (night): REEDS executive intake, the first loop of the executive team
 
 From the founder's executive-team specification and first implementation order.
