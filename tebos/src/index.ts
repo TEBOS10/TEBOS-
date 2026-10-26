@@ -18,6 +18,7 @@ export * from "./domain/editions";
 export * from "./domain/catalogue";
 export * from "./domain/week";
 export * from "./domain/reeds-intake";
+export * from "./domain/worker-health";
 export * from "./security/url-safety";
 export * from "./acquisition/fetcher";
 export * from "./acquisition/extract";

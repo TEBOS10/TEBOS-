@@ -107,3 +107,20 @@ test("on a phone, the board fits the screen", async ({ page }) => {
   expect(overflow).toBeLessThanOrEqual(1);
   await expect(page.getByTestId("week-task").first().getByRole("button", { name: "In progress" })).toBeVisible();
 });
+
+test("the worker's heartbeat: silence reads as not running, a stopped worker says since when", async ({ page }) => {
+  const fake = await founder(page);
+  await page.goto(`${TEPOS}/`);
+  await expect(page.getByTestId("worker-status")).toContainText("No worker has reported in yet. Nothing runs on its own");
+
+  const t = fake.tables as unknown as Record<string, Record<string, unknown>[]>;
+  t.worker_heartbeats = [{ worker_id: "w1", mode: "batch", last_beat_at: new Date(Date.now() - 6 * 86_400_000).toISOString(), last_pass_errors: 0,
+    last_error: "sources: Outlook sign-in failed (400)" }];
+  await page.reload();
+  await expect(page.getByTestId("worker-status")).toContainText("Stopped: the last pass was 6 days ago");
+  await expect(page.getByTestId("worker-status")).toContainText("Last error: sources: Outlook sign-in failed (400)");
+
+  t.worker_heartbeats = [{ worker_id: "w2", mode: "batch", last_beat_at: new Date(Date.now() - 3 * 60_000).toISOString(), last_pass_errors: 0 }];
+  await page.reload();
+  await expect(page.getByTestId("worker-status")).toHaveText("Worker Running: last pass 3 min ago.");
+});

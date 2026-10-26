@@ -4293,6 +4293,10 @@ export type Database = {
         Args: { p_org: string; p_week_start: string }
         Returns: string
       }
+      worker_status: {
+        Args: Record<PropertyKey, never>
+        Returns: { state: string; last_beat_at: string | null; minutes_since: number | null; mode: string | null; last_pass_errors: number; last_error: string | null; last_error_at: string | null }[]
+      }
       change_allowance: {
         Args: { p_org: string }
         Returns: { plan: string | null; allowance: number; used: number; period: string; resets_on: string }[]
