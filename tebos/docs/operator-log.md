@@ -64,9 +64,10 @@ Fixed:
   - The week board now opens with "Worker: running / late / stopped since …", or "No worker has reported in yet".
     Silence can no longer pass for "running".
   - Tests: `99zv_worker_heartbeat.sql`, `worker-health.test.ts`, and the week board e2e.
-- **Not applied yet:** applying the migration needs the founder's approval in the database connector. That request
-  timed out with no answer. Until it's applied, the worker logs a failed beat and carries on, and the board says
-  "couldn't check".
+- **Merged and applied (26 Oct, 19:57 UTC, the founder's "merge it and apply it"):** PR #98, with migration
+  `worker_heartbeat` applied live. A rolled-back check confirmed three things: a beat records, a credential in an
+  error is withheld, and browsers can't beat or read the table. The board says "No worker has reported in yet"
+  until the worker runs again.
 
 ## 26 Oct 2026 (late): the content studio skill, and the four-videos review
 
