@@ -24,7 +24,7 @@ async function founder(page: import("@playwright/test").Page) {
 
 test("TEPOS: the city and the tiles; Tidy Capital opens in the private organisation; unbuilt portals say so", async ({ page }) => {
   await founder(page);
-  await page.goto(`${TEPOS}/`);
+  await page.goto(`${TEPOS}/city`);
   await expect(page).toHaveTitle("TEPOS");
   await expect(page.getByRole("heading", { name: "Tidy", exact: true })).toBeVisible();
   // the city: six buildings, two of them under construction
@@ -51,7 +51,7 @@ test("TEPOS: the city and the tiles; Tidy Capital opens in the private organisat
 
 test("TEPOS: a building opens by keyboard too", async ({ page }) => {
   await founder(page);
-  await page.goto(`${TEPOS}/`);
+  await page.goto(`${TEPOS}/city`);
   await page.getByTestId("building-academics").focus();
   await page.keyboard.press("Enter");
   await expect(page.getByTestId("portal-not-built")).toContainText("study path");
@@ -59,7 +59,7 @@ test("TEPOS: a building opens by keyboard too", async ({ page }) => {
 
 test("TEPOS signs in as TEPOS, and its logo is the bronze one", async ({ page }) => {
   await installFakeSupabase(page, { signedIn: false });
-  await page.goto(`${TEPOS}/`);
+  await page.goto(`${TEPOS}/city`);
   await expect(page.getByRole("heading", { name: "TEPOS" })).toBeVisible();
   await expect(page.getByText("New to TEBOS")).toHaveCount(0);
   const logo = await page.locator(".brand-mark").first().evaluate((e) => getComputedStyle(e).backgroundImage);
@@ -110,7 +110,7 @@ test.describe("with motion", () => {
   test.use({ reducedMotion: "no-preference" });
   test("opening a portal pulls you through its vortex, then lands inside", async ({ page }) => {
     await founder(page);
-    await page.goto(`${TEPOS}/`);
+    await page.goto(`${TEPOS}/city`);
     await page.getByTestId("portal-forex").click();
     await expect(page.locator(".portal-vortex")).toBeVisible();
     await expect(page.getByTestId("portal-not-built")).toBeVisible();
@@ -121,7 +121,7 @@ test.describe("with motion", () => {
 test("TEPOS signs itself out after 30 minutes without use", async ({ page }) => {
   await page.clock.install();
   await founder(page);
-  await page.goto(`${TEPOS}/`);
+  await page.goto(`${TEPOS}/city`);
   await expect(page.getByRole("heading", { name: "Tidy", exact: true })).toBeVisible();
   await page.clock.fastForward("29:00");
   await expect(page.getByRole("heading", { name: "Tidy", exact: true })).toBeVisible();
@@ -135,7 +135,7 @@ test.describe("the city in 3D", () => {
     test.setTimeout(90_000);
     await founder(page);
     // ?force3d draws the 3D city on this test browser's software renderer too
-    await page.goto(`${TEPOS}/?force3d`);
+    await page.goto(`${TEPOS}/city?force3d`);
     const city = page.getByRole("group", { name: "Portals as buildings" });
     await expect(page.getByTestId("city-3d")).toBeVisible();
     await expect(city.getByRole("button")).toHaveCount(6);

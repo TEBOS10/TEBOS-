@@ -38,6 +38,63 @@ Update this list every run; strike items when they're done.
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 26 Oct 2026 (evening): the TEPOS week board, and the BAME commercial diagnostic
+
+From the founder's master execution brief (26 Oct).
+
+**Canonical sources, checked against Vercel's deployments:**
+- TEBOS is project `tebos` and TEPOS is `tebos-web`, both from this repo's `tebos/web`.
+- BAME's live site is project `bame-live`, built from the separate repo `TEBOS10/bame-live`, mirrored from this repo's
+  BAME branch. `bame/` on `main` is a stale copy, 60 files behind.
+- `bame-os` (Vercel) builds previews only. `tebos-ex3f` and `tebos-production-v2` are unused.
+
+**Prepared on this branch (not merged, migration not applied live): the week board.**
+- Migration `20261026120000_tepos_week.sql`:
+  - a recurring plan (`tepos_plan_days`, `tepos_plan_items`) kept apart from the weeks lived (`tepos_weeks`,
+    `tepos_week_days`, `tepos_week_tasks`);
+  - `tepos_open_week` copies the plan in once; opening a week twice adds nothing;
+  - only the signed-in founder marks a task done;
+  - blocked, deferred and skipped work needs a reason; a deferral needs a date today or later;
+  - the day closes with its outcomes;
+  - no client contact details and no secrets;
+  - private organisation only, after two-step sign-in, with a redacted audit trail.
+- Domain mirror `src/domain/week.ts`:
+  - the seven scenes from the brief, with 24 actions;
+  - South African dates;
+  - today's queue and the next best action.
+- TEPOS now opens on "This week"; the city moved to `/city`. The page shows:
+  - today's scene and the next action;
+  - the checklist with what "done" means;
+  - the six statuses, each with its reason and date;
+  - evidence and links, and the day close;
+  - the week as seven scene cards;
+  - the Income · Impact · Intelligence scoreboard, which reads real records and keeps expected commission apart from
+    cash.
+- Proven:
+  - core: typecheck, 401 unit tests, and `test:db` all pass, including the new `99zt`;
+  - web: typecheck, 63 unit tests, 135 end-to-end tests (4 new), and both production builds pass;
+  - layout checked at phone and desktop widths.
+- Found by the tests and fixed:
+  - Postgres caps regex repetition at 255, which broke the link check;
+  - the fake backend ignored "ignore duplicates";
+  - a ticked task vanished from today's list.
+
+**The BAME diagnostic:** `docs/clients/bame/commercial-diagnostic.md`, built from BAME's code, live site and database
+counts. The main findings:
+- the "two-minute diagnostic" is a 101-field, 16-section form;
+- 0 of 2 completed diagnostics were ever reviewed;
+- the only recorded win is a sponsorship;
+- personal details are passed in the address bar.
+
+The correction is a tested patch, `docs/clients/bame/funnel-and-sprint.patch`:
+- an honest CTA;
+- personal details out of the URL;
+- funnel events;
+- an unlinked, unindexed `/sprint` preview.
+
+Push access to `bame-live` was refused here, so it is **not deployed**. Decision: "Change segment/channel", reviewed
+9 Nov 2026.
+
 ## 26 Oct 2026 (later): the template catalogue is live
 
 - **Merged PR #95 and applied `template_catalogue` live** (founder: "merge it and apply it"). Main's "Apply database

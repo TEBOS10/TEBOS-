@@ -250,6 +250,19 @@ export const catalogueTemplateMachine = machine({
   },
 });
 
+// A task on the TEPOS week board (migration tepos_week): only the signed-in person marks it done.
+export const weekTaskMachine = machine({
+  initial: ["not_started"],
+  transitions: {
+    not_started: ["in_progress", "done", "blocked", "deferred", "skipped"],
+    in_progress: ["not_started", "done", "blocked", "deferred", "skipped"],
+    blocked: ["not_started", "in_progress", "deferred", "skipped"],
+    deferred: ["not_started", "in_progress", "done", "skipped"],
+    skipped: ["not_started"],
+    done: ["in_progress"],
+  },
+});
+
 export const MACHINES = {
   scan: scanMachine,
   scan_target: scanTargetMachine,
@@ -269,6 +282,7 @@ export const MACHINES = {
   work_task: workTaskMachine,
   change_request: changeRequestMachine,
   catalogue_template: catalogueTemplateMachine,
+  week_task: weekTaskMachine,
 } as const;
 
 export type MachineName = keyof typeof MACHINES;
@@ -289,6 +303,7 @@ export type WorkRequestStatus = StatesOf<typeof workRequestMachine>;
 export type WorkTaskStatus = StatesOf<typeof workTaskMachine>;
 export type ChangeRequestStatus = StatesOf<typeof changeRequestMachine>;
 export type CatalogueTemplateStatus = StatesOf<typeof catalogueTemplateMachine>;
+export type WeekTaskStatus = StatesOf<typeof weekTaskMachine>;
 
 export function canTransition<M extends MachineName>(
   name: M,

@@ -168,6 +168,288 @@ export type Database = {
         }
         Relationships: []
       }
+      factory_runs: {
+        Row: {
+          id: string
+          run_on: string
+          template_id: string
+          reason: string
+          outcome: string
+          evidence: string | null
+          blocker: string | null
+          next_action: string
+          created_by: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          run_on: string
+          template_id: string
+          reason: string
+          outcome: string
+          evidence?: string | null
+          blocker?: string | null
+          next_action: string
+          created_by?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          run_on?: string
+          template_id?: string
+          reason?: string
+          outcome?: string
+          evidence?: string | null
+          blocker?: string | null
+          next_action?: string
+          created_by?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      tepos_plan_days: {
+        Row: {
+          id: string
+          org_id: string
+          weekday: number
+          scene: string
+          focus: string
+          lens: string
+          deliverable: string
+          saved_to: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          weekday: number
+          scene: string
+          focus: string
+          lens: string
+          deliverable: string
+          saved_to: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          weekday?: number
+          scene?: string
+          focus?: string
+          lens?: string
+          deliverable?: string
+          saved_to?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tepos_plan_items: {
+        Row: {
+          id: string
+          org_id: string
+          weekday: number
+          position: number
+          title: string
+          lens: string
+          action: string
+          definition_of_done: string
+          est_minutes: number
+          active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          weekday: number
+          position: number
+          title: string
+          lens: string
+          action: string
+          definition_of_done: string
+          est_minutes: number
+          active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          weekday?: number
+          position?: number
+          title?: string
+          lens?: string
+          action?: string
+          definition_of_done?: string
+          est_minutes?: number
+          active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tepos_weeks: {
+        Row: {
+          id: string
+          org_id: string
+          week_start: string
+          timezone: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          week_start: string
+          timezone?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          week_start?: string
+          timezone?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      tepos_week_days: {
+        Row: {
+          id: string
+          org_id: string
+          week_id: string
+          weekday: number
+          local_date: string
+          scene: string
+          focus: string
+          lens: string
+          deliverable: string
+          saved_to: string
+          outcomes: string | null
+          blockers: string | null
+          learning: string | null
+          carried_forward: string | null
+          closed_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          week_id: string
+          weekday: number
+          local_date: string
+          scene: string
+          focus: string
+          lens: string
+          deliverable: string
+          saved_to: string
+          outcomes?: string | null
+          blockers?: string | null
+          learning?: string | null
+          carried_forward?: string | null
+          closed_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          week_id?: string
+          weekday?: number
+          local_date?: string
+          scene?: string
+          focus?: string
+          lens?: string
+          deliverable?: string
+          saved_to?: string
+          outcomes?: string | null
+          blockers?: string | null
+          learning?: string | null
+          carried_forward?: string | null
+          closed_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tepos_week_tasks: {
+        Row: {
+          id: string
+          org_id: string
+          week_id: string
+          day_id: string
+          plan_item_id: string | null
+          local_date: string
+          position: number
+          title: string
+          lens: string
+          action: string | null
+          definition_of_done: string
+          est_minutes: number | null
+          status: string
+          status_reason: string | null
+          defer_until: string | null
+          owner_label: string | null
+          evidence_note: string | null
+          output_link: string | null
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          week_id: string
+          day_id: string
+          plan_item_id?: string | null
+          local_date: string
+          position?: number
+          title: string
+          lens: string
+          action?: string | null
+          definition_of_done: string
+          est_minutes?: number | null
+          status?: string
+          status_reason?: string | null
+          defer_until?: string | null
+          owner_label?: string | null
+          evidence_note?: string | null
+          output_link?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          week_id?: string
+          day_id?: string
+          plan_item_id?: string | null
+          local_date?: string
+          position?: number
+          title?: string
+          lens?: string
+          action?: string | null
+          definition_of_done?: string
+          est_minutes?: number | null
+          status?: string
+          status_reason?: string | null
+          defer_until?: string | null
+          owner_label?: string | null
+          evidence_note?: string | null
+          output_link?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       vault_documents: {
         Row: {
           id: string
@@ -3734,6 +4016,10 @@ export type Database = {
       }
       review_work_task: {
         Args: { p_task: string; p_ok: boolean; p_note?: string | null }
+        Returns: string
+      }
+      tepos_open_week: {
+        Args: { p_org: string; p_week_start: string }
         Returns: string
       }
       change_allowance: {

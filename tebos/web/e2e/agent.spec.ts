@@ -32,7 +32,7 @@ async function founder(page: import("@playwright/test").Page, aal: "aal1" | "aal
 
 test("TEPOS: Real Estate Job opens in the private organisation with every next step, overdue first", async ({ page }) => {
   await founder(page);
-  await page.goto(`${TEPOS}/`);
+  await page.goto(`${TEPOS}/city`);
   await expect(page.getByTestId("building-agent")).toHaveAttribute("aria-label", "Real Estate Job: open");
   await page.getByTestId("building-agent").click();
   await expect(page.getByRole("heading", { name: "Real Estate Job" })).toBeVisible();
