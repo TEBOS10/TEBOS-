@@ -38,6 +38,17 @@ Update this list every run; strike items when they're done.
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 26 Oct 2026 (later): the template catalogue is live
+
+- **Merged PR #95 and applied `template_catalogue` live** (founder: "merge it and apply it"). Main's "Apply database
+  migrations" job passed but applied nothing: `SUPABASE_DB_URL` isn't set as a repository secret, so it no-ops by
+  design. The migration was applied through the connector under its own name, as before.
+- **Checked live:** both tables have row security on (catalogue: 3 triggers, 3 policies; runs: 2 and 2) and the 10
+  state transitions are in. In a block that rolled itself back: a server-made draft is accepted; a tier over its
+  ceiling is refused (`TEBOS_OUT_OF_PLAN`); the server can move a template to QA but can't approve it
+  (`TEBOS_PERMISSION_DENIED`); a "completed" run without evidence is refused (`TEBOS_EVIDENCE_REQUIRED`). Afterwards: 0
+  templates, 0 runs, every audit chain intact.
+
 ## 26 Oct 2026: the template catalogue, and the blueprint reconciled
 
 - **Founder's decisions (26 Oct):** TEBOS stays **monthly** (build included, change requests each month, 6-month
