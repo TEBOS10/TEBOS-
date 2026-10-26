@@ -1,6 +1,6 @@
 // The TEPOS app: sign-in, the second step, then the founder's portals. Only someone who owns a private
 // organisation gets in; anyone else is told this is a private system, and sees nothing of it.
-import { CalendarCheck, LayoutGrid, Landmark, KeyRound, GraduationCap, Home, LineChart, LogOut, MessageSquare, Vault } from "lucide-react";
+import { CalendarCheck, Inbox, LayoutGrid, Landmark, KeyRound, GraduationCap, Home, LineChart, LogOut, MessageSquare, Vault } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { TwoStepChallenge, TwoStepSettings } from "../components/TwoStep";
 import { Loading } from "../components/ui";
@@ -18,11 +18,13 @@ import { ReedsPage, ReedsRequestPage } from "../pages/ReedsPage";
 import { ResetPassword } from "../pages/ResetPassword";
 import { SignIn } from "../pages/SignIn";
 import { TeposHome, TeposPortalPage } from "./TeposPage";
+import { IntakePage } from "./IntakePage";
 import { WeekBoard } from "./WeekBoard";
 
 // each portal opens in the organisation that holds it, from the menu as from the city
 const NAV: Array<{ to: string; label: string; icon: typeof Vault; exact: boolean; org?: string }> = [
   { to: "/", label: "This week", icon: CalendarCheck, exact: true },
+  { to: "/intake", label: "Intake", icon: Inbox, exact: true },
   { to: "/city", label: "The city", icon: LayoutGrid, exact: true },
   { to: "/capital", label: "Tidy Capital", icon: Vault, exact: true, org: "irekun" },
   { to: "/property", label: "Tidy Enterprise", icon: Landmark, exact: false, org: "tidy-enterprise" },
@@ -36,6 +38,7 @@ const NAV: Array<{ to: string; label: string; icon: typeof Vault; exact: boolean
 const ROUTES: Array<[string, (p: Record<string, string>) => ReactNode]> = [
   ["/", () => <WeekBoard />],
   ["/city", () => <TeposHome />],
+  ["/intake", () => <IntakePage />],
   ["/property", () => <PropertyCasesPage />],
   ["/property/:id", (p) => <PropertyCasePage id={p.id!} />],
   ["/property/:id/report", (p) => <PropertyReportPage id={p.id!} />],

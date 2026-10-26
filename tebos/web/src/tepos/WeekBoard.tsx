@@ -21,6 +21,9 @@ import { ErrorNote, Loading } from "../components/ui";
 import { Link } from "../lib/router";
 import { useOrg } from "../lib/session";
 import { useQuery } from "../lib/useQuery";
+import { dailyBrief, OWNER_LABEL, SOURCE_LABEL, type SourceType } from "@core/reeds-intake";
+import { asCommitment } from "./IntakePage";
+import { loadIntake } from "./intakeData";
 import { closeDay, ensurePlan, loadSignals, openWeek, updateTask, type Signals, type WeekDayRow, type WeekTaskRow } from "./weekData";
 
 const STATUSES: WeekTaskStatus[] = ["not_started", "in_progress", "done", "blocked", "deferred", "skipped"];
@@ -48,6 +51,7 @@ export function WeekBoard() {
     return openWeek(org.db, orgId, weekStart);
   }, [orgId, weekStart]);
   const signals = useQuery(async () => (orgId ? loadSignals(org.db, orgId, weekStart) : null), [orgId, weekStart]);
+  const intake = useQuery(async () => (orgId ? loadIntake(org.db, orgId) : null), [orgId]);
 
   const [tasks, setTasks] = useState<WeekTaskRow[]>([]);
   const [days, setDays] = useState<WeekDayRow[]>([]);
@@ -88,6 +92,8 @@ export function WeekBoard() {
           </>
         ) : <p>Nothing open for today. Close the day, or look ahead below.</p>}
       </section>
+
+      {intake.data && <ReedsBrief data={intake.data} today={today} />}
 
       <section aria-label="Start now" className="week-today">
         <div className="week-section-head">
@@ -297,6 +303,44 @@ function Scoreboard({ tasks, signals }: { tasks: ReturnType<typeof asTask>[]; si
           </div>
         ))}
       </div>
+    </section>
+  );
+}
+
+/** REEDS's part of the morning brief: at most three priorities, what is late, what waits on you, and the truth about each source. */
+function ReedsBrief({ data, today }: { data: NonNullable<Awaited<ReturnType<typeof loadIntake>>>; today: string }) {
+  const brief = dailyBrief(data.commitments.map(asCommitment), today);
+  const openDecisions = data.decisions.filter((d) => d.status === "open" || d.status === "deferred");
+  const sourceOf = (id: string) => data.events.find((e) => e.id === id);
+  const notConnected = data.sources.filter((s) => s.source_type !== "manual" && s.state !== "connected");
+  return (
+    <section aria-label="REEDS brief" className="tepos-card reeds-brief" data-testid="reeds-brief">
+      <div className="week-section-head"><h2>REEDS brief</h2><Link to="/intake">Open intake</Link></div>
+      {brief.priorities.length === 0 && openDecisions.length === 0 && brief.blocked.length === 0
+        ? <p className="tepos-muted">Nothing from intake needs you today.</p>
+        : (
+          <ol className="reeds-priorities">
+            {brief.priorities.map((c) => {
+              const src = sourceOf(c.source_event_id);
+              return (
+                <li key={c.id} data-testid="reeds-priority">
+                  <Link to="/intake">{c.title}</Link>
+                  <span className="tepos-muted"> · {c.due_on ? (c.due_on < today ? `late, due ${c.due_on}` : "due today") : "high priority, no date"} · {OWNER_LABEL[c.owner]}</span>
+                  {src && <div className="intake-source">From {SOURCE_LABEL[src.source_type as SourceType].toLowerCase()}: {src.summary}{src.source_link && <> · <a href={src.source_link} target="_blank" rel="noreferrer">source</a></>}</div>}
+                </li>
+              );
+            })}
+          </ol>
+        )}
+      <p className="reeds-counts">
+        <span data-testid="reeds-decisions">{openDecisions.length} decision{openDecisions.length === 1 ? "" : "s"} waiting</span> ·{" "}
+        {brief.awaitingApproval.length} awaiting your approval · {brief.blocked.length} blocked · {brief.overdue.length} late · {data.conflicts.length} conflict{data.conflicts.length === 1 ? "" : "s"}
+      </p>
+      {notConnected.length > 0 && (
+        <p className="tepos-muted" data-testid="reeds-sources">
+          Not read automatically yet: {notConnected.map((s) => `${SOURCE_LABEL[s.source_type as SourceType]} (${s.state === "failing" ? "failing" : "not connected"})`).join(", ")}. Paste anything important into intake.
+        </p>
+      )}
     </section>
   );
 }

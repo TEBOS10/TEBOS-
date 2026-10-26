@@ -38,6 +38,25 @@ Update this list every run; strike items when they're done.
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 26 Oct 2026 (night): REEDS executive intake, the first loop of the executive team
+
+From the founder's executive-team specification and first implementation order.
+
+- **Phase 0 audit:** `docs/tepos-reeds-current-state.md`. Corrections to the specification:
+  - the "INACTIVE" database isn't ours: `tebos-core` and `bame-os` are both healthy;
+  - `tebos-web` is TEPOS;
+  - the repository's default branch is the BAME branch, which is a founder setting.
+- **Prepared on this branch (not merged, migration not applied live): the intake loop.**
+  - Migration `20261026150000_reeds_intake.sql`: source events captured once, commitments linked to their source,
+    decisions, conflicts kept beside the original, and sync health only the server writes.
+  - Domain `src/domain/reeds-intake.ts`; source adapter and sync runner in `src/sources/`.
+  - TEPOS `/intake`, and the REEDS brief on the week board.
+- **Proven:**
+  - core: typecheck, 407 unit tests, and `test:db` all pass (`99zu` covers the order's seven database tests);
+  - web: typecheck, 63 unit tests, 138 end-to-end tests and both builds pass.
+- **Not connected:** email, WhatsApp, calendar. No credentials exist, and the worker is stopped. Each shows "Not
+  connected"; nothing is faked.
+
 ## 26 Oct 2026 (evening): the TEPOS week board, and the BAME commercial diagnostic
 
 From the founder's master execution brief (26 Oct).

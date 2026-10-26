@@ -263,6 +263,31 @@ export const weekTaskMachine = machine({
   },
 });
 
+// REEDS executive intake (migration reeds_intake): a commitment is done only with evidence; a decision is the founder's.
+export const reedsCommitmentMachine = machine({
+  initial: ["captured", "ready"],
+  transitions: {
+    captured: ["ready", "cancelled"],
+    ready: ["in_progress", "blocked", "awaiting_approval", "done", "cancelled"],
+    in_progress: ["blocked", "awaiting_approval", "review", "done", "cancelled"],
+    blocked: ["ready", "in_progress", "cancelled"],
+    awaiting_approval: ["ready", "in_progress", "cancelled"],
+    review: ["in_progress", "done"],
+    done: ["in_progress"],
+    cancelled: [],
+  },
+});
+
+export const reedsDecisionMachine = machine({
+  initial: ["open"],
+  transitions: {
+    open: ["decided", "deferred", "withdrawn"],
+    deferred: ["open", "decided", "withdrawn"],
+    decided: [],
+    withdrawn: [],
+  },
+});
+
 export const MACHINES = {
   scan: scanMachine,
   scan_target: scanTargetMachine,
@@ -283,6 +308,8 @@ export const MACHINES = {
   change_request: changeRequestMachine,
   catalogue_template: catalogueTemplateMachine,
   week_task: weekTaskMachine,
+  reeds_commitment: reedsCommitmentMachine,
+  reeds_decision: reedsDecisionMachine,
 } as const;
 
 export type MachineName = keyof typeof MACHINES;
@@ -304,6 +331,8 @@ export type WorkTaskStatus = StatesOf<typeof workTaskMachine>;
 export type ChangeRequestStatus = StatesOf<typeof changeRequestMachine>;
 export type CatalogueTemplateStatus = StatesOf<typeof catalogueTemplateMachine>;
 export type WeekTaskStatus = StatesOf<typeof weekTaskMachine>;
+export type ReedsCommitmentStatus = StatesOf<typeof reedsCommitmentMachine>;
+export type ReedsDecisionStatus = StatesOf<typeof reedsDecisionMachine>;
 
 export function canTransition<M extends MachineName>(
   name: M,
