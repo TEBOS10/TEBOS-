@@ -38,6 +38,19 @@ Update this list every run; strike items when they're done.
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 26 Oct 2026 (late): the content studio skill, and the four-videos review
+
+- Built: `tebos/skills/tidy-content-studio`, a skill for claude.ai. It does eleven content jobs for TEBOS, BAME,
+  PRA and the property listings. It writes drafts only and nothing is posted. Every rate comes with its base, and
+  with fewer than ten posts it describes rather than concludes. A listing pack needs the seller's consent and
+  stated facts. Two scripts are included: `insights.py` (an Insights CSV summary) and `srt.py` (transcript to
+  captions). Both were tested on sample files.
+- It comes from the founder's four reference videos: an Instagram skill, a 41-agent real-estate team, an AI video
+  edit, and Como 1907's "who do you want to become?". The review was published as a private page for the founder.
+  Most of the real-estate pipeline already exists here. The next build is lead qualification and nurture, which
+  waits on decision 12 (POPIA).
+- Not done: nothing was posted, and no performance was measured.
+
 ## 26 Oct 2026 (late night): the week board and REEDS intake are live; the Outlook reader is ready
 
 - **Merged PR #96.** Applied `tepos_week` and `reeds_intake` live (founder: "merge it and apply it").
