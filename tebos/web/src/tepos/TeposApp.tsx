@@ -108,7 +108,8 @@ function TwoStepFirst({ children }: { children: ReactNode }) {
       <div className="auth-card" data-testid="tepos-two-step-first">
         <h1 className="page-title">Turn on two-step sign-in</h1>
         <p className="muted">TEPOS opens only after your password and a code from an authenticator app on your phone. A stolen password alone opens nothing here.</p>
-        <TwoStepSettings active={false} />
+        <p className="muted" data-testid="tepos-two-step-name">Your authenticator app will list this as <strong>TEPOS</strong>. If it also shows an older entry from an earlier attempt that you never confirmed, delete that one; only the code from the new entry works.</p>
+        <TwoStepSettings active={false} issuer="TEPOS" />
         <button className="btn" onClick={() => void db.auth.signOut()}>Sign out</button>
       </div>
     </div>
