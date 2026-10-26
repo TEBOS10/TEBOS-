@@ -38,6 +38,32 @@ Update this list every run; strike items when they're done.
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 26 Oct 2026: the template catalogue, and the blueprint reconciled
+
+- **Founder's decisions (26 Oct):** TEBOS stays **monthly** (build included, change requests each month, 6-month
+  minimum); Company stays **R7,500**. The master blueprint's one-time R500 / R2,500 / R7,200 pricing is not adopted.
+  This repo is the one TEBOS; the Floot build and the other Vercel projects named in the blueprint are not it.
+- **Prepared on this branch (not merged, not applied live): the template catalogue** (blueprint §5, §7.2).
+  - Migration `20261026090000_template_catalogue.sql`:
+    - `template_catalogue`: one archetype at one version, with each tier's workflow and part counts held inside the
+      plan's ceilings, the customer, buyer, problem and success measure, and the evidence;
+    - its states: Draft → Ready for QA → Approved internal template → Available for sale → Deprecated, or Blocked
+      (blocker named) and back to Draft;
+    - the gates: QA needs the problem, customer, buyer and measure; only a signed-in platform admin approves, sells or
+      deprecates (REEDS and the server never can); approval needs the test report, setup steps, limitations and
+      rollback; a sale needs `evidence_backed` with the evidence written down; an approved template is fixed, so a
+      change is a new version;
+    - `factory_runs`: one record per template per day, written once, dated by the database (no back-dating);
+      "completed" needs evidence and a template that has reached QA; "blocked" names the blocker;
+    - both audited; staff (maintainers) only, clients see neither.
+  - Domain mirror `src/domain/catalogue.ts` (gates, counts from each blueprint's editions, a speculative draft from a
+    blueprint), unit tests `test/catalogue.test.ts`, parity for the states, validation states and outcomes, SQL test
+    `99zs_template_catalogue.sql`.
+  - Proven: typecheck; 392 unit tests; `test:db` all 63 pass, 99zs included. All 11 blueprints' editions fit their
+    ceilings.
+  - **Next, after the founder's "merge it and apply it":** the catalogue page for staff, and seeding one draft per
+    blueprint (speculative, with customer and buyer left empty until real conversations fill them).
+
 ## 26 Oct 2026 (morning run): healthy; nothing new prepared
 
 - **Branch:** the fresh container had checked out another session's BAME branch (`claude/bame-intake-integration-s5ue43`)
