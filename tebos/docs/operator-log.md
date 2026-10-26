@@ -38,6 +38,21 @@ Update this list every run; strike items when they're done.
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 26 Oct 2026 (morning run): healthy; nothing new prepared
+
+- **Branch:** the fresh container had checked out another session's BAME branch (`claude/bame-intake-integration-s5ue43`)
+  under this branch's name. Those commits are safe on their own remote branch; this branch was pointed back at its own
+  history (main plus the 23 Oct log entry). Nothing was force-pushed.
+- **main:** Core and database, Web, Vercel and the migration apply all green on the PR #94 merge (47b2d0f). No open PRs.
+- **Audit chains:** all 12 intact, unchanged since 21 Oct (platform 4095, BAME 4096). Nothing recorded is gone.
+- **Advisors:** no new findings. The definer-function warnings are the known public entry points; `capital.*` has no
+  client policies by design (server-only, paper trading).
+- **Counts:** 6 businesses marked `client` (only BAME really is; the fix waits on the showcase answers), 1 channel
+  message, 0 change requests, 15 objectives, 0 enquiries, 0 opportunities, 0 billing accounts.
+- **Railway:** not checked; the connector needs signing in again, and the worker is stopped (decision 21).
+- **Prepared:** nothing. The next step (the showcase and the `client` labels) needs the founder's answers on BAME being
+  shown publicly and on real brand names.
+
 ## 23 Oct 2026: board ceilings live, and a call sheet for the first clients
 
 - **Merged PR #94 and applied `tier_board_limits` live** (founder: "merge it and apply it"). Checked live: the `guard_board_tier`
