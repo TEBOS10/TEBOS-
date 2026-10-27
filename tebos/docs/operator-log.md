@@ -8,7 +8,7 @@ Update this list every run; strike items when they're done.
 
 | # | Decision | What it unblocks |
 |---|---|---|
-| 19→1st | **Do first: enrol two-step sign-in** (TEPOS asks for it when you sign in; use an authenticator app and keep a backup). Without it every private TEPOS page stays locked, and the week board can't start | The week board, intake, property, money and the vault |
+| ~~19→1st~~ | ~~**Do first: enrol two-step sign-in**~~ **Done 27 Oct.** (TEPOS asks for it when you sign in; use an authenticator app and keep a backup). Without it every private TEPOS page stays locked, and the week board can't start | The week board, intake, property, money and the vault |
 | 21 | **Railway: switch to the Free plan (USD 0).** *(27 Oct: the connector is signed in, but Railway still answers "Your trial has expired. Please select a plan" for the tebos10 account. Choose Free while signed in as tebos10, then TEBOS starts the worker itself.)* The trial expired and stopped the worker. The worker now runs every 15 minutes, does its work and stops (batch mode), which fits inside the Free plan's USD 1 monthly credit. Steps: railway.com → sign in → the yellow "trial expired" banner (or Account → Plans) → choose **Free**. Then tell TEBOS, which reconnects the worker to `main` | Everything TEBOS does on its own: BAME monitoring, REEDS, analysis, reminders |
 | 22 | **Switch on the weekly signal brief:** TEBOS → Ask TEBOS → Weekly signal brief → "Switch on every week". One click; the worker then files it weekly for you (after decision 21) | REEDS reporting demand, cash, delivery, reliability and security each week |
 | 24 | **Your registration route without a matric:** ask your principal about candidate registration, ask two NQF 4 providers whether they accept your schooling or RPL, and send the PPRA questions (`pra-compliance-checklist.md`). The 12 Nov exam isn't open to you yet (it needs an FFC and NQF 4 first). Decide on the adult matric by Jan (registration closes 5 Feb 2027) | Your own registration, so you can practise and earn commission legally |
@@ -38,6 +38,25 @@ Update this list every run; strike items when they're done.
 | 18 | Each client's web app address (where TEBOS's people sign in to their department), starting with BAME's | Client tiles that open the client's web app |
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
+
+## 27 Oct 2026 (midday): the worker is running; technical work is delegated
+
+- **The founder's delegation (27 Oct):** "make the best decisions for me and the company, I don't want to spend time
+  fixing". This lifts the 19 Oct hold for tier 1 in `OPERATOR.md`:
+  - **Tier 1, without asking:** code, tests, fixes, internal docs, additive migrations, merging green PRs, and
+    redeploying the worker.
+  - **Tier 2, drafts only:** anything outward-facing.
+  - **Tier 3, the founder:** money, prices, legal, credentials, deleting data, destructive migrations.
+
+  The morning routine's instructions were updated to match, at the founder's request.
+- **Two-step sign-in:** confirmed at 09:21 UTC. TEPOS is open; the weekly plan (7 days, 24 tasks) and this week are
+  laid down.
+- **Worker:** Railway is on the Free plan (the founder, about 11:15 UTC). It's reconnected to `main`. The first pass
+  was at 11:32 and a second at 11:46: every 15 minutes, batch mode, beating each pass.
+- **Found and fixed:** the first pass beat with 0 errors while analysis was paused (Anthropic: "credit balance is
+  too low"). PR #100 counts a paused stage as a failed step and shows the reason on the board. It's merged.
+- **Founder (tier 3):** add credit at console.anthropic.com → Plans & Billing if analysis is wanted. Everything else
+  runs without it.
 
 ## 27 Oct 2026 (morning run, 03:50 UTC): healthy, but nothing runs on its own yet
 
