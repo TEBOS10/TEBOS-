@@ -212,7 +212,7 @@ log({
 const heartbeat = new Heartbeat(pool, workerId, batch ? "batch" : "continuous", {
   intelligence: intelligenceEnabled, execution: executionEnabled, voiceInterviews: voiceEnabled, intakeCalls: intakeVoiceEnabled,
   enquiryAlerts: alertsEnabled, payments: Boolean(paystackKey), clientEmails: Boolean(process.env.RESEND_API_KEY), sources: Boolean(sources),
-}, log);
+}, log, undefined, () => [intelligence?.pauseReason() ?? null]);
 
 async function step(name: string, fn: () => Promise<unknown>): Promise<boolean> {
   try {

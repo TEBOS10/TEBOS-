@@ -104,11 +104,13 @@ describe("intelligence worker", () => {
     expect(store.calls[0]!.errorDetail).toBe(PROVIDER_FAULT_DETAIL.misconfigured);
     expect(logs).toContainEqual(expect.objectContaining({ event: "intelligence.paused", reason: "misconfigured" }));
 
-    // paused: nothing is claimed, so the next scan keeps its attempts
+    // paused: nothing is claimed, so the next scan keeps its attempts; the pause is reported for the heartbeat
+    expect(worker.pauseReason()).toMatch(/^intelligence paused \(misconfigured: /);
     now += MISCONFIGURED_PAUSE_MS - 1;
     expect(await worker.runOnce()).toBeNull();
     expect(store.claims).toHaveLength(1);
     now += 1;
+    expect(worker.pauseReason()).toBeNull();
     expect(await worker.runOnce()).toMatchObject({ runId: "run-2" });
   });
 
