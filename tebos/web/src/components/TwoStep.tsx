@@ -90,7 +90,8 @@ export function TwoStepChallenge() {
 }
 
 /** The Account page card: turn two-step sign-in on, add a backup authenticator, or remove one. */
-export function TwoStepSettings({ active }: { active: boolean }) {
+// issuer: the name the authenticator app shows for this entry ("TEPOS" in the founder's app). It is one sign-in either way.
+export function TwoStepSettings({ active, issuer = "TEBOS" }: { active: boolean; issuer?: string }) {
   const { db, refresh } = useSessionState();
   const { factors, error: loadError, reload } = useFactors();
   const verified = (factors ?? []).filter((f) => f.status === "verified");
@@ -112,7 +113,7 @@ export function TwoStepSettings({ active }: { active: boolean }) {
         if (e) throw e;
       }
       const friendlyName = name.trim() || (verified.length === 0 ? "Phone" : `Backup ${verified.length}`);
-      const { data, error: e } = await db.auth.mfa.enroll({ factorType: "totp", friendlyName, issuer: "TEBOS" });
+      const { data, error: e } = await db.auth.mfa.enroll({ factorType: "totp", friendlyName, issuer });
       if (e) throw e;
       setEnrolling({ id: data.id, qr: data.totp.qr_code, secret: data.totp.secret });
     } catch (e) {

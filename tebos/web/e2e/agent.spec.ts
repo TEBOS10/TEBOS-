@@ -89,11 +89,16 @@ test("TEPOS: a listing is added with its next step; personal details and open-en
 });
 
 test("TEPOS: without two-step sign-in, the office stays closed", async ({ page }) => {
-  await founder(page, "aal1");
+  const fake = await founder(page, "aal1");
   await page.goto(`${TEPOS}/agent`);
   // all of TEPOS asks for the second step first (migration tepos_two_step)
   await expect(page.getByTestId("tepos-two-step-first")).toBeVisible();
   await expect(page.getByTestId("agenda")).toHaveCount(0);
+  // the authenticator app lists it as TEPOS, not TEBOS (same sign-in)
+  await expect(page.getByTestId("tepos-two-step-name")).toContainText("TEPOS");
+  await page.getByRole("button", { name: "Turn on two-step sign-in" }).click();
+  await expect(page.getByRole("img", { name: "QR code for your authenticator app" })).toBeVisible();
+  expect(fake.writes.find((w) => w.table === "auth/factors")?.body).toMatchObject({ factor_type: "totp", issuer: "TEPOS" });
 });
 
 test("TEPOS: a deal's documents follow the agency's checklist; nothing is stored, only where it is kept", async ({ page }) => {
