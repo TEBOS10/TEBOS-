@@ -54,6 +54,25 @@ describe("heartbeat", () => {
     expect(calls[1]![4]).toBeNull();
   });
 
+  it("a stage paused by a fault counts as a failed step, so running never hides it", async () => {
+    const { calls, pool } = fakePool();
+    let paused: string | null = "intelligence paused (misconfigured: credit balance is too low)";
+    const hb = new Heartbeat(pool as never, "w1", "batch", {}, () => {}, 60_000, () => [paused, null]);
+    expect(await hb.beat(true)).toBe(true);
+    expect(calls[0]![3]).toBe(1);
+    expect(calls[0]![4]).toBe("intelligence paused (misconfigured: credit balance is too low)");
+    // a real step failure in the same pass is reported first, and both are counted
+    hb.failed("sources", "Outlook read failed (503)");
+    await hb.beat(true);
+    expect(calls[1]![3]).toBe(2);
+    expect(calls[1]![4]).toBe("sources: Outlook read failed (503)");
+    // once the stage is back, the beat is clean
+    paused = null;
+    await hb.beat(true);
+    expect(calls[2]![3]).toBe(0);
+    expect(calls[2]![4]).toBeNull();
+  });
+
   it("a failed beat is logged and never throws", async () => {
     const { pool } = fakePool(true);
     const events: Record<string, unknown>[] = [];

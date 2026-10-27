@@ -78,6 +78,7 @@ export class IntelligenceWorker {
   /** While the provider is failing, no analysis is claimed: a provider fault is not a business's fault. */
   private pausedUntil = 0;
   private outages = 0;
+  private pauseDetail: string | null = null;
 
   constructor(
     private readonly store: IntelligenceStore,
@@ -95,8 +96,14 @@ export class IntelligenceWorker {
     const ms = err.kind === "misconfigured" ? MISCONFIGURED_PAUSE_MS : Math.min(OUTAGE_PAUSE_MS * 2 ** this.outages, MISCONFIGURED_PAUSE_MS);
     this.outages++;
     this.pausedUntil = this.now() + ms;
+    this.pauseDetail = `${err.kind}: ${err.message}`;
     this.log({ event: "intelligence.paused", reason: err.kind, until: new Date(this.pausedUntil).toISOString(), detail: err.message });
     return true;
+  }
+
+  /** While the stage is paused, why (for the heartbeat): a paused stage is not a healthy one. */
+  pauseReason(): string | null {
+    return this.now() < this.pausedUntil ? `intelligence paused (${this.pauseDetail})` : null;
   }
 
   private log(e: Record<string, unknown>) {

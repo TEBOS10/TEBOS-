@@ -85,9 +85,10 @@ export function WeekBoard() {
       </header>
 
       {worker.data && (
-        <p className={`worker-strip worker-${worker.data.state}`} data-testid="worker-status" role={worker.data.state === "running" ? undefined : "status"}>
+        <p className={`worker-strip worker-${worker.data.state}${worker.data.state === "running" && worker.data.lastPassErrors > 0 ? " worker-degraded" : ""}`} data-testid="worker-status" role={worker.data.state === "running" && worker.data.lastPassErrors === 0 ? undefined : "status"}>
           <strong>Worker</strong> {workerSummary(worker.data)}
-          {worker.data.state !== "running" && worker.data.state !== "never" && worker.data.lastError ? <span className="tepos-muted"> Last error: {worker.data.lastError}</span> : null}
+          {worker.data.lastError && worker.data.state !== "never" && (worker.data.state !== "running" || worker.data.lastPassErrors > 0)
+            ? <span className="tepos-muted"> Last error: {worker.data.lastError}</span> : null}
         </p>
       )}
       {worker.error ? <p className="worker-strip worker-unknown tepos-muted" data-testid="worker-status">Worker: couldn't check its status.</p> : null}

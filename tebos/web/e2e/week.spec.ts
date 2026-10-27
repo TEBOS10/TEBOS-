@@ -123,4 +123,11 @@ test("the worker's heartbeat: silence reads as not running, a stopped worker say
   t.worker_heartbeats = [{ worker_id: "w2", mode: "batch", last_beat_at: new Date(Date.now() - 3 * 60_000).toISOString(), last_pass_errors: 0 }];
   await page.reload();
   await expect(page.getByTestId("worker-status")).toHaveText("Worker Running: last pass 3 min ago.");
+
+  // running, but a stage is paused (analysis refused by the provider): the board says so, with the reason
+  t.worker_heartbeats = [{ worker_id: "w2", mode: "batch", last_beat_at: new Date(Date.now() - 2 * 60_000).toISOString(), last_pass_errors: 1,
+    last_error: "intelligence paused (misconfigured: credit balance is too low)" }];
+  await page.reload();
+  await expect(page.getByTestId("worker-status")).toContainText("Running (last pass 2 min ago), but 1 step failed in it.");
+  await expect(page.getByTestId("worker-status")).toContainText("Last error: intelligence paused (misconfigured: credit balance is too low)");
 });
