@@ -9,7 +9,7 @@ Update this list every run; strike items when they're done.
 | # | Decision | What it unblocks |
 |---|---|---|
 | 19→1st | **Do first: enrol two-step sign-in** (TEPOS asks for it when you sign in; use an authenticator app and keep a backup). Without it every private TEPOS page stays locked, and the week board can't start | The week board, intake, property, money and the vault |
-| 21 | **Railway: switch to the Free plan (USD 0).** *(26 Oct: switched to Free, but the worker has shown no activity since 20 Oct. Sign the Railway connector in again in claude.ai so TEBOS can check it and reconnect it to `main`. The week board will say when it runs.)* The trial expired and stopped the worker. The worker now runs every 15 minutes, does its work and stops (batch mode), which fits inside the Free plan's USD 1 monthly credit. Steps: railway.com → sign in → the yellow "trial expired" banner (or Account → Plans) → choose **Free**. Then tell TEBOS, which reconnects the worker to `main` | Everything TEBOS does on its own: BAME monitoring, REEDS, analysis, reminders |
+| 21 | **Railway: switch to the Free plan (USD 0).** *(27 Oct: the connector is signed in, but Railway still answers "Your trial has expired. Please select a plan" for the tebos10 account. Choose Free while signed in as tebos10, then TEBOS starts the worker itself.)* The trial expired and stopped the worker. The worker now runs every 15 minutes, does its work and stops (batch mode), which fits inside the Free plan's USD 1 monthly credit. Steps: railway.com → sign in → the yellow "trial expired" banner (or Account → Plans) → choose **Free**. Then tell TEBOS, which reconnects the worker to `main` | Everything TEBOS does on its own: BAME monitoring, REEDS, analysis, reminders |
 | 22 | **Switch on the weekly signal brief:** TEBOS → Ask TEBOS → Weekly signal brief → "Switch on every week". One click; the worker then files it weekly for you (after decision 21) | REEDS reporting demand, cash, delivery, reliability and security each week |
 | 24 | **Your registration route without a matric:** ask your principal about candidate registration, ask two NQF 4 providers whether they accept your schooling or RPL, and send the PPRA questions (`pra-compliance-checklist.md`). The 12 Nov exam isn't open to you yet (it needs an FFC and NQF 4 first). Decide on the adult matric by Jan (registration closes 5 Feb 2027) | Your own registration, so you can practise and earn commission legally |
 | 25 | **Put the agency arrangement in writing** with your principals: status, permitted work, mandates and adverts, the firm named to clients, commission split, and any separate assessment fee (draft message in `pra-compliance-checklist.md`) | Working with owners without regulatory risk; path B revenue |
@@ -38,6 +38,23 @@ Update this list every run; strike items when they're done.
 | 18 | Each client's web app address (where TEBOS's people sign in to their department), starting with BAME's | Client tiles that open the client's web app |
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
+
+## 27 Oct 2026 (morning run, 03:50 UTC): healthy, but nothing runs on its own yet
+
+- **Main:** green (PR #98, run 148). The branch is level with main, plus PR #99 (open, green, waiting for the founder's yes).
+- **Audit trail:** all 12 chains are **intact**. The platform chain still ends at 4095 and BAME's at 4096, as on
+  21 Oct. Nothing recorded is gone.
+- **Worker (Railway):** no deployment since the trial ended, the last one removed on 19 Oct. Starting it on 26 Oct
+  was refused with "Your trial has expired. Please select a plan". The Free plan isn't active on the account that
+  runs it (tebos10). Its settings are ready: `main`, every 15 minutes, batch mode. The heartbeat (live since 26 Oct)
+  has no beat yet, so the board will say "No worker has reported in yet".
+- **Two-step sign-in:** still unconfirmed. The founder's only factor dates from 19 Oct and was never verified, so
+  TEPOS stays locked. PR #99 makes the authenticator list it as TEPOS.
+- **Advisors:** nothing new beyond the by-design ones. `worker_heartbeats` has row security with no policies, on
+  purpose: it's read only through `worker_status()`.
+- **Portfolio:** counts unchanged since 21 Oct (`product-register.md`). No week has been opened and no source
+  events captured, both because of the two items above.
+- **Prepared:** no new build step. The only open PR is on this branch, and adding to it would widen it.
 
 ## 27 Oct 2026 (overnight): full check; the worker had been silent since 20 Oct, and now it can't be silent again
 
