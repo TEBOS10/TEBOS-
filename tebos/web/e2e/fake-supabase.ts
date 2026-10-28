@@ -379,6 +379,15 @@ function answerRpc(tables: FakeSupabase["tables"], name: string, args: Record<st
     if (health) health.imported = Number(health.imported) + 1;
     return { source_event_id: ev.id, duplicate: false, created, conflicts, skipped };
   }
+  if (name === "sales_calls_today") {
+    // the sales desk: due, active prospects, most promising first (migration sales_prospects)
+    const today = new Date().toISOString().slice(0, 10);
+    const rank: Record<string, number> = { meeting_booked: 0, interested: 1, no_answer: 2, new: 3 };
+    return (((tables as unknown as Record<string, Array<Record<string, unknown>>>).sales_prospects) ?? [])
+      .filter((p) => String(p.status) in rank && String(p.next_call_on ?? today) <= today)
+      .sort((a, b) => rank[String(a.status)]! - rank[String(b.status)]!)
+      .slice(0, Number(args.p_limit ?? 10));
+  }
   if (name === "worker_status") {
     // the worker's heartbeat: a test seeds tables.worker_heartbeats; none means "never"
     const beats = ((tables as unknown as Record<string, Array<Record<string, unknown>>>).worker_heartbeats ?? [])

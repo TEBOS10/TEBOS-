@@ -3370,6 +3370,47 @@ export type Database = {
         }
         Relationships: []
       }
+      sales_prospects: {
+        Row: {
+          id: string
+          business_name: string
+          industry: string
+          area: string
+          website: string | null
+          phone: string | null
+          source_url: string
+          why_fit: string
+          status: string
+          next_call_on: string | null
+          last_outcome: string | null
+          enquiry_id: string | null
+          added_by: string
+          owner: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          business_name: string
+          industry: string
+          area: string
+          website?: string | null
+          phone?: string | null
+          source_url: string
+          why_fit: string
+          added_by?: string
+        }
+        Update: {
+          status?: string
+          next_call_on?: string | null
+          last_outcome?: string | null
+          enquiry_id?: string | null
+          owner?: string | null
+          phone?: string | null
+          website?: string | null
+        }
+        Relationships: []
+      }
       sales_playbook: {
         Row: {
           id: string
@@ -4292,6 +4333,10 @@ export type Database = {
       tepos_open_week: {
         Args: { p_org: string; p_week_start: string }
         Returns: string
+      }
+      sales_calls_today: {
+        Args: { p_limit?: number }
+        Returns: Database["public"]["Tables"]["sales_prospects"]["Row"][]
       }
       worker_status: {
         Args: Record<PropertyKey, never>

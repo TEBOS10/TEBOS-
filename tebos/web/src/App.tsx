@@ -36,6 +36,7 @@ import { ContractPage, PaidPage } from "./pages/ContractPage";
 import { MarketingPage } from "./pages/MarketingPage";
 import { ContractTemplatesPage, OpportunityPage, PipelinePage } from "./pages/PipelinePage";
 import { MarketingPlaybookPage, SalesPlaybookPage, StaffInvitePage, StaffTeamPage } from "./pages/SalesPages";
+import { SalesCallsPage } from "./pages/SalesCallsPage";
 import { StaffShell } from "./components/StaffShell";
 import { BlogIndex, BlogPost } from "./pages/BlogPage";
 import { AiClientsPage } from "./pages/AiClientsPage";
@@ -91,6 +92,7 @@ function staffRoutes(): Array<[string, (p: Record<string, string>) => ReactNode]
     ["/pipeline/channel/:org", (p) => <StaffChannelsPage orgId={p.org!} />],
     ["/pipeline/:id", (p) => <OpportunityPage id={p.id!} />],
     ["/sales", () => <SalesPlaybookPage />],
+    ["/sales/calls", () => <SalesCallsPage />],
     ["/marketing", () => <MarketingPage />],
     ["/marketing/playbook", () => <MarketingPlaybookPage />],
   ];
