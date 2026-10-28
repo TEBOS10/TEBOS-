@@ -39,6 +39,22 @@ Update this list every run; strike items when they're done.
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 28 Oct 2026 (morning run, 03:48 UTC): the worker runs; yesterday's fix wasn't deployed until now
+
+- **Worker:** 132 passes since 27 Oct 11:32 UTC, every 15 minutes. The last beat was at 03:45 with 0 failed steps.
+- **Found:**
+  - Merging PR #100 into `main` did not rebuild the worker. Railway kept running the PR #99 build, so the heartbeat
+    fix wasn't live and analysis being paused still read as healthy.
+  - **Fixed** by reconnecting the source to `main` (05:57 UTC). A new deployment is building from `de8f695`.
+  - Pushes to `main` don't trigger Railway on their own. Until that's solved, each morning run checks that the
+    deployed commit is `main`'s head and rebuilds if not.
+- **Audit trail:** all 12 chains are **intact**. The platform chain still ends at 4095. BAME's chain has grown from
+  4096 to 4457: the worker's 15-minute readings of BAME's operations are now being recorded, which is expected.
+- **Main:** green (PR #100). Open PRs: only this branch's.
+- **Portfolio:** unchanged (`product-register.md`): 0 clients, payments, cases, money records and REEDS requests;
+  1 scan; 15 objectives (3 active). No week task has been marked done yet.
+- **Founder (tier 3):** Anthropic credit (console.anthropic.com → Plans & Billing) if analysis is wanted.
+
 ## 27 Oct 2026 (midday): the worker is running; technical work is delegated
 
 - **The founder's delegation (27 Oct):** "make the best decisions for me and the company, I don't want to spend time

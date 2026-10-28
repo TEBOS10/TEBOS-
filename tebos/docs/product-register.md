@@ -23,7 +23,7 @@ any change to a capability.
 - **"In use" needs real records** from an actual workflow in the live database.
 - A count of 0 means *not yet used*, never *broken*. Tests show it works as written; only use shows it helps.
 
-**Live counts, 27 Oct 2026** (read-only; unchanged since 21 Oct):
+**Live counts, 28 Oct 2026** (read-only; unchanged since 21 Oct):
 
 | | Count |
 |---|---|
