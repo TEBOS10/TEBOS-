@@ -87,7 +87,7 @@ The founder said yes to proposals 1 to 5 on 19 Oct (`tepos/creative-proposals.md
 | System | Where | Stage | Evidence and gap |
 |---|---|---|---|
 | Property Revenue Architecture | TEPOS (Tidy Enterprise) | Built, unused | 0 cases. Priority 1. First offer: the assessment (ADR 0009, price is decision 26), then the monthly plan (decided 19 Oct, `pra-pricing.md`). Monthly update built 19 Oct. First invoice waits on decision 10b |
-| Property journey (Property Revenue Architect Platform, Release 1) | Its own platform (`web/pra`, accounts `app = 'pra'`), linked from TEPOS | Built, tested, not deployed | 0 landlords. Problem register, evidence and actions linked to problems, proof rules, journey stage, milestones and next actions computed from records; owner pages at `/properties`. Migration `property_journey` waits on "merge it". Plan: `pra-platform/release-1.md`, ADR 0010 |
+| Property journey (Property Revenue Architect Platform, Release 1) | Its own platform (`web/pra`, accounts `app = 'pra'`), linked from TEPOS | Built, tested, not deployed | 0 landlords. Problem register, evidence and actions linked to problems, proof rules, journey stage, milestones and next actions computed from records; its own app. Migrations `property_journey` and `pra_platform` wait on "merge it"; the platform needs its own Vercel project. Plan: `pra-platform/release-1.md`, ADR 0010 |
 | Real Estate Office OS | TEPOS agent office (merged) | Built slice 1 | Listings and people with next steps. Documents, FFC path, relationships and marketing are next (founder, 19 Oct) |
 | Hospitality OS | — | Not started | Client tile only |
 | Sports and Marketing OS | BAME's own app (`bame/`) | Separate app | Not a TEBOS module. Its working parts are candidates for the library |
