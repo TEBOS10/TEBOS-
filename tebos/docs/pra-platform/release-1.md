@@ -64,6 +64,9 @@ here is validated: no landlord has used any of it yet (`product-register.md`: 0 
 
 ## 3. Release 1 architecture and data model
 
+**Amended 29 Oct (founder): its own platform.** The pages below form their own web app, linked from TEPOS; see the
+ADR 0010 amendment. Everything else in this section stands.
+
 **Decision: reuse, don't fork.** The landlord's workspace is the existing property case, in the landlord's own
 organisation in the **TEBOS app**. Neither the founder's private TEPOS app nor its data is reused for customers.
 

@@ -27,6 +27,8 @@ test("opens on Monday 26 October 2026: the week starts now, nothing earlier is m
   await page.goto(`${TEPOS}/`);
   await expect(page.getByTestId("week-today")).toHaveText("Monday, 26 October 2026");
   await expect(page.getByTestId("week-starts-now")).toBeVisible();
+  // the property platform is its own app, linked from TEPOS
+  await expect(page.getByTestId("pra-link")).toHaveAttribute("href", "https://pra.fixture.test");
   await expect(page.getByText("Scene 1:")).toContainText("Build the pipeline");
   await expect(page.getByTestId("next-action")).toContainText("Review what's left today");
   // Monday's Start-now queue, none of it done

@@ -16,7 +16,7 @@ export default defineConfig({
     // browser it destabilised the CI runner's headless shell, so it stays per file
     launchOptions: process.env.PLAYWRIGHT_CHROMIUM ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM } : {},
   },
-  // TEBOS on 5174; TEPOS, the separate personal app, on 5175 (its specs set their own baseURL)
+  // TEBOS on 5174; TEPOS, the separate personal app, on 5175; the property platform on 5176 (their specs set their own baseURL)
   webServer: [
     {
       command: "npx vite --port 5174 --strictPort",
@@ -27,6 +27,12 @@ export default defineConfig({
     {
       command: "npx vite --config vite.tepos.config.ts --port 5175 --strictPort",
       url: "http://localhost:5175",
+      reuseExistingServer: false,
+      env: { VITE_SUPABASE_URL: "https://fixture.supabase.test", VITE_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_fixture", VITE_PRA_URL: "https://pra.fixture.test" },
+    },
+    {
+      command: "npx vite --config vite.pra.config.ts --port 5176 --strictPort",
+      url: "http://localhost:5176",
       reuseExistingServer: false,
       env: { VITE_SUPABASE_URL: "https://fixture.supabase.test", VITE_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_fixture" },
     },

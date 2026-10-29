@@ -243,6 +243,13 @@ export async function installFakeSupabase(
 // The two invitation functions, answered from the fixture tables; any other RPC returns a fresh id.
 function answerRpc(tables: FakeSupabase["tables"], name: string, args: Record<string, string>, storedFiles = new Set<string>()): unknown {
   const now = new Date().toISOString();
+  if (name === "create_pra_account") {
+    // the property platform's own account: the database makes the slug and the owner's membership
+    const id = crypto.randomUUID();
+    tables.organisations!.push({ id, name: args.p_name, slug: `pra-${id.slice(0, 12)}`, private: false, app: "pra", created_at: now });
+    tables.memberships!.push({ org_id: id, user_id: USER_ID, role: "org_admin", created_at: now });
+    return id;
+  }
   if (name === "vault_confirm" || name === "vault_open") {
     // the vault: stored only when the file is there; an opening is logged before the path is handed back
     const t = tables as Record<string, Array<Record<string, unknown>>>;

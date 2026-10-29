@@ -4480,6 +4480,10 @@ export type Database = {
         Args: { p_name: string; p_slug: string }
         Returns: string
       }
+      create_pra_account: {
+        Args: { p_name: string }
+        Returns: string
+      }
       create_private_organisation: {
         Args: { p_name: string; p_slug: string }
         Returns: string

@@ -52,8 +52,9 @@ export const OPEN_ACTION_STATUSES = ["proposed", "ready", "awaiting_approval", "
 // ---------------------------------------------------------------------------
 
 /** Which web app an organisation belongs to: TEBOS (clients) or TEPOS (the founder's own). Private ones are TEPOS's. */
-export type App = "tebos" | "tepos";
-export const appOf = (o: Pick<Organisation, "private"> & { app?: string | null }): App => (o.app === "tepos" || o.private ? "tepos" : "tebos");
+export type App = "tebos" | "tepos" | "pra";
+export const appOf = (o: Pick<Organisation, "private"> & { app?: string | null }): App =>
+  o.app === "tepos" || o.private ? "tepos" : o.app === "pra" ? "pra" : "tebos";
 
 /** The person's organisations in this app only: TEBOS never lists TEPOS's, and the other way round. */
 export async function myOrganisations(db: Db, userId: string, app: App = "tebos") {

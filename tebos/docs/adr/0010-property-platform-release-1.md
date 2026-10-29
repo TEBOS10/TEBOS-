@@ -35,3 +35,26 @@ Platform: a continuous property-improvement journey for South African landlords,
   tested with real landlords before the next one grows.
 - **Real customer records need backups first:** Supabase Pro, a founder decision.
 - The R79 and R199 subscriptions are test prices only. Nothing charges anyone.
+
+## Amendment, 29 Oct 2026 (founder): its own platform, linked to TEPOS
+
+The founder: "it's its own platform … It's just linked to TPOS. That's the core difference."
+
+**What changes:**
+1. **A third web app.** The Property Revenue Architect Platform is now its own web app from the same code base:
+   - entry `web/pra/index.html`;
+   - build `vite.pra.config.ts`, which outputs `dist-pra`;
+   - its own deployment.
+
+   It sits alongside TEBOS (the client app) and TEPOS (the founder's own app).
+2. **Landlords' accounts belong to this app alone** (`organisations.app = 'pra'`, migration `pra_platform`).
+   - A landlord opens one account, without an invitation (`create_pra_account`).
+   - TEBOS and TEPOS never list it, and it never lists theirs.
+3. **TEPOS links to it.** The menu has a "Property platform" link, set with `VITE_PRA_URL`.
+4. **TEBOS's client app has no property pages any more.** The bundle check refuses any trace of the platform in TEBOS,
+   and any trace of TEPOS in the platform.
+
+**What stays the same:**
+- one database and one set of rules;
+- row-level security per account;
+- the founder's PRA cases in Tidy Enterprise (TEPOS).

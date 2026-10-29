@@ -1,4 +1,4 @@
-import { BookOpen, Briefcase, House, Clapperboard, Eye, Building2, CheckSquare, Download, Gauge, Home, ListChecks, LogOut, Megaphone, Menu, MessageSquare, MessagesSquare, PhoneCall, Plug, Receipt, ScanSearch, ShieldCheck, Sparkles, Stamp, Users } from "lucide-react";
+import { BookOpen, Briefcase, Clapperboard, Eye, Building2, CheckSquare, Download, Gauge, Home, ListChecks, LogOut, Megaphone, Menu, MessageSquare, MessagesSquare, PhoneCall, Plug, Receipt, ScanSearch, ShieldCheck, Sparkles, Stamp, Users } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { DEMO_BUSINESS } from "../demo/data";
 import { exitDemo, isDemo } from "../demo/mode";
@@ -11,7 +11,6 @@ const NAV = [
   { to: "/", label: "Home", icon: Home, exact: true },
   { to: "/reeds", label: "Ask TEBOS", icon: MessageSquare },
   { to: "/channel", label: "TEBOS channel", icon: MessagesSquare },
-  { to: "/properties", label: "Properties", icon: House },
   { to: "/businesses", label: "Businesses", icon: Building2 },
   { to: "/scans", label: "Scans", icon: ScanSearch },
   { to: "/findings", label: "Findings", icon: Sparkles },

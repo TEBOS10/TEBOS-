@@ -1,6 +1,6 @@
 // The TEPOS app: sign-in, the second step, then the founder's portals. Only someone who owns a private
 // organisation gets in; anyone else is told this is a private system, and sees nothing of it.
-import { CalendarCheck, Inbox, LayoutGrid, Landmark, KeyRound, GraduationCap, Home, LineChart, LogOut, MessageSquare, Vault } from "lucide-react";
+import { Building, CalendarCheck, ExternalLink, Inbox, LayoutGrid, Landmark, KeyRound, GraduationCap, Home, LineChart, LogOut, MessageSquare, Vault } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { TwoStepChallenge, TwoStepSettings } from "../components/TwoStep";
 import { Loading } from "../components/ui";
@@ -44,7 +44,7 @@ const ROUTES: Array<[string, (p: Record<string, string>) => ReactNode]> = [
   ["/property/:id/report", (p) => <PropertyReportPage id={p.id!} />],
   ["/property/:id/month", (p) => <PropertyMonthPage id={p.id!} />],
   ["/property/:id/month/:month", (p) => <PropertyMonthPage id={p.id!} month={p.month!} />],
-  ["/account", () => <AccountPage />],
+  ["/account", () => <AccountPage issuer="TEPOS" />],
   ["/reeds", () => <ReedsPage />],
   ["/reeds/:id", (p) => <ReedsRequestPage id={p.id!} />],
   ["/:portal", (p) => <TeposPortalPage portal={p.portal!} />],
@@ -73,7 +73,7 @@ function Gate() {
     case "signed_out":
       return <SignIn name="TEPOS" tagline="Tidy Enterprise Personal Operating System. Private." />;
     case "two_step":
-      return <TwoStepChallenge />;
+      return <TwoStepChallenge name="TEPOS" />;
     case "no_organisation":
       return <TwoStepFirst><Private /></TwoStepFirst>;
     case "error":
@@ -169,6 +169,7 @@ function Shell({ children }: { children: ReactNode }) {
               </Link>
             );
           })}
+          <PraLink />
         </nav>
         <div className="sidebar-foot">
           <div className="org-name" data-testid="current-org">{organisation.name}</div>
@@ -183,6 +184,20 @@ function Shell({ children }: { children: ReactNode }) {
       </aside>
       <main className="main">{children}</main>
     </div>
+  );
+}
+
+/** The Property Revenue Architect Platform is its own platform, linked from here: it opens in its own app. */
+const PRA_URL = (import.meta.env.VITE_PRA_URL as string | undefined)?.replace(/\/+$/, "") || null;
+
+function PraLink() {
+  if (!PRA_URL) {
+    return <span className="nav-link" aria-disabled="true" title="The property platform's address isn't set yet" data-testid="pra-link"><Building size={17} aria-hidden /> Property platform (not deployed yet)</span>;
+  }
+  return (
+    <a className="nav-link" href={PRA_URL} target="_blank" rel="noreferrer" data-testid="pra-link">
+      <Building size={17} aria-hidden /> Property platform <ExternalLink size={13} aria-hidden />
+    </a>
   );
 }
 

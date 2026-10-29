@@ -12,9 +12,14 @@ const now = () => new Date().toISOString();
 const inDays = (n: number) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
 type Tables = Record<string, Record<string, unknown>[]>;
 
+// the property platform is its own app (vite.pra.config.ts), on its own port
+test.use({ baseURL: "http://localhost:5176" });
+
 function empty(fake: FakeSupabase): Tables {
   const t = fake.tables as unknown as Tables;
   for (const k of ["property_cases", "property_problems", "property_evidence", "property_workstreams", "property_baselines", "property_outcome_reviews", "audit_events"]) t[k] = [];
+  // the fixture organisation stands in for a landlord's account on the property platform
+  for (const o of t.organisations!) if (o.id === ORG) o.app = "pra";
   return t;
 }
 
@@ -41,8 +46,8 @@ test("a landlord takes a property from its first record to a resolved problem, w
   const fake = await installFakeSupabase(page);
   const t = empty(fake);
   await page.goto("/");
-  await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Properties" }).click();
   await expect(page.getByRole("heading", { name: "Your properties" })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Your properties" })).toBeVisible();
   await expect(page.getByText("No properties yet.")).toBeVisible();
 
   // 1. create the property: what isn't known stays unknown
@@ -211,4 +216,33 @@ test("the portfolio places each property on its journey, and works on a phone", 
   await town.getByRole("link", { name: "Townhouse in Centurion (test)" }).click();
   await expect(page.getByTestId("next-actions")).toContainText("It was due on");
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+});
+
+test("a landlord opens their own account on the platform; TEBOS's and TEPOS's organisations never show here", async ({ page }) => {
+  const fake = await installFakeSupabase(page);
+  empty(fake);
+  const t = fake.tables as unknown as Tables;
+  // the fixture organisation is a TEBOS client's: it isn't this platform's
+  for (const o of t.organisations!) if (o.id === ORG) o.app = "tebos";
+  await page.goto("/");
+  const open = page.getByRole("form", { name: "Open your property account" });
+  await expect(open).toBeVisible();
+  await expect(page.getByText("Demo organisation (fixture)")).toHaveCount(0);
+  await open.getByRole("button", { name: "Open account" }).click();
+  await expect(open.getByRole("alert")).toContainText("Give your account a name");
+  await open.getByLabel("Account name").fill("Mokoena Properties (test)");
+  await open.getByRole("button", { name: "Open account" }).click();
+  await expect(page.getByRole("heading", { name: "Your properties" })).toBeVisible();
+  await expect(page.getByTestId("current-org")).toHaveText("Mokoena Properties (test)");
+  expect(t.organisations!.find((o) => o.name === "Mokoena Properties (test)")).toMatchObject({ app: "pra" });
+  await expect(page.getByText("not legal, tax, financial or property-practitioner advice")).toBeVisible();
+});
+
+test("TEBOS's client app has no property pages: the platform is its own app", async ({ page }) => {
+  await installFakeSupabase(page);
+  await page.goto("http://localhost:5174/");
+  await expect(page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Businesses" })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: /Propert/ })).toHaveCount(0);
+  await page.goto("http://localhost:5174/properties");
+  await expect(page.getByRole("heading", { name: "Your properties" })).toHaveCount(0);
 });

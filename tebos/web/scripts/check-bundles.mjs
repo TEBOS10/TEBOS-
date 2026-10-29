@@ -17,8 +17,10 @@ function forbid(dir, pattern, why) {
   for (const f of files(dir).filter(text)) if (pattern.test(readFileSync(f, "utf8"))) problems.push(`${f}: ${why}`);
 }
 
+forbid("dist", /Property Revenue Architect|create_pra_account/, "TEBOS must not contain the property platform");
+forbid("dist-pra", /TEPOS|Tidy Capital|IREKUN|tepos-mark|agent_listings|agent_contacts|vault_documents|tepos-vault/, "the property platform must not contain TEPOS");
 forbid("dist", /TEPOS|Tidy Capital|IREKUN|tepos-mark|agent_listings|agent_contacts|vault_documents|tepos-vault/, "TEBOS must not contain TEPOS");
-for (const d of ["dist", "dist-tepos"]) {
+for (const d of ["dist", "dist-tepos", "dist-pra"]) {
   forbid(d, /anthropic|elevenlabs|claude/i, "names a provider");
   forbid(d, /service_role|c2VydmljZV9yb2xl|sb_secret_[A-Za-z0-9_-]{16,}/, "carries a privileged database key");
 }
@@ -27,4 +29,4 @@ if (problems.length) {
   console.error(problems.join("\n"));
   process.exit(1);
 }
-console.log("Bundles checked: TEBOS carries nothing of TEPOS; no provider names; no privileged database keys.");
+console.log("Bundles checked: TEBOS carries nothing of TEPOS or the property platform; the property platform nothing of TEPOS; no provider names; no privileged database keys.");
