@@ -4,7 +4,8 @@ import { Card, PageHeader } from "../components/ui";
 import { usePeople } from "../lib/people";
 import { useOrg } from "../lib/session";
 
-export function AccountPage() {
+/** issuer: the name the person's authenticator app shows for this app's codes */
+export function AccountPage({ issuer }: { issuer?: string } = {}) {
   const org = useOrg();
   const { me } = usePeople();
   return (
@@ -18,7 +19,7 @@ export function AccountPage() {
           <SetPassword />
         </Card>
         <Card title="Two-step sign-in" subtitle="A code from an authenticator app, on top of your password. A stolen password alone then opens nothing.">
-          <TwoStepSettings active={org.twoStep} />
+          <TwoStepSettings active={org.twoStep} issuer={issuer} />
         </Card>
       </div>
     </div>

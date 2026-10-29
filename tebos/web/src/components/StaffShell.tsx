@@ -15,7 +15,7 @@ export function StaffShell({ children }: { children: ReactNode }) {
   useEffect(() => setMenuOpen(false), [path]);
   const pipeline = access?.sales || access?.maintainer;
   const nav = [
-    ...(pipeline ? [{ to: "/pipeline", label: "Pipeline", icon: Briefcase }, { to: "/sales", label: "Sales playbook", icon: BookOpen }] : []),
+    ...(pipeline ? [{ to: "/pipeline", label: "Pipeline", icon: Briefcase }, { to: "/sales/calls", label: "Today's calls", icon: PhoneCall, exact: true }, { to: "/sales", label: "Sales playbook", icon: BookOpen }] : []),
     { to: "/marketing", label: "Marketing", icon: Megaphone },
     { to: "/marketing/playbook", label: "Marketing playbook", icon: BookOpen },
     ...(access?.sales ? [{ to: "/meet", label: "Meeting mode", icon: PhoneCall }] : []),

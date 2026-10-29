@@ -40,7 +40,7 @@ export function Shell({ children }: { children: ReactNode }) {
   const base = NAV;
   const nav = pipeline || access?.marketing
     ? [...base,
-       ...(pipeline ? [{ to: "/pipeline", label: "Pipeline", icon: Briefcase, exact: false }, { to: "/sales", label: "Sales playbook", icon: BookOpen, exact: false }] : []),
+       ...(pipeline ? [{ to: "/pipeline", label: "Pipeline", icon: Briefcase, exact: false }, { to: "/sales/calls", label: "Today's calls", icon: PhoneCall, exact: true }, { to: "/sales", label: "Sales playbook", icon: BookOpen, exact: true }] : []),
        { to: "/marketing", label: "Marketing", icon: Megaphone, exact: true },
        { to: "/marketing/playbook", label: "Marketing playbook", icon: BookOpen, exact: true },
        ...(access?.sales ? [{ to: "/meet", label: "Meeting mode", icon: PhoneCall, exact: true }] : []),

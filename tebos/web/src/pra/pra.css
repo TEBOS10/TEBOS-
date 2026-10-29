@@ -1,0 +1,10 @@
+/* The Property Revenue Architect Platform: calm and premium. Black, charcoal, grey and white, with deep navy accents. */
+.pra { --pra-navy: #1b2c4a; --pra-navy-soft: #24395e; }
+.pra .sidebar { background: linear-gradient(180deg, #0b1424 0%, #0d0f13 100%); }
+.pra .nav-link.active { background: var(--pra-navy); }
+.pra-mark { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; background: var(--pra-navy, #1b2c4a); color: #fff; font-weight: 800; font-size: 11px; letter-spacing: 0.08em; flex: none; }
+.pra .journey-track li.current { border-top-color: #6f8fc7; }
+.pra .btn-primary { background: #e9eef7; color: #0b1424; border-color: #e9eef7; }
+.pra-eyebrow { text-transform: uppercase; letter-spacing: 0.12em; font-size: 11px; font-weight: 800; color: var(--muted); margin: 0 0 6px; }
+.pra-auth .auth-card { display: flex; flex-direction: column; gap: 14px; }
+.pra-boundary { margin-top: 32px; font-size: 12px; max-width: 760px; }

@@ -8,7 +8,7 @@ Update this list every run; strike items when they're done.
 
 | # | Decision | What it unblocks |
 |---|---|---|
-| 19→1st | **Do first: enrol two-step sign-in** (TEPOS asks for it when you sign in; use an authenticator app and keep a backup). Without it every private TEPOS page stays locked, and the week board can't start | The week board, intake, property, money and the vault |
+| ~~19→1st~~ | ~~**Do first: enrol two-step sign-in**~~ **Done 27 Oct.** (TEPOS asks for it when you sign in; use an authenticator app and keep a backup). Without it every private TEPOS page stays locked, and the week board can't start | The week board, intake, property, money and the vault |
 | 21 | **Railway: switch to the Free plan (USD 0).** *(27 Oct: the connector is signed in, but Railway still answers "Your trial has expired. Please select a plan" for the tebos10 account. Choose Free while signed in as tebos10, then TEBOS starts the worker itself.)* The trial expired and stopped the worker. The worker now runs every 15 minutes, does its work and stops (batch mode), which fits inside the Free plan's USD 1 monthly credit. Steps: railway.com → sign in → the yellow "trial expired" banner (or Account → Plans) → choose **Free**. Then tell TEBOS, which reconnects the worker to `main` | Everything TEBOS does on its own: BAME monitoring, REEDS, analysis, reminders |
 | 22 | **Switch on the weekly signal brief:** TEBOS → Ask TEBOS → Weekly signal brief → "Switch on every week". One click; the worker then files it weekly for you (after decision 21) | REEDS reporting demand, cash, delivery, reliability and security each week |
 | 24 | **Your registration route without a matric:** ask your principal about candidate registration, ask two NQF 4 providers whether they accept your schooling or RPL, and send the PPRA questions (`pra-compliance-checklist.md`). The 12 Nov exam isn't open to you yet (it needs an FFC and NQF 4 first). Decide on the adult matric by Jan (registration closes 5 Feb 2027) | Your own registration, so you can practise and earn commission legally |
@@ -38,6 +38,82 @@ Update this list every run; strike items when they're done.
 | 18 | Each client's web app address (where TEBOS's people sign in to their department), starting with BAME's | Client tiles that open the client's web app |
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
+
+## 29 Oct 2026 (day): Property Revenue Architect Platform, Release 1 built
+
+- **The founder's build directive** (29 Oct). The audit, gap analysis and plan are in `pra-platform/release-1.md`.
+  ADR 0010 records why Release 1 is built now, against ADR 0009's "nothing new before December".
+- **Reused, not forked:**
+  - the founder's property case workspace (intake, evidence, figures, work items, baseline, outcomes, audit, export)
+    becomes each landlord's workspace, in their own organisation in the TEBOS app;
+  - no new app or database, and no private records move.
+- **Built** (migration `property_journey`, `src/domain/journey.ts`, `/properties`):
+  - a problem register;
+  - evidence and actions linked to problems;
+  - proof rules: an action is done only with received evidence, and a problem is resolved only with a done action
+    and checked evidence;
+  - journey stage, milestones and next actions, each explaining itself;
+  - a portfolio view, a command centre, history and export.
+- **Proved:**
+  - core: 442 unit tests;
+  - `test:db`, including `99zx_property_journey.sql`;
+  - web: 63 unit tests and 143 e2e, including the Release 1 acceptance flow, a viewer's read-only view and a phone
+    width check;
+  - build.
+- **Founder decisions:**
+  - "merge it" for the PR;
+  - Supabase Pro (backups) before the first real landlord;
+  - pricing (R79 / R199) before Release 5.
+
+## 29 Oct 2026 (morning run, 03:48 UTC): healthy; the sales desk waits on PR #101
+
+- **Worker:** 324 passes; last beat 03:47 UTC. Railway runs `main`'s head (`de8f695`), so no rebuild was needed. Each
+  pass reports 1 failed step: analysis is paused because the Anthropic credit balance is zero. The heartbeat now shows
+  this truthfully.
+- **Audit trail:** all 12 chains are **intact**. The platform chain still ends at 4095; the newest event is 4791
+  (BAME's 15-minute readings).
+- **Advisors:** unchanged and by design: functions check their own roles or tokens, tables without policies are
+  server-only. Leaked-password protection is still decision 8.
+- **Main:** green. **PR #101** (sales desk, 12-month estimate, legal quote draft) is green at `0be0ca9` and needs the
+  founder's "merge it". Until then `sales_prospects` isn't live, so no businesses were added today.
+- **Corrected:** the estimate said token recording was still to build. It was already built and tested; the counts
+  are empty only because all 667 analysis runs were refused for credit. `pilot-budget-12m.md` now says so.
+- **Portfolio:** unchanged (0 clients, payments, cases).
+
+## 28 Oct 2026 (morning run, 03:48 UTC): the worker runs; yesterday's fix wasn't deployed until now
+
+- **Worker:** 132 passes since 27 Oct 11:32 UTC, every 15 minutes. The last beat was at 03:45 with 0 failed steps.
+- **Found:**
+  - Merging PR #100 into `main` did not rebuild the worker. Railway kept running the PR #99 build, so the heartbeat
+    fix wasn't live and analysis being paused still read as healthy.
+  - **Fixed** by reconnecting the source to `main` (05:57 UTC). A new deployment is building from `de8f695`.
+  - Pushes to `main` don't trigger Railway on their own. Until that's solved, each morning run checks that the
+    deployed commit is `main`'s head and rebuilds if not.
+- **Audit trail:** all 12 chains are **intact**. The platform chain still ends at 4095. BAME's chain has grown from
+  4096 to 4457: the worker's 15-minute readings of BAME's operations are now being recorded, which is expected.
+- **Main:** green (PR #100). Open PRs: only this branch's.
+- **Portfolio:** unchanged (`product-register.md`): 0 clients, payments, cases, money records and REEDS requests;
+  1 scan; 15 objectives (3 active). No week task has been marked done yet.
+- **Founder (tier 3):** Anthropic credit (console.anthropic.com → Plans & Billing) if analysis is wanted.
+
+## 27 Oct 2026 (midday): the worker is running; technical work is delegated
+
+- **The founder's delegation (27 Oct):** "make the best decisions for me and the company, I don't want to spend time
+  fixing". This lifts the 19 Oct hold for tier 1 in `OPERATOR.md`:
+  - **Tier 1, without asking:** code, tests, fixes, internal docs, additive migrations, merging green PRs, and
+    redeploying the worker.
+  - **Tier 2, drafts only:** anything outward-facing.
+  - **Tier 3, the founder:** money, prices, legal, credentials, deleting data, destructive migrations.
+
+  The morning routine's instructions were updated to match, at the founder's request.
+- **Two-step sign-in:** confirmed at 09:21 UTC. TEPOS is open; the weekly plan (7 days, 24 tasks) and this week are
+  laid down.
+- **Worker:** Railway is on the Free plan (the founder, about 11:15 UTC). It's reconnected to `main`. The first pass
+  was at 11:32 and a second at 11:46: every 15 minutes, batch mode, beating each pass.
+- **Found and fixed:** the first pass beat with 0 errors while analysis was paused (Anthropic: "credit balance is
+  too low"). PR #100 counts a paused stage as a failed step and shows the reason on the board. It's merged.
+- **Founder (tier 3):** add credit at console.anthropic.com → Plans & Billing if analysis is wanted. Everything else
+  runs without it.
 
 ## 27 Oct 2026 (morning run, 03:50 UTC): healthy, but nothing runs on its own yet
 

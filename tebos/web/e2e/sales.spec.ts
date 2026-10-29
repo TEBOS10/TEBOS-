@@ -139,3 +139,65 @@ test("a signed-in invitee accepts and lands on the playbook", async ({ page }) =
   // staff only: still no client app
   await expect(page.getByRole("link", { name: "Businesses" })).toHaveCount(0);
 });
+
+test("today's calls: the most promising first, each with its source and reason; an outcome needs a note and schedules the next call", async ({ page }) => {
+  const fake = await installFakeSupabase(page);
+  const t = fake.tables as Record<string, unknown[]>;
+  t.memberships = [];
+  t.platform_admins = [];
+  t.platform_staff = [{ user_id: USER_ID, role: "sales", added_by: null, created_at: now }];
+  t.staff_profiles = [{ user_id: USER_ID, display_name: "Lindiwe" }];
+  t.opportunities = [];
+  const prospect = (id: string, over: Record<string, unknown>) => ({
+    id, business_name: `Business ${id}`, industry: "Dental practice", area: "Rivonia", website: null, phone: "011 234 5678",
+    source_url: `https://directory.example/${id}`, why_fit: "Bookings by phone only; no reminders.", status: "new", next_call_on: null,
+    last_outcome: null, enquiry_id: null, added_by: "reeds", owner: null, created_at: now, updated_at: now, ...over,
+  });
+  t.sales_prospects = [
+    prospect("p1", { business_name: "Rivonia Dental" }),
+    prospect("p2", { business_name: "Sandton Tutors", status: "interested", last_outcome: "Wants a demo", industry: "Tutoring" }),
+    prospect("p3", { business_name: "Gone Plumbing", status: "do_not_contact" }),
+    prospect("p4", { business_name: "Later Bakery", status: "no_answer", next_call_on: "2099-01-01" }),
+  ];
+
+  await page.goto("/sales/calls");
+  await expect(page.getByRole("heading", { name: "Today's calls" })).toBeVisible();
+  const calls = page.getByTestId("call");
+  // interest first, then new; do-not-contact and not-yet-due never appear
+  await expect(calls).toHaveCount(2);
+  await expect(calls.nth(0)).toContainText("Sandton Tutors");
+  await expect(calls.nth(0)).toContainText("Last call: Wants a demo");
+  await expect(calls.nth(1)).toContainText("Rivonia Dental");
+  await expect(calls.nth(1).getByRole("link", { name: "Where we found them" })).toHaveAttribute("href", "https://directory.example/p1");
+  await expect(calls.nth(1).getByRole("link", { name: /011 234 5678/ })).toHaveAttribute("href", "tel:0112345678");
+  await expect(page.getByTestId("calls-today")).not.toContainText("Gone Plumbing");
+
+  // "interested" needs what they said; the next call is scheduled
+  const dental = page.getByRole("form", { name: "Record the call to Rivonia Dental" });
+  await dental.getByRole("button", { name: "Interested", exact: true }).click();
+  await dental.getByLabel("What did they say?").fill("Practice manager wants the booking flow");
+  await dental.getByRole("button", { name: "Save" }).click();
+  await expect.poll(() => fake.writes.find((w) => w.table === "sales_prospects" && w.method === "PATCH")?.body).toMatchObject({
+    status: "interested", last_outcome: "Practice manager wants the booking flow", next_call_on: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+  });
+
+  // asking not to be called is final and schedules nothing
+  const tutors = page.getByRole("form", { name: "Record the call to Sandton Tutors" });
+  await tutors.getByRole("button", { name: "Asked not to be called" }).click();
+  await expect(tutors).toContainText("They won't be called again.");
+  await tutors.getByRole("button", { name: "Save" }).click();
+  await expect.poll(() => fake.writes.filter((w) => w.table === "sales_prospects" && w.method === "PATCH").at(-1)?.body).toMatchObject({ status: "do_not_contact", next_call_on: null });
+
+  // adding a business needs where it was found and why it fits
+  await page.getByRole("button", { name: "Add a business" }).click();
+  const add = page.getByRole("form", { name: "Add a business" });
+  await add.getByLabel("Business name").fill("Fourways Physio");
+  await add.getByLabel("Industry").fill("Physiotherapy");
+  await add.getByLabel("Area").fill("Fourways");
+  await add.getByLabel("Where you found them").fill("https://directory.example/fourways-physio");
+  await add.getByLabel("Why they fit").fill("Appointments by phone only, no reminders on the site.");
+  await add.getByRole("button", { name: "Add" }).click();
+  await expect.poll(() => fake.writes.find((w) => w.table === "sales_prospects" && w.method === "POST")?.body).toMatchObject({
+    business_name: "Fourways Physio", source_url: "https://directory.example/fourways-physio", website: null, phone: null,
+  });
+});

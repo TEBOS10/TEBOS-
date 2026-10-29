@@ -41,7 +41,7 @@ function CodeInput({ value, onChange, label = "6-digit code" }: { value: string;
 }
 
 /** Shown after a password sign-in when the account has two-step sign-in. Nothing else loads until it passes. */
-export function TwoStepChallenge() {
+export function TwoStepChallenge({ name = "TEBOS" }: { name?: string } = {}) {
   const { db } = useSessionState();
   const { factors, error: loadError } = useFactors();
   const verified = (factors ?? []).filter((f) => f.status === "verified");
@@ -69,7 +69,7 @@ export function TwoStepChallenge() {
     <div className="auth">
       <form className="auth-card" onSubmit={submit} aria-label="Two-step sign-in">
         <h1 className="page-title">Enter your code</h1>
-        <p className="muted">Your account uses two-step sign-in. Open your authenticator app and enter the code for TEBOS.</p>
+        <p className="muted">Your account uses two-step sign-in. Open your authenticator app and enter the code for {name}.</p>
         <ErrorNote error={loadError} title="Couldn't load your authenticators" />
         {verified.length > 1 && (
           <Field label="Authenticator">

@@ -52,8 +52,9 @@ export const OPEN_ACTION_STATUSES = ["proposed", "ready", "awaiting_approval", "
 // ---------------------------------------------------------------------------
 
 /** Which web app an organisation belongs to: TEBOS (clients) or TEPOS (the founder's own). Private ones are TEPOS's. */
-export type App = "tebos" | "tepos";
-export const appOf = (o: Pick<Organisation, "private"> & { app?: string | null }): App => (o.app === "tepos" || o.private ? "tepos" : "tebos");
+export type App = "tebos" | "tepos" | "pra";
+export const appOf = (o: Pick<Organisation, "private"> & { app?: string | null }): App =>
+  o.app === "tepos" || o.private ? "tepos" : o.app === "pra" ? "pra" : "tebos";
 
 /** The person's organisations in this app only: TEBOS never lists TEPOS's, and the other way round. */
 export async function myOrganisations(db: Db, userId: string, app: App = "tebos") {
@@ -1546,6 +1547,8 @@ export type PropertyWorkstream = Row<"property_workstreams">;
 export type PropertyBaseline = Row<"property_baselines">;
 export type PropertyReview = Row<"property_outcome_reviews">;
 export type PropertyActual = Row<"property_outcome_values">;
+/** Release 1 of the property journey links a work item to a problem and its proof; the founder's case pages leave them unset. */
+type JourneyColumns = "problem_id" | "reason" | "done_when" | "completion_evidence_id";
 
 export async function listPropertyCases(db: Db, orgId: string) {
   const cases = must(await db.from("property_cases").select("*").eq("org_id", orgId).order("updated_at", { ascending: false }).limit(200));
@@ -1636,7 +1639,7 @@ export async function savePropertyGate(db: Db, existing: PropertyGate | undefine
   return must(await db.from("property_gates").insert(row).select().single());
 }
 
-export async function savePropertyWorkstream(db: Db, existing: PropertyWorkstream | undefined, row: Omit<PropertyWorkstream, "id" | "created_at" | "updated_at">) {
+export async function savePropertyWorkstream(db: Db, existing: PropertyWorkstream | undefined, row: Omit<PropertyWorkstream, "id" | "created_at" | "updated_at" | JourneyColumns> & Partial<Pick<PropertyWorkstream, JourneyColumns>>) {
   if (existing) return must(await db.from("property_workstreams").update(row).eq("id", existing.id).select().single());
   return must(await db.from("property_workstreams").insert(row).select().single());
 }

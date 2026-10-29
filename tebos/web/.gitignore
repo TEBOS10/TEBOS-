@@ -1,6 +1,7 @@
 node_modules/
 dist/
 dist-tepos/
+dist-pra/
 .env
 .env.local
 test-results/

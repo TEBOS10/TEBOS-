@@ -243,6 +243,13 @@ export async function installFakeSupabase(
 // The two invitation functions, answered from the fixture tables; any other RPC returns a fresh id.
 function answerRpc(tables: FakeSupabase["tables"], name: string, args: Record<string, string>, storedFiles = new Set<string>()): unknown {
   const now = new Date().toISOString();
+  if (name === "create_pra_account") {
+    // the property platform's own account: the database makes the slug and the owner's membership
+    const id = crypto.randomUUID();
+    tables.organisations!.push({ id, name: args.p_name, slug: `pra-${id.slice(0, 12)}`, private: false, app: "pra", created_at: now });
+    tables.memberships!.push({ org_id: id, user_id: USER_ID, role: "org_admin", created_at: now });
+    return id;
+  }
   if (name === "vault_confirm" || name === "vault_open") {
     // the vault: stored only when the file is there; an opening is logged before the path is handed back
     const t = tables as Record<string, Array<Record<string, unknown>>>;
@@ -379,6 +386,15 @@ function answerRpc(tables: FakeSupabase["tables"], name: string, args: Record<st
     if (health) health.imported = Number(health.imported) + 1;
     return { source_event_id: ev.id, duplicate: false, created, conflicts, skipped };
   }
+  if (name === "sales_calls_today") {
+    // the sales desk: due, active prospects, most promising first (migration sales_prospects)
+    const today = new Date().toISOString().slice(0, 10);
+    const rank: Record<string, number> = { meeting_booked: 0, interested: 1, no_answer: 2, new: 3 };
+    return (((tables as unknown as Record<string, Array<Record<string, unknown>>>).sales_prospects) ?? [])
+      .filter((p) => String(p.status) in rank && String(p.next_call_on ?? today) <= today)
+      .sort((a, b) => rank[String(a.status)]! - rank[String(b.status)]!)
+      .slice(0, Number(args.p_limit ?? 10));
+  }
   if (name === "worker_status") {
     // the worker's heartbeat: a test seeds tables.worker_heartbeats; none means "never"
     const beats = ((tables as unknown as Record<string, Array<Record<string, unknown>>>).worker_heartbeats ?? [])
@@ -469,7 +485,10 @@ const COLUMN_DEFAULTS: Record<string, Record<string, unknown>> = {
   vault_documents: { stored_at: null, archived_at: null, note: null, pack_item: null },
   // the database copies the case's figures into a baseline; the fake leaves it empty, as a case with no figures would be refused
   property_baselines: { figures: [], captured_on: new Date().toISOString().slice(0, 10), target_note: null },
-  property_workstreams: { approval: "not_needed", status: "planned" },
+  property_workstreams: { approval: "not_needed", status: "planned", problem_id: null, reason: null, done_when: null, completion_evidence_id: null, completion_evidence: null, completed_on: null, note: null, depends_on: null, budget: null },
+  // the property journey: a problem starts open, and its creator is whoever is signed in (the trigger's job)
+  property_problems: { status: "open", consequence: null, workaround: null, intervention: null, specialist: null, expected_result: null, measure: null, result_note: null, closed_on: null, created_by: "00000000-0000-4000-8000-000000000001" },
+  property_evidence: { problem_id: null, confidence: null, notes: null, follow_up: null, period_start: null, period_end: null, responsible: null },
   interview_sessions: { transcript: null, extraction_status: "pending", extraction_detail: null, failure_detail: null, duration_seconds: null, provider: null, provider_reference: null, started_at: null, ended_at: null },
   // the client channel: the database sizes a new request at 1, with no outcome yet
   change_requests: { units: 1, outcome_note: null, finished_at: null, period: new Date().toISOString().slice(0, 8) + "01" },

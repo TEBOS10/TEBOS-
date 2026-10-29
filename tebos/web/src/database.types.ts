@@ -3370,6 +3370,47 @@ export type Database = {
         }
         Relationships: []
       }
+      sales_prospects: {
+        Row: {
+          id: string
+          business_name: string
+          industry: string
+          area: string
+          website: string | null
+          phone: string | null
+          source_url: string
+          why_fit: string
+          status: string
+          next_call_on: string | null
+          last_outcome: string | null
+          enquiry_id: string | null
+          added_by: string
+          owner: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          business_name: string
+          industry: string
+          area: string
+          website?: string | null
+          phone?: string | null
+          source_url: string
+          why_fit: string
+          added_by?: string
+        }
+        Update: {
+          status?: string
+          next_call_on?: string | null
+          last_outcome?: string | null
+          enquiry_id?: string | null
+          owner?: string | null
+          phone?: string | null
+          website?: string | null
+        }
+        Relationships: []
+      }
       sales_playbook: {
         Row: {
           id: string
@@ -3765,6 +3806,8 @@ export type Database = {
           created_at: string
           updated_at: string
           next_review_on: string | null
+          area: string | null
+          current_use: string | null
         }
         Insert: {
           id?: string
@@ -3786,6 +3829,8 @@ export type Database = {
           created_at?: string
           updated_at?: string
           next_review_on?: string | null
+          area?: string | null
+          current_use?: string | null
         }
         Update: {
           id?: string
@@ -3807,6 +3852,8 @@ export type Database = {
           created_at?: string
           updated_at?: string
           next_review_on?: string | null
+          area?: string | null
+          current_use?: string | null
         }
         Relationships: []
       }
@@ -3830,6 +3877,7 @@ export type Database = {
           follow_up: string | null
           created_at: string
           updated_at: string
+          problem_id: string | null
         }
         Insert: {
           id?: string
@@ -3850,6 +3898,7 @@ export type Database = {
           follow_up?: string | null
           created_at?: string
           updated_at?: string
+          problem_id?: string | null
         }
         Update: {
           id?: string
@@ -3870,6 +3919,7 @@ export type Database = {
           follow_up?: string | null
           created_at?: string
           updated_at?: string
+          problem_id?: string | null
         }
         Relationships: []
       }
@@ -4099,6 +4149,10 @@ export type Database = {
           note: string | null
           created_at: string
           updated_at: string
+          problem_id: string | null
+          reason: string | null
+          done_when: string | null
+          completion_evidence_id: string | null
         }
         Insert: {
           id?: string
@@ -4118,6 +4172,10 @@ export type Database = {
           note?: string | null
           created_at?: string
           updated_at?: string
+          problem_id?: string | null
+          reason?: string | null
+          done_when?: string | null
+          completion_evidence_id?: string | null
         }
         Update: {
           id?: string
@@ -4135,6 +4193,73 @@ export type Database = {
           completion_evidence?: string | null
           completed_on?: string | null
           note?: string | null
+          created_at?: string
+          updated_at?: string
+          problem_id?: string | null
+          reason?: string | null
+          done_when?: string | null
+          completion_evidence_id?: string | null
+        }
+        Relationships: []
+      }
+      property_problems: {
+        Row: {
+          id: string
+          org_id: string
+          case_id: string
+          category: string
+          title: string
+          experienced: string
+          status: string
+          consequence: string | null
+          workaround: string | null
+          intervention: string | null
+          specialist: string | null
+          expected_result: string | null
+          measure: string | null
+          result_note: string | null
+          closed_on: string | null
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          case_id: string
+          category: string
+          title: string
+          experienced: string
+          status?: string
+          consequence?: string | null
+          workaround?: string | null
+          intervention?: string | null
+          specialist?: string | null
+          expected_result?: string | null
+          measure?: string | null
+          result_note?: string | null
+          closed_on?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          case_id?: string
+          category?: string
+          title?: string
+          experienced?: string
+          status?: string
+          consequence?: string | null
+          workaround?: string | null
+          intervention?: string | null
+          specialist?: string | null
+          expected_result?: string | null
+          measure?: string | null
+          result_note?: string | null
+          closed_on?: string | null
+          created_by?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -4293,6 +4418,10 @@ export type Database = {
         Args: { p_org: string; p_week_start: string }
         Returns: string
       }
+      sales_calls_today: {
+        Args: { p_limit?: number }
+        Returns: Database["public"]["Tables"]["sales_prospects"]["Row"][]
+      }
       worker_status: {
         Args: Record<PropertyKey, never>
         Returns: { state: string; last_beat_at: string | null; minutes_since: number | null; mode: string | null; last_pass_errors: number; last_error: string | null; last_error_at: string | null }[]
@@ -4349,6 +4478,10 @@ export type Database = {
       }
       create_organisation: {
         Args: { p_name: string; p_slug: string }
+        Returns: string
+      }
+      create_pra_account: {
+        Args: { p_name: string }
         Returns: string
       }
       create_private_organisation: {
