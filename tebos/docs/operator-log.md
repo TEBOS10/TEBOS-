@@ -39,6 +39,21 @@ Update this list every run; strike items when they're done.
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 29 Oct 2026 (morning run, 03:48 UTC): healthy; the sales desk waits on PR #101
+
+- **Worker:** 324 passes; last beat 03:47 UTC. Railway runs `main`'s head (`de8f695`), so no rebuild was needed. Each
+  pass reports 1 failed step: analysis is paused because the Anthropic credit balance is zero. The heartbeat now shows
+  this truthfully.
+- **Audit trail:** all 12 chains are **intact**. The platform chain still ends at 4095; the newest event is 4791
+  (BAME's 15-minute readings).
+- **Advisors:** unchanged and by design: functions check their own roles or tokens, tables without policies are
+  server-only. Leaked-password protection is still decision 8.
+- **Main:** green. **PR #101** (sales desk, 12-month estimate, legal quote draft) is green at `0be0ca9` and needs the
+  founder's "merge it". Until then `sales_prospects` isn't live, so no businesses were added today.
+- **Corrected:** the estimate said token recording was still to build. It was already built and tested; the counts
+  are empty only because all 667 analysis runs were refused for credit. `pilot-budget-12m.md` now says so.
+- **Portfolio:** unchanged (0 clients, payments, cases).
+
 ## 28 Oct 2026 (morning run, 03:48 UTC): the worker runs; yesterday's fix wasn't deployed until now
 
 - **Worker:** 132 passes since 27 Oct 11:32 UTC, every 15 minutes. The last beat was at 03:45 with 0 failed steps.

@@ -57,9 +57,11 @@ spend isn't recorded in the repo.
   plan's **USD 1 credit**, so the worker could stop part-way through a month. That's why item 3 is in the budget. It's
   worth confirming against Railway's usage page after the first full week.
 - **The database:** 29 MB. The free and Pro limits are far away.
-- **AI usage can't be measured yet.** All 628 analysis runs since 25 Sep have empty token counts (`agent_runs.tokens_in`
-  and `tokens_out` are null), and 627 of them failed for want of credit. **The cost per analysis is therefore
-  unknown.** Recording tokens is a small build step (tier 1). After it, this line becomes a measured cost.
+- **AI usage can't be measured yet.** The worker already records tokens for every answered request
+  (`agent_runs.tokens_in` and `tokens_out`, tested in `test/intelligence/worker.test.ts`). But all 667 analysis runs
+  so far (29 Oct) were refused for want of credit before any answer came back, so none has a token count. **The cost
+  per analysis is therefore unknown.** The first week of analyses after credit is added makes this line a measured
+  cost, with no further build.
 
 ### 2c. Assumptions (nothing has confirmed these yet)
 
@@ -93,7 +95,7 @@ this isn't counted as income yet.
 | Client workspace, pipeline, billing, audit trail, package limits | TEBOS (tier 1) | **Built** |
 | Daily sales desk | TEBOS (tier 1) | **Built**, PR #101 |
 | Per-client limits on AI usage and cost (spec: "gap") | TEBOS (tier 1) | To build |
-| Token usage recorded, so A1 becomes measured | TEBOS (tier 1) | To build |
+| Token usage recorded, so A1 becomes measured | TEBOS (tier 1) | **Built** already; waits on Anthropic credit for its first figures |
 | Isolation and permissions audit before the pilot (spec §3–4) | TEBOS (tier 1) | To do, 3–9 Nov per the plan |
 | Upgrade Supabase, Vercel and Railway (items 1–3) | **Founder (money)** | Decision |
 | Anthropic credit (A1) | **Founder (money)** | Decision |
