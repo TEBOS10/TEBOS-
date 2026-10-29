@@ -37,6 +37,7 @@ import { MarketingPage } from "./pages/MarketingPage";
 import { ContractTemplatesPage, OpportunityPage, PipelinePage } from "./pages/PipelinePage";
 import { MarketingPlaybookPage, SalesPlaybookPage, StaffInvitePage, StaffTeamPage } from "./pages/SalesPages";
 import { SalesCallsPage } from "./pages/SalesCallsPage";
+import { PropertiesPage, PropertyJourneyPage } from "./pages/PropertiesPage";
 import { StaffShell } from "./components/StaffShell";
 import { BlogIndex, BlogPost } from "./pages/BlogPage";
 import { AiClientsPage } from "./pages/AiClientsPage";
@@ -57,6 +58,8 @@ import { TeamPage } from "./pages/TeamPage";
 const ROUTES: Array<[string, (p: Record<string, string>) => ReactNode]> = [
   ["/", () => <HomePage />],
   ["/sign-in", () => <HomePage />],
+  ["/properties", () => <PropertiesPage />],
+  ["/properties/:id", (p) => <PropertyJourneyPage id={p.id!} />],
   ["/businesses", () => <BusinessesPage />],
   ["/businesses/:id", (p) => <BusinessPage id={p.id!} />],
   ["/businesses/:id/report", (p) => <ReportPage id={p.id!} />],

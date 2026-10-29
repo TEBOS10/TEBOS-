@@ -478,7 +478,10 @@ const COLUMN_DEFAULTS: Record<string, Record<string, unknown>> = {
   vault_documents: { stored_at: null, archived_at: null, note: null, pack_item: null },
   // the database copies the case's figures into a baseline; the fake leaves it empty, as a case with no figures would be refused
   property_baselines: { figures: [], captured_on: new Date().toISOString().slice(0, 10), target_note: null },
-  property_workstreams: { approval: "not_needed", status: "planned" },
+  property_workstreams: { approval: "not_needed", status: "planned", problem_id: null, reason: null, done_when: null, completion_evidence_id: null, completion_evidence: null, completed_on: null, note: null, depends_on: null, budget: null },
+  // the property journey: a problem starts open, and its creator is whoever is signed in (the trigger's job)
+  property_problems: { status: "open", consequence: null, workaround: null, intervention: null, specialist: null, expected_result: null, measure: null, result_note: null, closed_on: null, created_by: "00000000-0000-4000-8000-000000000001" },
+  property_evidence: { problem_id: null, confidence: null, notes: null, follow_up: null, period_start: null, period_end: null, responsible: null },
   interview_sessions: { transcript: null, extraction_status: "pending", extraction_detail: null, failure_detail: null, duration_seconds: null, provider: null, provider_reference: null, started_at: null, ended_at: null },
   // the client channel: the database sizes a new request at 1, with no outcome yet
   change_requests: { units: 1, outcome_note: null, finished_at: null, period: new Date().toISOString().slice(0, 8) + "01" },

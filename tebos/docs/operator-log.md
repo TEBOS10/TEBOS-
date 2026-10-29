@@ -39,6 +39,32 @@ Update this list every run; strike items when they're done.
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 29 Oct 2026 (day): Property Revenue Architect Platform, Release 1 built
+
+- **The founder's build directive** (29 Oct). The audit, gap analysis and plan are in `pra-platform/release-1.md`.
+  ADR 0010 records why Release 1 is built now, against ADR 0009's "nothing new before December".
+- **Reused, not forked:**
+  - the founder's property case workspace (intake, evidence, figures, work items, baseline, outcomes, audit, export)
+    becomes each landlord's workspace, in their own organisation in the TEBOS app;
+  - no new app or database, and no private records move.
+- **Built** (migration `property_journey`, `src/domain/journey.ts`, `/properties`):
+  - a problem register;
+  - evidence and actions linked to problems;
+  - proof rules: an action is done only with received evidence, and a problem is resolved only with a done action
+    and checked evidence;
+  - journey stage, milestones and next actions, each explaining itself;
+  - a portfolio view, a command centre, history and export.
+- **Proved:**
+  - core: 442 unit tests;
+  - `test:db`, including `99zx_property_journey.sql`;
+  - web: 63 unit tests and 143 e2e, including the Release 1 acceptance flow, a viewer's read-only view and a phone
+    width check;
+  - build.
+- **Founder decisions:**
+  - "merge it" for the PR;
+  - Supabase Pro (backups) before the first real landlord;
+  - pricing (R79 / R199) before Release 5.
+
 ## 29 Oct 2026 (morning run, 03:48 UTC): healthy; the sales desk waits on PR #101
 
 - **Worker:** 324 passes; last beat 03:47 UTC. Railway runs `main`'s head (`de8f695`), so no rebuild was needed. Each

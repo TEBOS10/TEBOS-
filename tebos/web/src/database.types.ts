@@ -3806,6 +3806,8 @@ export type Database = {
           created_at: string
           updated_at: string
           next_review_on: string | null
+          area: string | null
+          current_use: string | null
         }
         Insert: {
           id?: string
@@ -3827,6 +3829,8 @@ export type Database = {
           created_at?: string
           updated_at?: string
           next_review_on?: string | null
+          area?: string | null
+          current_use?: string | null
         }
         Update: {
           id?: string
@@ -3848,6 +3852,8 @@ export type Database = {
           created_at?: string
           updated_at?: string
           next_review_on?: string | null
+          area?: string | null
+          current_use?: string | null
         }
         Relationships: []
       }
@@ -3871,6 +3877,7 @@ export type Database = {
           follow_up: string | null
           created_at: string
           updated_at: string
+          problem_id: string | null
         }
         Insert: {
           id?: string
@@ -3891,6 +3898,7 @@ export type Database = {
           follow_up?: string | null
           created_at?: string
           updated_at?: string
+          problem_id?: string | null
         }
         Update: {
           id?: string
@@ -3911,6 +3919,7 @@ export type Database = {
           follow_up?: string | null
           created_at?: string
           updated_at?: string
+          problem_id?: string | null
         }
         Relationships: []
       }
@@ -4140,6 +4149,10 @@ export type Database = {
           note: string | null
           created_at: string
           updated_at: string
+          problem_id: string | null
+          reason: string | null
+          done_when: string | null
+          completion_evidence_id: string | null
         }
         Insert: {
           id?: string
@@ -4159,6 +4172,10 @@ export type Database = {
           note?: string | null
           created_at?: string
           updated_at?: string
+          problem_id?: string | null
+          reason?: string | null
+          done_when?: string | null
+          completion_evidence_id?: string | null
         }
         Update: {
           id?: string
@@ -4176,6 +4193,73 @@ export type Database = {
           completion_evidence?: string | null
           completed_on?: string | null
           note?: string | null
+          created_at?: string
+          updated_at?: string
+          problem_id?: string | null
+          reason?: string | null
+          done_when?: string | null
+          completion_evidence_id?: string | null
+        }
+        Relationships: []
+      }
+      property_problems: {
+        Row: {
+          id: string
+          org_id: string
+          case_id: string
+          category: string
+          title: string
+          experienced: string
+          status: string
+          consequence: string | null
+          workaround: string | null
+          intervention: string | null
+          specialist: string | null
+          expected_result: string | null
+          measure: string | null
+          result_note: string | null
+          closed_on: string | null
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          case_id: string
+          category: string
+          title: string
+          experienced: string
+          status?: string
+          consequence?: string | null
+          workaround?: string | null
+          intervention?: string | null
+          specialist?: string | null
+          expected_result?: string | null
+          measure?: string | null
+          result_note?: string | null
+          closed_on?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          case_id?: string
+          category?: string
+          title?: string
+          experienced?: string
+          status?: string
+          consequence?: string | null
+          workaround?: string | null
+          intervention?: string | null
+          specialist?: string | null
+          expected_result?: string | null
+          measure?: string | null
+          result_note?: string | null
+          closed_on?: string | null
+          created_by?: string | null
           created_at?: string
           updated_at?: string
         }
