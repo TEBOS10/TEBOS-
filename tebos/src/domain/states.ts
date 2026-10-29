@@ -291,6 +291,18 @@ export const salesProspectMachine = machine({
   },
 });
 
+export const propertyProblemMachine = machine({
+  initial: ["open"],
+  transitions: {
+    open: ["investigating", "planned", "parked"],
+    investigating: ["planned", "parked"],
+    planned: ["investigating", "resolved", "not_resolved", "parked"],
+    not_resolved: ["investigating", "planned"],
+    parked: ["open"],
+    resolved: ["open"],
+  },
+});
+
 export const reedsDecisionMachine = machine({
   initial: ["open"],
   transitions: {
@@ -324,6 +336,7 @@ export const MACHINES = {
   reeds_commitment: reedsCommitmentMachine,
   reeds_decision: reedsDecisionMachine,
   sales_prospect: salesProspectMachine,
+  property_problem: propertyProblemMachine,
 } as const;
 
 export type MachineName = keyof typeof MACHINES;
@@ -340,6 +353,7 @@ export type InvitationStatus = StatesOf<typeof invitationMachine>;
 export type InterviewStatus = StatesOf<typeof interviewMachine>;
 export type ObjectiveStatus = StatesOf<typeof objectiveMachine>;
 export type SalesProspectStatus = StatesOf<typeof salesProspectMachine>;
+export type PropertyProblemStatus = StatesOf<typeof propertyProblemMachine>;
 export type OpportunityStatus = StatesOf<typeof opportunityMachine>;
 export type WorkRequestStatus = StatesOf<typeof workRequestMachine>;
 export type WorkTaskStatus = StatesOf<typeof workTaskMachine>;
