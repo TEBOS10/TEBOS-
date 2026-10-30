@@ -39,6 +39,32 @@ Update this list every run; strike items when they're done.
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 30 Oct 2026 (morning run): PR #101 live; the sales desk has its first 8 businesses
+
+- **Finished from 29 Oct** (PR #101 was merged, then the session restarted before the follow-up):
+  - applied `sales_prospects`, `property_journey` and `pra_platform` live, then checked them with a rolled-back test:
+    - a platform account is accepted, and an unknown app type is refused;
+    - a phone number in a problem is refused, and a new problem starts open;
+    - resolving without proof is refused;
+    - the call list runs.
+  - Reconnected the worker to `main`: deployment `bd65d781` runs `f45e798`.
+- **Worker:** 602 passes; last beat 6 minutes before the check. The one failed step per pass is analysis, paused for
+  lack of Anthropic credit.
+- **Audit trail:** all 12 chains are **intact**; the newest event is 5324.
+- **Advisors:** one new finding, `create_pra_account` callable by signed-in users. That is by design: a landlord
+  opens their own account.
+- **Sales desk:** 8 businesses added (`added_by` reeds), each with its source page and only what that page shows.
+  No cellphone numbers are stored.
+  - 4 plumbers: Randburg Plumber, DMS Plumbing, Couplingz, Crusaders Plumbing.
+  - 1 physiotherapist: Just Physio.
+  - 1 salon: Bukky Beauty World.
+  - 2 driving schools: Ditheto Driving Academy and 522 Driving School.
+  - 8 due today; none called yet.
+- **Waiting on the founder:**
+  - the platform's Vercel project: this connection may not create projects;
+  - Supabase Pro, for backups, before real landlords;
+  - Anthropic credit.
+
 ## 29 Oct 2026 (day): Property Revenue Architect Platform, Release 1 built
 
 - **The founder's build directive** (29 Oct). The audit, gap analysis and plan are in `pra-platform/release-1.md`.
