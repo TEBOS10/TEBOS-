@@ -39,6 +39,21 @@ Update this list every run; strike items when they're done.
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 31 Oct 2026 (morning run): healthy; 5 more businesses on the sales desk
+
+- **Worker:** 708 passes; last beat 1 minute before the check, on `f45e798`. The one failed step per pass is still
+  analysis, paused for lack of Anthropic credit. `main` has only docs since, so no redeploy.
+- **Audit trail:** all 12 chains are **intact**; the newest event is 5505.
+- **Property platform:** 0 accounts and 0 problems; it isn't deployed yet (its Vercel project waits on the founder).
+- **Sales desk:** 5 businesses added (`added_by` reeds), each with its source page and only what that page shows.
+  Only one landline was shown; no cellphone numbers are stored.
+  - 2 medical practices: The Medical Centre (Kensington), AIM Healthcare Centre (Malanshof, Randburg).
+  - 2 dental practices: Cosmo City Family Dentist, Dr Chalita le Roux Kids Dentist (Ruimsig).
+  - 1 letting agency: Fitzanne (Pretoria).
+  - Skipped: Complete Family Clinic, because its page doesn't say where it is.
+  - 13 on the desk, all new and all due; none called yet. First three: DMS Plumbing, Couplingz, Randburg Plumber.
+- **Waiting on the founder:** the platform's Vercel project, Supabase Pro (backups), Anthropic credit.
+
 ## 30 Oct 2026 (morning run): PR #101 live; the sales desk has its first 8 businesses
 
 - **Finished from 29 Oct** (PR #101 was merged, then the session restarted before the follow-up):
