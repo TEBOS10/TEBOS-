@@ -107,7 +107,7 @@ function Hero() {
     let stop: (() => void) | null = null, cancelled = false;
     void import("./hero3d").then(({ mountHero }) => {
       if (cancelled || !host.current) return;
-      stop = mountHero(host.current, { model: "/hero/grape-lens.glb", onReady: () => setReady(true), onError: () => setFailed(true) });
+      stop = mountHero(host.current, { onReady: () => setReady(true), onError: () => setFailed(true) });
     });
     return () => { cancelled = true; stop?.(); };
   }, [three]);

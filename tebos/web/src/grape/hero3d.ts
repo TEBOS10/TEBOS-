@@ -1,13 +1,14 @@
 // Grape Studios' hero (ADR 0016): one modelled object, made for Grape Studios: a cluster of grapes where every grape
 // is a black camera lens. It turns slowly on a dark studio set under a softbox, with a muted aubergine rim light and,
 // every few seconds, the soft pulse of a camera flash. The pointer tilts the camera a little. The model was generated
-// with the founder's 3D integration (public/hero/grape-lens.glb); phones, reduced motion and computers without a
+// in code (grapeModel.ts); phones, reduced motion and computers without a
 // graphics chip get a still render of the same object instead.
 import * as THREE from "three";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { grapeLensCluster } from "./grapeModel";
 
-export interface HeroOptions { model: string; onReady?: () => void; onError?: () => void }
+export interface HeroOptions { /** A GLB to show instead of the modelled bunch, if one is supplied and loads. */ model?: string; onReady?: () => void; onError?: () => void }
 
 export function mountHero(host: HTMLElement, opts: HeroOptions): () => void {
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance", preserveDrawingBuffer: true });
@@ -48,7 +49,7 @@ export function mountHero(host: HTMLElement, opts: HeroOptions): () => void {
   flash.position.set(0.4, 0.6, 3.2);
   scene.add(flash);
 
-  const floor = new THREE.Mesh(new THREE.CircleGeometry(6, 64), new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.35, metalness: 0.6 }));
+  const floor = new THREE.Mesh(new THREE.CircleGeometry(6, 64), new THREE.MeshStandardMaterial({ color: 0x010101, roughness: 0.9, metalness: 0, envMapIntensity: 0.05 }));
   floor.rotation.x = -Math.PI / 2;
   floor.position.y = -1.15;
   floor.receiveShadow = true;
@@ -56,8 +57,7 @@ export function mountHero(host: HTMLElement, opts: HeroOptions): () => void {
 
   const stage = new THREE.Group();
   scene.add(stage);
-  new GLTFLoader().load(opts.model, (gltf) => {
-    const model = gltf.scene;
+  const place = (model: THREE.Object3D) => {
     // centre it and fit it to about two units tall
     const box = new THREE.Box3().setFromObject(model);
     const size = box.getSize(new THREE.Vector3());
@@ -65,19 +65,25 @@ export function mountHero(host: HTMLElement, opts: HeroOptions): () => void {
     const scale = 2.1 / Math.max(size.x, size.y, size.z);
     model.scale.setScalar(scale);
     model.position.sub(centre.multiplyScalar(scale));
+    stage.add(model);
+    opts.onReady?.();
+  };
+  // the bunch is modelled in code (grapeModel.ts); a supplied GLB replaces it only if it loads
+  const modelled = () => place(grapeLensCluster());
+  if (!opts.model) modelled();
+  else new GLTFLoader().load(opts.model, (gltf) => {
+    const model = gltf.scene;
     model.traverse((o) => {
       const m = o as THREE.Mesh;
       if (!m.isMesh) return;
       m.castShadow = true;
-      // lacquer: keep the generated colour, make the surface read as polished
       for (const mat of Array.isArray(m.material) ? m.material : [m.material]) {
         const s = mat as THREE.MeshStandardMaterial;
         if ("roughness" in s) { s.roughness = Math.min(s.roughness ?? 0.5, 0.35); s.envMapIntensity = 1.2; }
       }
     });
-    stage.add(model);
-    opts.onReady?.();
-  }, undefined, () => opts.onError?.());
+    place(model);
+  }, undefined, modelled);
 
   const pointer = new THREE.Vector2();
   const onPointer = (e: PointerEvent) => pointer.set(e.clientX / window.innerWidth - 0.5, e.clientY / window.innerHeight - 0.5);
