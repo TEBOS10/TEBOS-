@@ -39,6 +39,26 @@ Update this list every run; strike items when they're done.
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 1 Nov 2026 (morning run): healthy; 5 more businesses on the sales desk
+
+- **Worker:** 900 passes; last beat at 03:47:59 UTC, on `f45e798` (main since has docs only, so no redeploy). The
+  one failed step per pass is still analysis, paused for lack of Anthropic credit.
+- **Audit trail:** all 12 chains are **intact**; the newest event is 5863.
+- **Advisors:** no new findings since 30 Oct.
+- **Open PRs:** none. PR #103 (31 Oct log) merged green.
+- **Sales desk:** 5 businesses added (`added_by` reeds), each with its source page and only what that page shows.
+  No phone numbers stored: the pages showed only cellphones.
+  - 1 electrical call-out trade: Quantum Electrical Solutions (Pretoria, Centurion, Midrand).
+  - 1 tutoring centre: Renovatia Academic Centre (Die Hoewes, Centurion), from its Impaq listing.
+  - 2 vets: Zwartkop Animal Clinic (Centurion), Orange Grove Veterinary Hospital.
+  - 1 health practice: The Homeopathic Doctor (Sandton, Sunninghill).
+  - Skipped: Electrician Pros (Cape Town), a mobile groomer whose page gives no area, and salons that already
+    book online.
+  - 18 on the desk, all new and all due; none called, so no interest, meetings or enquiries yet.
+- **Register:** live counts refreshed; the property platform line now says its migrations are live.
+- **Built:** nothing today. The next roadmap steps wait on the founder (the platform's Vercel project, backups).
+- **Waiting on the founder:** the platform's Vercel project, Supabase Pro (backups), Anthropic credit.
+
 ## 31 Oct 2026 (morning run): healthy; 5 more businesses on the sales desk
 
 - **Worker:** 708 passes; last beat 1 minute before the check, on `f45e798`. The one failed step per pass is still
