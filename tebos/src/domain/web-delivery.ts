@@ -4,7 +4,7 @@
 // same rules (migration 20261101090000_web_delivery.sql); test/schema-parity.test.ts keeps the lists in step.
 import { BOARD_LIMITS, type Tier } from "./editions";
 import { fail, OK, type Check } from "./rules";
-import type { WebProjectStatus } from "./states";
+import type { WebProjectStatus, WebTaskStatus } from "./states";
 
 export const WEBSITE_TYPES = {
   landing_page: "Landing page",
@@ -207,5 +207,110 @@ export function qaPassed(runs: QaRun[], latestRevision: number | null): boolean 
 export function checkRelease(to: "client_review" | "release", qaOk: boolean, releaseApproved: boolean): Check {
   if (!qaOk) return fail("TEBOS_VALIDATION", `${to === "release" ? "Release" : "Client review"} needs a QA pass on the latest scope with no critical defect open.`);
   if (to === "release" && !releaseApproved) return fail("TEBOS_VALIDATION", "Release needs the client's release approval on the latest scope.");
+  return OK;
+}
+
+// ---------------------------------------------------------------------------
+// Milestone 2: the task ledger, assets, deployments (migration 20261101120000_web_delivery_ledger.sql)
+// ---------------------------------------------------------------------------
+
+/** The specification's roles. They are roles, not processes: a person or an agent does the work. */
+export const WEB_ROLES = {
+  director: "Web Delivery Director",
+  intake: "Client Intake and Scope Analyst",
+  creative: "Creative Director",
+  ux: "UX/UI Architect",
+  assets: "Visual Asset and 3D Specialist",
+  architect: "Solution Architect",
+  frontend: "Frontend Engineer",
+  backend: "Backend and Integration Engineer",
+  content: "Content and Conversion Strategist",
+  qa: "Independent QA and Security Auditor",
+  deployment: "Deployment and Handover Engineer",
+  librarian: "Delivery Intelligence and Template Librarian",
+} as const;
+export type WebRole = keyof typeof WEB_ROLES;
+
+export const WEB_TASK_STATUS_LABEL: Record<WebTaskStatus, string> = {
+  todo: "To do",
+  in_progress: "In progress",
+  review: "In review",
+  done: "Done",
+  blocked: "Blocked",
+  cancelled: "Cancelled",
+};
+
+export const ASSET_KINDS = {
+  logo: "Logo", photo: "Photograph", video: "Video", model_3d: "3D model", font: "Font", copy: "Copy", icon: "Icon", other: "Other",
+} as const;
+export const ASSET_SOURCES = {
+  client_supplied: "Supplied by the client", licensed: "Licensed", commissioned: "Commissioned", tebos_made: "Made by TEBOS", unknown: "Source unknown",
+} as const;
+export const ASSET_STATUSES = {
+  received: "Received", missing: "Missing", client_approval_required: "Needs the client's approval", not_applicable: "Not applicable",
+} as const;
+export type AssetSource = keyof typeof ASSET_SOURCES;
+export type AssetStatus = keyof typeof ASSET_STATUSES;
+
+/** An asset counts as received only with its source and licence written down (mirrors the web_assets check). */
+export function checkAsset(a: { status: AssetStatus; source: AssetSource; licenceNote: string }): Check {
+  if (a.status === "received" && a.source === "unknown") return fail("TEBOS_VALIDATION", "Say where this asset came from before marking it received.");
+  if (a.status === "received" && a.licenceNote.trim().length < 10) return fail("TEBOS_VALIDATION", "Write down the licence or permission (at least 10 characters) before marking it received.");
+  return OK;
+}
+
+export interface TaskLite { id: string; status: WebTaskStatus; dependsOn: string[] }
+
+/** Tasks that may start: not started, and everything they depend on is done (mirrors guard_web_task). */
+export function canStart(task: TaskLite, all: TaskLite[]): boolean {
+  if (task.status !== "todo" && task.status !== "blocked") return false;
+  const byId = new Map(all.map((t) => [t.id, t]));
+  return task.dependsOn.every((d) => byId.get(d)?.status === "done");
+}
+
+/** Would adding "task depends on dependsOn" close a loop? (mirrors guard_web_dependency) */
+export function makesLoop(taskId: string, dependsOn: string, edges: Array<[string, string]>): boolean {
+  if (taskId === dependsOn) return true;
+  const next = new Map<string, string[]>();
+  for (const [t, d] of edges) next.set(t, [...(next.get(t) ?? []), d]);
+  const seen = new Set<string>();
+  const stack = [dependsOn];
+  while (stack.length) {
+    const id = stack.pop()!;
+    if (id === taskId) return true;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    stack.push(...(next.get(id) ?? []));
+  }
+  return false;
+}
+
+/** Completion counted from accepted (done) tasks, never estimated. Cancelled tasks don't count. */
+export function completion(total: number, done: number): number | null {
+  return total > 0 ? Math.round((done / total) * 100) : null;
+}
+
+export type DeadlineState = "not_started" | "paused" | "overdue" | "due_today" | "at_risk" | "on_track" | "finished";
+
+/** Where a project stands against its clock on `today` (Johannesburg date). */
+export function deadlineState(p: { status: WebProjectStatus; deadlineOn: string | null; pausedOn: string | null }, today: string): { state: DeadlineState; businessDaysLeft: number | null } {
+  if (["release", "handover", "closed", "cancelled"].includes(p.status)) return { state: "finished", businessDaysLeft: null };
+  if (p.deadlineOn === null) return { state: "not_started", businessDaysLeft: null };
+  if (p.pausedOn !== null) return { state: "paused", businessDaysLeft: businessDaysBetween(p.pausedOn, p.deadlineOn) };
+  if (today > p.deadlineOn) return { state: "overdue", businessDaysLeft: -businessDaysBetween(p.deadlineOn, today) };
+  const left = businessDaysBetween(today, p.deadlineOn);
+  return { state: left === 0 ? "due_today" : left === 1 ? "at_risk" : "on_track", businessDaysLeft: left };
+}
+
+/** The production deployment rule (mirrors guard_web_deployment). */
+export function checkDeployment(d: { environment: "preview" | "production"; url: string; commitRef: string; checked: string },
+  project: { status: WebProjectStatus; releaseApproved: boolean }): Check {
+  if (!/^https:\/\/\S+$/.test(d.url)) return fail("TEBOS_VALIDATION", "The address must start with https://.");
+  if (!/^[0-9a-f]{7,40}$/.test(d.commitRef)) return fail("TEBOS_VALIDATION", "Give the commit it was built from (7 to 40 hex characters).");
+  if (d.checked.trim().length < 10) return fail("TEBOS_VALIDATION", "Say what you checked at that address.");
+  if (d.environment === "production") {
+    if (project.status !== "release" && project.status !== "handover") return fail("TEBOS_VALIDATION", "Production deploys happen in release.");
+    if (!project.releaseApproved) return fail("TEBOS_APPROVAL_REQUIRED", "Production needs the client's release approval.");
+  }
   return OK;
 }

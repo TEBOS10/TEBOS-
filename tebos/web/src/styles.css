@@ -921,3 +921,28 @@ table.table { width: 100%; border-collapse: collapse; }
   .journey-why, .journey-facts { grid-template-columns: 1fr; }
 }
 .journey .badge, .journey-portfolio .badge { text-transform: none; }
+
+/* Web delivery: the stage track, rows and the project file (pages/WebDeliveryPage.tsx) */
+.stage-track { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; margin: 0; padding: 0; }
+.stage-track li { font-size: 12px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line-strong, var(--line)); color: var(--muted); }
+.stage-track li.done { color: var(--ink-soft, inherit); }
+.stage-track li.current { border-color: currentColor; color: var(--ink, inherit); font-weight: 700; }
+.web-stats .stat-value { font-size: 36px; font-weight: 300; letter-spacing: -0.02em; }
+.web-stats .stat-warn .stat-value { color: var(--warn-fg); }
+.web-task { border-top: 1px solid var(--line); padding: 10px 0; }
+.web-task:first-child { border-top: 0; }
+.web-scope { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 14px; margin: 0; }
+.web-scope dt { color: var(--muted); font-size: 13px; }
+.web-scope dd { margin: 0; overflow-wrap: anywhere; }
+.web-scope ul, .web-approvals { margin: 0; padding-left: 18px; }
+@media (max-width: 720px) {
+  .web-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .web-columns { grid-template-columns: minmax(0, 1fr); }
+  .web-scope { grid-template-columns: minmax(0, 1fr); }
+  .web-scope dt { margin-top: 6px; }
+}
+.web-list > li { display: block; }
+.web-list > li + li { margin-top: 10px; }
+.web-list > li.card { padding: 16px 18px; border-top: 1px solid var(--line); }
+.web-list > li.card:first-child { border-top: 1px solid var(--line); }
+.web-page .badge { text-transform: none; }

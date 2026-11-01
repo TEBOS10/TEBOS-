@@ -39,6 +39,29 @@ Update this list every run; strike items when they're done.
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 1 Nov 2026 (evening): Web Delivery milestone 2 and the dashboard
+
+- **Founder:** "Start milestone 2 and build the dashboard."
+- **Built (migration `web_delivery_ledger`, not merged and not applied: it needs "merge it"):**
+  - the task ledger for the twelve roles. A task waits for its dependencies, dependencies can't form a loop, nobody
+    passes their own review, and "done" needs evidence;
+  - the asset register. An asset is received only with its source and licence recorded;
+  - deployment records. Production needs a project in release and the client's release approval, and afterwards a
+    record can only change to "rolled back";
+  - a handover gate: handover needs a live production deployment;
+  - the dashboard's reads: `web_delivery_board()` and `web_delivery_clients()`.
+- **The dashboard** is in the staff workspace, for maintainers, at `/web-delivery`:
+  - four numbers, then the projects, each with its stage, its clock and what holds it up;
+  - a project page with the stage track, a move-with-reason form, the database's readiness gaps, the checklist, scope
+    checked against the package, the client's approvals (read-only), tasks, assets, QA and deployments;
+  - it fits a 375px phone.
+- **Proved:**
+  - core: 463 unit tests and `test:db`;
+  - web: 63 unit tests, the build and the bundle check, and 151 browser tests, including 6 new ones for the dashboard.
+- **Changed along the way:**
+  - the milestone-1 SQL test now records a production deployment before handover;
+  - the out-of-plan refusal text is now general, since it covers both change requests and website scope.
+
 ## 1 Nov 2026 (later): web delivery live; Company price kept; design standard set
 
 - **The founder said "merge it":**

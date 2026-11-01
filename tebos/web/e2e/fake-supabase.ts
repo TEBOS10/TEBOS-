@@ -471,7 +471,50 @@ function answerRpc(tables: FakeSupabase["tables"], name: string, args: Record<st
     if (session) Object.assign(session, { status: "completed", extraction_status: "done" });
     return answers.length;
   }
+  if (name === "web_delivery_clients") {
+    // TEBOS clients with an active plan, as the database lists them for a maintainer
+    return (t.billing_accounts ?? []).filter((b) => b.status === "active").map((b) => ({
+      org_id: b.org_id, org_name: (t.organisations ?? []).find((o) => o.id === b.org_id)?.name ?? "Client", plan: b.plan,
+    }));
+  }
+  if (name === "web_project_readiness") return webGaps(t, args.p_project);
+  if (name === "web_delivery_board") {
+    // one row per project with its client's name and the counts the dashboard shows (simplified from the database's read)
+    return (t.web_projects ?? []).map((p) => {
+      const tasks = (t.web_tasks ?? []).filter((x) => x.project_id === p.id);
+      const qa = (t.web_qa_runs ?? []).filter((x) => x.project_id === p.id).sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))[0];
+      const live = (t.web_deployments ?? []).find((d) => d.project_id === p.id && d.environment === "production" && d.outcome === "live");
+      return {
+        ...p, org_name: (t.organisations ?? []).find((o) => o.id === p.org_id)?.name ?? "Client",
+        readiness_gaps: ["lead", "intake", "scope_review", "approval", "blocked_client", "scope_change"].includes(String(p.status)) ? webGaps(t, String(p.id)).length : 0,
+        tasks_total: tasks.filter((x) => x.status !== "cancelled").length, tasks_done: tasks.filter((x) => x.status === "done").length,
+        tasks_blocked: tasks.filter((x) => x.status === "blocked").length, last_qa_verdict: qa?.verdict ?? null, last_qa_at: qa?.created_at ?? null,
+        live_url: live?.url ?? null,
+      };
+    });
+  }
   return crypto.randomUUID();
+}
+
+// What stands between a project and its build, worked out from the fixture tables as web_readiness_gaps does.
+const WEB_READINESS = ["commercial_terms", "intake_complete", "assets", "technical_access", "dependencies", "delivery_window", "security_privacy", "release_authority"];
+function webGaps(t: Record<string, Array<Record<string, unknown>>>, projectId: string): string[] {
+  const p = (t.web_projects ?? []).find((x) => x.id === projectId);
+  if (!p) return [];
+  const gaps: string[] = [];
+  const plan = (t.billing_accounts ?? []).find((b) => b.org_id === p.org_id && b.status === "active")?.plan;
+  if (plan !== p.plan) gaps.push("package: the project's package is not the client's active plan");
+  const rev = (t.web_scope_revisions ?? []).filter((r) => r.project_id === projectId).sort((a, b) => Number(b.revision) - Number(a.revision))[0];
+  if (!rev) gaps.push("scope: no scope has been written");
+  else {
+    const approved = (kind: string) => (t.web_project_approvals ?? []).some((a) => a.revision_id === rev.id && a.kind === kind);
+    if (!approved("scope")) gaps.push("scope: the client has not approved the latest scope, its exclusions and recurring costs");
+    if (!approved("design")) gaps.push("design: the client has not approved the design direction for the latest scope");
+  }
+  for (const item of WEB_READINESS) {
+    if (!(t.web_readiness_items ?? []).some((r) => r.project_id === projectId && r.item === item && (r.status === "met" || r.status === "waived"))) gaps.push(`${item}: not confirmed with evidence`);
+  }
+  return gaps;
 }
 
 // Column defaults the database would fill in, for tables the tests insert into.
@@ -495,6 +538,11 @@ const COLUMN_DEFAULTS: Record<string, Record<string, unknown>> = {
   client_messages: { from_tebos: false, author_id: "00000000-0000-4000-8000-000000000001" },
   tepos_plan_items: { active: true },
   reeds_integrations: { state: "not_connected", detail: null, last_success_at: null, last_failure_at: null, last_error: null, imported: 0, duplicates: 0 },
+  // web delivery: the database numbers projects and starts each record in its first state
+  web_projects: { ref: "WP-0001", status: "intake", deadline_on: null, clock_paused_on: null, created_by: "00000000-0000-4000-8000-000000000001" },
+  web_tasks: { status: "todo", assigned_to: null, blocked_reason: null, evidence: null, due_on: null },
+  web_assets: { source: "unknown", status: "missing", licence_note: null, location: null },
+  web_scope_revisions: { revision: 1, features: [], workflows: [] },
   connection_instances: { business_id: null, granted_scopes: [], credential_ref_id: null, webhook_credential_ref_id: null, last_verified_at: null, last_success_at: null, last_failure_at: null, failure_detail: null, verification_requested_at: null },
 };
 

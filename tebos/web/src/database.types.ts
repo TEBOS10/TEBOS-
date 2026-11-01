@@ -4385,6 +4385,266 @@ export type Database = {
         }
         Relationships: []
       }
+      web_projects: {
+        Row: {
+          id: string
+          ref: string
+          org_id: string
+          name: string
+          website_type: string
+          primary_objective: string
+          plan: string
+          status: string
+          status_note: string
+          deadline_on: string | null
+          clock_paused_on: string | null
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          org_id: string
+          name: string
+          website_type: string
+          primary_objective: string
+          plan: string
+          status_note: string
+          status?: string
+        }
+        Update: {
+          name?: string
+          website_type?: string
+          primary_objective?: string
+          plan?: string
+          status?: string
+          status_note?: string
+        }
+        Relationships: []
+      }
+      web_scope_revisions: {
+        Row: {
+          id: string
+          project_id: string
+          org_id: string
+          revision: number
+          pages: string[]
+          features: string[]
+          workflows: string[]
+          exclusions: string
+          primary_conversion: string
+          acceptance_criteria: string[]
+          recurring_costs: string
+          created_by: string | null
+          created_at: string
+        }
+        Insert: {
+          project_id: string
+          org_id: string
+          pages: string[]
+          exclusions: string
+          primary_conversion: string
+          acceptance_criteria: string[]
+          recurring_costs: string
+          features?: string[]
+          workflows?: string[]
+        }
+        Update: {
+        }
+        Relationships: []
+      }
+      web_project_approvals: {
+        Row: {
+          id: string
+          project_id: string
+          org_id: string
+          revision_id: string
+          kind: string
+          approved_by: string | null
+          note: string | null
+          created_at: string
+        }
+        Insert: {
+          project_id: string
+          org_id: string
+          revision_id: string
+          kind: string
+          note?: string | null
+        }
+        Update: {
+        }
+        Relationships: []
+      }
+      web_readiness_items: {
+        Row: {
+          id: string
+          project_id: string
+          org_id: string
+          item: string
+          status: string
+          evidence: string | null
+          updated_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          project_id: string
+          org_id: string
+          item: string
+          status: string
+          evidence?: string | null
+        }
+        Update: {
+          status?: string
+          evidence?: string | null
+        }
+        Relationships: []
+      }
+      web_qa_runs: {
+        Row: {
+          id: string
+          project_id: string
+          org_id: string
+          revision_id: string
+          verdict: string
+          critical_open: number
+          checked: string[]
+          evidence: string
+          tested_url: string | null
+          run_by: string | null
+          created_at: string
+        }
+        Insert: {
+          project_id: string
+          org_id: string
+          revision_id: string
+          verdict: string
+          critical_open: number
+          checked: string[]
+          evidence: string
+          tested_url?: string | null
+        }
+        Update: {
+        }
+        Relationships: []
+      }
+      web_tasks: {
+        Row: {
+          id: string
+          project_id: string
+          org_id: string
+          role: string
+          title: string
+          done_when: string
+          due_on: string | null
+          assigned_to: string | null
+          status: string
+          blocked_reason: string | null
+          evidence: string | null
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          project_id: string
+          org_id: string
+          role: string
+          title: string
+          done_when: string
+          due_on?: string | null
+          assigned_to?: string | null
+          status?: string
+        }
+        Update: {
+          title?: string
+          done_when?: string
+          due_on?: string | null
+          assigned_to?: string | null
+          status?: string
+          blocked_reason?: string | null
+          evidence?: string | null
+        }
+        Relationships: []
+      }
+      web_task_dependencies: {
+        Row: {
+          task_id: string
+          depends_on: string
+          project_id: string
+          created_at: string
+        }
+        Insert: {
+          task_id: string
+          depends_on: string
+          project_id: string
+        }
+        Update: {
+        }
+        Relationships: []
+      }
+      web_assets: {
+        Row: {
+          id: string
+          project_id: string
+          org_id: string
+          label: string
+          kind: string
+          source: string
+          status: string
+          licence_note: string | null
+          location: string | null
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          project_id: string
+          org_id: string
+          label: string
+          kind: string
+          source?: string
+          status?: string
+          licence_note?: string | null
+          location?: string | null
+        }
+        Update: {
+          label?: string
+          kind?: string
+          source?: string
+          status?: string
+          licence_note?: string | null
+          location?: string | null
+        }
+        Relationships: []
+      }
+      web_deployments: {
+        Row: {
+          id: string
+          project_id: string
+          org_id: string
+          environment: string
+          url: string
+          commit_ref: string
+          outcome: string
+          checked: string
+          rollback_note: string | null
+          deployed_by: string | null
+          created_at: string
+        }
+        Insert: {
+          project_id: string
+          org_id: string
+          environment: string
+          url: string
+          commit_ref: string
+          outcome: string
+          checked: string
+        }
+        Update: {
+          outcome?: string
+          rollback_note?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -4417,6 +4677,18 @@ export type Database = {
       tepos_open_week: {
         Args: { p_org: string; p_week_start: string }
         Returns: string
+      }
+      web_delivery_board: {
+        Args: Record<PropertyKey, never>
+        Returns: { id: string; ref: string; name: string; org_id: string; org_name: string; website_type: string; plan: string; status: string; status_note: string; deadline_on: string | null; clock_paused_on: string | null; updated_at: string; readiness_gaps: number; tasks_total: number; tasks_done: number; tasks_blocked: number; last_qa_verdict: string | null; last_qa_at: string | null; live_url: string | null }[]
+      }
+      web_delivery_clients: {
+        Args: Record<PropertyKey, never>
+        Returns: { org_id: string; org_name: string; plan: string }[]
+      }
+      web_project_readiness: {
+        Args: { p_project: string }
+        Returns: string[]
       }
       sales_calls_today: {
         Args: { p_limit?: number }

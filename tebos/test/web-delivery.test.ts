@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { canTransition } from "../src/domain/states";
 import {
-  addBusinessDays, businessDaysBetween, checkRelease, checkScope, nextClock, qaPassed, readinessGaps,
+  addBusinessDays, businessDaysBetween, canStart, checkAsset, checkDeployment, checkRelease, checkScope, completion, deadlineState,
+  makesLoop, nextClock, qaPassed, readinessGaps,
   READINESS_ITEMS, type ReadinessItem, type ScopeDraft,
 } from "../src/domain/web-delivery";
 
@@ -101,5 +102,56 @@ describe("QA and release", () => {
     expect(canTransition("web_project", "build", "release")).toBe(false);
     expect(canTransition("web_project", "closed", "build")).toBe(false);
     expect(canTransition("web_project", "qa", "client_review")).toBe(true);
+  });
+});
+
+describe("milestone 2: tasks, assets, deployments, the clock on the dashboard", () => {
+  it("a task starts only when what it depends on is done", () => {
+    const all = [
+      { id: "a", status: "done" as const, dependsOn: [] },
+      { id: "b", status: "todo" as const, dependsOn: ["a"] },
+      { id: "c", status: "todo" as const, dependsOn: ["a", "b"] },
+    ];
+    expect(canStart(all[1]!, all)).toBe(true);
+    expect(canStart(all[2]!, all)).toBe(false);
+    expect(canStart(all[0]!, all)).toBe(false);
+  });
+  it("refuses dependencies that make a loop", () => {
+    const edges: Array<[string, string]> = [["b", "a"], ["c", "b"]];
+    expect(makesLoop("a", "c", edges)).toBe(true);
+    expect(makesLoop("a", "a", edges)).toBe(true);
+    expect(makesLoop("c", "a", edges)).toBe(false);
+  });
+  it("nobody passes their own review, and a task's states follow the ledger", () => {
+    expect(canTransition("web_task", "todo", "done")).toBe(false);
+    expect(canTransition("web_task", "review", "done")).toBe(true);
+    expect(canTransition("web_task", "cancelled", "todo")).toBe(false);
+  });
+  it("an asset is received only with its source and licence", () => {
+    expect(checkAsset({ status: "received", source: "unknown", licenceNote: "Client owns it outright." })).toMatchObject({ ok: false });
+    expect(checkAsset({ status: "received", source: "client_supplied", licenceNote: "short" })).toMatchObject({ ok: false });
+    expect(checkAsset({ status: "received", source: "client_supplied", licenceNote: "Client's own logo, supplied by email on 1 Nov." })).toEqual({ ok: true });
+    expect(checkAsset({ status: "missing", source: "unknown", licenceNote: "" })).toEqual({ ok: true });
+  });
+  it("completion is counted from done tasks only", () => {
+    expect(completion(0, 0)).toBeNull();
+    expect(completion(4, 1)).toBe(25);
+  });
+  it("places a project against its clock", () => {
+    const p = (status: "build" | "intake" | "handover", deadlineOn: string | null, pausedOn: string | null = null) => ({ status, deadlineOn, pausedOn });
+    expect(deadlineState(p("intake", null), "2026-11-02")).toEqual({ state: "not_started", businessDaysLeft: null });
+    expect(deadlineState(p("build", "2026-11-05"), "2026-11-02")).toEqual({ state: "on_track", businessDaysLeft: 3 });
+    expect(deadlineState(p("build", "2026-11-05"), "2026-11-04")).toEqual({ state: "at_risk", businessDaysLeft: 1 });
+    expect(deadlineState(p("build", "2026-11-05"), "2026-11-05")).toEqual({ state: "due_today", businessDaysLeft: 0 });
+    expect(deadlineState(p("build", "2026-11-05"), "2026-11-09")).toEqual({ state: "overdue", businessDaysLeft: -2 });
+    expect(deadlineState(p("build", "2026-11-05", "2026-11-03"), "2026-11-09").state).toBe("paused");
+    expect(deadlineState(p("handover", "2026-11-05"), "2026-11-09").state).toBe("finished");
+  });
+  it("production needs release and the client's approval", () => {
+    const d = { environment: "production" as const, url: "https://client.example", commitRef: "1de4b0b", checked: "Home, contact form and mobile menu load." };
+    expect(checkDeployment(d, { status: "build", releaseApproved: true })).toMatchObject({ ok: false });
+    expect(checkDeployment(d, { status: "release", releaseApproved: false })).toMatchObject({ code: "TEBOS_APPROVAL_REQUIRED" });
+    expect(checkDeployment(d, { status: "release", releaseApproved: true })).toEqual({ ok: true });
+    expect(checkDeployment({ ...d, environment: "preview", url: "http://x" }, { status: "build", releaseApproved: false })).toMatchObject({ ok: false });
   });
 });

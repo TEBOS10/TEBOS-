@@ -189,6 +189,9 @@ insert into public.web_project_approvals (project_id, org_id, revision_id, kind,
 select t99zz.ok((select count(*) = 2 from public.web_qa_runs), 'the client reads QA verdicts on their project');
 select set_config('request.jwt.claim.sub', :'staff', false);
 update public.web_projects set status = 'release', status_note = 'Client approved the release.' where id = :'proj';
+-- handover needs the site live in production (milestone 2, web_delivery_ledger)
+insert into public.web_deployments (project_id, org_id, environment, url, commit_ref, outcome, checked)
+  values (:'proj', :'org', 'production', 'https://client-99zz.example', '1de4b0b', 'live', 'Home and the enquiry form load on the live domain.');
 update public.web_projects set status = 'handover', status_note = 'Live; handover pack sent.' where id = :'proj';
 update public.web_projects set status = 'closed', status_note = 'Handover accepted by the client.' where id = :'proj';
 select t99zz.expect_error(format($$update public.web_projects set status = 'build', status_note = 'Reopening a closed project.' where id = %L$$, :'proj'), 'TEBOS_ILLEGAL_TRANSITION');

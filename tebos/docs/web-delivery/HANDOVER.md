@@ -15,6 +15,15 @@
   and an unready build are each refused.
 - **No interface yet.** The order is foundations first (`CLAUDE.md`).
 
+- **Milestone 2: BUILT and TESTED locally, not merged.** It adds:
+  - the task ledger with dependencies;
+  - the asset register;
+  - deployment records and the handover gate;
+  - `web_delivery_board()` and `web_delivery_clients()`.
+
+  The **maintainers' dashboard** is at `/web-delivery` and `/web-delivery/:id`, in the staff workspace. It needs the
+  founder's "merge it", because the migration changes the database.
+
 ## Setup and run
 
 ```sh
@@ -57,20 +66,21 @@ These are in ADR 0011.
 - **QA independence is by role only.** Any maintainer can record a verdict. "Not the builder" isn't enforced yet.
 - **The 3-day clock** doesn't yet exclude public holidays.
 
-## The next three tasks
+## Tests run (1 Nov, milestone 2)
+
+- **Core:** typecheck passed; 463 unit tests passed; `test:db` passed, including `99zz` and `99zzb`, plus the 63
+  integration tests.
+- **Web:** typecheck passed; 63 unit tests passed; the build and the bundle check passed; 151 browser tests passed, 1
+  skipped (the screenshot test, which runs only on request).
+
+## The next three tasks (after milestone 2 merges)
 
 1. **Founder:** check the Vercel plan, and choose a host for client sites whose terms allow commercial use
    (`TOOLCHAIN.md` §3).
-2. **Milestone 2, the data:**
-   - an agent task ledger with dependencies;
-   - the asset register, with licence status;
-   - integration connections, recorded with their owner and revocation plan;
-   - deployment records.
-   All additive, with SQL tests.
-3. **Milestone 2, the interface:**
-   - the maintainers' project list and project page in TEBOS;
-   - the client's progress-and-approve page;
-   - e2e at phone width.
+2. **The client's portal:** intake progress, pending decisions, the preview, and approve (scope, design and release
+   are approved by the client's admin only).
+3. **Project history on the dashboard** (a staff-readable audit view), then integration connections and cost
+   records.
 
 ## How another agent resumes
 

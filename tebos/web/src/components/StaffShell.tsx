@@ -1,7 +1,7 @@
 // The workspace for TEBOS's staff who aren't members of any organisation
 // (salespeople, and maintainers before their first client): the pipeline and
 // the playbook, and nothing of any client's.
-import { BookOpen, Briefcase, ListChecks, LogOut, Megaphone, Menu, MessagesSquare, PhoneCall, Receipt, ShieldCheck, Users } from "lucide-react";
+import { BookOpen, Briefcase, Globe, ListChecks, LogOut, Megaphone, Menu, MessagesSquare, PhoneCall, Receipt, ShieldCheck, Users } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, usePath } from "../lib/router";
 import { useSignedIn } from "../lib/session";
@@ -19,6 +19,7 @@ export function StaffShell({ children }: { children: ReactNode }) {
     { to: "/marketing", label: "Marketing", icon: Megaphone },
     { to: "/marketing/playbook", label: "Marketing playbook", icon: BookOpen },
     ...(access?.sales ? [{ to: "/meet", label: "Meeting mode", icon: PhoneCall }] : []),
+    ...(access?.maintainer || access?.admin ? [{ to: "/web-delivery", label: "Web delivery", icon: Globe }] : []),
     ...(access?.maintainer ? [{ to: "/pipeline/queue", label: "Maintainer queue", icon: ListChecks }, { to: "/pipeline/channel", label: "Client channels", icon: MessagesSquare }] : []),
     ...(access?.admin ? [{ to: "/pipeline/billing", label: "Billing", icon: Receipt }, { to: "/pipeline/team", label: "Staff", icon: Users }] : []),
   ];
