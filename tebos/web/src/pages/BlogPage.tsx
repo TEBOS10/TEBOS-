@@ -25,11 +25,8 @@ export function SiteFrame({ current, children }: { current?: "blog" | "pricing";
         <a className="lp-brand" href="/"><span className="brand-mark" aria-hidden><ShieldCheck size={18} /></span> TEBOS</a>
         <nav className="lp-links" aria-label="Site">
           <a href="/showcase">What TEBOS does</a>
+          <a href="/work">Work</a>
           <a href="/demo">Demo</a>
-          <a href="/systems">Systems</a>
-          <a href="/waitlist">Waiting list</a>
-          <a href="/self-check">Self-check</a>
-          <a href="/blog" aria-current={current === "blog" ? "page" : undefined}>Blog</a>
           <a href="/pricing" aria-current={current === "pricing" ? "page" : undefined}>Pricing</a>
           <a className="lp-signin" href="/sign-in">Sign in</a>
         </nav>
@@ -44,6 +41,12 @@ export function SiteFooter() {
   return (
     <footer className="lp-foot">
       <span>TEBOS · Evidence before assertion</span>
+      <nav className="row" style={{ gap: 14, flexWrap: "wrap" }} aria-label="More">
+        <a href="/systems" className="tour-link">Systems</a>
+        <a href="/self-check" className="tour-link">Self-check</a>
+        <a href="/waitlist" className="tour-link">Waiting list</a>
+        <a href="/blog" className="tour-link">Blog</a>
+      </nav>
       <nav className="row" style={{ gap: 14 }} aria-label="Legal">
         <a href="/privacy" className="tour-link">Privacy</a>
         <a href="/terms" className="tour-link">Terms</a>

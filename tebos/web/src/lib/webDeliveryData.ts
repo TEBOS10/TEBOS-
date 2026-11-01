@@ -39,10 +39,10 @@ export async function deliveryClients(db: Db): Promise<ClientOption[]> {
   return must(await db.rpc("web_delivery_clients")) as ClientOption[];
 }
 
-export interface NewProject { org_id: string; name: string; website_type: string; primary_objective: string; plan: string; status_note: string }
+export interface NewProject { org_id: string; name: string; website_type: string; primary_objective: string; plan: string; status_note: string; starting_point?: string; existing_url?: string | null }
 
 export async function createProject(db: Db, p: NewProject): Promise<WebProject> {
-  return must(await db.from("web_projects").insert({ ...p, name: p.name.trim(), status_note: p.status_note.trim() }).select().single());
+  return must(await db.from("web_projects").insert({ ...p, name: p.name.trim(), status_note: p.status_note.trim(), existing_url: p.existing_url?.trim() || null }).select().single());
 }
 
 export interface ProjectFile {

@@ -33,6 +33,37 @@ export const PRIMARY_OBJECTIVES = {
 } as const;
 export type PrimaryObjective = keyof typeof PRIMARY_OBJECTIVES;
 
+/** Where a project starts (migration 20261102090000_web_existing_sites.sql): a new site, or a site the client already has. */
+export const STARTING_POINTS = {
+  new_build: "Build a new website",
+  edit_existing: "Edit the website they already have",
+  connect_existing: "Keep their website and connect it to TEBOS",
+} as const;
+export type StartingPoint = keyof typeof STARTING_POINTS;
+
+/** An existing site's address: https only, no spaces. */
+export const EXISTING_URL = /^https:\/\/[^\s/]+\.[^\s]+$/;
+/** The kinds of client-owned access that let TEBOS touch an existing site. */
+export const EXISTING_SITE_ACCESS = ["hosting", "repository", "cms"] as const;
+
+export interface SiteAccess { service: string; account_owner: string; status: string; tebos_access: string }
+
+/** Whether TEBOS may count "technical access" as met: always decided by people for a new build; for an existing
+ *  site, only with the client's own hosting, repository or CMS access granted to TEBOS on record. */
+export function existingSiteAccess(start: StartingPoint, access: SiteAccess[]): Check {
+  if (start === "new_build") return OK;
+  const ok = access.some((a) => (EXISTING_SITE_ACCESS as readonly string[]).includes(a.service) && a.account_owner === "client"
+    && (a.status === "granted" || a.status === "verified") && a.tebos_access !== "none");
+  return ok ? OK : fail("TEBOS_VALIDATION", "record the client's grant of access to their existing site (hosting, repository or CMS) first");
+}
+
+/** A starting point needs an address unless it's a new build. */
+export function checkStartingPoint(start: StartingPoint, url: string | null): Check {
+  if (start === "new_build") return OK;
+  if (!url || !EXISTING_URL.test(url) || url.length > 300) return fail("TEBOS_VALIDATION", "give the address of the existing site, starting https://");
+  return OK;
+}
+
 /** The readiness items a person confirms with evidence. The other checks are computed from records. */
 export const READINESS_ITEMS = {
   commercial_terms: "Payment or agreed commercial terms are satisfied",

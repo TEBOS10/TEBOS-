@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { canTransition } from "../src/domain/states";
 import {
+  checkStartingPoint, existingSiteAccess,
   addBusinessDays, businessDaysBetween, canStart, checkAsset, checkDeployment, checkRelease, checkScope, completion, deadlineState,
   makesLoop, nextClock, qaPassed, readinessGaps, checkCost, checkIntegration, clientToDos, maintainersNeeded, monthlyRunningCents,
   WEB_PROJECTS_PER_MAINTAINER, INTAKE_REQUIRED, intakeMissing, easterSunday, isSaPublicHoliday,
@@ -226,5 +227,23 @@ describe("South African public holidays in the delivery clock", () => {
     expect(addBusinessDays("2026-04-02", 3)).toBe("2026-04-09");   // Good Friday, the weekend, Family Day
     expect(addBusinessDays("2026-12-15", 1)).toBe("2026-12-17");   // Day of Reconciliation
     expect(businessDaysBetween("2026-04-02", "2026-04-07")).toBe(1);
+  });
+});
+
+describe("existing websites", () => {
+  it("an existing site needs an https address; a new build needs none", () => {
+    expect(checkStartingPoint("new_build", null).ok).toBe(true);
+    expect(checkStartingPoint("edit_existing", null).ok).toBe(false);
+    expect(checkStartingPoint("edit_existing", "http://plain.example.co.za").ok).toBe(false);
+    expect(checkStartingPoint("connect_existing", "https://their.example.co.za").ok).toBe(true);
+  });
+  it("technical access to an existing site needs the client's own grant on record", () => {
+    const cms = { service: "cms", account_owner: "client", status: "granted", tebos_access: "admin" };
+    expect(existingSiteAccess("new_build", []).ok).toBe(true);
+    expect(existingSiteAccess("edit_existing", []).ok).toBe(false);
+    expect(existingSiteAccess("edit_existing", [{ ...cms, status: "requested" }]).ok).toBe(false);
+    expect(existingSiteAccess("edit_existing", [{ ...cms, service: "analytics" }]).ok).toBe(false);
+    expect(existingSiteAccess("edit_existing", [{ ...cms, tebos_access: "none" }]).ok).toBe(false);
+    expect(existingSiteAccess("connect_existing", [cms]).ok).toBe(true);
   });
 });
