@@ -10,7 +10,7 @@
 .wk-kind { font-size: 12px; color: var(--muted); padding: 4px 10px; border-radius: 999px; background: var(--surface-alt); white-space: nowrap; }
 .wk-what { color: var(--muted); padding: 0 4px; }
 
-.gr { --g-ink: #0b0b0c; --g-grape: #7b4bb3; --g-soft: #f4f4f5; --g-line: rgba(11, 11, 12, 0.1); min-height: 100%; background: #ffffff; color: var(--g-ink); padding-bottom: 60px; }
+.gr { --g-ink: #0b0b0c; --g-grape: #5b4766; --g-soft: #f4f4f5; --g-line: rgba(11, 11, 12, 0.1); min-height: 100%; background: #ffffff; color: var(--g-ink); padding-bottom: 60px; }
 .gr-nav { display: flex; align-items: center; justify-content: space-between; gap: 12px; max-width: 1120px; margin: 0 auto; padding: 22px 20px; flex-wrap: wrap; }
 .gr-back { color: var(--g-ink); opacity: 0.6; }
 .gr-mark { display: inline-flex; align-items: center; gap: 10px; font-size: 13px; letter-spacing: 0.32em; font-weight: 500; color: var(--g-ink); }

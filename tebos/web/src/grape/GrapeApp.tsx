@@ -93,20 +93,21 @@ function Hero() {
   const host = useRef<HTMLDivElement>(null);
   const [three] = useState(() => use3d() && window.innerWidth >= 700);
   const [ready, setReady] = useState(false);
+  const [failed, setFailed] = useState(false);
   useEffect(() => {
     if (!three || !host.current) return;
     let stop: (() => void) | null = null, cancelled = false;
     void import("./hero3d").then(({ mountHero }) => {
       if (cancelled || !host.current) return;
-      stop = mountHero(host.current, { photos: PHOTOS, logo: "/logo.png", onReady: () => setReady(true) });
+      stop = mountHero(host.current, { model: "/hero/grape-lens.glb", onReady: () => setReady(true), onError: () => setFailed(true) });
     });
     return () => { cancelled = true; stop?.(); };
   }, [three]);
   return (
-    <section className={`gs-hero ${three ? "is-3d" : ""}`} data-testid="hero" data-scene={three ? (ready ? "3d" : "loading") : "still"}>
-      {three ? <div ref={host} className={`gs-hero-3d ${ready ? "on" : ""}`} aria-hidden /> : (
-        <div className="gs-hero-still" aria-hidden>{PHOTOS.slice(0, 3).map((p) => <img key={p} src={p} alt="" />)}</div>
-      )}
+    <section className="gs-hero" data-testid="hero" data-scene={three && !failed ? (ready ? "3d" : "loading") : "still"}>
+      {/* the modelled object: live in 3D where the device can, otherwise a still render of the same object */}
+      {(!three || failed || !ready) && <img className="gs-hero-still" src="/hero/grape-lens.jpg" alt="" aria-hidden onError={(e) => { e.currentTarget.hidden = true; }} />}
+      {three && !failed && <div ref={host} className={`gs-hero-3d ${ready ? "on" : ""}`} aria-hidden />}
       <div className="gs-hero-copy gs-wrap">
         <p className="gs-kicker">Grape Studios · Johannesburg</p>
         <h1>Book the shoot<br />you <em>want.</em></h1>

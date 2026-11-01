@@ -1,16 +1,22 @@
-// Grape Studios' hero (ADR 0016): a black, glossy GP coin turning slowly in the dark, with the studio's own photographs
-// orbiting it like prints on a light table, lit by a single purple rim light. The pointer tilts the camera a little.
-// Loaded after the page; phones, reduced motion and computers without a graphics chip get the still version instead.
+// Grape Studios' hero (ADR 0016): one modelled object, made for Grape Studios: a cluster of grapes where every grape
+// is a black camera lens. It turns slowly on a dark studio set under a softbox, with a muted aubergine rim light and,
+// every few seconds, the soft pulse of a camera flash. The pointer tilts the camera a little. The model was generated
+// with the founder's 3D integration (public/hero/grape-lens.glb); phones, reduced motion and computers without a
+// graphics chip get a still render of the same object instead.
 import * as THREE from "three";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
-export interface HeroOptions { photos: string[]; logo: string; onReady?: () => void }
+export interface HeroOptions { model: string; onReady?: () => void; onError?: () => void }
 
 export function mountHero(host: HTMLElement, opts: HeroOptions): () => void {
-  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance", preserveDrawingBuffer: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.05;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.setClearColor(0x000000, 0);
   renderer.domElement.setAttribute("aria-hidden", "true");
   host.appendChild(renderer.domElement);
@@ -19,73 +25,64 @@ export function mountHero(host: HTMLElement, opts: HeroOptions): () => void {
   const pmrem = new THREE.PMREMGenerator(renderer);
   const env = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
   scene.environment = env;
-  scene.environmentIntensity = 0.35;
+  scene.environmentIntensity = 0.55;
 
-  const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 100);
-  camera.position.set(0, 0.6, 9.5);
+  const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
+  camera.position.set(0, 0.4, 6);
 
-  scene.add(new THREE.AmbientLight(0xffffff, 0.25));
-  const key = new THREE.DirectionalLight(0xffffff, 1.6);
-  key.position.set(3, 4, 6);
-  scene.add(key);
-  const rim = new THREE.PointLight(0x8b55d6, 60, 20, 2); // the pinch of purple
-  rim.position.set(-3.5, 1.5, -2.5);
+  // the studio: a softbox above and to the side, a muted aubergine rim behind, a floor that catches a reflection
+  scene.add(new THREE.AmbientLight(0xffffff, 0.08));
+  const softbox = new THREE.SpotLight(0xffffff, 60, 20, Math.PI / 6, 0.8, 1.6);
+  softbox.position.set(2.5, 4.5, 3);
+  softbox.castShadow = true;
+  softbox.shadow.mapSize.set(1024, 1024);
+  softbox.shadow.radius = 6;
+  scene.add(softbox);
+  const rim = new THREE.PointLight(0x6b5478, 22, 12, 2); // the pinch of aubergine, kept low
+  rim.position.set(-2.6, 1.2, -2.2);
   scene.add(rim);
-  const rim2 = new THREE.PointLight(0x8b55d6, 25, 14, 2);
-  rim2.position.set(3.5, -1.8, -1.5);
-  scene.add(rim2);
+  const fill = new THREE.DirectionalLight(0xffffff, 0.25);
+  fill.position.set(-3, 1, 4);
+  scene.add(fill);
+  const flash = new THREE.PointLight(0xffffff, 0, 10, 2); // the camera flash
+  flash.position.set(0.4, 0.6, 3.2);
+  scene.add(flash);
 
-  const loader = new THREE.TextureLoader();
-  const disposables: Array<{ dispose(): void }> = [env, pmrem];
-  const track = <T extends { dispose(): void }>(x: T) => (disposables.push(x), x);
+  const floor = new THREE.Mesh(new THREE.CircleGeometry(6, 64), new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.35, metalness: 0.6 }));
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.y = -1.15;
+  floor.receiveShadow = true;
+  scene.add(floor);
 
-  // the coin: black lacquer, the GP mark on its face
-  const coin = new THREE.Group();
-  scene.add(coin);
-  const body = new THREE.Mesh(track(new THREE.CylinderGeometry(1.25, 1.25, 0.22, 96)),
-    track(new THREE.MeshPhysicalMaterial({ color: 0x050505, metalness: 0.6, roughness: 0.25, clearcoat: 1, clearcoatRoughness: 0.08 })));
-  body.rotation.x = Math.PI / 2;
-  coin.add(body);
-  const faceTex = track(loader.load(opts.logo));
-  faceTex.colorSpace = THREE.SRGBColorSpace;
-  const faceMat = track(new THREE.MeshPhysicalMaterial({ map: faceTex, metalness: 0.2, roughness: 0.3, clearcoat: 1, transparent: true }));
-  for (const side of [1, -1]) {
-    const face = new THREE.Mesh(track(new THREE.CircleGeometry(1.24, 96)), faceMat);
-    face.position.z = 0.111 * side;
-    if (side < 0) face.rotation.y = Math.PI;
-    coin.add(face);
-  }
-
-  // the prints: the studio's photographs on a tilted orbit
-  const ring = new THREE.Group();
-  ring.rotation.x = -0.32;
-  ring.rotation.z = 0.08;
-  scene.add(ring);
-  const radius = 3.4;
-  const prints: THREE.Mesh[] = [];
-  let loaded = 0;
-  opts.photos.forEach((src, i) => {
-    const tex = track(loader.load(src, (t) => {
-      const img = t.image as HTMLImageElement;
-      const aspect = img.width / img.height;
-      prints[i]!.scale.set(aspect, 1, 1);
-      loaded++;
-      if (loaded === opts.photos.length) opts.onReady?.();
-    }));
-    tex.colorSpace = THREE.SRGBColorSpace;
-    tex.anisotropy = 4;
-    const m = new THREE.Mesh(track(new THREE.PlaneGeometry(1.5, 1.5)), track(new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide, toneMapped: false })));
-    const a = (i / opts.photos.length) * Math.PI * 2;
-    m.position.set(Math.cos(a) * radius, 0, Math.sin(a) * radius);
-    ring.add(m);
-    prints.push(m);
-  });
+  const stage = new THREE.Group();
+  scene.add(stage);
+  new GLTFLoader().load(opts.model, (gltf) => {
+    const model = gltf.scene;
+    // centre it and fit it to about two units tall
+    const box = new THREE.Box3().setFromObject(model);
+    const size = box.getSize(new THREE.Vector3());
+    const centre = box.getCenter(new THREE.Vector3());
+    const scale = 2.1 / Math.max(size.x, size.y, size.z);
+    model.scale.setScalar(scale);
+    model.position.sub(centre.multiplyScalar(scale));
+    model.traverse((o) => {
+      const m = o as THREE.Mesh;
+      if (!m.isMesh) return;
+      m.castShadow = true;
+      // lacquer: keep the generated colour, make the surface read as polished
+      for (const mat of Array.isArray(m.material) ? m.material : [m.material]) {
+        const s = mat as THREE.MeshStandardMaterial;
+        if ("roughness" in s) { s.roughness = Math.min(s.roughness ?? 0.5, 0.35); s.envMapIntensity = 1.2; }
+      }
+    });
+    stage.add(model);
+    opts.onReady?.();
+  }, undefined, () => opts.onError?.());
 
   const pointer = new THREE.Vector2();
   const onPointer = (e: PointerEvent) => pointer.set(e.clientX / window.innerWidth - 0.5, e.clientY / window.innerHeight - 0.5);
   window.addEventListener("pointermove", onPointer, { passive: true });
 
-  // on a wide screen the scene sits to the right of the words; on a narrow one it is centred above them
   let lookX = 0;
   const resize = () => {
     const w = host.clientWidth, h = host.clientHeight;
@@ -93,16 +90,16 @@ export function mountHero(host: HTMLElement, opts: HeroOptions): () => void {
     renderer.domElement.style.width = `${w}px`;
     renderer.domElement.style.height = `${h}px`;
     camera.aspect = w / Math.max(1, h);
-    // keep the whole ring in frame on narrow screens
-    camera.position.z = w / h < 1 ? 13 : 9.5;
-    lookX = w / h > 1.2 ? -3 : 0;
+    camera.position.z = w / h < 1 ? 8.5 : 6;
+    // on a wide screen the object stands to the right of the words
+    lookX = w / h > 1.2 ? -1.3 : 0;
     camera.updateProjectionMatrix();
   };
   resize();
   const ro = new ResizeObserver(resize);
   ro.observe(host);
 
-  let raf = 0, last = performance.now(), visible = true;
+  let raf = 0, last = performance.now(), visible = true, flashAt = performance.now() + 3500;
   const io = new IntersectionObserver(([e]) => { visible = Boolean(e?.isIntersecting); });
   io.observe(host);
   const tick = (now: number) => {
@@ -110,13 +107,14 @@ export function mountHero(host: HTMLElement, opts: HeroOptions): () => void {
     if (!visible) { last = now; return; }
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
-    coin.rotation.y += dt * 0.35;
-    coin.position.y = Math.sin(now / 1600) * 0.06;
-    ring.rotation.y -= dt * 0.12;
-    // each print turns to face the camera as it passes, like someone holding it up
-    for (const p of prints) p.lookAt(camera.position.x, p.getWorldPosition(new THREE.Vector3()).y, camera.position.z);
-    camera.position.x += (pointer.x * 1.2 - camera.position.x) * 0.04;
-    camera.position.y += (0.6 - pointer.y * 0.8 - camera.position.y) * 0.04;
+    stage.rotation.y += dt * 0.28;
+    stage.position.y = Math.sin(now / 1800) * 0.05;
+    // a soft flash every six to eight seconds: a quick rise, a slower fade
+    const since = (now - flashAt) / 1000;
+    flash.intensity = since > 0 && since < 0.6 ? 40 * Math.exp(-since * 9) : 0;
+    if (since > 0.6) flashAt = now + 6000 + Math.random() * 2000;
+    camera.position.x += (pointer.x * 0.8 - camera.position.x) * 0.04;
+    camera.position.y += (0.4 - pointer.y * 0.5 - camera.position.y) * 0.04;
     camera.lookAt(lookX, 0, 0);
     renderer.render(scene, camera);
   };
@@ -127,7 +125,14 @@ export function mountHero(host: HTMLElement, opts: HeroOptions): () => void {
     ro.disconnect();
     io.disconnect();
     window.removeEventListener("pointermove", onPointer);
-    for (const d of disposables) d.dispose();
+    scene.traverse((o) => {
+      const m = o as THREE.Mesh;
+      if (m.geometry) m.geometry.dispose();
+      const mats = m.material ? (Array.isArray(m.material) ? m.material : [m.material]) : [];
+      for (const mat of mats) { for (const v of Object.values(mat)) if (v instanceof THREE.Texture) v.dispose(); mat.dispose(); }
+    });
+    env.dispose();
+    pmrem.dispose();
     renderer.dispose();
     renderer.domElement.remove();
   };
