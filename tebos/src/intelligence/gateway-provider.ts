@@ -17,12 +17,19 @@ export interface GatewayConfig {
   model: string;
   apiKey?: string;
   timeoutMs?: number;
+  /** The provider's name in results and logs (default "gateway"). */
+  name?: string;
+  /** How errors refer to it (default "The model gateway"). */
+  label?: string;
 }
 
 export class GatewayProvider implements ReasoningProvider {
-  readonly name = "gateway";
+  readonly name: string;
+  private readonly label: string;
 
   constructor(private readonly config: GatewayConfig, private readonly fetchImpl: Fetch = fetch) {
+    this.name = config.name ?? "gateway";
+    this.label = config.label ?? "The model gateway";
     if (!/^https?:\/\//.test(config.baseUrl)) throw new Error("TEBOS_MODEL_GATEWAY_URL must be an http(s) URL");
     if (!config.model) throw new Error("TEBOS_GATEWAY_MODEL must name the model to request");
   }
@@ -46,13 +53,13 @@ export class GatewayProvider implements ReasoningProvider {
         signal: AbortSignal.timeout(this.config.timeoutMs ?? 300_000),
       });
     } catch (err) {
-      throw new ReasoningError("provider_unavailable", `The model gateway couldn't be reached: ${(err as Error).message}`);
+      throw new ReasoningError("provider_unavailable", `${this.label} couldn't be reached: ${(err as Error).message}`);
     }
 
-    if (res.status === 401 || res.status === 403) throw new ReasoningError("misconfigured", `The model gateway rejected the credentials (${res.status})`);
-    if (res.status === 400 || res.status === 404 || res.status === 422) throw new ReasoningError("misconfigured", `The model gateway rejected the request (${res.status})`);
-    if (res.status === 429 || res.status >= 500) throw new ReasoningError("provider_unavailable", `The model gateway is temporarily unavailable (${res.status})`);
-    if (!res.ok) throw new ReasoningError("provider_unavailable", `The model gateway answered ${res.status}`);
+    if (res.status === 401 || res.status === 403) throw new ReasoningError("misconfigured", `${this.label} rejected the credentials (${res.status})`);
+    if (res.status === 400 || res.status === 404 || res.status === 422) throw new ReasoningError("misconfigured", `${this.label} rejected the request (${res.status})`);
+    if (res.status === 429 || res.status >= 500) throw new ReasoningError("provider_unavailable", `${this.label} is temporarily unavailable (${res.status})`);
+    if (!res.ok) throw new ReasoningError("provider_unavailable", `${this.label} answered ${res.status}`);
 
     let body: {
       model?: string;
@@ -62,10 +69,10 @@ export class GatewayProvider implements ReasoningProvider {
     try {
       body = (await res.json()) as typeof body;
     } catch {
-      throw new ReasoningError("invalid_output", "The model gateway's answer was not JSON");
+      throw new ReasoningError("invalid_output", `${this.label}'s answer was not JSON`);
     }
     const choice = body.choices?.[0];
-    if (!choice?.message) throw new ReasoningError("invalid_output", "The model gateway returned no answer");
+    if (!choice?.message) throw new ReasoningError("invalid_output", `${this.label} returned no answer`);
     if (choice.message.refusal) throw new ReasoningError("refusal", "The model declined the request");
     if (choice.finish_reason === "length") throw new ReasoningError("truncated", "The answer was cut off at the token limit");
 

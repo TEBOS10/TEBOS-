@@ -75,3 +75,40 @@ describe("naming the workspace for a key that isn't scoped to one", async () => 
     expect(() => workspaceHeaders("not a workspace; id")).toThrow();
   });
 });
+
+describe("Grok (xAI)", () => {
+  it("calls xAI's endpoint with the key only in the header, under its own name", async () => {
+    const { xaiProvider, XAI_BASE_URL, DEFAULT_XAI_MODEL } = await import("../src/intelligence/xai-provider");
+    const seen: Array<{ url: string; init: RequestInit }> = [];
+    const g = xaiProvider("xai-test-key", undefined, fakeFetch(200, answer('{"ok":true}'), seen));
+    expect(g.name).toBe("xai");
+    expect((await g.structured(request)).provider).toBe("xai");
+    expect(seen[0]!.url).toBe(`${XAI_BASE_URL}/chat/completions`);
+    expect(XAI_BASE_URL).toBe("https://api.x.ai/v1");
+    expect((seen[0]!.init.headers as Record<string, string>).authorization).toBe("Bearer xai-test-key");
+    const body = JSON.parse(String(seen[0]!.init.body));
+    expect(body.model).toBe(DEFAULT_XAI_MODEL);
+    expect(body.response_format).toMatchObject({ type: "json_schema", json_schema: { strict: true } });
+    expect(String(seen[0]!.init.body)).not.toContain("xai-test-key");
+  });
+
+  it("uses the chosen model, refuses an empty key, and names itself in errors", async () => {
+    const { xaiProvider } = await import("../src/intelligence/xai-provider");
+    const seen: Array<{ url: string; init: RequestInit }> = [];
+    await xaiProvider("k", "grok-other", fakeFetch(200, answer('{"ok":true}'), seen)).structured(request);
+    expect(JSON.parse(String(seen[0]!.init.body)).model).toBe("grok-other");
+    expect(() => xaiProvider("  ")).toThrow();
+    const err = await xaiProvider("k", undefined, fakeFetch(401, {})).structured(request).catch((e) => e);
+    expect(err).toBeInstanceOf(ReasoningError);
+    expect(err.kind).toBe("misconfigured");
+    expect(err.message).toMatch(/^xAI /);
+  });
+
+  it("is a fallback after Claude: an outage moves on to Grok", async () => {
+    const { xaiProvider } = await import("../src/intelligence/xai-provider");
+    const claudeDown: ReasoningProvider = { name: "anthropic", structured: async () => { throw new ReasoningError("provider_unavailable", "down"); } };
+    const chain = new FallbackProvider([claudeDown, xaiProvider("k", undefined, fakeFetch(200, answer('{"ok":true}')))]);
+    expect(chain.name).toBe("anthropic+xai");
+    expect((await chain.structured(request)).provider).toBe("xai");
+  });
+});
