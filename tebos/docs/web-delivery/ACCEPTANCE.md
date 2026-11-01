@@ -41,3 +41,15 @@ Evidence is the named test file. The SQL tests run with `npm run test:db`, the u
 | 22 | Cost and delivery metrics per project | NOT VERIFIED |
 | 23 | One reusable website template delivered end to end | BLOCKED: a commercial-use host is needed (`TOOLCHAIN.md` §3) |
 | 24 | Public-holiday calendar in the business-day count | NOT VERIFIED (weekends only today) |
+
+## Design standard (from `DESIGN_BRIEF.md`; checked for every client site at QA)
+
+| # | Criterion | How it's checked |
+|---|---|---|
+| D1 | The site is built around one named hero idea (object, world, transformation, or person and work) | The creative brief names it; design review fails a site without one |
+| D2 | One display face, one quiet sans, one accent colour; body text at least 16px | Token file review; computed styles in e2e |
+| D3 | The primary call to action is visible in the first viewport on 375px and 1280px, and returns at the end of each chapter | Playwright screenshots at both widths |
+| D4 | Every animated or 3D section has a fallback: still chapters for reduced motion, and a poster without WebGL | e2e with `reducedMotion: 'reduce'`, and with WebGL disabled |
+| D5 | Before the first interaction on mobile, the hero transfers at most 2 MB | Playwright network log on a throttled profile |
+| D6 | Keyboard only: every link and control is reachable with visible focus; scroll scenes have text equivalents | e2e keyboard walk |
+| D7 | Every image and model is in the asset register with its licence or source | Asset register (milestone 2) |

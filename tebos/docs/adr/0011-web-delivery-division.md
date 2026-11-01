@@ -30,8 +30,7 @@ project record, the state machine, intake, scope approval and package enforcemen
 
 ## Consequences
 
-- **Prices aren't changed.** The spec lists Company at R7,200; the recorded decision is R7,500. That is for the founder
-  to settle.
+- **Prices aren't changed.** The spec lists Company at R7,200; the founder confirmed R7,500 on 1 Nov.
 - **Public client sites need a host whose terms allow commercial use.** Vercel Hobby doesn't
   (`docs/web-delivery/TOOLCHAIN.md` §3). Until a host is chosen, nothing commercial is deployed publicly.
 - **Later milestones** add the task ledger, assets, integrations, deployments, costs, the dashboard and the client

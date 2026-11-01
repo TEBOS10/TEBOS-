@@ -39,6 +39,22 @@ Update this list every run; strike items when they're done.
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 1 Nov 2026 (later): web delivery live; Company price kept; design standard set
+
+- **The founder said "merge it":**
+  - PR #105 merged (all checks green);
+  - migration `web_delivery` applied through the connector;
+  - a rolled-back live test returned VERIFIED_OK. It confirmed that a project is accepted, and that a private
+    organisation, scope over the package, and an unready build are each refused.
+- **Founder decision:** Company stays **R7,500** a month. The spec's R7,200 was not adopted.
+- **Design standard:** the founder sent eight reference recordings. `docs/web-delivery/DESIGN_BRIEF.md` now records:
+  - what each recording teaches;
+  - the TEBOS standard (one hero idea, scroll as story, one display face and one accent, the conversion always
+    visible);
+  - how to build it at no added cost: Three.js (already a dependency), scroll-scrubbed image sequences, and fallbacks;
+  - which package can carry which level.
+  Design criteria D1–D7 were added to `ACCEPTANCE.md`. The recordings stay out of this public repository.
+
 ## 1 Nov 2026 (day): Web Delivery Division, milestone 1 (founder's operating specification)
 
 - **Inspected first:** TEBOS already has client onboarding steps (`delivery_tasks`), package ceilings (board limits)

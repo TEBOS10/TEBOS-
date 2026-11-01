@@ -10,8 +10,9 @@
   - the readiness check;
   - the delivery clock;
   - QA verdicts and the release gates.
-- **Not merged and not applied to the live database.** It changes the database, so it needs the founder's
-  "merge it".
+- **Merged (PR #105) and applied live** on 1 Nov as migration `web_delivery`, then checked with a rolled-back live
+  test. The live test confirmed that a project is accepted, and that a private organisation, scope over the package,
+  and an unready build are each refused.
 - **No interface yet.** The order is foundations first (`CLAUDE.md`).
 
 ## Setup and run
@@ -45,8 +46,8 @@ interface). Never commit values. The interface holds only the publishable Supaba
 These are in ADR 0011.
 - The division is a **module of TEBOS**, on the existing database and roles. It is not a new app.
 - **Package ceilings reuse the board limits** (workflows and parts): Small 4/10, Medium 10/30, Company 40/120.
-- **The founder's spec says Company is R7,200; TEBOS's recorded decision (20 Oct) is R7,500.** Nothing was changed.
-  The founder confirms which one is right (tier 3, pricing).
+- **Company stays R7,500 a month.** The founder decided this on 1 Nov; the spec's R7,200 was not adopted.
+- **The design standard is set by the founder's eight reference recordings** (`DESIGN_BRIEF.md`).
 - **Business days count weekends only.** South African public holidays aren't counted yet.
 
 ## Known problems and limits
@@ -58,8 +59,8 @@ These are in ADR 0011.
 
 ## The next three tasks
 
-1. **Founder:** say "merge it", then apply `web_delivery` through the Supabase connector under that name, and verify
-   it with a rolled-back test.
+1. **Founder:** check the Vercel plan, and choose a host for client sites whose terms allow commercial use
+   (`TOOLCHAIN.md` §3).
 2. **Milestone 2, the data:**
    - an agent task ledger with dependencies;
    - the asset register, with licence status;
