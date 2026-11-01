@@ -10,14 +10,14 @@ import { CSS2DObject, CSS2DRenderer } from "three/addons/renderers/CSS2DRenderer
 import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
-import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { isSoftwareRenderer, lathe, PROFILES, RoundedTile } from "./kit";
 
 export const STAGE_COUNT = 9; // hero + seven stages + outro
 
-const BLUE = new THREE.Color("#7fb2ff");
+const BLUE = new THREE.Color("#2f6feb"); // deep enough to read on the white room (founder, 1 Nov 2026: "change the black with white")
 const AMBER = new THREE.Color("#ffb04a");
+const ROOM = "#f6f5f2"; // the white room the board stands in
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
 const smooth = (x: number) => { const t = clamp01(x); return t * t * (3 - 2 * t); };
 const seg = (p: number, a: number, b: number) => smooth((p - a) / (b - a));
@@ -76,7 +76,7 @@ export function createBoardWorld(host: HTMLElement, opts: { reducedMotion: boole
   const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, mobile ? 1.5 : 2));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 0.95;
+  renderer.toneMappingExposure = 1.15;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.domElement.setAttribute("aria-hidden", "true");
   host.appendChild(renderer.domElement);
@@ -88,20 +88,20 @@ export function createBoardWorld(host: HTMLElement, opts: { reducedMotion: boole
   // Without a graphics chip, jump to each scroll position and draw only then.
   const still = isSoftwareRenderer(renderer);
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color("#05070b");
-  scene.fog = new THREE.Fog("#05070b", 16, 34);
+  scene.background = new THREE.Color(ROOM);
+  scene.fog = new THREE.Fog(ROOM, 24, 60);
   const pmrem = new THREE.PMREMGenerator(renderer);
   const envTex = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
   scene.environment = envTex;
-  scene.environmentIntensity = 0.42;
+  scene.environmentIntensity = 0.6;
 
   const camera = new THREE.PerspectiveCamera(mobile ? 50 : 38, 1, 0.1, 100);
   camera.position.copy(SHOTS[0]![0]);
   const lookAt = SHOTS[0]![1].clone();
 
   // light: a cool key, a soft rim, and the environment's reflections
-  scene.add(new THREE.HemisphereLight("#c9d6ff", "#05070b", 0.35));
-  const key = new THREE.DirectionalLight("#ffffff", 1.6);
+  scene.add(new THREE.HemisphereLight("#ffffff", "#d9d8d3", 0.9));
+  const key = new THREE.DirectionalLight("#ffffff", 1.4);
   key.position.set(6, 10, 4);
   scene.add(key);
   const rim = new THREE.PointLight("#7fb2ff", 18, 18, 1.6);
@@ -115,8 +115,8 @@ export function createBoardWorld(host: HTMLElement, opts: { reducedMotion: boole
   // ---------------------------------------------------------------- the board
   const board = new THREE.Group();
   scene.add(board);
-  const dark = mat(new THREE.MeshPhysicalMaterial({ color: "#0b0f16", metalness: 0.55, roughness: 0.22, clearcoat: 1, clearcoatRoughness: 0.12 }));
-  const silver = mat(new THREE.MeshPhysicalMaterial({ color: "#7d8795", metalness: 1, roughness: 0.38, clearcoat: 0.5, clearcoatRoughness: 0.2 }));
+  const dark = mat(new THREE.MeshPhysicalMaterial({ color: "#1b1e24", metalness: 0.4, roughness: 0.22, clearcoat: 1, clearcoatRoughness: 0.12 }));
+  const silver = mat(new THREE.MeshPhysicalMaterial({ color: "#efeeea", metalness: 0.05, roughness: 0.32, clearcoat: 1, clearcoatRoughness: 0.15 }));
   const tileGeo = geo(new RoundedTile(0.97, 0.14, 0.97));
   for (let x = 0; x < 8; x++) {
     for (let z = 0; z < 8; z++) {
@@ -125,10 +125,10 @@ export function createBoardWorld(host: HTMLElement, opts: { reducedMotion: boole
       board.add(t);
     }
   }
-  const rimFrame = new THREE.Mesh(geo(new THREE.BoxGeometry(8.6, 0.22, 8.6)), mat(new THREE.MeshPhysicalMaterial({ color: "#11151c", metalness: 0.9, roughness: 0.28, clearcoat: 1 })));
+  const rimFrame = new THREE.Mesh(geo(new THREE.BoxGeometry(8.6, 0.22, 8.6)), mat(new THREE.MeshPhysicalMaterial({ color: "#d6d4ce", metalness: 0.2, roughness: 0.4, clearcoat: 1 })));
   rimFrame.position.y = -0.2;
   board.add(rimFrame);
-  const floor = new THREE.Mesh(geo(new THREE.CircleGeometry(40, 64)), mat(new THREE.MeshStandardMaterial({ color: "#06080d", metalness: 0.9, roughness: 0.45 })));
+  const floor = new THREE.Mesh(geo(new THREE.CircleGeometry(40, 64)), mat(new THREE.MeshStandardMaterial({ color: "#ffffff", metalness: 0, roughness: 0.95 })));
   floor.rotation.x = -Math.PI / 2;
   floor.position.y = -0.32;
   scene.add(floor);
@@ -147,7 +147,7 @@ export function createBoardWorld(host: HTMLElement, opts: { reducedMotion: boole
   const obsidian = mat(new THREE.MeshPhysicalMaterial({ color: "#161b24", metalness: 0.9, roughness: 0.26, clearcoat: 1, clearcoatRoughness: 0.1 }));
   const pieceTop = new Map<string, THREE.Vector3>();
   const labelEls: HTMLElement[] = [];
-  const ringMat = mat(new THREE.MeshBasicMaterial({ color: BLUE, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+  const ringMat = mat(new THREE.MeshBasicMaterial({ color: BLUE, transparent: true, opacity: 0, blending: THREE.NormalBlending, depthWrite: false }));
   const ringGeo = geo(new THREE.TorusGeometry(0.44, 0.018, 12, 64));
   const rings: THREE.Mesh[] = [];
   for (const p of PIECES) {
@@ -182,14 +182,14 @@ export function createBoardWorld(host: HTMLElement, opts: { reducedMotion: boole
     labelEls.push(el);
   }
   const founder = pieceTop.get("founder")!;
-  const halo = new THREE.Mesh(geo(new THREE.TorusGeometry(0.62, 0.03, 12, 80)), mat(new THREE.MeshBasicMaterial({ color: AMBER, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false })));
+  const halo = new THREE.Mesh(geo(new THREE.TorusGeometry(0.62, 0.03, 12, 80)), mat(new THREE.MeshBasicMaterial({ color: AMBER, transparent: true, opacity: 0.9, blending: THREE.NormalBlending, depthWrite: false })));
   halo.rotation.x = -Math.PI / 2;
   halo.position.copy(founder).setY(0.03);
   scene.add(halo);
 
   // ---------------------------------------------------------------- flows
   interface Flow { line: THREE.Line; via: THREE.Vector3[]; direct: THREE.Vector3[]; curve: THREE.CatmullRomCurve3; t: number[] }
-  const flowMat = mat(new THREE.LineBasicMaterial({ color: AMBER, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false }));
+  const flowMat = mat(new THREE.LineBasicMaterial({ color: AMBER, transparent: true, opacity: 0.55, blending: THREE.NormalBlending, depthWrite: false }));
   const flows: Flow[] = FLOWS.map(([a, b], i) => {
     const A = pieceTop.get(a)!, B = pieceTop.get(b)!;
     const mid = A.clone().lerp(B, 0.5);
@@ -201,20 +201,20 @@ export function createBoardWorld(host: HTMLElement, opts: { reducedMotion: boole
     scene.add(line);
     return { line, via, direct, curve, t: Array.from({ length: PULSES_PER_FLOW }, (_, k) => k / PULSES_PER_FLOW) };
   });
-  const pulseMat = mat(new THREE.MeshBasicMaterial({ color: "#ffffff", toneMapped: false }));
+  const pulseMat = mat(new THREE.MeshBasicMaterial({ color: "#16181d", toneMapped: false }));
   const pulses = new THREE.InstancedMesh(geo(new THREE.SphereGeometry(0.045, 16, 12)), pulseMat, FLOWS.length * PULSES_PER_FLOW);
   pulses.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
   scene.add(pulses);
 
   // the scan: a sheet of light sweeping the board
-  const scanMat = mat(new THREE.MeshBasicMaterial({ color: BLUE, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+  const scanMat = mat(new THREE.MeshBasicMaterial({ color: BLUE, transparent: true, opacity: 0, blending: THREE.NormalBlending, depthWrite: false, side: THREE.DoubleSide }));
   const scan = new THREE.Mesh(geo(new THREE.PlaneGeometry(8.4, 1.6)), scanMat);
   scan.rotation.y = Math.PI / 2;
   scene.add(scan);
 
   // the gate: consequential moves pass a person's approval
   const gateAt = flows[3]!.direct[2]!.clone();
-  const gate = new THREE.Mesh(geo(new THREE.TorusGeometry(0.5, 0.035, 16, 96)), mat(new THREE.MeshBasicMaterial({ color: BLUE, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false })));
+  const gate = new THREE.Mesh(geo(new THREE.TorusGeometry(0.5, 0.035, 16, 96)), mat(new THREE.MeshBasicMaterial({ color: BLUE, transparent: true, opacity: 0, blending: THREE.NormalBlending, depthWrite: false })));
   gate.position.copy(gateAt);
   const dir = flows[3]!.direct[3]!.clone().sub(flows[3]!.direct[1]!).normalize();
   gate.lookAt(gateAt.clone().add(dir));
@@ -235,7 +235,7 @@ export function createBoardWorld(host: HTMLElement, opts: { reducedMotion: boole
   const fill = new THREE.Mesh(geo(new THREE.CylinderGeometry(0.3, 0.3, 1, 48)), fillMat);
   fill.position.copy(objAt);
   scene.add(fill);
-  const targetRing = new THREE.Mesh(geo(new THREE.TorusGeometry(0.4, 0.02, 12, 64)), mat(new THREE.MeshBasicMaterial({ color: "#ffffff", toneMapped: false })));
+  const targetRing = new THREE.Mesh(geo(new THREE.TorusGeometry(0.4, 0.02, 12, 64)), mat(new THREE.MeshBasicMaterial({ color: "#16181d", toneMapped: false })));
   targetRing.rotation.x = -Math.PI / 2;
   targetRing.position.copy(objAt).setY(-0.3 + 2.6 * 0.8);
   scene.add(targetRing);
@@ -245,11 +245,9 @@ export function createBoardWorld(host: HTMLElement, opts: { reducedMotion: boole
   objLabel.position.copy(objAt).setY(2.75);
   scene.add(objLabel);
 
-  // ---------------------------------------------------------------- post
+  // ---------------------------------------------------------------- post (no bloom: in a white room it washes the board out)
   const composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
-  const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.7, 0.5, 0.92);
-  composer.addPass(bloom);
   composer.addPass(new OutputPass());
 
   // ---------------------------------------------------------------- loop
@@ -375,7 +373,6 @@ export function createBoardWorld(host: HTMLElement, opts: { reducedMotion: boole
       renderer.domElement.style.height = `${h}px`;
       labels.setSize(w, h);
       composer.setSize(w, h);
-      bloom.setSize(w / 2, h / 2);
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       dirty = true;

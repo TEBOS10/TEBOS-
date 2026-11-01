@@ -26,15 +26,12 @@ function Hero({ onWatch }: { onWatch: () => void }) {
       <p className="lp-kicker">Business operating architecture</p>
       <h1 className="lp-title">A business that runs on structure, not on you.</h1>
       <p className="lp-sub">
-        In most growing businesses the founder is the middleware: every lead, price and handover passes through one person's
-        memory. TEBOS maps how your business really runs, finds where it depends on memory, improvisation and you, and builds
-        the structure around the systems you already have, so the business can produce its intended outcomes with far less of it.
+        TEBOS learns how your business really runs, then builds the structure around it, so it keeps working when you step away.
       </p>
       <div className="lp-ctas">
         <a className="btn btn-lime lp-cta" href="/demo">Try the demo</a>
-        <a className="lp-watch" href="/waitlist">Join the waiting list · 3-day operating system</a>
-        <a className="lp-watch" href="/self-check">Take the free self-check · 2 min</a>
         <button className="lp-watch" onClick={onWatch}><Play size={16} aria-hidden /> Watch the film · 1 min</button>
+        <a className="lp-watch" href="/self-check">Take the free self-check · 2 min</a>
       </div>
     </>
   );
@@ -66,10 +63,6 @@ export function LandingPage() {
         <nav className="lp-links" aria-label="Site">
           <a href="/showcase">What TEBOS does</a>
           <a href="/demo">Demo</a>
-          <a href="/systems">Systems</a>
-          <a href="/waitlist">Waiting list</a>
-          <a href="/self-check">Self-check</a>
-          <a href="/blog">Blog</a>
           <a href="/pricing">Pricing</a>
           <a className="lp-signin" href="/sign-in">Sign in</a>
         </nav>
@@ -167,6 +160,9 @@ export function LandingPage() {
       <footer className="lp-foot">
         <span>TEBOS · Evidence before assertion</span>
         <a href="/pricing" className="tour-link">Pricing</a>
+        <a href="/systems" className="tour-link">Systems</a>
+        <a href="/waitlist" className="tour-link">Waiting list</a>
+        <a href="/blog" className="tour-link">Blog</a>
         <span>The board, the film and the demo show a fictional business.</span>
         <a href="/privacy" className="tour-link">Privacy</a>
         <a href="/terms" className="tour-link">Terms</a>
