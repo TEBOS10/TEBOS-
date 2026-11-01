@@ -26,6 +26,7 @@
   "include": [
     "src",
     "tepos",
-    "pra"
+    "pra",
+    "grape"
   ]
 }

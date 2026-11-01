@@ -41,6 +41,7 @@ import { WebDeliveryPage, WebProjectPage } from "./pages/WebDeliveryPage";
 import { WebsitePage } from "./pages/WebsitePage";
 import { EquityPage } from "./pages/EquityPage";
 import { SalesRegisterPage } from "./pages/SalesRegisterPage";
+import { BookingsPage } from "./pages/BookingsPage";
 import { StaffShell } from "./components/StaffShell";
 import { BlogIndex, BlogPost } from "./pages/BlogPage";
 import { AiClientsPage } from "./pages/AiClientsPage";
@@ -82,6 +83,7 @@ const ROUTES: Array<[string, (p: Record<string, string>) => ReactNode]> = [
   ["/channel", () => <ChannelPage />],
   ["/website", () => <WebsitePage />],
   ["/sales-register", () => <SalesRegisterPage />],
+  ["/bookings", () => <BookingsPage />],
   ["/ai-clients", () => <AiClientsPage />],
   ["/reeds/:id", (p) => <ReedsRequestPage id={p.id!} />],
   ...staffRoutes(),

@@ -184,7 +184,12 @@ export async function installFakeSupabase(
     if (rpc) {
       const args = req.postDataJSON() ?? {};
       writes.push({ method: "RPC", table: name!, body: args });
-      return route.fulfill({ status: 200, headers, body: JSON.stringify(answerRpc(tables, name!, args, storedFiles)) });
+      try {
+        return route.fulfill({ status: 200, headers, body: JSON.stringify(answerRpc(tables, name!, args, storedFiles)) });
+      } catch (err) {
+        const e = err as Error & { hint?: string };
+        return route.fulfill({ status: 400, headers, body: JSON.stringify({ code: "P0001", message: e.message, hint: e.hint ?? null, details: null }) });
+      }
     }
 
     const table = (tables[name!] ??= []);
@@ -241,6 +246,9 @@ export async function installFakeSupabase(
 }
 
 // The two invitation functions, answered from the fixture tables; any other RPC returns a fresh id.
+const toMin = (hm: string) => Number(hm.slice(0, 2)) * 60 + Number(hm.slice(3, 5));
+const hhmm = (m: number) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+
 function answerRpc(tables: FakeSupabase["tables"], name: string, args: Record<string, string>, storedFiles = new Set<string>()): unknown {
   const now = new Date().toISOString();
   if (name === "create_pra_account") {
@@ -485,6 +493,73 @@ function answerRpc(tables: FakeSupabase["tables"], name: string, args: Record<st
       return { user_id: s.user_id, open_projects: mine.length, building: mine.filter((p) => ["build", "qa", "qa_failed"].includes(String(p.status))).length, overdue: 0, capacity: 8 };
     });
   }
+  // bookings (simplified from the database's reads: the rules themselves are tested in 99zzh_bookings.sql)
+  if (name.startsWith("booking_")) {
+    const svc = (id: unknown) => (t.booking_services ?? []).find((x) => x.id === id);
+    const pkg = (id: unknown) => (t.booking_packages ?? []).find((x) => x.id === id);
+    const orgBySlug = (slug: string) => (t.organisations ?? []).find((o) => o.slug === slug);
+    const settings = (org: unknown) => (t.booking_settings ?? []).find((x) => x.org_id === org);
+    const open = (org: unknown) => (t.bookings ?? []).filter((b) => b.org_id === org && ["requested", "confirmed"].includes(String(b.status)));
+    if (name === "booking_schedule") {
+      const from = new Date(`${args.p_from}T00:00:00+02:00`).getTime(), to = from + Number(args.p_days ?? 7) * 86400_000;
+      const inRange = (x: Record<string, unknown>) => new Date(String(x.starts_at)).getTime() < to && new Date(String(x.ends_at)).getTime() > from;
+      const team = (t.memberships ?? []).some((m) => m.org_id === args.p_org && ["org_admin", "operator"].includes(String(m.role)));
+      return [
+        ...(t.bookings ?? []).filter((b) => b.org_id === args.p_org && b.status !== "declined" && inRange(b)).map((b) => ({
+          id: b.id, ref: b.ref, starts_at: b.starts_at, ends_at: b.ends_at, status: b.status, service: svc(b.service_id)?.name ?? null,
+          package: pkg(b.package_id)?.label ?? null, customer_name: team ? b.customer_name : null, price_cents: b.price_cents ?? null,
+          deposit_paid: Boolean(b.deposit_ref), kind: "booking" })),
+        ...(t.booking_time_off ?? []).filter((x) => x.org_id === args.p_org && inRange(x)).map((x) => ({
+          id: x.id, ref: null, starts_at: x.starts_at, ends_at: x.ends_at, status: "time_off", service: null, package: null, customer_name: null,
+          price_cents: null, deposit_paid: null, kind: "time_off" })),
+      ].sort((a, b) => String(a.starts_at).localeCompare(String(b.starts_at)));
+    }
+    if (name === "booking_catalogue") {
+      const o = orgBySlug(args.p_slug); const st = o && settings(o.id);
+      if (!o || !st) return null;
+      return { name: st.public_name, accepting: st.accepting, services: (t.booking_services ?? []).filter((v) => v.org_id === o.id)
+        .sort((a, b) => Number(a.sort) - Number(b.sort)).map((v) => ({ id: v.id, key: v.key, name: v.name, cover: v.cover_path ?? null,
+          pictures: v.pictures_note ?? null, delivery_min: v.delivery_min ?? 2, delivery_max: v.delivery_max ?? 4, travel_min: v.travel_min ?? null,
+          travel_max: v.travel_max ?? null, at_studio: v.at_studio ?? false,
+          packages: (t.booking_packages ?? []).filter((p) => p.service_id === v.id).map((p) => ({ id: p.id, label: p.label, minutes: p.minutes, price_cents: p.price_cents, note: p.note ?? null })) })) };
+    }
+    if (name === "booking_free_times") {
+      const o = orgBySlug(args.p_slug); if (!o) return [];
+      const wd = new Date(`${args.p_day}T12:00:00Z`).getUTCDay() || 7;
+      const h = (t.booking_hours ?? []).find((x) => x.org_id === o.id && x.weekday === wd); if (!h) return [];
+      const mins = Number(args.p_minutes), out: Array<{ starts_at: string }> = [];
+      for (let m = toMin(String(h.opens)); m + mins <= toMin(String(h.closes)); m += 30) {
+        const s = new Date(`${args.p_day}T${hhmm(m)}:00+02:00`).getTime(), e = s + mins * 60_000;
+        if (s < Date.now() + 86400_000) continue;
+        if (open(o.id).some((b) => new Date(String(b.starts_at)).getTime() < e && new Date(String(b.ends_at)).getTime() > s)) continue;
+        out.push({ starts_at: new Date(s).toISOString() });
+      }
+      return out;
+    }
+    if (name === "booking_request") {
+      const o = orgBySlug(args.p_slug); const st = o && settings(o.id);
+      if (!o || !st?.accepting) throw Object.assign(new Error("this business isn't taking bookings online yet"), { hint: "TEBOS_VALIDATION" });
+      const p = pkg(args.p_package); const mins = p ? Number(p.minutes) : Number(args.p_minutes);
+      const token = `tok-${crypto.randomUUID()}`, ref = `BK-${String((t.bookings ?? []).length + 1).padStart(5, "0")}`;
+      (t.bookings ??= []).push({ id: crypto.randomUUID(), ref, org_id: o.id, service_id: args.p_service, package_id: args.p_package ?? null,
+        starts_at: args.p_starts, ends_at: new Date(new Date(args.p_starts).getTime() + mins * 60_000).toISOString(), status: "requested",
+        status_note: "Requested online.", customer_name: args.p_name, customer_email: String(args.p_email).toLowerCase(), customer_phone: args.p_phone ?? null,
+        brief: args.p_brief ?? null, price_cents: p ? p.price_cents : null, deposit_cents: null, deposit_ref: null, delivered_note: null,
+        token_hash: token, consent_at: now, created_at: now, updated_at: now });
+      return { ref, token };
+    }
+    if (name === "booking_for_token") {
+      const b = (t.bookings ?? []).find((x) => x.token_hash === args.p_token); if (!b) return null;
+      const v = svc(b.service_id), st = settings(b.org_id), price = b.price_cents as number | null;
+      return { ref: b.ref, status: b.status, status_note: ["declined", "cancelled"].includes(String(b.status)) ? b.status_note : null,
+        business: st?.public_name, contact_email: st?.contact_email ?? null, service: v?.name, package: pkg(b.package_id)?.label ?? null,
+        starts_at: b.starts_at, ends_at: b.ends_at, price_cents: price, deposit_cents: price == null ? null : Math.round(price / 2),
+        deposit_paid: Boolean(b.deposit_ref), deposit_instructions: b.status === "requested" && price != null ? st?.deposit_instructions ?? null : null,
+        delivery_min: v?.delivery_min ?? 2, delivery_max: v?.delivery_max ?? 4, travel_min: v?.travel_min ?? null, travel_max: v?.travel_max ?? null,
+        delivered_note: b.delivered_note ?? null,
+        week_busy: open(b.org_id).map((x) => ({ starts_at: x.starts_at, ends_at: x.ends_at, yours: x.id === b.id })) };
+    }
+  }
   if (name === "equity_client_orgs") return (t.organisations ?? []).filter((o) => (o.app ?? "tebos") === "tebos").map((o) => ({ org_id: o.id, org_name: o.name }));
   if (name === "equity_audit") {
     // the last few months' totals from the fixture's sales and closes (simplified from the database's audit: no flags
@@ -589,6 +664,8 @@ const COLUMN_DEFAULTS: Record<string, Record<string, unknown>> = {
   equity_applications: { status: "applied", org_id: null, registration_number: null, trading_since: null, employees: 0, owner_full_time: false,
     revenue_evidence_note: null, reporting_consent: false, package: "starter", screened_by: null, approved_by: null, agreement_ref: null },
   equity_terms: { equity_pct: 5, voting_pct: 5.1, ended_on: null },
+  bookings: { status: "requested", deposit_ref: null, deposit_cents: null, delivered_note: null, customer_phone: null, brief: null },
+  booking_time_off: { reason: null },
   partner_sales: { reference: null, customer_ref: null, note: null, channel: "other" },
   web_intakes: { answers: {}, status: "draft", submitted_by: null, submitted_at: null, reopen_reason: null },
   web_integrations: { status: "requested", verified_on: null, revocation_plan: null, transfer_plan: null },

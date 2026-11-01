@@ -336,6 +336,19 @@ export const webTaskMachine = machine({
   },
 });
 
+export const bookingMachine = machine({
+  initial: ["requested"],
+  transitions: {
+    requested: ["confirmed", "declined", "cancelled"],
+    confirmed: ["completed", "cancelled", "no_show"],
+    completed: ["delivered"],
+    declined: [],
+    cancelled: [],
+    no_show: [],
+    delivered: [],
+  },
+});
+
 export const equityApplicationMachine = machine({
   initial: ["applied"],
   transitions: {
@@ -388,6 +401,7 @@ export const MACHINES = {
   web_project: webProjectMachine,
   web_task: webTaskMachine,
   equity_application: equityApplicationMachine,
+  booking: bookingMachine,
 } as const;
 
 export type MachineName = keyof typeof MACHINES;
@@ -408,6 +422,7 @@ export type PropertyProblemStatus = StatesOf<typeof propertyProblemMachine>;
 export type WebProjectStatus = StatesOf<typeof webProjectMachine>;
 export type WebTaskStatus = StatesOf<typeof webTaskMachine>;
 export type EquityApplicationStatus = StatesOf<typeof equityApplicationMachine>;
+export type BookingStatus = StatesOf<typeof bookingMachine>;
 export type OpportunityStatus = StatesOf<typeof opportunityMachine>;
 export type WorkRequestStatus = StatesOf<typeof workRequestMachine>;
 export type WorkTaskStatus = StatesOf<typeof workTaskMachine>;
