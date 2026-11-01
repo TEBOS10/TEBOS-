@@ -8,6 +8,7 @@ import type { BookingStatus } from "@core/states";
 import { money } from "@core/property";
 import { Link, matchPath, navigate, RouterProvider, usePath } from "../lib/router";
 import { use3d } from "../world/support";
+import { Reels } from "./Reels";
 import { BEHANCE, BOOKINGS_EMAIL, BRANDS, freeTimes, INSTAGRAM, loadCatalogue, myBooking, requestBooking, type Catalogue, type CatService, type MyBooking } from "./data";
 
 const PHOTOS = ["studio", "on-location", "corporate", "graduation", "property", "events"].map((k) => `/photos/${k}.jpg`);
@@ -26,10 +27,12 @@ function Routes() {
   useEffect(() => { void loadCatalogue().then(setCat); }, []);
   const mine = matchPath("/b/:token", path);
   const book = matchPath("/book/:service", path);
+  const reels = path === "/reels";
   return (
     <div className="gs">
-      <Nav onDark={!mine && !book && Boolean(cat)} />
-      {mine ? <BookingView token={mine.token!} />
+      <Nav onDark={!mine && !book && !reels && Boolean(cat)} />
+      {reels ? <Reels />
+        : mine ? <BookingView token={mine.token!} />
         : !cat ? <p className="gs-wrap gs-muted">Loading…</p>
         : book ? <BookFlow cat={cat} serviceKey={book.service!} />
         : <Home cat={cat} />}

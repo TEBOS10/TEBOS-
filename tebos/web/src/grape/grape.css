@@ -143,3 +143,27 @@ h1, h2, h3, p { margin: 0; }
 .gs-brand-list { list-style: none; margin: 18px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 14px clamp(24px, 3vw, 40px); align-items: baseline; }
 @media (min-width: 900px) { .gs-brand-list { justify-content: space-between; flex-wrap: nowrap; } }
 .gs-brand-list li { font-size: clamp(18px, 1.9vw, 24px); white-space: nowrap; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--g-black, #0b0b0c); opacity: 0.85; }
+
+/* Listing reels (ADR 0019) */
+.gs-reels h1 { margin-bottom: 14px; }
+.gs-lead { max-width: 640px; color: var(--g-muted); font-size: 17px; line-height: 1.55; margin: 0 0 24px; }
+.gs-drop { position: relative; display: grid; place-items: center; gap: 8px; padding: 40px 20px; border: 1px dashed var(--g-line); border-radius: 18px; color: var(--g-muted); cursor: pointer; text-align: center; }
+.gs-drop:hover, .gs-drop:focus-within { border-color: var(--g-purple); color: var(--g-ink); }
+.gs-drop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.gs-picks { list-style: none; padding: 0; margin: 20px 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
+.gs-picks li { position: relative; }
+.gs-picks li > button:first-child { position: relative; display: block; width: 100%; aspect-ratio: 4 / 3; padding: 0; border: 2px solid transparent; border-radius: 12px; overflow: hidden; background: var(--g-grey); cursor: pointer; opacity: 0.45; }
+.gs-picks li > button.on { border-color: var(--g-ink); opacity: 1; }
+.gs-picks img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.gs-pick-n { position: absolute; left: 6px; top: 6px; min-width: 22px; padding: 2px 6px; border-radius: 999px; background: rgba(0, 0, 0, 0.7); color: #fff; font-size: 12px; }
+.gs-pick-x { position: absolute; right: 6px; top: 6px; display: grid; place-items: center; width: 24px; height: 24px; border: 0; border-radius: 50%; background: rgba(0, 0, 0, 0.7); color: #fff; cursor: pointer; }
+.gs-reel-opts { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
+.gs-reel-opts label { display: grid; gap: 6px; font-size: 13px; color: var(--g-muted); }
+.gs-reel-opts select, .gs-reel-opts input { font: inherit; font-size: 15px; padding: 10px 12px; border: 1px solid var(--g-line); border-radius: 12px; color: var(--g-ink); background: #fff; }
+.gs-grow { flex: 1 1 220px; }
+.gs-made { list-style: none; padding: 0; margin: 28px 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+.gs-made li { display: grid; gap: 8px; }
+.gs-made video { width: 100%; aspect-ratio: 9 / 16; border-radius: 14px; background: #000; object-fit: cover; }
+.gs-made-label { margin: 0; font-size: 13px; color: var(--g-muted); }
+.gs-reel-canvas { position: absolute; left: -10000px; top: 0; width: 108px; height: 192px; }
+.gs-small { font-size: 13px; margin-top: 18px; }
