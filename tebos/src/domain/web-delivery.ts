@@ -371,12 +371,105 @@ export function monthlyRunningCents(costs: Array<{ amountCents: number; recurren
 /** What a client still has to decide or supply, from their project's records. */
 export function clientToDos(p: {
   status: WebProjectStatus; isAdmin: boolean; hasScope: boolean; approved: { scope: boolean; design: boolean; release: boolean };
-  qaPassed: boolean; assetsNeeded: number;
+  qaPassed: boolean; assetsNeeded: number; briefSubmitted?: boolean;
 }): string[] {
   const out: string[] = [];
+  if ((p.status === "lead" || p.status === "intake") && p.briefSubmitted === false) out.push(p.isAdmin ? "Fill in and submit your brief" : "Your admin submits the brief");
   if (p.hasScope && !p.approved.scope) out.push(p.isAdmin ? "Approve the scope and its costs" : "Your admin approves the scope and its costs");
   if (p.hasScope && !p.approved.design) out.push(p.isAdmin ? "Approve the design direction" : "Your admin approves the design direction");
   if (p.qaPassed && !p.approved.release && (p.status === "client_review")) out.push(p.isAdmin ? "Review the preview and approve the release" : "Your admin approves the release");
   if (p.assetsNeeded > 0) out.push(`Send ${p.assetsNeeded} item${p.assetsNeeded === 1 ? "" : "s"} TEBOS needs from you`);
   return out;
 }
+
+// ---------------------------------------------------------------------------
+// Milestone 4: the client's brief and the work queue (migration 20261101180000_web_delivery_intake.sql)
+// ---------------------------------------------------------------------------
+
+export const VISUAL_DIRECTIONS = {
+  cinematic_3d: "Cinematic, with 3D",
+  luxury_editorial: "Luxury and editorial",
+  corporate: "Corporate and professional",
+  minimal: "Minimal and clean",
+  bold: "Bold and expressive",
+  product_led: "Product-led, built to convert",
+  data_rich: "Data-rich and functional",
+  tebos_recommends: "Let TEBOS recommend",
+} as const;
+export type VisualDirection = keyof typeof VISUAL_DIRECTIONS;
+
+export const LAUNCH_FEATURES = {
+  contact_form: "Contact or enquiry form",
+  booking: "Booking requests",
+  payments: "Payments",
+  shop: "Online shop",
+  accounts: "Client log-ins",
+  search: "Search and filters",
+  uploads: "File uploads",
+  blog: "News or blog",
+  cms: "Editing my own content",
+  languages: "More than one language",
+  analytics: "Visitor analytics",
+} as const;
+
+/** The client's brief (spec §5). Contact details are left out on purpose: they run through the client's account. */
+export interface IntakeAnswers {
+  business_name?: string;
+  industry?: string;
+  target_market?: string;
+  existing_website?: string;
+  objective?: string;
+  audience?: string;
+  first_action?: string;
+  current_problem?: string;
+  success_measure?: string;
+  references?: string;
+  pages?: string[];
+  launch_features?: string[];
+  later_features?: string;
+  visual_direction?: VisualDirection;
+  brand_colours?: string;
+  likes?: string;
+  dislikes?: string;
+  has_logo?: boolean;
+  content_notes?: string;
+  launch_date?: string;
+  recurring_budget?: string;
+  approver_role?: string;
+  confirmations?: { rights?: boolean; privacy?: boolean };
+}
+
+export const INTAKE_REQUIRED = {
+  business_name: "Your business's name",
+  audience: "Who the website is for",
+  first_action: "What visitors should do first",
+  success_measure: "How you'll measure success",
+  pages: "At least one page",
+  visual_direction: "A visual direction",
+  confirm_rights: "That you hold the rights to what you send",
+  confirm_privacy: "That what the site collects has a stated purpose",
+} as const;
+export type IntakeRequirement = keyof typeof INTAKE_REQUIRED;
+
+/** What a brief still lacks before it can be submitted (mirrors web_intake_missing). */
+export function intakeMissing(a: IntakeAnswers): IntakeRequirement[] {
+  const len = (s: string | undefined) => (s ?? "").trim().length;
+  const out: IntakeRequirement[] = [];
+  if (len(a.business_name) < 2) out.push("business_name");
+  if (len(a.audience) < 10) out.push("audience");
+  if (len(a.first_action) < 5) out.push("first_action");
+  if (len(a.success_measure) < 5) out.push("success_measure");
+  if (!a.pages || a.pages.length < 1) out.push("pages");
+  if (!a.visual_direction || !(a.visual_direction in VISUAL_DIRECTIONS)) out.push("visual_direction");
+  if (a.confirmations?.rights !== true) out.push("confirm_rights");
+  if (a.confirmations?.privacy !== true) out.push("confirm_privacy");
+  return out;
+}
+
+export const QUEUE_KIND_LABEL = {
+  request: "Client request",
+  brief: "New brief",
+  task: "Task due",
+  late: "Late project",
+} as const;
+export type QueueKind = keyof typeof QUEUE_KIND_LABEL;

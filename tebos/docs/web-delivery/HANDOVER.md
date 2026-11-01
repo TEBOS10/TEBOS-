@@ -25,7 +25,10 @@
   founder's "merge it", because the migration changes the database.
 
 - **Milestone 2 is live** (merged in PR #107, applied 1 Nov, checked with a rolled-back test).
-- **Milestone 3: BUILT and TESTED locally, not merged.** It adds:
+- **Milestone 3 is live** (merged in PR #108, applied 1 Nov, checked with a rolled-back test).
+- **Milestone 4: BUILT and TESTED.** It adds the client's brief and the maintainers' work queue, in migration
+  `web_delivery_intake`.
+- **Milestone 3, for reference.** It adds:
   - the client's page, **Your website** (`/website`);
   - website change requests from the client's own account;
   - client-owned accounts with TEBOS's delegated access recorded;
@@ -89,13 +92,19 @@ These are in ADR 0011.
 - **Web:** typecheck passed; 63 unit tests passed; the build and the bundle check passed; 155 browser tests passed, 2
   skipped (the screenshot tests, which run only on request).
 
+## Tests run (1 Nov, milestone 4)
+
+- **Core:** typecheck passed; 468 unit tests passed; `test:db` passed, including `99zzd`.
+- **Web:** typecheck passed; 63 unit tests passed; the build and the bundle check passed; 158 browser tests passed, 2
+  skipped (the screenshot tests, which run only on request).
+
 ## The next three tasks
 
-1. **Founder:** invite maintainers (Staff → Invite, role Maintainer). The team does the delivery; there are 0 today.
-2. **The client's intake form** (spec §5, sections A–J), so a new client fills in their brief from their own
-   account.
-3. **The maintainers' work queue across clients:** every open change request and every task due today, oldest first,
-   so nothing waits on the founder.
+1. **Founder:** invite maintainers (Staff → Invite, role Maintainer). There are 0, and nothing is delivered without
+   them.
+2. **Public holidays in the 3-day clock.** A South African holiday table, mirrored in the domain code.
+3. **A website starter template**, used for the first real client project end to end. Its public launch waits on a
+   commercial-use host (`TOOLCHAIN.md` §3).
 
 ## How another agent resumes
 

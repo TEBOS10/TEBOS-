@@ -40,6 +40,30 @@ Update this list every run; strike items when they're done.
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 1 Nov 2026 (late): milestone 3 live; milestone 4, the client's brief and one work queue
+
+- **Founder:** "merge it and do it all".
+- **Merged and live:**
+  - PR #108 (milestone 3), merged with all checks green;
+  - `web_delivery_portal` applied, then checked with a rolled-back test. It confirmed that access with no plan for
+    ending it, and an undisclosed recurring cost the client pays, are each refused, and that the history is refused
+    to a non-member.
+  - The "only maintainers run a project" rule couldn't be tested live: every live user is staff or an admin. The
+    local SQL test covers it.
+- **Built (migration `web_delivery_intake`):**
+  - **the client's brief**, under Your website. It saves as a draft and is submitted only when complete. It refuses
+    personal details and secrets; contact runs through the client's account. Once submitted it's fixed until a
+    maintainer reopens it with a reason;
+  - **Today's work** on the dashboard: one queue across every client, oldest first, with a "mine only" filter. It holds
+    open client requests, submitted briefs awaiting scope, tasks due or late, and late projects.
+- **Proved:** core 468 unit tests and `test:db`, including `99zzd`; web 63 unit tests, the build, and 158 browser
+  tests, including 3 new ones.
+- **Still the founder's (tier 3):**
+  - invite maintainers (0 today);
+  - the Paystack live key (decision 1);
+  - Anthropic credit;
+  - a commercial-use host.
+
 ## 1 Nov 2026 (night): milestone 2 live; milestone 3, client accounts and capacity for 50
 
 - **Founder:** "Build them. Merge it." He also wants:

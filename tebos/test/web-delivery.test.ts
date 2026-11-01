@@ -3,7 +3,7 @@ import { canTransition } from "../src/domain/states";
 import {
   addBusinessDays, businessDaysBetween, canStart, checkAsset, checkDeployment, checkRelease, checkScope, completion, deadlineState,
   makesLoop, nextClock, qaPassed, readinessGaps, checkCost, checkIntegration, clientToDos, maintainersNeeded, monthlyRunningCents,
-  WEB_PROJECTS_PER_MAINTAINER,
+  WEB_PROJECTS_PER_MAINTAINER, INTAKE_REQUIRED, intakeMissing,
   READINESS_ITEMS, type ReadinessItem, type ScopeDraft,
 } from "../src/domain/web-delivery";
 
@@ -183,7 +183,24 @@ describe("milestone 3: capacity, accounts, costs, the client's to-dos", () => {
     const p = { status: "approval" as const, isAdmin: true, hasScope: true, approved: { scope: false, design: true, release: false }, qaPassed: false, assetsNeeded: 2 };
     expect(clientToDos(p)).toEqual(["Approve the scope and its costs", "Send 2 items TEBOS needs from you"]);
     expect(clientToDos({ ...p, isAdmin: false })[0]).toMatch(/Your admin/);
+    expect(clientToDos({ ...p, status: "intake", hasScope: false, briefSubmitted: false, assetsNeeded: 0 })).toEqual(["Fill in and submit your brief"]);
+    expect(clientToDos({ ...p, status: "intake", hasScope: false, briefSubmitted: true, assetsNeeded: 0 })).toEqual([]);
     expect(clientToDos({ ...p, status: "client_review", approved: { scope: true, design: true, release: false }, qaPassed: true, assetsNeeded: 0 }))
       .toEqual(["Review the preview and approve the release"]);
+  });
+});
+
+describe("milestone 4: the client's brief", () => {
+  const full = {
+    business_name: "Northwind Studio", audience: "Homeowners in Randburg who need a plumber today.", first_action: "Request a call-out",
+    success_measure: "Ten call-out requests a month", pages: ["Home", "Services"], visual_direction: "minimal" as const,
+    confirmations: { rights: true, privacy: true },
+  };
+  it("is complete only with what TEBOS needs to start", () => {
+    expect(intakeMissing(full)).toEqual([]);
+    expect(intakeMissing({})).toEqual(Object.keys(INTAKE_REQUIRED));
+    expect(intakeMissing({ ...full, pages: [] })).toEqual(["pages"]);
+    expect(intakeMissing({ ...full, confirmations: { rights: true } })).toEqual(["confirm_privacy"]);
+    expect(intakeMissing({ ...full, visual_direction: "vaporwave" as never })).toEqual(["visual_direction"]);
   });
 });
