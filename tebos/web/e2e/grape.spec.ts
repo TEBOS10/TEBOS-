@@ -24,6 +24,16 @@ test("before set-up: the six categories with their rates, and booking by email",
   await expect(page.locator("body")).not.toContainText(/FNB|63175867846/);
 });
 
+test("the brands Grape Studios has shot for, named in type, and its portfolio", async ({ page }) => {
+  await installFakeSupabase(page, { signedIn: false });
+  await page.goto("/");
+  const brands = page.locator("#brands");
+  await expect(brands.getByText("Brands we've shot for")).toBeVisible();
+  await expect(brands.getByRole("listitem")).toHaveText(["PUMA", "G-Star Raw", "Antony Morato", "Happyville", "YMZ", "2Millionicons"]);
+  await expect(brands.locator("img")).toHaveCount(0); // never the brands' logos
+  await expect(page.getByRole("link", { name: "Portfolio on Behance" })).toHaveAttribute("href", "https://www.behance.net/tebohotefu");
+});
+
 test("booked online: a free time, a deposit due, and a private page with the schedule", async ({ page }) => {
   const fake = await installFakeSupabase(page, { signedIn: false });
   seedStudio(fake.tables as Record<string, unknown[]>, "grape-studios");

@@ -2,10 +2,10 @@ import { describe, expect, it } from "vitest";
 import { BLUEPRINTS, blueprintByKey, blueprintCoverage, blueprintPayload, checkBlueprint, type Blueprint } from "../src";
 
 describe("operating-system blueprints", () => {
-  it("covers eleven different kinds of business, each with a unique key", () => {
-    expect(BLUEPRINTS).toHaveLength(11);
-    expect(new Set(BLUEPRINTS.map((b) => b.key)).size).toBe(11);
-    expect(new Set(BLUEPRINTS.map((b) => b.industry)).size).toBe(11);
+  it("covers twelve different kinds of business, each with a unique key", () => {
+    expect(BLUEPRINTS).toHaveLength(12);
+    expect(new Set(BLUEPRINTS.map((b) => b.key)).size).toBe(12);
+    expect(new Set(BLUEPRINTS.map((b) => b.industry)).size).toBe(12);
   });
 
   it.each(BLUEPRINTS.map((b) => [b.key, b] as const))("%s fits the board's rules", (_, b) => {
@@ -20,6 +20,16 @@ describe("operating-system blueprints", () => {
       expect(c.founderSteps).toBeLessThanOrEqual(2);
       expect(c.stepsWithRules / c.steps).toBeGreaterThan(0.5);
     }
+  });
+
+  it("a photography studio keeps running when its lead photographer is away", () => {
+    const b = blueprintByKey("photography-studio")!;
+    const steps = b.flows.flatMap((f) => f.steps);
+    // only signing brand agreements needs the owner; shoot days and edits are done by the team
+    expect(steps.filter((x) => x.performer === "founder").map((x) => x.name)).toEqual(["Sign the brand agreement"]);
+    const shootDay = b.flows.find((f) => f.name === "Shoot day")!;
+    expect(shootDay.steps.every((x) => x.performer !== "founder")).toBe(true);
+    expect(shootDay.steps.some((x) => x.role === "Second photographer")).toBe(true);
   });
 
   it("catches what the database would refuse", () => {

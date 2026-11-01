@@ -351,6 +351,56 @@ export const BLUEPRINTS: Blueprint[] = [
     ],
   },
   {
+    key: "photography-studio", version: 1, industry: "Photography studio", name: "Studio operating system",
+    promise: "Bookings, shoot days, edits and brand work run on written rules, so the studio keeps shooting and delivering when its lead photographer is away.",
+    pieces: [
+      { name: "Booking site", kind: "software", ownerRole: "Bookings coordinator", description: "Categories, rate cards, free times and booking requests, with each customer's private booking page." },
+      { name: "Team schedule", kind: "software", ownerRole: "Bookings coordinator", description: "Every requested and confirmed shoot, time off and working hours, seen by the whole team." },
+      { name: "Accounting system", kind: "software", ownerRole: "Studio admin", description: "Deposits, balances, invoices and brand payment terms." },
+      { name: "Bookings inbox", kind: "channel", ownerRole: "Bookings coordinator", description: "The bookings email and Instagram messages, answered by the team, not one person." },
+      { name: "Gallery delivery", kind: "software", ownerRole: "Editor", description: "Client proofing and final galleries, released only when paid." },
+      { name: "Backup storage", kind: "data_store", ownerRole: "Editor", description: "Every shoot's raw files, in two places, the same day." },
+      { name: "House look and shot lists", kind: "document", ownerRole: "Lead photographer", description: "The studio's editing presets, lighting set-ups and a shot list per category, written down once so any photographer delivers the same look." },
+      { name: "Contracts and releases", kind: "document", ownerRole: "Studio admin", description: "Booking terms, model releases and brand usage-rights agreements." },
+      { name: "Second photographer", kind: "role", ownerRole: "Lead photographer", description: "Shoots any category to the shot list when the lead photographer is booked or away." },
+    ],
+    flows: [
+      { name: "Enquiry to confirmed shoot", startsWhen: "Someone asks to book, on the site, by email or on Instagram", doneWhen: "The shoot is confirmed with its deposit, or declined with a reason", ownerRole: "Bookings coordinator", steps: [
+        s("automation", "Booking site", "Take the request with category, package and a free time", "Only free times inside working hours, at least 24 hours ahead, can be requested; each request gets its own reference.", "Booking site"),
+        s("staff", "Bookings coordinator", "Answer every enquiry from the inbox", "Answer within two working hours: send the booking link and the category's rate card; never quote outside the rate card.", "Bookings inbox"),
+        s("staff", "Bookings coordinator", "Confirm or decline the request", "Confirm when a photographer is free and the brief fits a category; decline politely, with another time, when it doesn't.", "Team schedule"),
+        s("staff", "Bookings coordinator", "Quote custom work from the rate card", "Custom quotes are built from the rate card's hourly and day rates plus travel; anything below the rate card goes to the lead photographer."),
+        s("staff", "Studio admin", "Record the deposit", "The date is held only once half the price is paid; the deposit is recorded against the booking reference the day it lands.", "Accounting system"),
+      ] },
+      { name: "Shoot day", startsWhen: "A confirmed shoot is two days away", doneWhen: "The shoot is done and its files are backed up", ownerRole: "Lead photographer", steps: [
+        s("staff", "Bookings coordinator", "Send the call sheet", "Two days before: time, place, outfits, parking and the photographer's name, sent to the client.", "Bookings inbox"),
+        s("staff", "Second photographer", "Shoot to the category's shot list", "Any photographer on the schedule shoots the booking using the category's shot list and lighting set-up; the lead photographer is not required.", "House look and shot lists"),
+        s("staff", "Second photographer", "Get releases signed before the first frame", "No release, no shoot of that person; brand shoots follow the brand's own release.", "Contracts and releases"),
+        s("staff", "Editor", "Back up the cards the same day", "Raw files in two places before the cards are cleared.", "Backup storage"),
+        s("staff", "Bookings coordinator", "Mark the shoot done on the schedule", "Mark it shot, or no-show with what happened, the same day.", "Team schedule"),
+      ] },
+      { name: "Edit to delivered gallery", startsWhen: "A shoot is backed up", doneWhen: "The client has the final gallery and the balance is paid", ownerRole: "Editor", steps: [
+        s("staff", "Editor", "Cull and edit in the house look", "Edit with the studio's presets; skin retouching stays natural unless the brief says otherwise.", "House look and shot lists"),
+        s("staff", "Lead photographer", "Check a sample before it goes out", "Check five frames per gallery against the house look; anyone the lead names may check when they are away."),
+        s("staff", "Studio admin", "Invoice the balance", "Send the balance invoice with the proofing gallery.", "Accounting system"),
+        s("automation", "Gallery delivery", "Release full resolution when paid", "Full-resolution files are released only when the balance is paid, within the category's delivery window.", "Gallery delivery"),
+        s("client", "Client", "Choose and download the photos"),
+      ] },
+      { name: "Brand campaign", startsWhen: "A brand or agency asks for a campaign", doneWhen: "The campaign is delivered, invoiced and the usage rights are on file", ownerRole: "Studio admin", steps: [
+        s("staff", "Bookings coordinator", "Take the brief in writing", "No campaign starts without a written brief: deliverables, dates, usage, and who approves."),
+        s("staff", "Studio admin", "Price usage rights separately", "Usage (where, how long, which media) is priced on top of the shoot fee and written into the agreement.", "Contracts and releases"),
+        s("founder", "Lead photographer", "Sign the brand agreement", "Only the owner signs agreements with brands; everything before and after is the team's."),
+        s("staff", "Editor", "Deliver to the brand's specification", "Deliver in the brand's sizes, names and folders, by the agreed date.", "Gallery delivery"),
+        s("staff", "Studio admin", "Invoice on the brand's terms and chase on day 31", "Invoice on delivery; follow up the day after the payment terms end.", "Accounting system"),
+      ] },
+    ],
+    objectives: [
+      { title: "Lead photographer hours on admin below 5 a week", metric: "founder_hours", target: 5, why: "The studio runs on rules, so the lead photographer shoots instead of answering messages." },
+      { title: "Every enquiry answered within two hours", metric: "lead_response_time", target: 2, why: "The studio that answers first gets the booking." },
+      { title: "Clients who book again", metric: "client_retention", target: 60, why: "Brands and returning clients are the studio's steady work." },
+    ],
+  },
+  {
     key: "gym-fitness", version: 1, industry: "Gym or fitness studio", name: "Gym operating system",
     promise: "The door knows who is a paid-up member, messages answer themselves, and the owner stops walking the floor to check.",
     pieces: [

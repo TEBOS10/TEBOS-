@@ -8,7 +8,7 @@ import type { BookingStatus } from "@core/states";
 import { money } from "@core/property";
 import { Link, matchPath, navigate, RouterProvider, usePath } from "../lib/router";
 import { use3d } from "../world/support";
-import { BOOKINGS_EMAIL, freeTimes, INSTAGRAM, loadCatalogue, myBooking, requestBooking, type Catalogue, type CatService, type MyBooking } from "./data";
+import { BEHANCE, BOOKINGS_EMAIL, BRANDS, freeTimes, INSTAGRAM, loadCatalogue, myBooking, requestBooking, type Catalogue, type CatService, type MyBooking } from "./data";
 
 const PHOTOS = ["studio", "on-location", "corporate", "graduation", "property", "events"].map((k) => `/photos/${k}.jpg`);
 const longDate = (day: string) => new Date(`${day}T00:00:00Z`).toLocaleDateString("en-ZA", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
@@ -36,6 +36,7 @@ function Routes() {
       <footer className="gs-foot gs-wrap">
         <span>Grape Studios · Johannesburg</span>
         <a href={INSTAGRAM} target="_blank" rel="noreferrer noopener"><Camera size={15} aria-hidden /> @grape.studios_</a>
+        <a href={BEHANCE} target="_blank" rel="noreferrer noopener">Portfolio on Behance</a>
         <a href={`mailto:${BOOKINGS_EMAIL}`}>{BOOKINGS_EMAIL}</a>
       </footer>
     </div>
@@ -66,6 +67,10 @@ function Home({ cat }: { cat: Catalogue }) {
         <h2 id="gs-work">The work</h2>
         <div className="gs-tri">{PHOTOS.slice(0, 3).map((p) => <img key={p} src={p} alt="" loading="lazy" />)}</div>
         <div className="gs-tri">{PHOTOS.slice(3).map((p) => <img key={p} src={p} alt="" loading="lazy" />)}</div>
+      </section>
+      <section id="brands" className="gs-wrap gs-brands" aria-labelledby="gs-brands">
+        <p className="gs-kicker" id="gs-brands">Brands we've shot for</p>
+        <ul className="gs-brand-list">{BRANDS.map((b) => <li key={b}>{b}</li>)}</ul>
       </section>
       <section id="book" className="gs-wrap gs-section" aria-labelledby="gs-book">
         <p className="gs-kicker">Six ways to work together</p>
