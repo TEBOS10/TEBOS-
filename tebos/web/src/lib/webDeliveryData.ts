@@ -2,8 +2,8 @@
 // read and write, which state changes are allowed and when a project is ready; these calls only read and write, and a
 // refusal comes back as the database's own reason.
 import type { WebProjectStatus, WebTaskStatus } from "@core/states";
-import type { ReadinessItem, ReadinessStatus, WebRole } from "@core/web-delivery";
-import type { Database } from "../database.types";
+import type { IntakeAnswers, ReadinessItem, ReadinessStatus, WebRole } from "@core/web-delivery";
+import type { Database, Json } from "../database.types";
 import type { Db } from "./supabase";
 
 type Tables = Database["public"]["Tables"];
@@ -23,6 +23,8 @@ export type ProjectCost = Tables["web_project_costs"]["Row"];
 export type ChangeRequestRow = Tables["change_requests"]["Row"];
 export type TeamLoad = Database["public"]["Functions"]["web_team_load"]["Returns"][number];
 export type HistoryRow = Database["public"]["Functions"]["web_project_history"]["Returns"][number];
+export type Intake = Tables["web_intakes"]["Row"];
+export type QueueItem = Database["public"]["Functions"]["web_work_queue"]["Returns"][number];
 
 function must<R extends { data: unknown; error: unknown }>(res: R): NonNullable<R["data"]> {
   if (res.error) throw res.error;
@@ -59,10 +61,11 @@ export interface ProjectFile {
   costs: ProjectCost[];
   changes: ChangeRequestRow[];
   history: HistoryRow[];
+  intake: Intake | null;
 }
 
 export async function projectFile(db: Db, id: string): Promise<ProjectFile> {
-  const [project, scopes, approvals, readiness, qa, tasks, dependencies, assets, deployments, gaps, board, integrations, costs, changes, history] = await Promise.all([
+  const [project, scopes, approvals, readiness, qa, tasks, dependencies, assets, deployments, gaps, board, integrations, costs, changes, history, intake] = await Promise.all([
     db.from("web_projects").select("*").eq("id", id).single(),
     db.from("web_scope_revisions").select("*").eq("project_id", id).order("revision", { ascending: false }),
     db.from("web_project_approvals").select("*").eq("project_id", id).order("created_at"),
@@ -78,13 +81,16 @@ export async function projectFile(db: Db, id: string): Promise<ProjectFile> {
     db.from("web_project_costs").select("*").eq("project_id", id).order("incurred_on", { ascending: false }),
     db.from("change_requests").select("*").eq("web_project_id", id).order("created_at", { ascending: false }),
     db.rpc("web_project_history", { p_project: id }),
+    db.from("web_intakes").select("*").eq("project_id", id).maybeSingle(),
   ]);
+  if (intake.error) throw intake.error;
   return {
     project: must(project), scopes: must(scopes), approvals: must(approvals), readiness: must(readiness), qa: must(qa),
     tasks: must(tasks), dependencies: must(dependencies), assets: must(assets), deployments: must(deployments),
     gaps: (must(gaps) as string[]) ?? [],
     clientName: ((must(board) as BoardRow[]).find((b) => b.id === id)?.org_name) ?? null,
     integrations: must(integrations), costs: must(costs), changes: must(changes), history: (must(history) as HistoryRow[]) ?? [],
+    intake: intake.data ?? null,
   };
 }
 
@@ -195,4 +201,20 @@ export async function approve(db: Db, project: WebProject, revisionId: string, k
 
 export async function askForChange(db: Db, project: WebProject, title: string, detail: string) {
   return must(await db.from("change_requests").insert({ org_id: project.org_id, web_project_id: project.id, title: title.trim(), detail: detail.trim() || null }).select().single());
+}
+
+// ---------------------------------------------------------------------------
+// Milestone 4: the client's brief and the work queue
+// ---------------------------------------------------------------------------
+export async function saveIntake(db: Db, project: WebProject, existing: Intake | null, answers: IntakeAnswers, submit: boolean): Promise<Intake> {
+  const row = existing ?? must(await db.from("web_intakes").insert({ project_id: project.id, org_id: project.org_id }).select().single());
+  return must(await db.from("web_intakes").update({ answers: answers as unknown as Json, ...(submit ? { status: "submitted" } : {}) }).eq("id", row.id).select().single());
+}
+
+export async function reopenIntake(db: Db, id: string, reason: string) {
+  return must(await db.from("web_intakes").update({ status: "draft", reopen_reason: reason.trim() }).eq("id", id).select().single());
+}
+
+export async function workQueue(db: Db): Promise<QueueItem[]> {
+  return must(await db.rpc("web_work_queue")) as QueueItem[];
 }

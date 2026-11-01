@@ -948,3 +948,7 @@ table.table { width: 100%; border-collapse: collapse; }
 .web-page .badge { text-transform: none; }
 .web-meter { height: 4px; border-radius: 999px; background: var(--line); margin-top: 6px; overflow: hidden; }
 .web-meter > span { display: block; height: 100%; background: currentColor; opacity: 0.6; }
+.web-brief-h { font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 18px 0 4px; font-weight: 600; }
+.web-checks { border: 0; padding: 0; margin: 0; display: grid; gap: 6px; }
+.web-checks legend { font-weight: 700; margin-bottom: 4px; }
+.web-checks label { display: flex; gap: 8px; align-items: flex-start; }

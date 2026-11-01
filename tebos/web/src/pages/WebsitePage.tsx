@@ -10,6 +10,7 @@ import { Badge, Card, Empty, ErrorNote, Field, Loading, PageHeader } from "../co
 import { useOrg } from "../lib/session";
 import { useQuery } from "../lib/useQuery";
 import { approve, askForChange, clientProjects, type ClientProject } from "../lib/webDeliveryData";
+import { BriefForm } from "./WebBrief";
 import { ClockBadge, History, StageTrack } from "./WebDeliveryPage";
 
 export function WebsitePage() {
@@ -36,7 +37,7 @@ function Project({ p, isAdmin, canAsk, onDone }: { p: ClientProject; isAdmin: bo
   const approved = (kind: string) => Boolean(latest && p.approvals.some((a) => a.revision_id === latest.id && a.kind === kind));
   const passed = qaPassed(p.qa.map((r) => ({ revision: p.scopes.find((s) => s.id === r.revision_id)?.revision ?? -1, verdict: r.verdict as "pass" | "conditional_pass" | "fail", criticalOpen: r.critical_open, at: r.created_at })), latest?.revision ?? null);
   const assetsNeeded = p.assets.filter((a) => a.status === "missing" || a.status === "client_approval_required").length;
-  const todos = clientToDos({ status, isAdmin, hasScope: Boolean(latest), approved: { scope: approved("scope"), design: approved("design"), release: approved("release") }, qaPassed: passed, assetsNeeded });
+  const todos = clientToDos({ status, isAdmin, hasScope: Boolean(latest), approved: { scope: approved("scope"), design: approved("design"), release: approved("release") }, qaPassed: passed, assetsNeeded, briefSubmitted: p.intake?.status === "submitted" });
   const preview = p.deployments.find((d) => d.environment === "preview" && d.outcome === "live");
   const live = p.deployments.find((d) => d.environment === "production" && d.outcome === "live");
   const pct = completion(p.tasks.filter((t) => t.status !== "cancelled").length, p.tasks.filter((t) => t.status === "done").length);
@@ -59,6 +60,7 @@ function Project({ p, isAdmin, canAsk, onDone }: { p: ClientProject; isAdmin: bo
           <ul className="muted">{p.assets.filter((a) => a.status === "missing" || a.status === "client_approval_required").map((a) => <li key={a.id}>{a.label}</li>)}</ul>
         )}
       </Card>
+      {(p.intake || ["lead", "intake", "scope_review"].includes(status)) && <BriefForm f={p} canWrite={canAsk} onDone={onDone} />}
       {latest && (
         <Card title={`What we agreed (revision ${latest.revision})`} subtitle="Read this before you approve: it's what TEBOS builds and tests against.">
           <dl className="web-scope">

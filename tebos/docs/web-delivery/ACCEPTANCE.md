@@ -38,7 +38,7 @@ Evidence is the named test file. The SQL tests run with `npm run test:db`, the u
 | 19 | An asset register. An asset is received only with its source and licence recorded | TESTED | `99zzb`, e2e |
 | 21 | Deployment records: environment, address, commit, what was checked, outcome. Production needs a project in release and the client's release approval; afterwards the record can only change to "rolled back". Handover needs a live production deployment | TESTED | `99zzb`, `99zz`, e2e |
 
-## Milestone 3 (built 1 Nov; migration `web_delivery_portal` waits on "merge it"; ADR 0012)
+## Milestone 3 (live 1 Nov; migration `web_delivery_portal`; ADR 0012)
 
 | # | Criterion | Status | Evidence |
 |---|---|---|---|
@@ -50,11 +50,19 @@ Evidence is the named test file. The SQL tests run with `npm run test:db`, the u
 | 25 | Every project has a maintainer, by default the client's own. A maintainer runs at most 8 open projects, and the dashboard shows the team's load | TESTED | `99zzc`, `web-delivery.test.ts`, e2e |
 | 26 | 50 clients at once: 52 projects on one board (`99zzc`); the board's read takes about 10 ms on a local Postgres with 50 projects | TESTED locally; live NOT VERIFIED | `99zzc`, ADR 0012 |
 
+## Milestone 4 (built 1 Nov; migration `web_delivery_intake`)
+
+| # | Criterion | Status | Evidence |
+|---|---|---|---|
+| 15 | **The client's brief**, under Your website: business, goal, audience, first action, success measure, references, pages, features at launch and later, visual direction, content, launch date, running-cost comfort, approver, and confirmations of rights and privacy. Saved as a draft; submitted only when complete; no contact details, personal data or secrets | TESTED | `99zzd_web_delivery_intake.sql`, `web-delivery.test.ts`, `web/e2e/web-brief.spec.ts` |
+| 15a | A submitted brief is fixed. Only a maintainer reopens it, with a reason the client sees | TESTED | `99zzd`, e2e |
+| 27 | **Today's work:** one queue across every client, oldest first, with a "mine only" filter. It holds open client requests, submitted briefs awaiting scope, tasks due or late, and late projects. Maintainers only | TESTED | `99zzd`, e2e |
+
 ## Later (not built)
 
 | # | Criterion | Status |
 |---|---|---|
-| 15 | Client intake form (sections A–J, conditional questions) in the client portal | NOT VERIFIED |
+| 28 | Pause the 3-day clock on South African public holidays | NOT VERIFIED |
 | 22 | Cost and delivery metrics per project | NOT VERIFIED |
 | 23 | One reusable website template delivered end to end | BLOCKED: a commercial-use host is needed (`TOOLCHAIN.md` §3) |
 | 24 | Public-holiday calendar in the business-day count | NOT VERIFIED (weekends only today) |

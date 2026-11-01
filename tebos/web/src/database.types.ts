@@ -4725,6 +4725,31 @@ export type Database = {
         }
         Relationships: []
       }
+      web_intakes: {
+        Row: {
+          id: string
+          project_id: string
+          org_id: string
+          answers: Json
+          status: string
+          submitted_by: string | null
+          submitted_at: string | null
+          reopen_reason: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          project_id: string
+          org_id: string
+          answers?: Json
+        }
+        Update: {
+          answers?: Json
+          status?: string
+          reopen_reason?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -4757,6 +4782,10 @@ export type Database = {
       tepos_open_week: {
         Args: { p_org: string; p_week_start: string }
         Returns: string
+      }
+      web_work_queue: {
+        Args: Record<PropertyKey, never>
+        Returns: { kind: string; project_id: string; ref: string; project_name: string; org_name: string; maintainer_id: string | null; item_id: string; title: string; since: string; due_on: string | null }[]
       }
       web_team_load: {
         Args: Record<PropertyKey, never>

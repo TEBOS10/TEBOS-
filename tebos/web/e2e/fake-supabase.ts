@@ -485,6 +485,20 @@ function answerRpc(tables: FakeSupabase["tables"], name: string, args: Record<st
       return { user_id: s.user_id, open_projects: mine.length, building: mine.filter((p) => ["build", "qa", "qa_failed"].includes(String(p.status))).length, overdue: 0, capacity: 8 };
     });
   }
+  if (name === "web_work_queue") {
+    // every client's open requests, new briefs, due tasks and late projects (simplified from the database's read)
+    const today = new Date().toISOString().slice(0, 10);
+    const proj = (id: unknown) => (t.web_projects ?? []).find((p) => p.id === id);
+    const org = (id: unknown) => (t.organisations ?? []).find((o) => o.id === id)?.name ?? "Client";
+    const row = (kind: string, p: Record<string, unknown>, item_id: unknown, title: unknown, since: unknown, due_on: unknown = null) =>
+      ({ kind, project_id: p.id, ref: p.ref, project_name: p.name, org_name: org(p.org_id), maintainer_id: p.maintainer_id ?? null, item_id, title, since, due_on });
+    const out: Array<Record<string, unknown>> = [];
+    for (const c of t.change_requests ?? []) { const p = proj(c.web_project_id); if (p && ["received", "in_progress"].includes(String(c.status))) out.push(row("request", p, c.id, c.title, c.created_at)); }
+    for (const i of t.web_intakes ?? []) { const p = proj(i.project_id); if (p && i.status === "submitted" && ["lead", "intake"].includes(String(p.status)) && !(t.web_scope_revisions ?? []).some((r) => r.project_id === p.id)) out.push(row("brief", p, i.id, "Brief submitted: write the scope", i.submitted_at)); }
+    for (const k of t.web_tasks ?? []) { const p = proj(k.project_id); if (p && ["todo", "in_progress", "review", "blocked"].includes(String(k.status)) && k.due_on && String(k.due_on) <= today) out.push(row("task", p, k.id, k.title, k.created_at, k.due_on)); }
+    for (const p of t.web_projects ?? []) if (["build", "qa", "qa_failed", "blocked_technical"].includes(String(p.status)) && !p.clock_paused_on && p.deadline_on && String(p.deadline_on) < today) out.push(row("late", p, p.id, "Past its delivery date", p.updated_at, p.deadline_on));
+    return out;
+  }
   if (name === "web_project_history") {
     // the fixture's own audit rows for the project, newest first
     return (t.web_history ?? []).filter((h) => h.project_id === args.p_project);
@@ -554,6 +568,7 @@ const COLUMN_DEFAULTS: Record<string, Record<string, unknown>> = {
   web_tasks: { status: "todo", assigned_to: null, blocked_reason: null, evidence: null, due_on: null },
   web_assets: { source: "unknown", status: "missing", licence_note: null, location: null },
   web_scope_revisions: { revision: 1, features: [], workflows: [] },
+  web_intakes: { answers: {}, status: "draft", submitted_by: null, submitted_at: null, reopen_reason: null },
   web_integrations: { status: "requested", verified_on: null, revocation_plan: null, transfer_plan: null },
   web_project_costs: { currency: "ZAR", incurred_on: new Date().toISOString().slice(0, 10) },
   web_project_approvals: { approved_by: "00000000-0000-4000-8000-000000000001", note: null },

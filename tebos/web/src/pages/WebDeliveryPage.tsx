@@ -8,7 +8,7 @@ import { BOARD_LIMITS, type Tier } from "@core/editions";
 import {
   ASSET_KINDS, ASSET_SOURCES, ASSET_STATUSES, canStart, checkAsset, checkCost, checkDeployment, checkIntegration, checkScope, completion,
   COST_KINDS, deadlineState, INTEGRATION_SERVICES, INTEGRATION_STATUSES, maintainersNeeded, monthlyRunningCents, TEBOS_ACCESS,
-  WEB_PROJECTS_PER_MAINTAINER, type CostRecurrence, type IntegrationStatus, type TebosAccess,
+  QUEUE_KIND_LABEL, WEB_PROJECTS_PER_MAINTAINER, type CostRecurrence, type QueueKind, type IntegrationStatus, type TebosAccess,
   PRIMARY_OBJECTIVES, READINESS_ITEMS, WAIVABLE, WEB_ROLES, WEB_STATUS_LABEL, WEB_TASK_STATUS_LABEL, WEBSITE_TYPES,
   type AssetSource, type AssetStatus, type DeadlineState, type ReadinessItem, type ReadinessStatus, type WebRole,
 } from "@core/web-delivery";
@@ -21,10 +21,11 @@ import { useStaff } from "../lib/staff";
 import { useQuery } from "../lib/useQuery";
 import {
   addAsset, addCost, addDeployment, addIntegration, addQaRun, addScope, addTask, assignMaintainer, claimTask, createProject, deliveryBoard,
-  deliveryClients, lines, moveProject, moveTask, projectFile, projectMaintainers, rollBack, saveReadiness, setIntegrationStatus, teamLoad,
+  deliveryClients, lines, moveProject, workQueue, moveTask, projectFile, projectMaintainers, rollBack, saveReadiness, setIntegrationStatus, teamLoad,
   updateAsset, type BoardRow, type NewCost, type NewIntegration, type ProjectFile, type WebTask,
 } from "../lib/webDeliveryData";
 import { StaffOnly } from "./PipelinePage";
+import { BriefSummary } from "./WebBrief";
 
 const maintainer = (a: { maintainer?: boolean; admin?: boolean }) => Boolean(a.maintainer || a.admin);
 const PLAN_NAME: Record<string, string> = { starter: "Small", growth: "Medium", company: "Company" };
@@ -64,6 +65,7 @@ function Board() {
   const today = saToday();
   const board = useQuery(() => deliveryBoard(db), []);
   const team = useQuery(() => teamLoad(db), []);
+  const queue = useQuery(() => workQueue(db), []);
   const owners = useQuery(() => projectMaintainers(db), []);
   const { nameOf } = useStaff();
   const [opening, setOpening] = useState(false);
@@ -88,6 +90,7 @@ function Board() {
             <Stat value={waiting.length} label="Waiting on the client" />
             <Stat value={live.length} label="Live sites" />
           </div>
+          {queue.data && <QueueCard items={queue.data} nameOf={nameOf} />}
           {team.data && <TeamCard team={team.data} open={open.length} nameOf={nameOf} />}
           {rows.length === 0 ? (
             <Card><Empty>No website projects yet. Open one with "New project" once a client's plan is active.</Empty></Card>
@@ -262,6 +265,7 @@ function ProjectView({ id }: { id: string }) {
       )}
       <div className="grid grid-main web-columns">
         <div className="stack">
+          <BriefSummary f={f} onReopen={q.reload} />
           <Changes f={f} />
           <Tasks f={f} onDone={q.reload} />
           <Scope f={f} onDone={q.reload} />
@@ -879,6 +883,30 @@ export function History({ f }: { f: ProjectFile }) {
               {ENTITY_LABEL[h.entity_type] ?? h.entity_type}
               {h.to_status && h.from_status !== h.to_status ? `: ${h.from_status ? `${h.from_status.replace(/_/g, " ")} → ` : ""}${h.to_status.replace(/_/g, " ")}` : h.action.endsWith("insert") ? " added" : " updated"}
               {h.note ? <span className="muted"> · {h.note}</span> : null}
+            </li>
+          ))}
+        </ol>
+      )}
+    </Card>
+  );
+}
+
+function QueueCard({ items, nameOf }: { items: Array<{ kind: string; project_id: string; ref: string; project_name: string; org_name: string; maintainer_id: string | null; item_id: string; title: string; since: string; due_on: string | null }>; nameOf: (id: string) => string }) {
+  const { userId } = useSignedIn();
+  const [mine, setMine] = useState(false);
+  const shown = items.filter((i) => !mine || i.maintainer_id === userId);
+  return (
+    <Card title="Today's work" subtitle="Every client's open requests, new briefs, tasks due and late projects, oldest first. Nothing here waits on the founder."
+      actions={<label className="row" style={{ gap: 6 }}><input type="checkbox" checked={mine} onChange={(e) => setMine(e.target.checked)} /> Mine only</label>}>
+      {shown.length === 0 ? <Empty>Nothing waiting. New client requests and briefs appear here as they arrive.</Empty> : (
+        <ol className="list web-list" data-testid="web-queue">
+          {shown.map((i) => (
+            <li key={`${i.kind}-${i.item_id}`}>
+              <div className="row" style={{ justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
+                <span><Badge tone={i.kind === "late" ? "bad" : i.kind === "request" ? "warn" : "info"}>{QUEUE_KIND_LABEL[i.kind as QueueKind] ?? i.kind}</Badge>{" "}
+                  <Link to={`/web-delivery/${i.project_id}`}>{i.title}</Link></span>
+                <span className="muted">{i.org_name} · {i.ref} · {i.maintainer_id ? nameOf(i.maintainer_id) : "unassigned"}{i.due_on ? ` · due ${i.due_on}` : ` · since ${i.since.slice(0, 10)}`}</span>
+              </div>
             </li>
           ))}
         </ol>
