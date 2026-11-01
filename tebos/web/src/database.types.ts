@@ -4404,6 +4404,8 @@ export type Database = {
           created_at: string
           updated_at: string
           maintainer_id: string | null
+          starting_point: string
+          existing_url: string | null
         }
         Insert: {
           org_id: string
@@ -4414,6 +4416,8 @@ export type Database = {
           status_note: string
           status?: string
           maintainer_id?: string | null
+          starting_point?: string
+          existing_url?: string | null
         }
         Update: {
           name?: string
@@ -4423,6 +4427,8 @@ export type Database = {
           status?: string
           status_note?: string
           maintainer_id?: string | null
+          starting_point?: string
+          existing_url?: string | null
         }
         Relationships: []
       }

@@ -8,7 +8,7 @@ import { FACTORY_OUTCOMES, VALIDATION_STATES } from "../src/domain/catalogue";
 import { ELIGIBLE_SECTORS, EQUITY_PCT, MAX_EQUITY_PARTNERS, MIN_TRADING_MONTHS, QUALIFYING_BANDS, REVENUE_BANDS, VOTING_PCT } from "../src/domain/equity";
 import {
   ASSET_KINDS, ASSET_SOURCES, ASSET_STATUSES, COST_KINDS, DELIVERY_BUSINESS_DAYS, INTEGRATION_SERVICES, INTEGRATION_STATUSES, TEBOS_ACCESS,
-  WEB_PROJECTS_PER_MAINTAINER, INTAKE_REQUIRED, VISUAL_DIRECTIONS, SA_FIXED_HOLIDAYS, PRIMARY_OBJECTIVES, READINESS_ITEMS, WAIVABLE, WEB_ROLES, WEBSITE_TYPES,
+  WEB_PROJECTS_PER_MAINTAINER, INTAKE_REQUIRED, VISUAL_DIRECTIONS, SA_FIXED_HOLIDAYS, PRIMARY_OBJECTIVES, STARTING_POINTS, EXISTING_SITE_ACCESS, READINESS_ITEMS, WAIVABLE, WEB_ROLES, WEBSITE_TYPES,
 } from "../src/domain/web-delivery";
 
 const migrationsDir = join(__dirname, "..", "supabase", "migrations");
@@ -79,6 +79,11 @@ describe("domain mirrors the database", () => {
       [...src.split(`check (${col} in (`)[1]!.split(")")[0]!.matchAll(/'([a-z0-9_]+)'/g)].map((m) => m[1]).sort();
     expect(list("website_type")).toEqual(Object.keys(WEBSITE_TYPES).sort());
     expect(list("primary_objective")).toEqual(Object.keys(PRIMARY_OBJECTIVES).sort());
+    const existing = sql.split("alter table public.web_projects\n  add column starting_point")[1]!.split(";")[0]!;
+    expect(list("starting_point", existing)).toEqual(Object.keys(STARTING_POINTS).sort());
+    expect(existing).toContain("existing_url ~ '^https://[^\\s/]+\\.[^\\s]+$'");
+    const access = sql.split("function tebos_private.guard_existing_site_access")[1]!.split("end $$")[0]!;
+    expect([...access.split("i.service in (")[1]!.split(")")[0]!.matchAll(/'([a-z]+)'/g)].map((m) => m[1])).toEqual([...EXISTING_SITE_ACCESS]);
     const readiness = sql.split("create table public.web_readiness_items")[1]!.split(");")[0]!;
     expect(list("item", readiness)).toEqual(Object.keys(READINESS_ITEMS).sort());
     expect(readiness).toContain("check (status <> 'waived' or item = 'assets')");

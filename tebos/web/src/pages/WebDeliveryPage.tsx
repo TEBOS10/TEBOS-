@@ -9,7 +9,7 @@ import {
   ASSET_KINDS, ASSET_SOURCES, ASSET_STATUSES, canStart, checkAsset, checkCost, checkDeployment, checkIntegration, checkScope, completion,
   COST_KINDS, deadlineState, INTEGRATION_SERVICES, INTEGRATION_STATUSES, maintainersNeeded, monthlyRunningCents, TEBOS_ACCESS,
   QUEUE_KIND_LABEL, WEB_PROJECTS_PER_MAINTAINER, type CostRecurrence, type QueueKind, type IntegrationStatus, type TebosAccess,
-  PRIMARY_OBJECTIVES, READINESS_ITEMS, WAIVABLE, WEB_ROLES, WEB_STATUS_LABEL, WEB_TASK_STATUS_LABEL, WEBSITE_TYPES,
+  PRIMARY_OBJECTIVES, READINESS_ITEMS, WAIVABLE, WEB_ROLES, WEB_STATUS_LABEL, WEB_TASK_STATUS_LABEL, WEBSITE_TYPES, STARTING_POINTS,
   type AssetSource, type AssetStatus, type DeadlineState, type ReadinessItem, type ReadinessStatus, type WebRole,
 } from "@core/web-delivery";
 import { money } from "@core/property";
@@ -174,7 +174,7 @@ function ProjectRow({ r, today, owner }: { r: BoardRow; today: string; owner: st
 function NewProject({ onDone }: { onDone: () => void }) {
   const { db } = useSignedIn();
   const clients = useQuery(() => deliveryClients(db), []);
-  const [f, setF] = useState({ org_id: "", name: "", website_type: "service_business", primary_objective: "leads", status_note: "" });
+  const [f, setF] = useState({ org_id: "", name: "", website_type: "service_business", primary_objective: "leads", status_note: "", starting_point: "new_build", existing_url: "" });
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
   const client = clients.data?.find((c) => c.org_id === f.org_id);
@@ -185,7 +185,7 @@ function NewProject({ onDone }: { onDone: () => void }) {
     setBusy(true);
     setError(null);
     try {
-      await createProject(db, { ...f, plan: client.plan });
+      await createProject(db, { ...f, plan: client.plan, existing_url: f.starting_point === "new_build" ? null : f.existing_url });
       onDone();
     } catch (err) {
       setError(err);
@@ -206,6 +206,16 @@ function NewProject({ onDone }: { onDone: () => void }) {
           </select>
         </Field>
         <Field label="Project name"><input className="input" required minLength={2} value={f.name} onChange={set("name")} /></Field>
+        <Field label="Starting from">
+          <select className="input" value={f.starting_point} onChange={set("starting_point")}>
+            {Object.entries(STARTING_POINTS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+          </select>
+        </Field>
+        {f.starting_point !== "new_build" && (
+          <Field label="Their website's address" hint="It starts with https://. Before work starts, the client grants TEBOS access to it on their own account.">
+            <input className="input" type="url" required pattern="https://.+" placeholder="https://" value={f.existing_url} onChange={set("existing_url")} />
+          </Field>
+        )}
         <Field label="Website type">
           <select className="input" value={f.website_type} onChange={set("website_type")}>
             {Object.entries(WEBSITE_TYPES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
@@ -251,6 +261,11 @@ function ProjectView({ id }: { id: string }) {
           <ClockBadge p={p} today={today} />
           {p.deadline_on && <span className="muted">Deadline {p.deadline_on}</span>}
         </span>
+        {p.starting_point && p.starting_point !== "new_build" && (
+          <p className="muted" data-testid="starting-point">
+            {STARTING_POINTS[p.starting_point as keyof typeof STARTING_POINTS]}: <a href={p.existing_url ?? undefined} target="_blank" rel="noreferrer noopener">{p.existing_url}</a>
+          </p>
+        )}
       </PageHeader>
       <StageTrack status={status} />
       <Card title="Where it stands">

@@ -81,6 +81,24 @@ test("a maintainer opens a project for a client with an active plan; the package
   expect(sent).toMatchObject({ org_id: CLIENT, plan: "starter", website_type: "booking", name: "Northwind bookings site" });
 });
 
+test("a project can start from the client's existing website, with its address", async ({ page }) => {
+  const fake = await asMaintainer(page);
+  await page.goto("/web-delivery");
+  await page.getByRole("button", { name: "New project" }).click();
+  const form = page.getByRole("form", { name: "New project" });
+  await form.getByRole("combobox", { name: "Client" }).selectOption({ label: "Northwind Studio" });
+  await form.getByLabel("Project name").fill("Northwind site edits");
+  await expect(form.getByLabel("Their website's address")).toHaveCount(0);
+  await form.getByLabel("Starting from").selectOption({ label: "Edit the website they already have" });
+  await expect(form).toContainText("the client grants TEBOS access to it on their own account");
+  await form.getByLabel("Their website's address").fill("https://northwind.example.co.za");
+  await form.getByLabel("Where it starts").fill("They want their booking page reworked.");
+  await form.getByRole("button", { name: "Open the project" }).click();
+  await expect(page.getByTestId("web-project")).toHaveCount(4);
+  const sent = fake.writes.find((w) => w.method === "POST" && w.table === "web_projects")!.body as Record<string, unknown>;
+  expect(sent).toMatchObject({ starting_point: "edit_existing", existing_url: "https://northwind.example.co.za" });
+});
+
 test("a project's file: readiness from the database, scope held to the package, refusals explained", async ({ page }) => {
   const fake = await asMaintainer(page);
   await page.goto("/web-delivery/p1");

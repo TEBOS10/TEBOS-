@@ -62,6 +62,7 @@ export function LandingPage() {
         </a>
         <nav className="lp-links" aria-label="Site">
           <a href="/showcase">What TEBOS does</a>
+          <a href="/work">Work</a>
           <a href="/demo">Demo</a>
           <a href="/pricing">Pricing</a>
           <a className="lp-signin" href="/sign-in">Sign in</a>

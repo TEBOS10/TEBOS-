@@ -47,6 +47,7 @@ import { AiClientsPage } from "./pages/AiClientsPage";
 import { ReedsPage, ReedsRequestPage } from "./pages/ReedsPage";
 import { TwoStepChallenge } from "./components/TwoStep";
 import { ShowcasePage } from "./pages/ShowcasePage";
+import { GrapeStudiosPage, WorkPage } from "./pages/WorkPage";
 import { SystemsPage } from "./pages/SystemsPage";
 import { WaitlistPage } from "./pages/WaitlistPage";
 import { MeetPage } from "./pages/MeetPage";
@@ -134,6 +135,8 @@ function Gate() {
   if (path === "/blog") return <BlogIndex />;
   if (path === "/systems") return <SystemsPage />;
   if (path === "/showcase") return <ShowcasePage />;
+  if (path === "/work") return <WorkPage />;
+  if (path === "/work/grape-studios") return <GrapeStudiosPage />;
   if (path === "/waitlist") return <WaitlistPage />;
   if (path === "/self-check") return <SelfCheckPage />;
   if (path === "/self-check/result") return <SelfCheckShared />;
