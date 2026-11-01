@@ -37,12 +37,12 @@ for (const p of PAGES) {
     test("no console errors, working in-page links, described images", async ({ page }) => {
       const errors = await open(page, p.url, 1440);
       const missing = await page.evaluate(() =>
-        [...document.querySelectorAll<HTMLAnchorElement>('a[href^="#"]')]
+        Array.from(document.querySelectorAll<HTMLAnchorElement>('a[href^="#"]'))
           .map((a) => a.getAttribute("href")!.slice(1))
           .filter((id) => id && !document.getElementById(decodeURIComponent(id))));
       expect(missing, "in-page links without a target").toEqual([]);
       const undescribed = await page.evaluate(() =>
-        [...document.querySelectorAll("img")].filter((i) => !i.hasAttribute("alt")).map((i) => i.getAttribute("src")));
+        Array.from(document.querySelectorAll("img")).filter((i) => !i.hasAttribute("alt")).map((i) => i.getAttribute("src")));
       expect(undescribed, "images without alt").toEqual([]);
       expect(errors, "console errors").toEqual([]);
     });
@@ -54,9 +54,9 @@ for (const p of PAGES) {
         const over = document.documentElement.scrollWidth - vw;
         // name the elements that stick out, so a failure says where to look
         const culprits = over > 1
-          ? [...document.querySelectorAll<HTMLElement>("body *")]
+          ? Array.from(document.querySelectorAll<HTMLElement>("body *"))
               .filter((el) => el.getBoundingClientRect().right > vw + 1 && getComputedStyle(el).position !== "fixed")
-              .slice(0, 5).map((el) => `${el.tagName.toLowerCase()}.${[...el.classList].join(".")}`)
+              .slice(0, 5).map((el) => `${el.tagName.toLowerCase()}.${Array.from(el.classList).join(".")}`)
           : [];
         return { over, culprits };
       });
