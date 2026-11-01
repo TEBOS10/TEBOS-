@@ -314,3 +314,69 @@ export function checkDeployment(d: { environment: "preview" | "production"; url:
   }
   return OK;
 }
+
+// ---------------------------------------------------------------------------
+// Milestone 3: maintainers and capacity, client-owned accounts, costs (migration 20261101150000_web_delivery_portal.sql)
+// ---------------------------------------------------------------------------
+
+/** The most open projects one maintainer runs at once (mirrors guard_web_assignment and web_team_load). */
+export const WEB_PROJECTS_PER_MAINTAINER = 8;
+
+/** How many maintainers a number of open projects needs. 50 clients, one project each, need 7. */
+export function maintainersNeeded(openProjects: number): number {
+  return Math.ceil(openProjects / WEB_PROJECTS_PER_MAINTAINER);
+}
+
+export const INTEGRATION_SERVICES = {
+  hosting: "Hosting", domain: "Domain", dns: "DNS", repository: "Code repository", database: "Database", email: "Email sending",
+  payments: "Payments", analytics: "Analytics", cms: "Content editing", booking: "Bookings", maps: "Maps", other: "Other",
+} as const;
+export const TEBOS_ACCESS = {
+  none: "No access", read: "Read only", deploy: "Can deploy", admin: "Full admin",
+} as const;
+export const INTEGRATION_STATUSES = {
+  requested: "Access requested", granted: "Access granted", verified: "Access verified", revoked: "Access revoked",
+} as const;
+export type TebosAccess = keyof typeof TEBOS_ACCESS;
+export type IntegrationStatus = keyof typeof INTEGRATION_STATUSES;
+
+/** The client owns their accounts; TEBOS's access is recorded with how it ends (mirrors the web_integrations checks). */
+export function checkIntegration(i: { accountOwner: "client" | "tebos"; access: TebosAccess; status: IntegrationStatus; purpose: string; revocationPlan: string; transferPlan: string; verifiedOn: string | null }): Check {
+  if (i.purpose.trim().length < 10) return fail("TEBOS_VALIDATION", "Say what the site uses this account for (at least 10 characters).");
+  if (i.access !== "none" && i.revocationPlan.trim().length < 10) return fail("TEBOS_VALIDATION", "Say how TEBOS's access is removed when the work ends.");
+  if (i.accountOwner === "tebos" && i.transferPlan.trim().length < 10) return fail("TEBOS_VALIDATION", "An account TEBOS holds for a client needs a plan to hand it over to them.");
+  if (i.status === "verified" && !i.verifiedOn) return fail("TEBOS_VALIDATION", "Give the date the access was checked.");
+  if (i.status === "revoked" && i.access !== "none") return fail("TEBOS_VALIDATION", "Revoked access means TEBOS has no access left.");
+  return OK;
+}
+
+export const COST_KINDS = {
+  hosting: "Hosting", domain: "Domain", software: "Software", assets: "Assets", ai_usage: "AI usage", labour: "Labour", other: "Other",
+} as const;
+export type CostRecurrence = "once" | "monthly" | "yearly";
+
+/** A recurring cost the client pays must have been disclosed to them (mirrors the web_project_costs check). */
+export function checkCost(c: { description: string; amountCents: number; recurrence: CostRecurrence; paidBy: "client" | "tebos"; disclosed: boolean }): Check {
+  if (c.description.trim().length < 5) return fail("TEBOS_VALIDATION", "Describe the cost.");
+  if (!Number.isInteger(c.amountCents) || c.amountCents < 0) return fail("TEBOS_VALIDATION", "Give the amount in rand, zero or more.");
+  if (c.paidBy === "client" && c.recurrence !== "once" && !c.disclosed) return fail("TEBOS_VALIDATION", "A recurring cost the client pays must be disclosed to them first.");
+  return OK;
+}
+
+/** Monthly equivalent of the recurring costs, in cents (yearly divided by 12, rounded). */
+export function monthlyRunningCents(costs: Array<{ amountCents: number; recurrence: CostRecurrence }>): number {
+  return costs.reduce((n, c) => n + (c.recurrence === "monthly" ? c.amountCents : c.recurrence === "yearly" ? Math.round(c.amountCents / 12) : 0), 0);
+}
+
+/** What a client still has to decide or supply, from their project's records. */
+export function clientToDos(p: {
+  status: WebProjectStatus; isAdmin: boolean; hasScope: boolean; approved: { scope: boolean; design: boolean; release: boolean };
+  qaPassed: boolean; assetsNeeded: number;
+}): string[] {
+  const out: string[] = [];
+  if (p.hasScope && !p.approved.scope) out.push(p.isAdmin ? "Approve the scope and its costs" : "Your admin approves the scope and its costs");
+  if (p.hasScope && !p.approved.design) out.push(p.isAdmin ? "Approve the design direction" : "Your admin approves the design direction");
+  if (p.qaPassed && !p.approved.release && (p.status === "client_review")) out.push(p.isAdmin ? "Review the preview and approve the release" : "Your admin approves the release");
+  if (p.assetsNeeded > 0) out.push(`Send ${p.assetsNeeded} item${p.assetsNeeded === 1 ? "" : "s"} TEBOS needs from you`);
+  return out;
+}

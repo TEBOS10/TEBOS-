@@ -1941,6 +1941,7 @@ export type Database = {
           created_at: string
           updated_at: string
           finished_at: string | null
+          web_project_id: string | null
         }
         Insert: {
           id?: string
@@ -1948,6 +1949,7 @@ export type Database = {
           requested_by?: string
           title: string
           detail?: string | null
+          web_project_id?: string | null
           units?: number
           status?: string
           outcome_note?: string | null
@@ -4401,6 +4403,7 @@ export type Database = {
           created_by: string | null
           created_at: string
           updated_at: string
+          maintainer_id: string | null
         }
         Insert: {
           org_id: string
@@ -4410,6 +4413,7 @@ export type Database = {
           plan: string
           status_note: string
           status?: string
+          maintainer_id?: string | null
         }
         Update: {
           name?: string
@@ -4418,6 +4422,7 @@ export type Database = {
           plan?: string
           status?: string
           status_note?: string
+          maintainer_id?: string | null
         }
         Relationships: []
       }
@@ -4645,6 +4650,81 @@ export type Database = {
         }
         Relationships: []
       }
+      web_integrations: {
+        Row: {
+          id: string
+          project_id: string
+          org_id: string
+          service: string
+          provider: string
+          account_owner: string
+          tebos_access: string
+          purpose: string
+          status: string
+          verified_on: string | null
+          revocation_plan: string | null
+          transfer_plan: string | null
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          project_id: string
+          org_id: string
+          service: string
+          provider: string
+          purpose: string
+          account_owner?: string
+          tebos_access?: string
+          status?: string
+          verified_on?: string | null
+          revocation_plan?: string | null
+          transfer_plan?: string | null
+        }
+        Update: {
+          provider?: string
+          account_owner?: string
+          tebos_access?: string
+          purpose?: string
+          status?: string
+          verified_on?: string | null
+          revocation_plan?: string | null
+          transfer_plan?: string | null
+        }
+        Relationships: []
+      }
+      web_project_costs: {
+        Row: {
+          id: string
+          project_id: string
+          org_id: string
+          kind: string
+          description: string
+          amount_cents: number
+          currency: string
+          recurrence: string
+          paid_by: string
+          disclosed_to_client: boolean
+          incurred_on: string
+          recorded_by: string | null
+          created_at: string
+        }
+        Insert: {
+          project_id: string
+          org_id: string
+          kind: string
+          description: string
+          amount_cents: number
+          recurrence: string
+          paid_by: string
+          disclosed_to_client?: boolean
+          incurred_on?: string
+        }
+        Update: {
+          disclosed_to_client?: boolean
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -4677,6 +4757,14 @@ export type Database = {
       tepos_open_week: {
         Args: { p_org: string; p_week_start: string }
         Returns: string
+      }
+      web_team_load: {
+        Args: Record<PropertyKey, never>
+        Returns: { user_id: string; open_projects: number; building: number; overdue: number; capacity: number }[]
+      }
+      web_project_history: {
+        Args: { p_project: string }
+        Returns: { occurred_at: string; by_tebos: boolean; action: string; entity_type: string; from_status: string | null; to_status: string | null; note: string | null }[]
       }
       web_delivery_board: {
         Args: Record<PropertyKey, never>

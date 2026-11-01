@@ -38,6 +38,7 @@ import { ContractTemplatesPage, OpportunityPage, PipelinePage } from "./pages/Pi
 import { MarketingPlaybookPage, SalesPlaybookPage, StaffInvitePage, StaffTeamPage } from "./pages/SalesPages";
 import { SalesCallsPage } from "./pages/SalesCallsPage";
 import { WebDeliveryPage, WebProjectPage } from "./pages/WebDeliveryPage";
+import { WebsitePage } from "./pages/WebsitePage";
 import { StaffShell } from "./components/StaffShell";
 import { BlogIndex, BlogPost } from "./pages/BlogPage";
 import { AiClientsPage } from "./pages/AiClientsPage";
@@ -76,6 +77,7 @@ const ROUTES: Array<[string, (p: Record<string, string>) => ReactNode]> = [
   ["/system", () => <SystemPage />],
   ["/reeds", () => <ReedsPage />],
   ["/channel", () => <ChannelPage />],
+  ["/website", () => <WebsitePage />],
   ["/ai-clients", () => <AiClientsPage />],
   ["/reeds/:id", (p) => <ReedsRequestPage id={p.id!} />],
   ...staffRoutes(),

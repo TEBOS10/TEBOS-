@@ -18,6 +18,11 @@ export type WebTask = Tables["web_tasks"]["Row"];
 export type Dependency = Tables["web_task_dependencies"]["Row"];
 export type WebAsset = Tables["web_assets"]["Row"];
 export type Deployment = Tables["web_deployments"]["Row"];
+export type Integration = Tables["web_integrations"]["Row"];
+export type ProjectCost = Tables["web_project_costs"]["Row"];
+export type ChangeRequestRow = Tables["change_requests"]["Row"];
+export type TeamLoad = Database["public"]["Functions"]["web_team_load"]["Returns"][number];
+export type HistoryRow = Database["public"]["Functions"]["web_project_history"]["Returns"][number];
 
 function must<R extends { data: unknown; error: unknown }>(res: R): NonNullable<R["data"]> {
   if (res.error) throw res.error;
@@ -50,10 +55,14 @@ export interface ProjectFile {
   deployments: Deployment[];
   gaps: string[];
   clientName: string | null;
+  integrations: Integration[];
+  costs: ProjectCost[];
+  changes: ChangeRequestRow[];
+  history: HistoryRow[];
 }
 
 export async function projectFile(db: Db, id: string): Promise<ProjectFile> {
-  const [project, scopes, approvals, readiness, qa, tasks, dependencies, assets, deployments, gaps, board] = await Promise.all([
+  const [project, scopes, approvals, readiness, qa, tasks, dependencies, assets, deployments, gaps, board, integrations, costs, changes, history] = await Promise.all([
     db.from("web_projects").select("*").eq("id", id).single(),
     db.from("web_scope_revisions").select("*").eq("project_id", id).order("revision", { ascending: false }),
     db.from("web_project_approvals").select("*").eq("project_id", id).order("created_at"),
@@ -65,12 +74,17 @@ export async function projectFile(db: Db, id: string): Promise<ProjectFile> {
     db.from("web_deployments").select("*").eq("project_id", id).order("created_at", { ascending: false }),
     db.rpc("web_project_readiness", { p_project: id }),
     db.rpc("web_delivery_board"),
+    db.from("web_integrations").select("*").eq("project_id", id).order("created_at"),
+    db.from("web_project_costs").select("*").eq("project_id", id).order("incurred_on", { ascending: false }),
+    db.from("change_requests").select("*").eq("web_project_id", id).order("created_at", { ascending: false }),
+    db.rpc("web_project_history", { p_project: id }),
   ]);
   return {
     project: must(project), scopes: must(scopes), approvals: must(approvals), readiness: must(readiness), qa: must(qa),
     tasks: must(tasks), dependencies: must(dependencies), assets: must(assets), deployments: must(deployments),
     gaps: (must(gaps) as string[]) ?? [],
     clientName: ((must(board) as BoardRow[]).find((b) => b.id === id)?.org_name) ?? null,
+    integrations: must(integrations), costs: must(costs), changes: must(changes), history: (must(history) as HistoryRow[]) ?? [],
   };
 }
 
@@ -131,3 +145,54 @@ export async function rollBack(db: Db, id: string, note: string) {
 
 /** Split a textarea into one item per line, dropping blanks. */
 export const lines = (text: string) => text.split("\n").map((l) => l.trim()).filter(Boolean);
+
+// ---------------------------------------------------------------------------
+// Milestone 3: maintainers, accounts, costs, and the client's side
+// ---------------------------------------------------------------------------
+export async function teamLoad(db: Db): Promise<TeamLoad[]> {
+  return must(await db.rpc("web_team_load")) as TeamLoad[];
+}
+
+export async function projectMaintainers(db: Db): Promise<Record<string, string | null>> {
+  const rows = must(await db.from("web_projects").select("id, maintainer_id"));
+  return Object.fromEntries(rows.map((r) => [r.id, r.maintainer_id]));
+}
+
+export async function assignMaintainer(db: Db, id: string, userId: string) {
+  return must(await db.from("web_projects").update({ maintainer_id: userId }).eq("id", id).select().single());
+}
+
+export interface NewIntegration { service: string; provider: string; account_owner: "client" | "tebos"; tebos_access: string; purpose: string; revocation_plan: string; transfer_plan: string }
+
+export async function addIntegration(db: Db, project: WebProject, i: NewIntegration) {
+  return must(await db.from("web_integrations").insert({
+    project_id: project.id, org_id: project.org_id, service: i.service, provider: i.provider.trim(), account_owner: i.account_owner,
+    tebos_access: i.tebos_access, purpose: i.purpose.trim(), revocation_plan: i.revocation_plan.trim() || null, transfer_plan: i.transfer_plan.trim() || null,
+  }).select().single());
+}
+
+export async function setIntegrationStatus(db: Db, id: string, status: string, verifiedOn: string | null, access?: string) {
+  return must(await db.from("web_integrations").update({ status, verified_on: verifiedOn, ...(access ? { tebos_access: access } : {}) }).eq("id", id).select().single());
+}
+
+export interface NewCost { kind: string; description: string; amount_cents: number; recurrence: string; paid_by: "client" | "tebos"; disclosed_to_client: boolean }
+
+export async function addCost(db: Db, project: WebProject, c: NewCost) {
+  return must(await db.from("web_project_costs").insert({ project_id: project.id, org_id: project.org_id, ...c, description: c.description.trim() }).select().single());
+}
+
+/** The client's own projects (the board returns only theirs) and, for each, what the portal shows. */
+export interface ClientProject extends ProjectFile { row: BoardRow }
+
+export async function clientProjects(db: Db): Promise<ClientProject[]> {
+  const rows = (must(await db.rpc("web_delivery_board")) as BoardRow[]).filter((r) => r.status !== "cancelled");
+  return Promise.all(rows.map(async (row) => ({ ...(await projectFile(db, row.id)), row })));
+}
+
+export async function approve(db: Db, project: WebProject, revisionId: string, kind: "scope" | "design" | "release", note: string) {
+  return must(await db.from("web_project_approvals").insert({ project_id: project.id, org_id: project.org_id, revision_id: revisionId, kind, note: note.trim() || null }).select().single());
+}
+
+export async function askForChange(db: Db, project: WebProject, title: string, detail: string) {
+  return must(await db.from("change_requests").insert({ org_id: project.org_id, web_project_id: project.id, title: title.trim(), detail: detail.trim() || null }).select().single());
+}

@@ -24,6 +24,15 @@
   The **maintainers' dashboard** is at `/web-delivery` and `/web-delivery/:id`, in the staff workspace. It needs the
   founder's "merge it", because the migration changes the database.
 
+- **Milestone 2 is live** (merged in PR #107, applied 1 Nov, checked with a rolled-back test).
+- **Milestone 3: BUILT and TESTED locally, not merged.** It adds:
+  - the client's page, **Your website** (`/website`);
+  - website change requests from the client's own account;
+  - client-owned accounts with TEBOS's delegated access recorded;
+  - costs, project history, and maintainers with a capacity of 8 open projects each.
+
+  See ADR 0012. Migration `web_delivery_portal` needs "merge it".
+
 ## Setup and run
 
 ```sh
@@ -73,14 +82,20 @@ These are in ADR 0011.
 - **Web:** typecheck passed; 63 unit tests passed; the build and the bundle check passed; 151 browser tests passed, 1
   skipped (the screenshot test, which runs only on request).
 
-## The next three tasks (after milestone 2 merges)
+## Tests run (1 Nov, milestone 3)
 
-1. **Founder:** check the Vercel plan, and choose a host for client sites whose terms allow commercial use
-   (`TOOLCHAIN.md` §3).
-2. **The client's portal:** intake progress, pending decisions, the preview, and approve (scope, design and release
-   are approved by the client's admin only).
-3. **Project history on the dashboard** (a staff-readable audit view), then integration connections and cost
-   records.
+- **Core:** typecheck passed; 467 unit tests passed; `test:db` passed, including `99zzc`, which puts 52 projects on
+  one board.
+- **Web:** typecheck passed; 63 unit tests passed; the build and the bundle check passed; 155 browser tests passed, 2
+  skipped (the screenshot tests, which run only on request).
+
+## The next three tasks
+
+1. **Founder:** invite maintainers (Staff → Invite, role Maintainer). The team does the delivery; there are 0 today.
+2. **The client's intake form** (spec §5, sections A–J), so a new client fills in their brief from their own
+   account.
+3. **The maintainers' work queue across clients:** every open change request and every task due today, oldest first,
+   so nothing waits on the founder.
 
 ## How another agent resumes
 

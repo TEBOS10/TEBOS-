@@ -6,18 +6,23 @@ import { useState, type FormEvent } from "react";
 import { MACHINES, type WebProjectStatus, type WebTaskStatus } from "@core/states";
 import { BOARD_LIMITS, type Tier } from "@core/editions";
 import {
-  ASSET_KINDS, ASSET_SOURCES, ASSET_STATUSES, canStart, checkAsset, checkDeployment, checkScope, completion, deadlineState,
+  ASSET_KINDS, ASSET_SOURCES, ASSET_STATUSES, canStart, checkAsset, checkCost, checkDeployment, checkIntegration, checkScope, completion,
+  COST_KINDS, deadlineState, INTEGRATION_SERVICES, INTEGRATION_STATUSES, maintainersNeeded, monthlyRunningCents, TEBOS_ACCESS,
+  WEB_PROJECTS_PER_MAINTAINER, type CostRecurrence, type IntegrationStatus, type TebosAccess,
   PRIMARY_OBJECTIVES, READINESS_ITEMS, WAIVABLE, WEB_ROLES, WEB_STATUS_LABEL, WEB_TASK_STATUS_LABEL, WEBSITE_TYPES,
   type AssetSource, type AssetStatus, type DeadlineState, type ReadinessItem, type ReadinessStatus, type WebRole,
 } from "@core/web-delivery";
+import { money } from "@core/property";
 import { saToday } from "@core/week";
 import { Badge, Card, Empty, ErrorNote, Field, Loading, PageHeader } from "../components/ui";
 import { Link } from "../lib/router";
 import { useSignedIn } from "../lib/session";
+import { useStaff } from "../lib/staff";
 import { useQuery } from "../lib/useQuery";
 import {
-  addAsset, addDeployment, addQaRun, addScope, addTask, claimTask, createProject, deliveryBoard, deliveryClients, lines, moveProject,
-  moveTask, projectFile, rollBack, saveReadiness, updateAsset, type BoardRow, type ProjectFile, type WebTask,
+  addAsset, addCost, addDeployment, addIntegration, addQaRun, addScope, addTask, assignMaintainer, claimTask, createProject, deliveryBoard,
+  deliveryClients, lines, moveProject, moveTask, projectFile, projectMaintainers, rollBack, saveReadiness, setIntegrationStatus, teamLoad,
+  updateAsset, type BoardRow, type NewCost, type NewIntegration, type ProjectFile, type WebTask,
 } from "../lib/webDeliveryData";
 import { StaffOnly } from "./PipelinePage";
 
@@ -40,7 +45,7 @@ function clockOf(p: { status: string; deadline_on: string | null; clock_paused_o
   return deadlineState({ status: p.status as WebProjectStatus, deadlineOn: p.deadline_on, pausedOn: p.clock_paused_on }, today);
 }
 
-function ClockBadge({ p, today }: { p: { status: string; deadline_on: string | null; clock_paused_on: string | null }; today: string }) {
+export function ClockBadge({ p, today }: { p: { status: string; deadline_on: string | null; clock_paused_on: string | null }; today: string }) {
   const c = clockOf(p, today);
   const days = c.businessDaysLeft;
   const extra = c.state === "on_track" && days !== null ? ` · ${days} business days left` : c.state === "overdue" && days !== null ? ` · ${-days} business day${days === -1 ? "" : "s"} late` : "";
@@ -58,6 +63,9 @@ function Board() {
   const { db } = useSignedIn();
   const today = saToday();
   const board = useQuery(() => deliveryBoard(db), []);
+  const team = useQuery(() => teamLoad(db), []);
+  const owners = useQuery(() => projectMaintainers(db), []);
+  const { nameOf } = useStaff();
   const [opening, setOpening] = useState(false);
   const rows = board.data ?? [];
   const open = rows.filter((r) => r.status !== "closed" && r.status !== "cancelled");
@@ -80,11 +88,12 @@ function Board() {
             <Stat value={waiting.length} label="Waiting on the client" />
             <Stat value={live.length} label="Live sites" />
           </div>
+          {team.data && <TeamCard team={team.data} open={open.length} nameOf={nameOf} />}
           {rows.length === 0 ? (
             <Card><Empty>No website projects yet. Open one with "New project" once a client's plan is active.</Empty></Card>
           ) : (
             <ol className="list web-list" data-testid="web-projects">
-              {rows.map((r) => <ProjectRow key={r.id} r={r} today={today} />)}
+              {rows.map((r) => <ProjectRow key={r.id} r={r} today={today} owner={owners.data?.[r.id] ? nameOf(owners.data[r.id]) : null} />)}
             </ol>
           )}
         </>
@@ -112,7 +121,31 @@ function nextHoldUp(r: BoardRow): string {
   return r.status_note;
 }
 
-function ProjectRow({ r, today }: { r: BoardRow; today: string }) {
+function TeamCard({ team, open, nameOf }: { team: Array<{ user_id: string; open_projects: number; building: number; overdue: number; capacity: number }>; open: number; nameOf: (id: string) => string }) {
+  const slots = team.length * WEB_PROJECTS_PER_MAINTAINER;
+  const used = team.reduce((n, m) => n + m.open_projects, 0);
+  const need = maintainersNeeded(open);
+  return (
+    <Card title="The team" subtitle={`Each maintainer runs up to ${WEB_PROJECTS_PER_MAINTAINER} open projects. ${used} of ${slots} places are taken.`}>
+      {team.length === 0 ? <Empty>No maintainers yet. Invite one from Staff; projects need a maintainer before TEBOS can deliver them.</Empty> : (
+        <ul className="list web-list" data-testid="web-team">
+          {team.map((m) => (
+            <li key={m.user_id}>
+              <div className="row" style={{ justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
+                <strong>{nameOf(m.user_id)}</strong>
+                <span className="muted">{m.open_projects} of {m.capacity} open · {m.building} in build or QA · {m.overdue} late</span>
+              </div>
+              <div className="web-meter" aria-hidden><span style={{ width: `${Math.min(100, (m.open_projects / m.capacity) * 100)}%` }} /></div>
+            </li>
+          ))}
+        </ul>
+      )}
+      {need > team.length && <p className="muted" data-testid="web-hire">{open} open projects need {need} maintainers; the team has {team.length}. Invite {need - team.length} more from Staff.</p>}
+    </Card>
+  );
+}
+
+function ProjectRow({ r, today, owner }: { r: BoardRow; today: string; owner: string | null }) {
   const pct = completion(r.tasks_total, r.tasks_done);
   return (
     <li className="card web-row" data-testid="web-project">
@@ -120,7 +153,7 @@ function ProjectRow({ r, today }: { r: BoardRow; today: string }) {
         <div>
           <span className="mono muted">{r.ref}</span>{" "}
           <Link to={`/web-delivery/${r.id}`} className="card-title">{r.name}</Link>
-          <div className="muted">{r.org_name} · {PLAN_NAME[r.plan] ?? r.plan} · {WEBSITE_TYPES[r.website_type as keyof typeof WEBSITE_TYPES] ?? r.website_type}</div>
+          <div className="muted">{r.org_name} · {PLAN_NAME[r.plan] ?? r.plan} · {WEBSITE_TYPES[r.website_type as keyof typeof WEBSITE_TYPES] ?? r.website_type} · {owner ? `Run by ${owner}` : "No maintainer yet"}</div>
         </div>
         <div className="row" style={{ gap: 6, flexWrap: "wrap" }}>
           <Badge tone="info">{WEB_STATUS_LABEL[r.status as WebProjectStatus] ?? r.status}</Badge>
@@ -219,6 +252,7 @@ function ProjectView({ id }: { id: string }) {
       <StageTrack status={status} />
       <Card title="Where it stands">
         <p data-testid="status-note">{p.status_note}</p>
+        <Assign f={f} onDone={q.reload} />
         <Move f={f} onDone={q.reload} />
       </Card>
       {f.gaps.length > 0 && ["intake", "scope_review", "approval", "blocked_client", "scope_change"].includes(status) && (
@@ -228,6 +262,7 @@ function ProjectView({ id }: { id: string }) {
       )}
       <div className="grid grid-main web-columns">
         <div className="stack">
+          <Changes f={f} />
           <Tasks f={f} onDone={q.reload} />
           <Scope f={f} onDone={q.reload} />
           <Qa f={f} onDone={q.reload} />
@@ -237,13 +272,16 @@ function ProjectView({ id }: { id: string }) {
           <Approvals f={f} />
           <Readiness f={f} onDone={q.reload} />
           <Assets f={f} onDone={q.reload} />
+          <Integrations f={f} onDone={q.reload} />
+          <Costs f={f} onDone={q.reload} />
         </div>
       </div>
+      <History f={f} />
     </div>
   );
 }
 
-function StageTrack({ status }: { status: WebProjectStatus }) {
+export function StageTrack({ status }: { status: WebProjectStatus }) {
   const at = MAIN_PATH.indexOf(status);
   return (
     <ol className="stage-track" aria-label="Stages" data-testid="stage-track">
@@ -684,5 +722,167 @@ function DeploymentLine({ d, onDone }: { d: ProjectFile["deployments"][number]; 
         </form>
       )}
     </li>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Milestone 3: the maintainer, the client's requests, accounts, costs, history
+// ---------------------------------------------------------------------------
+function Assign({ f, onDone }: { f: ProjectFile; onDone: () => void }) {
+  const { db } = useSignedIn();
+  const { nameOf } = useStaff();
+  const team = useQuery(() => teamLoad(db), []);
+  const a = useAction(onDone);
+  const current = f.project.maintainer_id;
+  return (
+    <div className="row" style={{ gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+      <span className="muted">Run by</span>
+      <select className="input" aria-label="Maintainer" style={{ flex: "1 1 200px", maxWidth: 320 }} value={current ?? ""} disabled={a.busy}
+        onChange={(e) => e.target.value && void a.run(() => assignMaintainer(db, f.project.id, e.target.value))}>
+        <option value="">No maintainer yet</option>
+        {(team.data ?? []).map((m) => <option key={m.user_id} value={m.user_id}>{nameOf(m.user_id)} ({m.open_projects} of {m.capacity})</option>)}
+      </select>
+      <ErrorNote error={a.error} title="Not assigned" />
+    </div>
+  );
+}
+
+function Changes({ f }: { f: ProjectFile }) {
+  const open = f.changes.filter((c) => !["done", "cancelled", "declined"].includes(c.status));
+  return (
+    <Card title="The client's requests" subtitle="Changes the client asked for from their own account, counted against their plan's monthly allowance."
+      actions={<Link to={`/pipeline/channel/${f.project.org_id}`} className="btn btn-sm">Open their channel</Link>}>
+      {f.changes.length === 0 ? <Empty>No requests about this website yet.</Empty> : (
+        <ul className="list web-list" data-testid="web-changes">
+          {f.changes.map((c) => (
+            <li key={c.id}>
+              <div className="row" style={{ justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
+                <strong>{c.title}</strong><Badge tone={open.includes(c) ? "warn" : "good"}>{c.status.replace(/_/g, " ")}</Badge>
+              </div>
+              {c.detail && <p className="muted" style={{ margin: "4px 0 0" }}>{c.detail}</p>}
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
+  );
+}
+
+function Integrations({ f, onDone }: { f: ProjectFile; onDone: () => void }) {
+  const { db } = useSignedIn();
+  const a = useAction(onDone);
+  const [adding, setAdding] = useState(false);
+  const [i, setI] = useState<NewIntegration>({ service: "hosting", provider: "", account_owner: "client", tebos_access: "deploy", purpose: "", revocation_plan: "", transfer_plan: "" });
+  const set = (k: keyof NewIntegration) => (e: { target: { value: string } }) => setI({ ...i, [k]: e.target.value } as NewIntegration);
+  const today = saToday();
+  return (
+    <Card title="Accounts and access" subtitle="The client owns their accounts; TEBOS records the access it was given and how it ends. Passwords and keys are never kept here."
+      actions={<button className="btn btn-sm" onClick={() => setAdding((x) => !x)}>{adding ? "Close" : "Add"}</button>}>
+      {f.integrations.length === 0 ? <Empty>No accounts recorded yet.</Empty> : (
+        <ul className="list web-list" data-testid="web-integrations">
+          {f.integrations.map((x) => (
+            <li key={x.id}>
+              <div className="row" style={{ justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
+                <span><strong>{INTEGRATION_SERVICES[x.service as keyof typeof INTEGRATION_SERVICES]}</strong> · {x.provider}</span>
+                <Badge tone={x.status === "verified" ? "good" : x.status === "revoked" ? "neutral" : "warn"}>{INTEGRATION_STATUSES[x.status as IntegrationStatus]}</Badge>
+              </div>
+              <p className="muted" style={{ margin: "4px 0" }}>
+                {x.account_owner === "client" ? "The client's account" : "Held by TEBOS for the client"} · TEBOS: {TEBOS_ACCESS[x.tebos_access as TebosAccess]}
+                {x.verified_on ? ` · checked ${x.verified_on}` : ""}{x.revocation_plan ? ` · ends: ${x.revocation_plan}` : ""}
+              </p>
+              <div className="row" style={{ gap: 6, flexWrap: "wrap" }}>
+                {x.status !== "verified" && x.status !== "revoked" && x.tebos_access !== "none" && <button className="btn btn-sm" disabled={a.busy} onClick={() => a.run(() => setIntegrationStatus(db, x.id, "verified", today))}>Access checked today</button>}
+                {x.status !== "revoked" && <button className="btn btn-sm" disabled={a.busy} onClick={() => a.run(() => setIntegrationStatus(db, x.id, "revoked", x.verified_on, "none"))}>Access removed</button>}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+      {adding && (
+        <form className="form" aria-label="Add an account" onSubmit={async (e) => {
+          e.preventDefault();
+          const c = checkIntegration({ accountOwner: i.account_owner, access: i.tebos_access as TebosAccess, status: "requested", purpose: i.purpose, revocationPlan: i.revocation_plan, transferPlan: i.transfer_plan, verifiedOn: null });
+          if (!c.ok) { a.setError({ message: c.reason, hint: c.code }); return; }
+          if (await a.run(() => addIntegration(db, f.project, i))) setAdding(false);
+        }}>
+          <Field label="Service"><select className="input" value={i.service} onChange={set("service")}>{Object.entries(INTEGRATION_SERVICES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></Field>
+          <Field label="Provider"><input className="input" required minLength={2} value={i.provider} onChange={set("provider")} /></Field>
+          <Field label="Whose account"><select className="input" value={i.account_owner} onChange={set("account_owner")}><option value="client">The client's (recommended)</option><option value="tebos">Held by TEBOS for the client</option></select></Field>
+          <Field label="TEBOS's access"><select className="input" value={i.tebos_access} onChange={set("tebos_access")}>{Object.entries(TEBOS_ACCESS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></Field>
+          <Field label="What the site uses it for"><input className="input" required minLength={10} value={i.purpose} onChange={set("purpose")} /></Field>
+          {i.tebos_access !== "none" && <Field label="How TEBOS's access ends"><input className="input" required minLength={10} value={i.revocation_plan} onChange={set("revocation_plan")} /></Field>}
+          {i.account_owner === "tebos" && <Field label="How it's handed to the client"><input className="input" required minLength={10} value={i.transfer_plan} onChange={set("transfer_plan")} /></Field>}
+          <ErrorNote error={a.error} title="Not recorded" />
+          <button className="btn btn-primary" disabled={a.busy}>Record the account</button>
+        </form>
+      )}
+    </Card>
+  );
+}
+
+const rand = (cents: number) => money(cents / 100);
+
+function Costs({ f, onDone }: { f: ProjectFile; onDone: () => void }) {
+  const { db } = useSignedIn();
+  const a = useAction(onDone);
+  const [adding, setAdding] = useState(false);
+  const [c, setC] = useState({ kind: "hosting", description: "", amount: "", recurrence: "once", paid_by: "tebos", disclosed: false });
+  const once = f.costs.filter((x) => x.recurrence === "once" && x.paid_by === "tebos").reduce((n, x) => n + x.amount_cents, 0);
+  const running = monthlyRunningCents(f.costs.filter((x) => x.paid_by === "client").map((x) => ({ amountCents: x.amount_cents, recurrence: x.recurrence as CostRecurrence })));
+  return (
+    <Card title="Costs" subtitle={`TEBOS has spent ${rand(once)} once-off; the client's running costs are ${rand(running)} a month.`}
+      actions={<button className="btn btn-sm" onClick={() => setAdding((x) => !x)}>{adding ? "Close" : "Add"}</button>}>
+      {f.costs.length === 0 ? <Empty>No costs recorded.</Empty> : (
+        <ul className="list web-list" data-testid="web-costs">
+          {f.costs.map((x) => (
+            <li key={x.id}>{x.description} · <strong>{rand(x.amount_cents)}</strong> {x.recurrence === "once" ? "once" : x.recurrence === "monthly" ? "a month" : "a year"} · paid by {x.paid_by === "client" ? "the client" : "TEBOS"}{x.paid_by === "client" && x.recurrence !== "once" ? (x.disclosed_to_client ? " · disclosed" : "") : ""}</li>
+          ))}
+        </ul>
+      )}
+      {adding && (
+        <form className="form" aria-label="Add a cost" onSubmit={async (e) => {
+          e.preventDefault();
+          const cents = Math.round(Number(c.amount) * 100);
+          const draft: NewCost = { kind: c.kind, description: c.description, amount_cents: cents, recurrence: c.recurrence, paid_by: c.paid_by as "client" | "tebos", disclosed_to_client: c.disclosed };
+          const ok = checkCost({ description: c.description, amountCents: cents, recurrence: c.recurrence as CostRecurrence, paidBy: draft.paid_by, disclosed: c.disclosed });
+          if (!ok.ok) { a.setError({ message: ok.reason, hint: ok.code }); return; }
+          if (await a.run(() => addCost(db, f.project, draft))) setAdding(false);
+        }}>
+          <Field label="Kind"><select className="input" value={c.kind} onChange={(e) => setC({ ...c, kind: e.target.value })}>{Object.entries(COST_KINDS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></Field>
+          <Field label="What it is"><input className="input" required minLength={5} value={c.description} onChange={(e) => setC({ ...c, description: e.target.value })} /></Field>
+          <Field label="Amount (rand)"><input className="input" type="number" min={0} step="0.01" required value={c.amount} onChange={(e) => setC({ ...c, amount: e.target.value })} /></Field>
+          <Field label="How often"><select className="input" value={c.recurrence} onChange={(e) => setC({ ...c, recurrence: e.target.value })}><option value="once">Once</option><option value="monthly">Monthly</option><option value="yearly">Yearly</option></select></Field>
+          <Field label="Paid by"><select className="input" value={c.paid_by} onChange={(e) => setC({ ...c, paid_by: e.target.value })}><option value="tebos">TEBOS</option><option value="client">The client</option></select></Field>
+          <label className="row" style={{ gap: 6 }}><input type="checkbox" checked={c.disclosed} onChange={(e) => setC({ ...c, disclosed: e.target.checked })} /> Disclosed to the client</label>
+          <ErrorNote error={a.error} title="Not recorded" />
+          <button className="btn btn-primary" disabled={a.busy}>Record the cost</button>
+        </form>
+      )}
+    </Card>
+  );
+}
+
+const ENTITY_LABEL: Record<string, string> = {
+  web_projects: "Project", web_scope_revisions: "Scope", web_project_approvals: "Approval", web_readiness_items: "Readiness",
+  web_qa_runs: "QA", web_tasks: "Task", web_assets: "Asset", web_deployments: "Deployment", web_integrations: "Account", web_project_costs: "Cost",
+};
+
+export function History({ f }: { f: ProjectFile }) {
+  return (
+    <Card title="History" subtitle="From the audit trail: who did what, and when.">
+      {f.history.length === 0 ? <Empty>Nothing recorded yet.</Empty> : (
+        <ol className="list web-list" data-testid="web-history">
+          {f.history.slice(0, 40).map((h, n) => (
+            <li key={n}>
+              <span className="muted mono">{h.occurred_at.slice(0, 16).replace("T", " ")}</span>{" "}
+              <Badge tone={h.by_tebos ? "info" : "neutral"}>{h.by_tebos ? "TEBOS" : "Client"}</Badge>{" "}
+              {ENTITY_LABEL[h.entity_type] ?? h.entity_type}
+              {h.to_status && h.from_status !== h.to_status ? `: ${h.from_status ? `${h.from_status.replace(/_/g, " ")} → ` : ""}${h.to_status.replace(/_/g, " ")}` : h.action.endsWith("insert") ? " added" : " updated"}
+              {h.note ? <span className="muted"> · {h.note}</span> : null}
+            </li>
+          ))}
+        </ol>
+      )}
+    </Card>
   );
 }

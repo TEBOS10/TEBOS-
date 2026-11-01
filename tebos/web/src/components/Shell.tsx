@@ -11,6 +11,7 @@ const NAV = [
   { to: "/", label: "Home", icon: Home, exact: true },
   { to: "/reeds", label: "Ask TEBOS", icon: MessageSquare },
   { to: "/channel", label: "TEBOS channel", icon: MessagesSquare },
+  { to: "/website", label: "Your website", icon: Globe },
   { to: "/businesses", label: "Businesses", icon: Building2 },
   { to: "/scans", label: "Scans", icon: ScanSearch },
   { to: "/findings", label: "Findings", icon: Sparkles },
