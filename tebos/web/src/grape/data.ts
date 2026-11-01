@@ -8,6 +8,12 @@ import { CATEGORIES } from "../lib/grapeRates";
 export const SLUG = "grape-studios";
 export const BOOKINGS_EMAIL = "grapephotographybookings@gmail.com";
 export const INSTAGRAM = "https://www.instagram.com/grape.studios_/";
+export const BEHANCE = "https://www.behance.net/tebohotefu";
+
+// The brands Grape Studios has shot for, as listed in its own Instagram highlights (seen 1 Nov 2026). Shown as names
+// in type, never as the brands' logos. Grape confirms each one, and that it may name it, before the site goes live
+// (operator log, decision 34).
+export const BRANDS = ["PUMA", "G-Star Raw", "Antony Morato", "Happyville", "YMZ", "2Millionicons"] as const;
 
 const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;

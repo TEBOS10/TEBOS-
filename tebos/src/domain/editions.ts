@@ -84,6 +84,11 @@ export const VARIANTS: Record<string, Variant[]> = {
     { key: "courier", label: "Courier", pieces: [p("Route planner", "software", "Dispatcher", "Daily routes and stops.")] },
     { key: "freight", label: "Freight and haulage", pieces: [p("Fleet maintenance log", "document", "Fleet manager", "Services, licences and roadworthies.")] },
   ],
+  "photography-studio": [
+    { key: "portrait-events", label: "Portraits, graduations and events", pieces: [p("Event run sheets", "document", "Bookings coordinator", "Venue, timings, key people and must-have shots for each event.")] },
+    { key: "fashion-brand", label: "Fashion and brand work", pieces: [p("Brand usage register", "document", "Studio admin", "Each brand's usage rights, dates and media, so images are never used beyond what was paid for.")] },
+    { key: "property", label: "Property and corporate", pieces: [p("Listing shot checklist", "document", "Second photographer", "Rooms, angles and exterior shots each listing needs.")] },
+  ],
   "gym-fitness": [
     { key: "gym", label: "Gym", pieces: [p("Equipment service log", "document", "Manager", "Every service and repair.")] },
     { key: "studio", label: "Studio (yoga, pilates, boxing)", pieces: [p("Class booking app", "software", "Studio manager", "Classes, spaces and waitlists.")] },

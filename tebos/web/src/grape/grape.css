@@ -137,3 +137,9 @@ h1, h2, h3, p { margin: 0; }
   .gs-nav nav a:not(.gs-pill) { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .gs-cat img, .gs-hero-3d { transition: none; } }
+
+/* Brands we've shot for: the names in type, one quiet line, never the brands' logos */
+.gs-brands { padding-top: clamp(28px, 4vw, 48px); padding-bottom: clamp(8px, 2vw, 16px); border-top: 1px solid var(--g-line, rgba(11, 11, 12, 0.1)); }
+.gs-brand-list { list-style: none; margin: 18px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 14px clamp(24px, 3vw, 40px); align-items: baseline; }
+@media (min-width: 900px) { .gs-brand-list { justify-content: space-between; flex-wrap: nowrap; } }
+.gs-brand-list li { font-size: clamp(18px, 1.9vw, 24px); white-space: nowrap; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--g-black, #0b0b0c); opacity: 0.85; }
