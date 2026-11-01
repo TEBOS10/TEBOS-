@@ -31,6 +31,18 @@ export async function openRequests(db: Db, org: string): Promise<Booking[]> {
   return must(await db.from("bookings").select("*").eq("org_id", org).eq("status", "requested").order("created_at"));
 }
 
+export type CrewMember = Database["public"]["Functions"]["booking_crew"]["Returns"][number];
+
+/** Who on the team can be assigned to a shoot (admins and operators), with their names. */
+export async function crew(db: Db, org: string): Promise<CrewMember[]> {
+  return must(await db.rpc("booking_crew", { p_org: org })) as CrewMember[];
+}
+
+/** The confirmed and shot bookings a team member is assigned to, soonest first: "my shoots". */
+export async function assignedTo(db: Db, org: string, user: string): Promise<Booking[]> {
+  return must(await db.from("bookings").select("*").eq("org_id", org).eq("assignee_id", user).in("status", ["confirmed", "completed"]).order("starts_at"));
+}
+
 export async function booking(db: Db, id: string): Promise<Booking> {
   return must(await db.from("bookings").select("*").eq("id", id).single());
 }

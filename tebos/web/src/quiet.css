@@ -286,3 +286,7 @@ button.bk-item { cursor: pointer; }
 .bk-cancelled, .bk-no_show { opacity: 0.45; text-decoration: line-through; }
 .bk-time_off { background: repeating-linear-gradient(45deg, var(--surface-alt), var(--surface-alt) 6px, #e9e8e4 6px, #e9e8e4 12px); color: var(--muted); box-shadow: none; }
 .bk-free { margin: 6px 0 0; text-align: center; font-size: 11px; color: var(--faint); }
+/* the shoot-day checklist and "my shoots" (ADR 0018) */
+.bk-check { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 14px; color: var(--muted); }
+.bk-check li.done { color: var(--ink); }
+.bk-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }

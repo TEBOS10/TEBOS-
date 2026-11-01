@@ -269,6 +269,18 @@ function BookingView({ token }: { token: string }) {
           <p className="gs-muted">Use {b.ref} as the reference. Your date is held once it arrives.</p>
         </section>
       )}
+      {b.balance_due && b.price_cents && b.deposit_cents && (
+        <section className="gs-card" aria-label="The balance">
+          <h2>The balance</h2>
+          <p>{money((b.price_cents - b.deposit_cents) / 100)} is due before your gallery is released. Pay it the same way as the deposit, with {b.ref} as the reference.</p>
+        </section>
+      )}
+      {b.gallery_url && /^https:\/\//.test(b.gallery_url) && (
+        <section className="gs-card" aria-label="Your gallery">
+          <h2>Your gallery</h2>
+          <p><a className="gs-btn" href={b.gallery_url} target="_blank" rel="noreferrer noopener">Open your gallery <ArrowUpRight size={15} aria-hidden /></a></p>
+        </section>
+      )}
       <Week busy={b.week_busy} day={start.date} />
       <div className="gs-row">
         <button type="button" className="gs-btn gs-btn-quiet" onClick={() => { void navigator.clipboard?.writeText(window.location.href).then(() => setCopied(true)); }}>

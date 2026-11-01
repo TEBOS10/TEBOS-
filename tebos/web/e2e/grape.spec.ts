@@ -70,3 +70,22 @@ test("a wrong link shows nothing", async ({ page }) => {
   await page.goto("/b/not-a-real-link");
   await expect(page.getByRole("heading", { name: "We couldn't find that booking" })).toBeVisible();
 });
+
+test("a delivered shoot: the customer's page opens the gallery; a shot one asks for the balance first", async ({ page }) => {
+  const fake = await installFakeSupabase(page, { signedIn: false });
+  const t = fake.tables as Record<string, unknown[]>;
+  seedStudio(t, "grape-studios");
+  const y = new Date(Date.now() - 50 * 3600_000).toISOString(), y2 = new Date(Date.now() - 49 * 3600_000).toISOString();
+  const row = (id: string, status: string, extra: Record<string, unknown>) => ({ id, ref: `BK-0000${id}`, org_id: (t.organisations as Array<{ id: string; slug: string }>).find((o) => o.slug === "grape-studios")!.id,
+    service_id: "s-studio", package_id: "p-1h", starts_at: y, ends_at: y2, status, status_note: "x", customer_name: "Sipho N", customer_email: "sipho@example.co.za",
+    customer_phone: null, brief: null, price_cents: 260000, deposit_cents: 130000, deposit_ref: "EFT 1300", delivered_note: null, token_hash: `tok-${id}`,
+    consent_at: y, created_at: y, updated_at: y, assignee_id: null, call_sheet_at: y, releases_note: "Signed.", backed_up_at: y, balance_ref: null, gallery_url: null, ...extra });
+  t.bookings = [row("1", "completed", { gallery_url: "https://gallery.example/sipho" }),
+                row("2", "delivered", { balance_ref: "EFT 2", gallery_url: "https://gallery.example/sipho", delivered_note: "Gallery link by email, 52 images" })];
+  await page.goto("/b/tok-1");
+  await expect(page.getByRole("region", { name: "The balance" })).toContainText("R1 300 is due before your gallery is released");
+  await expect(page.getByRole("link", { name: "Open your gallery" })).toHaveCount(0);
+  await page.goto("/b/tok-2");
+  await expect(page.getByRole("link", { name: "Open your gallery" })).toHaveAttribute("href", "https://gallery.example/sipho");
+  await expect(page.getByRole("region", { name: "The balance" })).toHaveCount(0);
+});
