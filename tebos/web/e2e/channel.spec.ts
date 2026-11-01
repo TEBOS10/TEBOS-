@@ -56,7 +56,7 @@ test("over the allowance, or without a plan, the page says why and the database'
   fake.refuse({ table: "change_requests", method: "POST", hint: "TEBOS_OUT_OF_PLAN", message: "this month's 5 change requests are used" });
   await page.getByLabel("What should change").fill("One more thing");
   await page.getByRole("button", { name: "Request the change" }).click();
-  await expect(page.getByText(/change requests are used, or there's no active plan yet/)).toBeVisible();
+  await expect(page.getByText(/goes beyond what the plan covers/)).toBeVisible();
 });
 
 test("a maintainer answers as TEBOS, sizes a request, and closes it with what was done", async ({ page }) => {

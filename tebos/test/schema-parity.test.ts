@@ -5,7 +5,9 @@ import { PUBLIC_LIMITS, RULE_CODES, transitionTable } from "../src";
 import { PLAN_TERMS } from "../src/domain/plans";
 import { BOARD_LIMITS } from "../src/domain/editions";
 import { FACTORY_OUTCOMES, VALIDATION_STATES } from "../src/domain/catalogue";
-import { DELIVERY_BUSINESS_DAYS, PRIMARY_OBJECTIVES, READINESS_ITEMS, WAIVABLE, WEBSITE_TYPES } from "../src/domain/web-delivery";
+import {
+  ASSET_KINDS, ASSET_SOURCES, ASSET_STATUSES, DELIVERY_BUSINESS_DAYS, PRIMARY_OBJECTIVES, READINESS_ITEMS, WAIVABLE, WEB_ROLES, WEBSITE_TYPES,
+} from "../src/domain/web-delivery";
 
 const migrationsDir = join(__dirname, "..", "supabase", "migrations");
 const sql = readdirSync(migrationsDir)
@@ -72,7 +74,7 @@ describe("domain mirrors the database", () => {
   it("web delivery's lists match the database's", () => {
     const body = sql.split("create table public.web_projects")[1]!.split(");")[0]!;
     const list = (col: string, src = body) =>
-      [...src.split(`check (${col} in (`)[1]!.split(")")[0]!.matchAll(/'([a-z_]+)'/g)].map((m) => m[1]).sort();
+      [...src.split(`check (${col} in (`)[1]!.split(")")[0]!.matchAll(/'([a-z0-9_]+)'/g)].map((m) => m[1]).sort();
     expect(list("website_type")).toEqual(Object.keys(WEBSITE_TYPES).sort());
     expect(list("primary_objective")).toEqual(Object.keys(PRIMARY_OBJECTIVES).sort());
     const readiness = sql.split("create table public.web_readiness_items")[1]!.split(");")[0]!;
@@ -83,6 +85,12 @@ describe("domain mirrors the database", () => {
     expect([...gaps.split("foreach v_item in array array[")[1]!.split("]")[0]!.matchAll(/'([a-z_]+)'/g)].map((m) => m[1]))
       .toEqual(Object.keys(READINESS_ITEMS));
     expect(sql).toContain(`tebos_private.add_business_days(v_today, ${DELIVERY_BUSINESS_DAYS})`);
+    const tasks = sql.split("create table public.web_tasks")[1]!.split(");")[0]!;
+    expect(list("role", tasks)).toEqual(Object.keys(WEB_ROLES).sort());
+    const assets = sql.split("create table public.web_assets")[1]!.split(");")[0]!;
+    expect(list("kind", assets)).toEqual(Object.keys(ASSET_KINDS).sort());
+    expect(list("source", assets)).toEqual(Object.keys(ASSET_SOURCES).sort());
+    expect(list("status", assets)).toEqual(Object.keys(ASSET_STATUSES).sort());
   });
 
   it("the catalogue's validation states and factory outcomes match the database's", () => {

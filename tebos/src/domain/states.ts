@@ -324,6 +324,18 @@ export const webProjectMachine = machine({
   },
 });
 
+export const webTaskMachine = machine({
+  initial: ["todo"],
+  transitions: {
+    todo: ["in_progress", "blocked", "cancelled"],
+    in_progress: ["review", "blocked", "todo"],
+    review: ["done", "in_progress"],
+    blocked: ["todo", "in_progress", "cancelled"],
+    done: ["in_progress"],
+    cancelled: [],
+  },
+});
+
 export const reedsDecisionMachine = machine({
   initial: ["open"],
   transitions: {
@@ -359,6 +371,7 @@ export const MACHINES = {
   sales_prospect: salesProspectMachine,
   property_problem: propertyProblemMachine,
   web_project: webProjectMachine,
+  web_task: webTaskMachine,
 } as const;
 
 export type MachineName = keyof typeof MACHINES;
@@ -377,6 +390,7 @@ export type ObjectiveStatus = StatesOf<typeof objectiveMachine>;
 export type SalesProspectStatus = StatesOf<typeof salesProspectMachine>;
 export type PropertyProblemStatus = StatesOf<typeof propertyProblemMachine>;
 export type WebProjectStatus = StatesOf<typeof webProjectMachine>;
+export type WebTaskStatus = StatesOf<typeof webTaskMachine>;
 export type OpportunityStatus = StatesOf<typeof opportunityMachine>;
 export type WorkRequestStatus = StatesOf<typeof workRequestMachine>;
 export type WorkTaskStatus = StatesOf<typeof workTaskMachine>;

@@ -27,17 +27,25 @@ Evidence is the named test file. The SQL tests run with `npm run test:db`, the u
 | 13 | Nothing is deleted | TESTED | `99zz` |
 | 14 | No secrets in the records (`looks_secret` checks on the free text) | IMPLEMENTED | migration checks |
 
-## Milestone 2 onward (not built)
+## Milestone 2 (built 1 Nov; migration `web_delivery_ledger` waits on "merge it")
+
+| # | Criterion | Status | Evidence |
+|---|---|---|---|
+| 16 | Maintainers' dashboard, with four numbers: open projects, due within a day or late, waiting on the client, live sites. Each project shows its stage, its clock, tasks done, and what holds it up | TESTED | `web/e2e/web-delivery.spec.ts`; the `web_delivery_board()` SQL in `99zzb` |
+| 16a | A project page with these parts: the stage track, moving stages with a reason, the database's readiness gaps, the readiness checklist, scope revisions checked against the package before sending, the client's approvals (read-only), tasks, assets, QA and deployments | TESTED | `web-delivery.spec.ts` |
+| 16b | The dashboard fits a 375px phone with no sideways scroll, and is for maintainers only | TESTED | `web-delivery.spec.ts` |
+| 18 | A task ledger for the twelve roles. A task waits for the tasks it depends on, and dependencies can't form a loop. Nobody passes their own review, and "done" needs evidence | TESTED | `99zzb_web_delivery_ledger.sql`, `web-delivery.test.ts`, e2e |
+| 19 | An asset register. An asset is received only with its source and licence recorded | TESTED | `99zzb`, e2e |
+| 21 | Deployment records: environment, address, commit, what was checked, outcome. Production needs a project in release and the client's release approval; afterwards the record can only change to "rolled back". Handover needs a live production deployment | TESTED | `99zzb`, `99zz`, e2e |
+
+## Later (not built)
 
 | # | Criterion | Status |
 |---|---|---|
 | 15 | Client intake form (sections A–J, conditional questions) in the client portal | NOT VERIFIED |
-| 16 | Maintainer dashboard: stage, deadline, readiness gaps, QA, approvals, history | NOT VERIFIED |
 | 17 | Client portal: intake progress, pending decisions, preview, approve | NOT VERIFIED |
-| 18 | Agent task ledger with dependencies (`agent_tasks`, `task_dependencies`) | NOT VERIFIED |
-| 19 | Assets register with licence status | NOT VERIFIED |
 | 20 | Integration connections with owner, access level and revocation plan | NOT VERIFIED |
-| 21 | Deployment records: preview URL, production URL, rollback | NOT VERIFIED |
+| 22a | Project history on the dashboard, read from the audit trail (staff can't read client organisations' audit events yet) | NOT VERIFIED |
 | 22 | Cost and delivery metrics per project | NOT VERIFIED |
 | 23 | One reusable website template delivered end to end | BLOCKED: a commercial-use host is needed (`TOOLCHAIN.md` §3) |
 | 24 | Public-holiday calendar in the business-day count | NOT VERIFIED (weekends only today) |
