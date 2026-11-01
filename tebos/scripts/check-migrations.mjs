@@ -12,6 +12,10 @@
 //     founder-approved-destructive (FOUNDER_APPROVED_DESTRUCTIVE=true).
 //     The database refuses such statements anyway (destructive_guard); this
 //     check says so before merge, with the line.
+//   * A new table in the public schema revokes Supabase's default grants
+//     ("revoke all on public.<table> from anon, authenticated"), then grants
+//     only what it needs. On the live project a new table otherwise gives
+//     anon and authenticated every privilege (migration grant_hygiene).
 import { execFileSync } from "node:child_process";
 
 const base = process.argv[2] ?? "origin/main";
@@ -43,6 +47,10 @@ for (const [status, path] of changes) {
   if (!/^\d{14}_[a-z0-9_]+\.sql$/.test(file)) problems.push(`${file}: name it <14-digit version>_<snake_case>.sql`);
   if (file.slice(0, 14) <= latest) problems.push(`${file}: its version must be newer than ${latest}, the latest migration`);
   const sql = git("show", `HEAD:${path}`).replace(/--[^\n]*/g, "");
+  for (const [, table] of sql.matchAll(/\bcreate\s+table\s+(?:if\s+not\s+exists\s+)?public\.([a-z0-9_]+)/gi)) {
+    const revoked = new RegExp(`\\brevoke\\s+all\\s+on\\s+(?:table\\s+)?public\\.${table}\\s+from\\s+anon\\s*,\\s*authenticated\\b`, "i");
+    if (!revoked.test(sql)) problems.push(`${file}: public.${table} keeps Supabase's default grants. Add "revoke all on public.${table} from anon, authenticated;" before granting what it needs.`);
+  }
   sql.split("\n").forEach((line, i) => {
     for (const [re, what] of DESTRUCTIVE) {
       if (re.test(line) && !approved) problems.push(`${file}:${i + 1}: ${what}. Needs the founder's label founder-approved-destructive.`);
