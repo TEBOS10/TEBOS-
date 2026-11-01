@@ -38,14 +38,23 @@ Evidence is the named test file. The SQL tests run with `npm run test:db`, the u
 | 19 | An asset register. An asset is received only with its source and licence recorded | TESTED | `99zzb`, e2e |
 | 21 | Deployment records: environment, address, commit, what was checked, outcome. Production needs a project in release and the client's release approval; afterwards the record can only change to "rolled back". Handover needs a live production deployment | TESTED | `99zzb`, `99zz`, e2e |
 
+## Milestone 3 (built 1 Nov; migration `web_delivery_portal` waits on "merge it"; ADR 0012)
+
+| # | Criterion | Status | Evidence |
+|---|---|---|---|
+| 17 | **Your website** (`/website`), the client's page in their own account. It shows: the stage, the clock and progress; what TEBOS needs from them; the agreed scope; approve buttons for their admin only; the preview and live links; and history | TESTED | `web/e2e/web-portal.spec.ts` |
+| 17a | The client asks TEBOS for a change from their account. It lands on the project and counts against their plan; a refusal from the plan is shown with its reason | TESTED | `99zzc`, `web-portal.spec.ts` |
+| 20 | Accounts the site depends on: the client owns them, and TEBOS's access is recorded with how it ends. An account TEBOS holds needs a hand-over plan; no secrets are stored | TESTED | `99zzc`, `web-delivery.test.ts`, e2e |
+| 22 | Costs per project. A recurring cost the client pays must be disclosed first | TESTED | `99zzc`, e2e |
+| 22a | Project history from the audit trail, for staff and the client's members only | TESTED | `99zzc`, e2e |
+| 25 | Every project has a maintainer, by default the client's own. A maintainer runs at most 8 open projects, and the dashboard shows the team's load | TESTED | `99zzc`, `web-delivery.test.ts`, e2e |
+| 26 | 50 clients at once: 52 projects on one board (`99zzc`); the board's read takes about 10 ms on a local Postgres with 50 projects | TESTED locally; live NOT VERIFIED | `99zzc`, ADR 0012 |
+
 ## Later (not built)
 
 | # | Criterion | Status |
 |---|---|---|
 | 15 | Client intake form (sections A–J, conditional questions) in the client portal | NOT VERIFIED |
-| 17 | Client portal: intake progress, pending decisions, preview, approve | NOT VERIFIED |
-| 20 | Integration connections with owner, access level and revocation plan | NOT VERIFIED |
-| 22a | Project history on the dashboard, read from the audit trail (staff can't read client organisations' audit events yet) | NOT VERIFIED |
 | 22 | Cost and delivery metrics per project | NOT VERIFIED |
 | 23 | One reusable website template delivered end to end | BLOCKED: a commercial-use host is needed (`TOOLCHAIN.md` §3) |
 | 24 | Public-holiday calendar in the business-day count | NOT VERIFIED (weekends only today) |

@@ -946,3 +946,5 @@ table.table { width: 100%; border-collapse: collapse; }
 .web-list > li.card { padding: 16px 18px; border-top: 1px solid var(--line); }
 .web-list > li.card:first-child { border-top: 1px solid var(--line); }
 .web-page .badge { text-transform: none; }
+.web-meter { height: 4px; border-radius: 999px; background: var(--line); margin-top: 6px; overflow: hidden; }
+.web-meter > span { display: block; height: 100%; background: currentColor; opacity: 0.6; }

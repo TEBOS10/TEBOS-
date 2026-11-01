@@ -478,6 +478,17 @@ function answerRpc(tables: FakeSupabase["tables"], name: string, args: Record<st
     }));
   }
   if (name === "web_project_readiness") return webGaps(t, args.p_project);
+  if (name === "web_team_load") {
+    // each maintainer's open projects, as the database counts them
+    return (t.platform_staff ?? []).filter((s) => s.role === "maintainer").map((s) => {
+      const mine = (t.web_projects ?? []).filter((p) => p.maintainer_id === s.user_id && !["lead", "closed", "cancelled"].includes(String(p.status)));
+      return { user_id: s.user_id, open_projects: mine.length, building: mine.filter((p) => ["build", "qa", "qa_failed"].includes(String(p.status))).length, overdue: 0, capacity: 8 };
+    });
+  }
+  if (name === "web_project_history") {
+    // the fixture's own audit rows for the project, newest first
+    return (t.web_history ?? []).filter((h) => h.project_id === args.p_project);
+  }
   if (name === "web_delivery_board") {
     // one row per project with its client's name and the counts the dashboard shows (simplified from the database's read)
     return (t.web_projects ?? []).map((p) => {
@@ -543,6 +554,9 @@ const COLUMN_DEFAULTS: Record<string, Record<string, unknown>> = {
   web_tasks: { status: "todo", assigned_to: null, blocked_reason: null, evidence: null, due_on: null },
   web_assets: { source: "unknown", status: "missing", licence_note: null, location: null },
   web_scope_revisions: { revision: 1, features: [], workflows: [] },
+  web_integrations: { status: "requested", verified_on: null, revocation_plan: null, transfer_plan: null },
+  web_project_costs: { currency: "ZAR", incurred_on: new Date().toISOString().slice(0, 10) },
+  web_project_approvals: { approved_by: "00000000-0000-4000-8000-000000000001", note: null },
   connection_instances: { business_id: null, granted_scopes: [], credential_ref_id: null, webhook_credential_ref_id: null, last_verified_at: null, last_success_at: null, last_failure_at: null, failure_detail: null, verification_requested_at: null },
 };
 

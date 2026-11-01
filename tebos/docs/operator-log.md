@@ -9,6 +9,7 @@ Update this list every run; strike items when they're done.
 | # | Decision | What it unblocks |
 |---|---|---|
 | ~~19→1st~~ | ~~**Do first: enrol two-step sign-in**~~ **Done 27 Oct.** (TEPOS asks for it when you sign in; use an authenticator app and keep a backup). Without it every private TEPOS page stays locked, and the week board can't start | The week board, intake, property, money and the vault |
+| 30 | **Invite TEBOS's maintainers:** Staff → Invite, role Maintainer. Each runs up to 8 open client projects, so 50 clients need 7. Hiring and paying them is your decision | Delivery without you: client requests, builds and fixes go to the team (ADR 0012) |
 | 21 | **Railway: switch to the Free plan (USD 0).** *(27 Oct: the connector is signed in, but Railway still answers "Your trial has expired. Please select a plan" for the tebos10 account. Choose Free while signed in as tebos10, then TEBOS starts the worker itself.)* The trial expired and stopped the worker. The worker now runs every 15 minutes, does its work and stops (batch mode), which fits inside the Free plan's USD 1 monthly credit. Steps: railway.com → sign in → the yellow "trial expired" banner (or Account → Plans) → choose **Free**. Then tell TEBOS, which reconnects the worker to `main` | Everything TEBOS does on its own: BAME monitoring, REEDS, analysis, reminders |
 | 22 | **Switch on the weekly signal brief:** TEBOS → Ask TEBOS → Weekly signal brief → "Switch on every week". One click; the worker then files it weekly for you (after decision 21) | REEDS reporting demand, cash, delivery, reliability and security each week |
 | 24 | **Your registration route without a matric:** ask your principal about candidate registration, ask two NQF 4 providers whether they accept your schooling or RPL, and send the PPRA questions (`pra-compliance-checklist.md`). The 12 Nov exam isn't open to you yet (it needs an FFC and NQF 4 first). Decide on the adult matric by Jan (registration closes 5 Feb 2027) | Your own registration, so you can practise and earn commission legally |
@@ -38,6 +39,33 @@ Update this list every run; strike items when they're done.
 | 18 | Each client's web app address (where TEBOS's people sign in to their department), starting with BAME's | Client tiles that open the client's web app |
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
+
+## 1 Nov 2026 (night): milestone 2 live; milestone 3, client accounts and capacity for 50
+
+- **Founder:** "Build them. Merge it." He also wants:
+  - capacity for 50 clients;
+  - clients working from their own accounts, with TEBOS given access to change their systems;
+  - clients talking to TEBOS directly, with TEBOS delivering without him.
+- **Merged and live:**
+  - PR #107 (milestone 2), merged with all checks green;
+  - `web_delivery_ledger` applied, then checked with a rolled-back test (VERIFIED_OK). It confirmed that a dependency
+    loop, starting a task before its dependency is done, and a production deploy before release are each refused.
+- **Built (migration `web_delivery_portal`, not merged; ADR 0012):**
+  - **Your website** (`/website`), in each client's own account. It shows the stage, the clock and progress, what TEBOS
+    needs from them, the scope; approve buttons for their admin only; and requests for changes;
+  - change requests linked to the project, counted against the plan;
+  - client-owned accounts, with TEBOS's access recorded and revocable, and no secrets stored;
+  - costs, with recurring client costs disclosed first;
+  - history read from the audit trail;
+  - maintainers with a capacity of 8 open projects each, plus the team's load on the dashboard.
+- **Measured locally:** 50 client projects, with 600 tasks and 250 assets. The dashboard's read takes about 10 ms; the
+  team load and history about 1 ms each.
+- **Proved:**
+  - core: 467 unit tests and `test:db`;
+  - web: 63 unit tests, the build, and 155 browser tests, including 4 new ones for the portal and the team.
+- **The truth about "without the founder"** (live database, 1 Nov): 0 maintainers, 0 active paid plans, no Paystack
+  key, and no Anthropic credit. The system now routes all client work to TEBOS's team, but the team still has to be
+  hired. That decision is tier 3: see the decisions table.
 
 ## 1 Nov 2026 (evening): Web Delivery milestone 2 and the dashboard
 

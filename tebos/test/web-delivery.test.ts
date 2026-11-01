@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { canTransition } from "../src/domain/states";
 import {
   addBusinessDays, businessDaysBetween, canStart, checkAsset, checkDeployment, checkRelease, checkScope, completion, deadlineState,
-  makesLoop, nextClock, qaPassed, readinessGaps,
+  makesLoop, nextClock, qaPassed, readinessGaps, checkCost, checkIntegration, clientToDos, maintainersNeeded, monthlyRunningCents,
+  WEB_PROJECTS_PER_MAINTAINER,
   READINESS_ITEMS, type ReadinessItem, type ScopeDraft,
 } from "../src/domain/web-delivery";
 
@@ -153,5 +154,36 @@ describe("milestone 2: tasks, assets, deployments, the clock on the dashboard", 
     expect(checkDeployment(d, { status: "release", releaseApproved: false })).toMatchObject({ code: "TEBOS_APPROVAL_REQUIRED" });
     expect(checkDeployment(d, { status: "release", releaseApproved: true })).toEqual({ ok: true });
     expect(checkDeployment({ ...d, environment: "preview", url: "http://x" }, { status: "build", releaseApproved: false })).toMatchObject({ ok: false });
+  });
+});
+
+describe("milestone 3: capacity, accounts, costs, the client's to-dos", () => {
+  it("50 clients need 7 maintainers at 8 open projects each", () => {
+    expect(WEB_PROJECTS_PER_MAINTAINER).toBe(8);
+    expect(maintainersNeeded(50)).toBe(7);
+    expect(maintainersNeeded(8)).toBe(1);
+    expect(maintainersNeeded(0)).toBe(0);
+  });
+  it("records TEBOS's access with how it ends, and a hand-over for accounts TEBOS holds", () => {
+    const base = { accountOwner: "client" as const, access: "deploy" as const, status: "granted" as const, purpose: "Hosts the client's website.", revocationPlan: "", transferPlan: "", verifiedOn: null };
+    expect(checkIntegration(base)).toMatchObject({ ok: false });
+    expect(checkIntegration({ ...base, revocationPlan: "Remove TEBOS from the team at handover." })).toEqual({ ok: true });
+    expect(checkIntegration({ ...base, revocationPlan: "Remove TEBOS from the team.", accountOwner: "tebos" })).toMatchObject({ ok: false });
+    expect(checkIntegration({ ...base, access: "none", status: "verified" })).toMatchObject({ ok: false });
+    expect(checkIntegration({ ...base, revocationPlan: "Remove TEBOS from the team.", status: "revoked" })).toMatchObject({ ok: false });
+  });
+  it("a recurring cost the client pays is disclosed first; running costs are monthly", () => {
+    const c = { description: "Hosting plan", amountCents: 12_000, recurrence: "monthly" as const, paidBy: "client" as const, disclosed: false };
+    expect(checkCost(c)).toMatchObject({ ok: false });
+    expect(checkCost({ ...c, disclosed: true })).toEqual({ ok: true });
+    expect(checkCost({ ...c, paidBy: "tebos" })).toEqual({ ok: true });
+    expect(monthlyRunningCents([{ amountCents: 12_000, recurrence: "monthly" }, { amountCents: 24_000, recurrence: "yearly" }, { amountCents: 99_900, recurrence: "once" }])).toBe(14_000);
+  });
+  it("tells the client what they still have to decide or send", () => {
+    const p = { status: "approval" as const, isAdmin: true, hasScope: true, approved: { scope: false, design: true, release: false }, qaPassed: false, assetsNeeded: 2 };
+    expect(clientToDos(p)).toEqual(["Approve the scope and its costs", "Send 2 items TEBOS needs from you"]);
+    expect(clientToDos({ ...p, isAdmin: false })[0]).toMatch(/Your admin/);
+    expect(clientToDos({ ...p, status: "client_review", approved: { scope: true, design: true, release: false }, qaPassed: true, assetsNeeded: 0 }))
+      .toEqual(["Review the preview and approve the release"]);
   });
 });

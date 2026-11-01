@@ -6,7 +6,8 @@ import { PLAN_TERMS } from "../src/domain/plans";
 import { BOARD_LIMITS } from "../src/domain/editions";
 import { FACTORY_OUTCOMES, VALIDATION_STATES } from "../src/domain/catalogue";
 import {
-  ASSET_KINDS, ASSET_SOURCES, ASSET_STATUSES, DELIVERY_BUSINESS_DAYS, PRIMARY_OBJECTIVES, READINESS_ITEMS, WAIVABLE, WEB_ROLES, WEBSITE_TYPES,
+  ASSET_KINDS, ASSET_SOURCES, ASSET_STATUSES, COST_KINDS, DELIVERY_BUSINESS_DAYS, INTEGRATION_SERVICES, INTEGRATION_STATUSES, TEBOS_ACCESS,
+  WEB_PROJECTS_PER_MAINTAINER, PRIMARY_OBJECTIVES, READINESS_ITEMS, WAIVABLE, WEB_ROLES, WEBSITE_TYPES,
 } from "../src/domain/web-delivery";
 
 const migrationsDir = join(__dirname, "..", "supabase", "migrations");
@@ -91,6 +92,14 @@ describe("domain mirrors the database", () => {
     expect(list("kind", assets)).toEqual(Object.keys(ASSET_KINDS).sort());
     expect(list("source", assets)).toEqual(Object.keys(ASSET_SOURCES).sort());
     expect(list("status", assets)).toEqual(Object.keys(ASSET_STATUSES).sort());
+    const integrations = sql.split("create table public.web_integrations")[1]!.split(");")[0]!;
+    expect(list("service", integrations)).toEqual(Object.keys(INTEGRATION_SERVICES).sort());
+    expect(list("tebos_access", integrations)).toEqual(Object.keys(TEBOS_ACCESS).sort());
+    expect(list("status", integrations)).toEqual(Object.keys(INTEGRATION_STATUSES).sort());
+    expect(list("kind", sql.split("create table public.web_project_costs")[1]!.split(");")[0]!)).toEqual(Object.keys(COST_KINDS).sort());
+    const assignment = sql.split("function tebos_private.guard_web_assignment")[1]!.split("end $$")[0]!;
+    expect(assignment).toContain(`web_open_load(new.maintainer_id, new.id) >= ${WEB_PROJECTS_PER_MAINTAINER}`);
+    expect(sql.split("function public.web_team_load")[1]!.split("$$")[1]).toContain(`${WEB_PROJECTS_PER_MAINTAINER}\n    from`);
   });
 
   it("the catalogue's validation states and factory outcomes match the database's", () => {
