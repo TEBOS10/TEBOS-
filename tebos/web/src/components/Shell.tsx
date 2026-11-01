@@ -1,4 +1,4 @@
-import { BookOpen, Briefcase, CalendarDays, Clapperboard, Eye, Building2, CheckSquare, Download, Gauge, Globe, Handshake, Home, ListChecks, LogOut, Megaphone, Menu, MessageSquare, MessagesSquare, PhoneCall, Plug, Receipt, ScanSearch, ShieldCheck, Sparkles, Stamp, Users } from "lucide-react";
+import { BookOpen, Bot, Briefcase, CalendarDays, Clapperboard, Eye, Building2, CheckSquare, Download, Gauge, Globe, Handshake, Home, ListChecks, LogOut, Megaphone, Menu, MessageSquare, MessagesSquare, PhoneCall, Plug, Receipt, ScanSearch, ShieldCheck, Sparkles, Stamp, Users } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { DEMO_BUSINESS } from "../demo/data";
 import { exitDemo, isDemo } from "../demo/mode";
@@ -46,7 +46,7 @@ export function Shell({ children }: { children: ReactNode }) {
   const { access } = useStaff();
   const pipeline = access?.sales || access?.maintainer;
   const extra = [
-    ...(bookings.data ? [{ to: "/bookings", label: "Bookings", icon: CalendarDays, exact: false }] : []),
+    ...(bookings.data ? [{ to: "/bookings", label: "Bookings", icon: CalendarDays, exact: false }, { to: "/crew", label: "Crew", icon: Bot, exact: false }] : []),
     ...(partner.data ? [{ to: "/sales-register", label: "Sales", icon: Receipt, exact: false }] : []),
   ];
   const base = [...NAV.slice(0, 4), ...extra, ...NAV.slice(4)];

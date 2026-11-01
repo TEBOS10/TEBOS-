@@ -52,6 +52,8 @@ import { AcquisitionWorker } from "./acquisition/worker";
 import { AnthropicProvider } from "./intelligence/anthropic-provider";
 import { FallbackProvider, GatewayProvider } from "./intelligence/gateway-provider";
 import { xaiProvider } from "./intelligence/xai-provider";
+import { CrewWorker } from "./crew/worker";
+import { PgCrewStore } from "./crew/pg-store";
 import type { ReasoningProvider } from "./intelligence/provider";
 import { isEmailAddress } from "./domain/email";
 import { EnquiryAlertWorker } from "./notify/enquiries";
@@ -115,6 +117,8 @@ if (process.env.TEBOS_MODEL_GATEWAY_URL) {
 const intelligenceEnabled = reasoners.length > 0 && process.env.TEBOS_INTELLIGENCE !== "off";
 const provider = !intelligenceEnabled ? null : reasoners.length === 1 ? reasoners[0]! : new FallbackProvider(reasoners);
 const intelligence = provider ? new IntelligenceWorker(new PgIntelligenceStore(pool), provider, { workerId, log }) : null;
+// the AI crew (ADR 0020): businesses' agents draft their queued work; people approve and send it
+const crew = provider && process.env.TEBOS_CREW !== "off" ? new CrewWorker(new PgCrewStore(pool), provider, log) : null;
 
 const executionEnabled = process.env.TEBOS_EXECUTION !== "off";
 const executionStore = new PgExecutionStore(pool, workerId);
@@ -207,7 +211,7 @@ log({
   mode: batch ? "batch" : "continuous",
   pollMs,
   reasoning: provider?.name ?? null, // provider names only, e.g. "anthropic+xai"; never a key
-  stages: { acquisition: true, intelligence: intelligenceEnabled, execution: executionEnabled, webhooks: Boolean(server), voiceInterviews: voiceEnabled, intakeCalls: intakeVoiceEnabled, enquiryAlerts: alertsEnabled,
+  stages: { acquisition: true, intelligence: intelligenceEnabled, crew: Boolean(crew), execution: executionEnabled, webhooks: Boolean(server), voiceInterviews: voiceEnabled, intakeCalls: intakeVoiceEnabled, enquiryAlerts: alertsEnabled,
     pipeline: { payments: Boolean(paystackKey), clientEmails: Boolean(process.env.RESEND_API_KEY) } },
   ...(intelligenceEnabled ? {} : { note: "Findings are not generated: set ANTHROPIC_API_KEY, XAI_API_KEY or TEBOS_MODEL_GATEWAY_URL to enable the intelligence stage" }),
 });
@@ -242,7 +246,8 @@ while (!stopping) {
   const maintained = !stopping ? await step("maintenance", () => maintenance.runOnce()) : false;
   const answered = !stopping ? await step("reeds", () => reeds.runOnce()) : false;
   const synced = sources && !stopping ? await step("sources", () => sources.runOnce()) : false;
-  const idle = !acquired && !analysed && !executed && !interviewed && !intook && !monitored && !alerted && !piped && !billed && !maintained && !answered && !synced;
+  const drafted = crew && !stopping ? await step("crew", () => crew.runOnce()) : false;
+  const idle = !acquired && !analysed && !executed && !interviewed && !intook && !monitored && !alerted && !piped && !billed && !maintained && !answered && !synced && !drafted;
   await heartbeat.beat(batch && (idle || Date.now() >= batchDeadline));
   if (batch && (idle || Date.now() >= batchDeadline)) {
     log({ event: "worker.batch_done", reason: idle ? "nothing left to do" : "time cap" });

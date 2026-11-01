@@ -59,12 +59,14 @@ export async function freeTimes(day: string, minutes: number): Promise<string[]>
 
 export interface Request {
   service: string; package: string | null; starts: string; minutes: number; name: string; email: string; phone: string; brief: string; consent: boolean;
+  /** Whether Grape may publish photos from the shoot: asked at intake and always answered (ADR 0020). */
+  publish: boolean;
 }
 export async function requestBooking(r: Request): Promise<{ ref: string; token: string }> {
   if (!db) throw new Error("Online booking isn't open yet.");
   const { data, error } = await db.rpc("booking_request", {
     p_slug: SLUG, p_service: r.service, p_package: r.package, p_starts: r.starts, p_minutes: r.minutes,
-    p_name: r.name, p_email: r.email, p_phone: r.phone || null, p_brief: r.brief || null, p_consent: r.consent,
+    p_name: r.name, p_email: r.email, p_phone: r.phone || null, p_brief: r.brief || null, p_consent: r.consent, p_publish: r.publish,
   });
   if (error) throw error;
   return data as unknown as { ref: string; token: string };

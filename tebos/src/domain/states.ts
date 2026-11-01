@@ -336,6 +336,19 @@ export const webTaskMachine = machine({
   },
 });
 
+/** An AI agent's piece of work (ADR 0020): drafted by an agent, decided by a person, sent by a person. */
+export const aiTaskMachine = machine({
+  initial: ["queued"],
+  transitions: {
+    queued: ["drafted", "cancelled"],
+    drafted: ["approved", "rejected", "queued"],
+    approved: ["sent", "cancelled"],
+    rejected: [],
+    sent: [],
+    cancelled: [],
+  },
+});
+
 export const bookingMachine = machine({
   initial: ["requested"],
   transitions: {
@@ -402,6 +415,7 @@ export const MACHINES = {
   web_task: webTaskMachine,
   equity_application: equityApplicationMachine,
   booking: bookingMachine,
+  ai_task: aiTaskMachine,
 } as const;
 
 export type MachineName = keyof typeof MACHINES;
@@ -431,6 +445,7 @@ export type CatalogueTemplateStatus = StatesOf<typeof catalogueTemplateMachine>;
 export type WeekTaskStatus = StatesOf<typeof weekTaskMachine>;
 export type ReedsCommitmentStatus = StatesOf<typeof reedsCommitmentMachine>;
 export type ReedsDecisionStatus = StatesOf<typeof reedsDecisionMachine>;
+export type AiTaskStatus = StatesOf<typeof aiTaskMachine>;
 
 export function canTransition<M extends MachineName>(
   name: M,

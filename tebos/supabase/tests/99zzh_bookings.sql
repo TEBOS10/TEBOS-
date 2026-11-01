@@ -66,22 +66,22 @@ set role anon;
 select t99zzh.ok((public.booking_catalogue('studio-99zzh') ->> 'accepting')::boolean = false, 'the catalogue says it isn''t accepting yet');
 select t99zzh.ok(jsonb_array_length(public.booking_catalogue('studio-99zzh') -> 'services') = 2, 'both services are listed');
 select t99zzh.ok(jsonb_array_length(public.booking_catalogue('studio-99zzh') -> 'services' -> 0 -> 'packages') = 2, 'with their rates');
-select t99zzh.expect_error(format($$select public.booking_request('studio-99zzh', %L, %L, %L, 60, 'Lerato', 'lerato@example.co.za', null, null, true)$$, :'svc', :'hour', :'t10'), 'TEBOS_VALIDATION');
+select t99zzh.expect_error(format($$select public.booking_request('studio-99zzh', %L, %L, %L, 60, 'Lerato', 'lerato@example.co.za', null, null, true, true)$$, :'svc', :'hour', :'t10'), 'TEBOS_VALIDATION');
 reset role;
 update public.booking_settings set accepting = true where org_id = :'org';
 set role anon;
 select t99zzh.expect_error('select * from public.bookings', '42501');
-select t99zzh.expect_error(format($$select public.booking_request('studio-99zzh', %L, %L, %L, 60, 'Lerato', 'lerato@example.co.za', null, null, false)$$, :'svc', :'hour', :'t10'), 'TEBOS_VALIDATION');
-select t99zzh.expect_error(format($$select public.booking_request('studio-99zzh', %L, %L, %L, 60, 'Lerato', 'lerato@example.co.za', null, null, true)$$, :'svc', :'hour', :'soon'), 'TEBOS_VALIDATION');
-select t99zzh.expect_error(format($$select public.booking_request('studio-99zzh', %L, %L, %L, 60, 'Lerato', 'lerato@example.co.za', null, null, true)$$, :'svc', :'hour', :'t06'), 'TEBOS_VALIDATION');
-select t99zzh.expect_error(format($$select public.booking_request('studio-99zzh', %L, %L, %L, 60, 'Lerato', 'lerato@example.co.za', null, null, true)$$, :'svc', :'hour', :'t1730'), 'TEBOS_VALIDATION');
-select t99zzh.expect_error(format($$select public.booking_request('studio-99zzh', %L, null, %L, 120, 'Lerato', 'lerato@example.co.za', null, 'short', true)$$, :'events', :'t10'), 'TEBOS_VALIDATION');
-select t99zzh.expect_error(format($$select public.booking_request('studio-99zzh', %L, %L, %L, 60, 'Lerato', 'not-an-email', null, null, true)$$, :'svc', :'hour', :'t10'), '23514');
-select public.booking_request('studio-99zzh', :'svc', :'hour', :'t10', 999, 'Lerato M', 'Lerato@Example.co.za', '061 000 0000', null, true) as req \gset
+select t99zzh.expect_error(format($$select public.booking_request('studio-99zzh', %L, %L, %L, 60, 'Lerato', 'lerato@example.co.za', null, null, false, true)$$, :'svc', :'hour', :'t10'), 'TEBOS_VALIDATION');
+select t99zzh.expect_error(format($$select public.booking_request('studio-99zzh', %L, %L, %L, 60, 'Lerato', 'lerato@example.co.za', null, null, true, true)$$, :'svc', :'hour', :'soon'), 'TEBOS_VALIDATION');
+select t99zzh.expect_error(format($$select public.booking_request('studio-99zzh', %L, %L, %L, 60, 'Lerato', 'lerato@example.co.za', null, null, true, true)$$, :'svc', :'hour', :'t06'), 'TEBOS_VALIDATION');
+select t99zzh.expect_error(format($$select public.booking_request('studio-99zzh', %L, %L, %L, 60, 'Lerato', 'lerato@example.co.za', null, null, true, true)$$, :'svc', :'hour', :'t1730'), 'TEBOS_VALIDATION');
+select t99zzh.expect_error(format($$select public.booking_request('studio-99zzh', %L, null, %L, 120, 'Lerato', 'lerato@example.co.za', null, 'short', true, true)$$, :'events', :'t10'), 'TEBOS_VALIDATION');
+select t99zzh.expect_error(format($$select public.booking_request('studio-99zzh', %L, %L, %L, 60, 'Lerato', 'not-an-email', null, null, true, true)$$, :'svc', :'hour', :'t10'), '23514');
+select public.booking_request('studio-99zzh', :'svc', :'hour', :'t10', 999, 'Lerato M', 'Lerato@Example.co.za', '061 000 0000', null, true, true) as req \gset
 select (:'req'::jsonb ->> 'token') as tok, (:'req'::jsonb ->> 'ref') as ref \gset
 select t99zzh.ok(:'ref' like 'BK-%', 'a booking gets a reference');
 -- the slot is taken now: overlapping is refused, the next free half hour is not offered
-select t99zzh.expect_error(format($$select public.booking_request('studio-99zzh', %L, %L, %L, 60, 'Sipho', 'sipho@example.co.za', null, null, true)$$, :'svc', :'hour', :'t1030'), 'TEBOS_VALIDATION');
+select t99zzh.expect_error(format($$select public.booking_request('studio-99zzh', %L, %L, %L, 60, 'Sipho', 'sipho@example.co.za', null, null, true, true)$$, :'svc', :'hour', :'t1030'), 'TEBOS_VALIDATION');
 select t99zzh.ok(not exists (select 1 from public.booking_free_times('studio-99zzh', current_date + 7, 60) f where f.starts_at in (:'t10'::timestamptz, :'t1030'::timestamptz)), 'taken times aren''t offered');
 select t99zzh.ok(exists (select 1 from public.booking_free_times('studio-99zzh', current_date + 7, 60) f where f.starts_at = :'t10'::timestamptz + interval '1 hour'), 'the next hour is');
 -- the link shows the booking and the deposit, never anyone else's details
@@ -91,7 +91,7 @@ select t99zzh.ok((public.booking_for_token(:'tok') ->> 'deposit_instructions') l
 select t99zzh.ok(public.booking_for_token(:'tok')::text not like '%lerato%', 'the link carries no contact details');
 select t99zzh.ok(public.booking_for_token('not-a-real-token') is null, 'a wrong link shows nothing');
 -- a custom rate: a brief, no price yet
-select public.booking_request('studio-99zzh', :'events', null, :'t10'::timestamptz + interval '1 day', 180, 'Thandi', 'thandi@example.co.za', null, 'A 30th birthday, about 40 guests.', true) as req2 \gset
+select public.booking_request('studio-99zzh', :'events', null, :'t10'::timestamptz + interval '1 day', 180, 'Thandi', 'thandi@example.co.za', null, 'A 30th birthday, about 40 guests.', true, true) as req2 \gset
 select (:'req2'::jsonb ->> 'token') as tok2 \gset
 select t99zzh.ok((public.booking_for_token(:'tok2') ->> 'price_cents') is null, 'a custom rate has no price until quoted');
 select t99zzh.ok((public.booking_for_token(:'tok2') ->> 'deposit_instructions') is null, 'and no deposit is asked for yet');
