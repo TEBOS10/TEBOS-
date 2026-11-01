@@ -29,7 +29,7 @@ test("the brands Grape Studios has shot for, named in type, and its portfolio", 
   await page.goto("/");
   const brands = page.locator("#brands");
   await expect(brands.getByText("Brands we've shot for")).toBeVisible();
-  await expect(brands.getByRole("listitem")).toHaveText(["PUMA", "G-Star Raw", "Antony Morato", "Happyville", "YMZ", "2Millionicons"]);
+  await expect(brands.getByRole("listitem")).toHaveText(["PUMA", "adidas", "Happyville", "G-Star Raw", "Antony Morato", "Yo Mzansi (YMZ)"]);
   await expect(brands.locator("img")).toHaveCount(0); // never the brands' logos
   await expect(page.getByRole("link", { name: "Portfolio on Behance" })).toHaveAttribute("href", "https://www.behance.net/tebohotefu");
 });
