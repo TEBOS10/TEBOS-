@@ -3,7 +3,7 @@ import { canTransition } from "../src/domain/states";
 import {
   addBusinessDays, businessDaysBetween, canStart, checkAsset, checkDeployment, checkRelease, checkScope, completion, deadlineState,
   makesLoop, nextClock, qaPassed, readinessGaps, checkCost, checkIntegration, clientToDos, maintainersNeeded, monthlyRunningCents,
-  WEB_PROJECTS_PER_MAINTAINER, INTAKE_REQUIRED, intakeMissing,
+  WEB_PROJECTS_PER_MAINTAINER, INTAKE_REQUIRED, intakeMissing, easterSunday, isSaPublicHoliday,
   READINESS_ITEMS, type ReadinessItem, type ScopeDraft,
 } from "../src/domain/web-delivery";
 
@@ -202,5 +202,29 @@ describe("milestone 4: the client's brief", () => {
     expect(intakeMissing({ ...full, pages: [] })).toEqual(["pages"]);
     expect(intakeMissing({ ...full, confirmations: { rights: true } })).toEqual(["confirm_privacy"]);
     expect(intakeMissing({ ...full, visual_direction: "vaporwave" as never })).toEqual(["visual_direction"]);
+  });
+});
+
+describe("South African public holidays in the delivery clock", () => {
+  it("finds Easter (published dates)", () => {
+    expect(easterSunday(2024)).toBe("2024-03-31");
+    expect(easterSunday(2025)).toBe("2025-04-20");
+    expect(easterSunday(2026)).toBe("2026-04-05");
+    expect(easterSunday(2027)).toBe("2027-03-28");
+    expect(easterSunday(2030)).toBe("2030-04-21");
+  });
+  it("knows the Act's holidays, Good Friday, Family Day and the Sunday rule", () => {
+    expect(isSaPublicHoliday("2026-12-16")).toBe(true);
+    expect(isSaPublicHoliday("2026-04-03")).toBe(true);   // Good Friday
+    expect(isSaPublicHoliday("2026-04-06")).toBe(true);   // Family Day
+    expect(isSaPublicHoliday("2028-09-25")).toBe(true);   // Heritage Day on Sunday 24 Sep 2028 → Monday
+    expect(isSaPublicHoliday("2022-12-27")).toBe(false);  // Christmas on a Sunday: the Monday is already the Day of Goodwill
+    expect(isSaPublicHoliday("2026-11-02")).toBe(false);
+  });
+  it("skips holidays when it sets and extends a deadline", () => {
+    expect(addBusinessDays("2026-12-24", 3)).toBe("2026-12-30");   // 25 Dec (Fri), the weekend
+    expect(addBusinessDays("2026-04-02", 3)).toBe("2026-04-09");   // Good Friday, the weekend, Family Day
+    expect(addBusinessDays("2026-12-15", 1)).toBe("2026-12-17");   // Day of Reconciliation
+    expect(businessDaysBetween("2026-04-02", "2026-04-07")).toBe(1);
   });
 });

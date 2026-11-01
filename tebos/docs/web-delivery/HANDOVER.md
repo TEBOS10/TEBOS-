@@ -26,7 +26,10 @@
 
 - **Milestone 2 is live** (merged in PR #107, applied 1 Nov, checked with a rolled-back test).
 - **Milestone 3 is live** (merged in PR #108, applied 1 Nov, checked with a rolled-back test).
-- **Milestone 4: BUILT and TESTED.** It adds the client's brief and the maintainers' work queue, in migration
+- **Milestone 4 is live** (merged in PR #109, applied 1 Nov, checked with a rolled-back test).
+- **The starter template and public holidays: BUILT and TESTED.** The template is in `templates/service-site/` and
+  `src/domain/site-template.ts`, built with `npm run site:build`. Holidays are migration `web_delivery_holidays`.
+- **Milestone 4, for reference.** It adds the client's brief and the maintainers' work queue, in migration
   `web_delivery_intake`.
 - **Milestone 3, for reference.** It adds:
   - the client's page, **Your website** (`/website`);
@@ -100,11 +103,16 @@ These are in ADR 0011.
 
 ## The next three tasks
 
-1. **Founder:** invite maintainers (Staff → Invite, role Maintainer). There are 0, and nothing is delivered without
-   them.
-2. **Public holidays in the 3-day clock.** A South African holiday table, mirrored in the domain code.
-3. **A website starter template**, used for the first real client project end to end. Its public launch waits on a
-   commercial-use host (`TOOLCHAIN.md` §3).
+1. **Founder:**
+   - invite maintainers (0 today);
+   - choose a commercial-use host;
+   - set the Paystack key.
+2. **The first real client project, end to end:**
+   - the brief comes in from Your website;
+   - `draftSiteFromBrief`, then the content tasks;
+   - a preview build, QA, the client's approval;
+   - a release build on the client's own hosting.
+3. **A second template** (booking, or property), once the first one has a real client behind it.
 
 ## How another agent resumes
 

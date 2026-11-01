@@ -86,18 +86,46 @@ export const DEFAULT_SITEMAP: Record<WebsiteType, string[]> = {
 };
 
 // ---------------------------------------------------------------------------
-// Business days (Africa/Johannesburg dates; weekends only, as in the database: public holidays are not yet counted)
+// Business days (Africa/Johannesburg dates): weekdays that aren't South African public holidays (Public Holidays Act
+// 36 of 1994; migration web_delivery_holidays). Ad hoc days the President declares aren't included until added there.
 // ---------------------------------------------------------------------------
 const day = (iso: string) => new Date(`${iso}T00:00:00Z`);
 const iso = (d: Date) => d.toISOString().slice(0, 10);
+
+/** The Act's fixed dates (MM-DD). Good Friday and Family Day move with Easter. */
+export const SA_FIXED_HOLIDAYS = ["01-01", "03-21", "04-27", "05-01", "06-16", "08-09", "09-24", "12-16", "12-25", "12-26"] as const;
+
+/** Western Easter Sunday for a year (the anonymous Gregorian computus; mirrors tebos_private.easter_sunday). */
+export function easterSunday(year: number): string {
+  const a = year % 19, b = Math.floor(year / 100), c = year % 100, d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25);
+  const h = (19 * a + b - d - Math.floor((b - f + 1) / 3) + 15) % 30, i = Math.floor(c / 4), k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const month = Math.floor((h + l - 7 * m + 114) / 31), dayOfMonth = ((h + l - 7 * m + 114) % 31) + 1;
+  return `${year}-${String(month).padStart(2, "0")}-${String(dayOfMonth).padStart(2, "0")}`;
+}
+
+const shift = (isoDate: string, days: number) => { const d = day(isoDate); d.setUTCDate(d.getUTCDate() + days); return iso(d); };
+
+function statutoryHoliday(isoDate: string): boolean {
+  if ((SA_FIXED_HOLIDAYS as readonly string[]).includes(isoDate.slice(5))) return true;
+  const easter = easterSunday(Number(isoDate.slice(0, 4)));
+  return isoDate === shift(easter, -2) || isoDate === shift(easter, 1);
+}
+
+/** A public holiday, including the Monday after one that falls on a Sunday (mirrors is_sa_public_holiday). */
+export function isSaPublicHoliday(isoDate: string): boolean {
+  return statutoryHoliday(isoDate) || (day(isoDate).getUTCDay() === 1 && statutoryHoliday(shift(isoDate, -1)));
+}
+
 const weekday = (d: Date) => d.getUTCDay() !== 0 && d.getUTCDay() !== 6;
+const businessDay = (d: Date) => weekday(d) && !isSaPublicHoliday(iso(d));
 
 export function addBusinessDays(from: string, days: number): string {
   const d = day(from);
   let n = 0;
   while (n < days) {
     d.setUTCDate(d.getUTCDate() + 1);
-    if (weekday(d)) n++;
+    if (businessDay(d)) n++;
   }
   return iso(d);
 }
@@ -109,7 +137,7 @@ export function businessDaysBetween(from: string, to: string): number {
   let n = 0;
   while (d < end) {
     d.setUTCDate(d.getUTCDate() + 1);
-    if (weekday(d)) n++;
+    if (businessDay(d)) n++;
   }
   return n;
 }

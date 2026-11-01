@@ -10,7 +10,8 @@
     "test": "vitest run",
     "test:db": "./scripts/test-db.sh",
     "worker": "tsx src/main.ts",
-    "eval:findings": "tsx eval/run-findings-eval.ts"
+    "eval:findings": "tsx eval/run-findings-eval.ts",
+    "site:build": "tsx scripts/build-site.ts"
   },
   "devDependencies": {
     "@types/node": "^20",
