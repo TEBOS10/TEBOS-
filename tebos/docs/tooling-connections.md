@@ -39,6 +39,7 @@ worker ──► Headroom (compress) ──► OmniRoute (route + fallback) ─�
     misconfigured). A refusal or a bad answer is never retried elsewhere.
   - **The worker's order:**
     - Claude first, when `ANTHROPIC_API_KEY` is set;
+    - then Grok, when `XAI_API_KEY` is set (model `TEBOS_XAI_MODEL`, default `grok-4.7`; ADR 0017);
     - then the gateway, when `TEBOS_MODEL_GATEWAY_URL` is set (with `TEBOS_GATEWAY_MODEL`, and
       `TEBOS_MODEL_GATEWAY_KEY` if the gateway requires one).
 

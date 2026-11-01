@@ -5,7 +5,8 @@
 // Each loop iteration does one unit of work per stage:
 //   acquisition   — queued scan  -> evidence            (always on)
 //   intelligence  — finished scan -> validated findings; else a business review across scans,
-//                   interviews and connected systems (on when ANTHROPIC_API_KEY is set)
+//                   interviews and connected systems (on when ANTHROPIC_API_KEY, XAI_API_KEY
+//                   or TEBOS_MODEL_GATEWAY_URL is set)
 //   execution     — verify connections, send approved actions through them, confirm
 //                   delivery with the provider (on unless TEBOS_EXECUTION=off)
 //   interviews    — place booked diagnostic calls (when ELEVENLABS_API_KEY, ELEVENLABS_AGENT_ID
@@ -50,6 +51,7 @@ import { PgAcquisitionStore } from "./acquisition/pg-store";
 import { AcquisitionWorker } from "./acquisition/worker";
 import { AnthropicProvider } from "./intelligence/anthropic-provider";
 import { FallbackProvider, GatewayProvider } from "./intelligence/gateway-provider";
+import { xaiProvider } from "./intelligence/xai-provider";
 import type { ReasoningProvider } from "./intelligence/provider";
 import { isEmailAddress } from "./domain/email";
 import { EnquiryAlertWorker } from "./notify/enquiries";
@@ -97,10 +99,12 @@ const acquisition = new AcquisitionWorker(new PgAcquisitionStore(pool), {
   log,
 });
 
-// Reasoning: Claude directly when ANTHROPIC_API_KEY is set, then TEBOS's own model gateway
-// (TEBOS_MODEL_GATEWAY_URL, docs/tooling-connections.md) as the fallback, or alone.
+// Reasoning: Claude directly when ANTHROPIC_API_KEY is set, then Grok when XAI_API_KEY is set
+// (TEBOS_XAI_MODEL picks the model, docs/adr/0017-grok.md), then TEBOS's own model gateway
+// (TEBOS_MODEL_GATEWAY_URL, docs/tooling-connections.md). Each is a fallback for the one before, or runs alone.
 const reasoners: ReasoningProvider[] = [];
 if (process.env.ANTHROPIC_API_KEY) reasoners.push(new AnthropicProvider());
+if (process.env.XAI_API_KEY) reasoners.push(xaiProvider(process.env.XAI_API_KEY, process.env.TEBOS_XAI_MODEL));
 if (process.env.TEBOS_MODEL_GATEWAY_URL) {
   reasoners.push(new GatewayProvider({
     baseUrl: process.env.TEBOS_MODEL_GATEWAY_URL,
@@ -202,9 +206,10 @@ log({
   event: "worker.started",
   mode: batch ? "batch" : "continuous",
   pollMs,
+  reasoning: provider?.name ?? null, // provider names only, e.g. "anthropic+xai"; never a key
   stages: { acquisition: true, intelligence: intelligenceEnabled, execution: executionEnabled, webhooks: Boolean(server), voiceInterviews: voiceEnabled, intakeCalls: intakeVoiceEnabled, enquiryAlerts: alertsEnabled,
     pipeline: { payments: Boolean(paystackKey), clientEmails: Boolean(process.env.RESEND_API_KEY) } },
-  ...(intelligenceEnabled ? {} : { note: "Findings are not generated: set ANTHROPIC_API_KEY or TEBOS_MODEL_GATEWAY_URL to enable the intelligence stage" }),
+  ...(intelligenceEnabled ? {} : { note: "Findings are not generated: set ANTHROPIC_API_KEY, XAI_API_KEY or TEBOS_MODEL_GATEWAY_URL to enable the intelligence stage" }),
 });
 
 // The heartbeat: each pass is reported (at most once a minute, and always at the end of a batch run), so the founder
