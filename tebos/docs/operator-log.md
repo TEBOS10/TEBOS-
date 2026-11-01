@@ -40,6 +40,25 @@ Update this list every run; strike items when they're done.
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 1 Nov 2026 (later still): the starter website template and public holidays
+
+- **Founder:** "go ahead and build the template and holidays".
+- **Public holidays** (migration `web_delivery_holidays`): the 3-business-day clock now skips:
+  - South African public holidays (the Act's ten dates, Good Friday, Family Day);
+  - the Monday after a holiday that falls on a Sunday.
+
+  Ad hoc declared days, such as election days, are added by migration when gazetted. The rule is mirrored in the
+  domain code and checked against published dates.
+- **The starter website** (`templates/service-site/`, `src/domain/site-template.ts`, `npm run site:build`):
+  - one static site, with no libraries or trackers, built to the design standard;
+  - it refuses anything missing or unapproved, never invents testimonials or prices, and escapes everything typed in;
+  - its form says "Sent" only on success and keeps the message on failure;
+  - a preview build is stamped and not indexed;
+  - `draftSiteFromBrief` starts a site from the client's brief.
+- **Proved:**
+  - core: 480 unit tests and `test:db`, including `99zze`;
+  - web: 63 unit tests, the build, and 162 browser tests, including 4 new ones for the template.
+
 ## 1 Nov 2026 (late): milestone 3 live; milestone 4, the client's brief and one work queue
 
 - **Founder:** "merge it and do it all".

@@ -62,10 +62,11 @@ Evidence is the named test file. The SQL tests run with `npm run test:db`, the u
 
 | # | Criterion | Status |
 |---|---|---|
-| 28 | Pause the 3-day clock on South African public holidays | NOT VERIFIED |
+| 28 | The starter template's checks, in order: business name, area, headline, promise, first action, services, search description; an accent readable at 4.5:1 and visible at 3:1; image descriptions; nothing hosted elsewhere; a first action with something behind it; a consent line; a privacy notice when the site collects details; testimonials only with permission; and for release, the client's approval of the copy and the privacy notice | TESTED (`test/site-template.test.ts`) |
+| 29 | The template on screen: fits 375px, the menu works, the call to action appears once the hero scrolls away, it reads with motion off, keyboard skip link, "Sent" only on success, the message kept on failure, no double send, and no send without consent | TESTED (`web/e2e/site-template.spec.ts`) |
 | 22 | Cost and delivery metrics per project | NOT VERIFIED |
-| 23 | One reusable website template delivered end to end | BLOCKED: a commercial-use host is needed (`TOOLCHAIN.md` §3) |
-| 24 | Public-holiday calendar in the business-day count | NOT VERIFIED (weekends only today) |
+| 23 | One reusable website template (`templates/service-site/`) | TESTED: `test/site-template.test.ts`, `web/e2e/site-template.spec.ts`. Delivering it publicly is BLOCKED: it needs a commercial-use host and a real client (`TOOLCHAIN.md` §3) |
+| 24 | Public holidays in the business-day count: the Act's ten dates, Good Friday, Family Day, and the Monday after a Sunday holiday. Ad hoc declared days are added by migration when gazetted | TESTED: `99zze`, `web-delivery.test.ts` |
 
 ## Design standard (from `DESIGN_BRIEF.md`; checked for every client site at QA)
 

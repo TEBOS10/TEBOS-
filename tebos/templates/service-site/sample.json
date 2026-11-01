@@ -1,0 +1,38 @@
+{
+  "business": {
+    "name": "Sample Plumbing Co",
+    "area": "Example area, Gauteng",
+    "phone": "010 000 0000",
+    "hours": ["Mon–Fri 07:00–17:00", "Sat 08:00–12:00"]
+  },
+  "brand": { "accent": "#c2410c", "canvas": "dark", "display": "serif" },
+  "hero": {
+    "eyebrow": "Sample content: not a real business",
+    "headline": "The leak, found and fixed today.",
+    "promise": "A sample of TEBOS's starter website for a service business: replace every word here with the client's own."
+  },
+  "firstAction": { "label": "Request a call-out", "kind": "form" },
+  "story": {
+    "title": "How a call-out works",
+    "steps": [
+      { "title": "You tell us what's wrong", "text": "A short form or a call. The sample text describes the client's real first step." },
+      { "title": "We arrive in the window we give", "text": "The client's own promise goes here, only if they can keep it." },
+      { "title": "Fixed, tested, explained", "text": "What the customer sees at the end of the job, in the client's words." }
+    ]
+  },
+  "services": [
+    { "name": "Leaks and burst pipes", "text": "Sample service description supplied by the client." },
+    { "name": "Geysers", "text": "Sample service description supplied by the client." },
+    { "name": "Blocked drains", "text": "Sample service description supplied by the client." }
+  ],
+  "faq": [{ "q": "Do you charge a call-out fee?", "a": "Sample answer: the client states their own fee policy here." }],
+  "form": { "endpoint": "https://example.invalid/enquiries", "consentText": "I agree that Sample Plumbing Co may use these details to reply to my request." },
+  "privacy": {
+    "responsible": "Sample Plumbing Co (sample)",
+    "purpose": "To reply to your request and arrange the work you asked about.",
+    "retention": "Twelve months after your last request.",
+    "contact": "Use the contact form and ask for your details to be corrected or deleted."
+  },
+  "seo": { "description": "Sample of the TEBOS starter website for a service business. Every word is placeholder text to replace." },
+  "approved": { "copy": false, "privacy": false }
+}
