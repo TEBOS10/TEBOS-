@@ -16,8 +16,10 @@ export function LegalPage({ which }: { which: "privacy" | "terms" }) {
   return (
     <SiteFrame>
       <article className="contract-card blog-post">
+        <h1>{title}</h1>
         <p className="lp-kicker">Last updated {LEGAL_UPDATED} · being reviewed by our legal advisers; this version applies until it is replaced</p>
-        <AgreementText text={which === "privacy" ? PRIVACY_POLICY : WEBSITE_TERMS} />
+        {/* the page's own heading is the h1 above; the text's first "# " line would repeat it */}
+        <AgreementText text={(which === "privacy" ? PRIVACY_POLICY : WEBSITE_TERMS).replace(/^# [^\n]*\n+/, "")} />
       </article>
     </SiteFrame>
   );
