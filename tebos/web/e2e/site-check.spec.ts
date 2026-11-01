@@ -18,6 +18,7 @@ const PAGES: Array<{ name: string; url: string }> = [
   { name: "TEBOS terms", url: "http://localhost:5174/terms" },
   { name: "TEBOS privacy", url: "http://localhost:5174/privacy" },
   { name: "Grape Studios site", url: "http://localhost:5177/" },
+  { name: "Grape listing reels", url: "http://localhost:5177/reels" },
 ];
 
 async function open(page: Page, url: string, width: number) {
