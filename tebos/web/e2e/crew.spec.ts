@@ -34,8 +34,8 @@ test("the crew's roster by team and shift, and an admin approving a draft before
   await expect(work).toContainText("Approved: send it");
   await work.getByLabel("After you've sent it: how, and to whom").fill("Emailed from bookings@ to the customer");
   await work.getByRole("button", { name: "Mark as sent" }).click();
-  const patches = fake.writes.filter((w) => w.method === "PATCH" && w.table === "ai_tasks").map((w) => w.body);
-  expect(patches).toEqual([{ draft: "Hi Lerato, thanks for your request for next Monday." }, { status: "approved" }, { status: "sent", sent_note: "Emailed from bookings@ to the customer" }]);
+  // the last write lands after the click returns: wait for it rather than reading at once
+  await expect.poll(() => fake.writes.filter((w) => w.method === "PATCH" && w.table === "ai_tasks").map((w) => w.body)).toEqual([{ draft: "Hi Lerato, thanks for your request for next Monday." }, { status: "approved" }, { status: "sent", sent_note: "Emailed from bookings@ to the customer" }]);
 
   // an admin adds a night agent to fill a gap
   const add = page.getByRole("form", { name: "Add an agent" });
