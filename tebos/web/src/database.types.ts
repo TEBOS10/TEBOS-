@@ -4864,6 +4864,42 @@ export type Database = {
         }
         Relationships: []
       }
+      booking_services: {
+        Row: { id: string; org_id: string; key: string; name: string; cover_path: string | null; pictures_note: string | null; delivery_days: string | null; travel_min: number | null; travel_max: number | null; at_studio: boolean; sort: number; active: boolean; created_at: string }
+        Insert: { org_id: string; key: string; name: string; cover_path?: string | null; pictures_note?: string | null; delivery_days?: string | null; travel_min?: number | null; travel_max?: number | null; at_studio?: boolean; sort?: number; active?: boolean }
+        Update: { name?: string; cover_path?: string | null; pictures_note?: string | null; delivery_days?: string | null; travel_min?: number | null; travel_max?: number | null; at_studio?: boolean; sort?: number; active?: boolean }
+        Relationships: []
+      }
+      booking_packages: {
+        Row: { id: string; service_id: string; org_id: string; label: string; minutes: number; price_cents: number; note: string | null; sort: number; active: boolean; created_at: string }
+        Insert: { service_id: string; org_id: string; label: string; minutes: number; price_cents: number; note?: string | null; sort?: number; active?: boolean }
+        Update: { label?: string; minutes?: number; price_cents?: number; note?: string | null; sort?: number; active?: boolean }
+        Relationships: []
+      }
+      booking_hours: {
+        Row: { org_id: string; weekday: number; opens: string; closes: string }
+        Insert: { org_id: string; weekday: number; opens: string; closes: string }
+        Update: { opens?: string; closes?: string }
+        Relationships: []
+      }
+      booking_time_off: {
+        Row: { id: string; org_id: string; starts_at: string; ends_at: string; reason: string | null; created_by: string | null; created_at: string }
+        Insert: { org_id: string; starts_at: string; ends_at: string; reason?: string | null }
+        Update: { starts_at?: string; ends_at?: string; reason?: string | null }
+        Relationships: []
+      }
+      booking_settings: {
+        Row: { org_id: string; public_name: string; contact_email: string | null; deposit_instructions: string | null; accepting: boolean; updated_at: string }
+        Insert: { org_id: string; public_name: string; contact_email?: string | null; deposit_instructions?: string | null; accepting?: boolean }
+        Update: { public_name?: string; contact_email?: string | null; deposit_instructions?: string | null; accepting?: boolean }
+        Relationships: []
+      }
+      bookings: {
+        Row: { id: string; ref: string; org_id: string; service_id: string; package_id: string | null; starts_at: string; ends_at: string; status: string; status_note: string; customer_name: string; customer_email: string; customer_phone: string | null; brief: string | null; price_cents: number | null; deposit_cents: number | null; deposit_ref: string | null; delivered_note: string | null; token_hash: string; consent_at: string; created_by: string | null; created_at: string; updated_at: string }
+        Insert: { org_id: string; service_id: string; package_id?: string | null; starts_at: string; ends_at: string; status_note: string; customer_name: string; customer_email: string; customer_phone?: string | null; brief?: string | null; token_hash: string; consent_at: string }
+        Update: { starts_at?: string; ends_at?: string; status?: string; status_note?: string; price_cents?: number | null; deposit_ref?: string | null; delivered_note?: string | null }
+        Relationships: []
+      }
       partner_month_closes: {
         Row: {
           org_id: string
@@ -4918,6 +4954,26 @@ export type Database = {
       tepos_open_week: {
         Args: { p_org: string; p_week_start: string }
         Returns: string
+      }
+      booking_schedule: {
+        Args: { p_org: string; p_from: string; p_days?: number }
+        Returns: { id: string; ref: string | null; starts_at: string; ends_at: string; status: string; service: string | null; package: string | null; customer_name: string | null; price_cents: number | null; deposit_paid: boolean | null; kind: string }[]
+      }
+      booking_catalogue: {
+        Args: { p_slug: string }
+        Returns: Json
+      }
+      booking_free_times: {
+        Args: { p_slug: string; p_day: string; p_minutes: number }
+        Returns: { starts_at: string }[]
+      }
+      booking_request: {
+        Args: { p_slug: string; p_service: string; p_package: string | null; p_starts: string; p_minutes: number; p_name: string; p_email: string; p_phone: string | null; p_brief: string | null; p_consent: boolean }
+        Returns: Json
+      }
+      booking_for_token: {
+        Args: { p_token: string }
+        Returns: Json
       }
       equity_audit: {
         Args: { p_org: string; p_months?: number }

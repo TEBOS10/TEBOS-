@@ -5,6 +5,7 @@ import { PUBLIC_LIMITS, RULE_CODES, transitionTable } from "../src";
 import { PLAN_TERMS } from "../src/domain/plans";
 import { BOARD_LIMITS } from "../src/domain/editions";
 import { FACTORY_OUTCOMES, VALIDATION_STATES } from "../src/domain/catalogue";
+import { DEPOSIT_SHARE as BOOKING_DEPOSIT, MAX_AHEAD_MONTHS, MAX_OPEN_REQUESTS, MIN_NOTICE_HOURS, SLOT_STEP_MINUTES } from "../src/domain/bookings";
 import { ELIGIBLE_SECTORS, EQUITY_PCT, MAX_EQUITY_PARTNERS, MIN_TRADING_MONTHS, QUALIFYING_BANDS, REVENUE_BANDS, VOTING_PCT } from "../src/domain/equity";
 import {
   ASSET_KINDS, ASSET_SOURCES, ASSET_STATUSES, COST_KINDS, DELIVERY_BUSINESS_DAYS, INTEGRATION_SERVICES, INTEGRATION_STATUSES, TEBOS_ACCESS,
@@ -111,6 +112,15 @@ describe("domain mirrors the database", () => {
     const assignment = sql.split("function tebos_private.guard_web_assignment")[1]!.split("end $$")[0]!;
     expect(assignment).toContain(`web_open_load(new.maintainer_id, new.id) >= ${WEB_PROJECTS_PER_MAINTAINER}`);
     expect(sql.split("function public.web_team_load")[1]!.split("$$")[1]).toContain(`${WEB_PROJECTS_PER_MAINTAINER}\n    from`);
+  });
+
+  it("bookings' rules match the database's", () => {
+    const slot = sql.split("function tebos_private.booking_slot_problem")[1]!.split("$$")[1]!;
+    expect(slot).toContain(`now() + interval '${MIN_NOTICE_HOURS} hours'`);
+    expect(slot).toContain(`now() + interval '${MAX_AHEAD_MONTHS} months'`);
+    expect(sql.split("function tebos_private.guard_booking()")[1]!.split("end $$")[0]).toContain(`round(new.price_cents * ${BOOKING_DEPOSIT})`);
+    expect(sql.split("function public.booking_free_times")[1]!.split("$$")[1]).toContain(`interval '${SLOT_STEP_MINUTES} minutes'`);
+    expect(sql.split("function public.booking_request")[1]!.split("end $$")[0]).toContain(`>= ${MAX_OPEN_REQUESTS} then`);
   });
 
   it("the equity programme's terms and lists match the database's", () => {

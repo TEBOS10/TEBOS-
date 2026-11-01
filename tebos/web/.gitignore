@@ -2,6 +2,7 @@ node_modules/
 dist/
 dist-tepos/
 dist-pra/
+dist-grape/
 .env
 .env.local
 test-results/

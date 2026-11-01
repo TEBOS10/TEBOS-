@@ -31,6 +31,12 @@ export default defineConfig({
       env: { VITE_SUPABASE_URL: "https://fixture.supabase.test", VITE_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_fixture", VITE_PRA_URL: "https://pra.fixture.test" },
     },
     {
+      command: "npx vite --config vite.grape.config.ts --port 5177 --strictPort",
+      url: "http://localhost:5177",
+      reuseExistingServer: false,
+      env: { VITE_SUPABASE_URL: "https://fixture.supabase.test", VITE_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_fixture" },
+    },
+    {
       command: "npx vite --config vite.pra.config.ts --port 5176 --strictPort",
       url: "http://localhost:5176",
       reuseExistingServer: false,

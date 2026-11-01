@@ -1,4 +1,4 @@
-import { BookOpen, Briefcase, Clapperboard, Eye, Building2, CheckSquare, Download, Gauge, Globe, Handshake, Home, ListChecks, LogOut, Megaphone, Menu, MessageSquare, MessagesSquare, PhoneCall, Plug, Receipt, ScanSearch, ShieldCheck, Sparkles, Stamp, Users } from "lucide-react";
+import { BookOpen, Briefcase, CalendarDays, Clapperboard, Eye, Building2, CheckSquare, Download, Gauge, Globe, Handshake, Home, ListChecks, LogOut, Megaphone, Menu, MessageSquare, MessagesSquare, PhoneCall, Plug, Receipt, ScanSearch, ShieldCheck, Sparkles, Stamp, Users } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { DEMO_BUSINESS } from "../demo/data";
 import { exitDemo, isDemo } from "../demo/mode";
@@ -6,6 +6,7 @@ import { Link, usePath } from "../lib/router";
 import { useOrg } from "../lib/session";
 import { useQuery } from "../lib/useQuery";
 import { myTerms } from "../lib/equityData";
+import { takesBookings } from "../lib/bookingsData";
 import { useStaff } from "../lib/staff";
 import { useInstallPrompt } from "../lib/install";
 
@@ -35,6 +36,8 @@ export function Shell({ children }: { children: ReactNode }) {
   const { organisation, organisations, switchOrganisation, role, db, session } = useOrg();
   // an equity partner records its sales; everyone else never sees the page
   const partner = useQuery(() => myTerms(db, organisation.id), [organisation.id]);
+  // a business that sells time sees its bookings
+  const bookings = useQuery(() => takesBookings(db, organisation.id), [organisation.id]);
   // on a phone the menu folds away behind a button, and folds again after choosing a page
   const [menuOpen, setMenuOpen] = useState(false);
   const install = useInstallPrompt();
@@ -42,7 +45,11 @@ export function Shell({ children }: { children: ReactNode }) {
   // TEBOS's own staff also see the client pipeline and the sales playbook
   const { access } = useStaff();
   const pipeline = access?.sales || access?.maintainer;
-  const base = partner.data ? [...NAV.slice(0, 4), { to: "/sales-register", label: "Sales", icon: Receipt }, ...NAV.slice(4)] : NAV;
+  const extra = [
+    ...(bookings.data ? [{ to: "/bookings", label: "Bookings", icon: CalendarDays, exact: false }] : []),
+    ...(partner.data ? [{ to: "/sales-register", label: "Sales", icon: Receipt, exact: false }] : []),
+  ];
+  const base = [...NAV.slice(0, 4), ...extra, ...NAV.slice(4)];
   const nav = pipeline || access?.marketing
     ? [...base,
        ...(pipeline ? [{ to: "/pipeline", label: "Pipeline", icon: Briefcase, exact: false }, { to: "/sales/calls", label: "Today's calls", icon: PhoneCall, exact: true }, { to: "/sales", label: "Sales playbook", icon: BookOpen, exact: true }] : []),
