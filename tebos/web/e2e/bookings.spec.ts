@@ -32,9 +32,15 @@ test("the team answers a request: confirm once the deposit has arrived", async (
   const panel = page.getByTestId("booking-panel");
   await expect(panel).toContainText("R2 600 · deposit R1 300 not yet received");
   await expect(panel).toContainText("lerato@example.co.za");
+  // a booking is confirmed only with a photographer assigned: anyone on the team, not only the owner
+  await expect(panel.getByRole("button", { name: "Confirm the booking" })).toBeDisabled();
+  await panel.getByRole("combobox").selectOption({ label: "Thandi Mokoena" });
+  await panel.getByRole("button", { name: "Assign" }).click();
+  await expect.poll(() => fake.writes.filter((w) => w.method === "PATCH" && w.table === "bookings").map((w) => w.body)).toEqual([{ assignee_id: USER_ID }]);
   await panel.getByLabel("Deposit received: its reference").fill("EFT 0811");
   await panel.getByRole("button", { name: "Confirm the booking" }).click();
-  const sent = fake.writes.find((w) => w.method === "PATCH" && w.table === "bookings")!.body as Record<string, unknown>;
+  await expect.poll(() => fake.writes.filter((w) => w.method === "PATCH" && w.table === "bookings").length).toBe(2);
+  const sent = fake.writes.filter((w) => w.method === "PATCH" && w.table === "bookings")[1]!.body as Record<string, unknown>;
   expect(sent).toMatchObject({ status: "confirmed", deposit_ref: "EFT 0811" });
   await expect(panel).toContainText("Confirmed");
 });
@@ -63,4 +69,41 @@ test("the team closes the studio, and a viewer sees when but not who", async ({ 
   await expect(page.getByTestId("week")).not.toContainText("Lerato");
   await expect(page.getByText("To answer")).toHaveCount(0);
   await expect(page.getByText("Only the team sees who booked.")).toBeVisible();
+});
+
+test("a photographer runs a shoot without the owner: checklist, backup, balance and the gallery", async ({ page }) => {
+  const fake = await installFakeSupabase(page);
+  const t = fake.tables as Record<string, unknown[]>;
+  seedStudio(t);
+  const y = new Date(Date.now() - 26 * 3600_000).toISOString(), y2 = new Date(Date.now() - 25 * 3600_000).toISOString();
+  t.bookings = [{ id: "b9", ref: "BK-00009", org_id: ORG, service_id: "s-studio", package_id: "p-1h", starts_at: y, ends_at: y2,
+    status: "confirmed", status_note: "Deposit received.", customer_name: "Sipho N", customer_email: "sipho@example.co.za", customer_phone: null,
+    brief: null, price_cents: 260000, deposit_cents: 130000, deposit_ref: "EFT 1300", delivered_note: null, token_hash: "tok-9", consent_at: y,
+    created_at: y, updated_at: y, assignee_id: USER_ID, call_sheet_at: y, releases_note: null, backed_up_at: null, balance_ref: null, gallery_url: null }];
+  await page.goto("/bookings");
+  const mine = page.getByTestId("my-shoots");
+  await expect(mine).toContainText("BK-00009 · Sipho N");
+  await mine.getByRole("button", { name: /BK-00009/ }).click();
+  const panel = page.getByTestId("booking-panel");
+  await expect(panel.getByRole("list", { name: "Shoot checklist" }).getByRole("listitem")).toHaveText(["✓ Photographer assigned", "✓ Call sheet sent",
+    "○ Releases signed or noted", "○ Files backed up", "○ Balance paid", "○ Gallery delivered"]);
+  // not done until the files are backed up and releases noted
+  await expect(panel.getByRole("button", { name: "Mark as shot" })).toBeDisabled();
+  await panel.getByRole("textbox", { name: /^Releases/ }).fill("Model release signed by Sipho.");
+  await panel.getByRole("button", { name: "Save" }).click();
+  await panel.getByRole("button", { name: "Files backed up" }).click();
+  await expect(panel.getByRole("button", { name: "Mark as shot" })).toBeEnabled();
+  await panel.getByRole("button", { name: "Mark as shot" }).click();
+  await expect(panel).toContainText("Shot");
+  // delivered only with the gallery and the balance paid
+  await expect(panel.getByRole("button", { name: "Mark as delivered" })).toBeDisabled();
+  await panel.getByLabel("Gallery link").fill("https://gallery.example/sipho");
+  await panel.getByRole("button", { name: "Save the link" }).click();
+  await panel.getByLabel(/Balance received \(R1 300\)/).fill("EFT balance 1300");
+  await panel.getByRole("button", { name: "Record the balance" }).click();
+  await panel.getByLabel("How the images were sent").fill("Gallery link by email, 52 images");
+  await panel.getByRole("button", { name: "Mark as delivered" }).click();
+  await expect(panel).toContainText("Delivered");
+  const patches = fake.writes.filter((w) => w.method === "PATCH" && w.table === "bookings").map((w) => Object.keys(w.body as object).sort().join(","));
+  expect(patches).toEqual(["releases_note", "backed_up_at", "status,status_note", "gallery_url", "balance_ref", "delivered_note,status,status_note"]);
 });

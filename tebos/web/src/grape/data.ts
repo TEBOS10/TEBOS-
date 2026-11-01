@@ -76,6 +76,10 @@ export interface MyBooking {
   package: string | null; starts_at: string; ends_at: string; price_cents: number | null; deposit_cents: number | null;
   deposit_paid: boolean; deposit_instructions: string | null; delivery_min: number | null; delivery_max: number | null;
   travel_min: number | null; travel_max: number | null; delivered_note: string | null;
+  /** Shot, and the balance is still owed before the gallery is released. */
+  balance_due?: boolean;
+  /** Only once delivered. */
+  gallery_url?: string | null;
   week_busy: Array<{ starts_at: string; ends_at: string; yours: boolean }>;
 }
 export async function myBooking(token: string): Promise<MyBooking | null> {

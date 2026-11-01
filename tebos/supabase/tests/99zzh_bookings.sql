@@ -107,7 +107,7 @@ select t99zzh.expect_error(format($$update public.bookings set status = 'confirm
 select t99zzh.expect_error(format($$update public.bookings set price_cents = 100 where id = %L$$, :'bk'), 'TEBOS_INPUT_FROZEN');
 select t99zzh.expect_error(format($$update public.bookings set customer_email = 'x@example.co.za' where id = %L$$, :'bk'), '42501');
 select t99zzh.expect_error(format($$update public.bookings set status = 'completed', status_note = 'Done early.' where id = %L$$, :'bk'), 'TEBOS_ILLEGAL_TRANSITION');
-update public.bookings set status = 'confirmed', status_note = 'Deposit received by EFT.', deposit_ref = 'EFT BK-1 1300' where id = :'bk';
+update public.bookings set status = 'confirmed', status_note = 'Deposit received by EFT.', deposit_ref = 'EFT BK-1 1300', assignee_id = :'op' where id = :'bk';
 select t99zzh.ok((select deposit_cents = 130000 from public.bookings where id = :'bk'), 'confirming records half as the deposit');
 select t99zzh.ok((public.booking_for_token(:'tok') ->> 'deposit_paid')::boolean, 'the customer sees the deposit arrived');
 select t99zzh.expect_error(format($$update public.bookings set status = 'completed', status_note = 'Shot it.' where id = %L$$, :'bk'), 'TEBOS_VALIDATION');

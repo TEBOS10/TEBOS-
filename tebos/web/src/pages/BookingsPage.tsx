@@ -3,12 +3,12 @@
 // a viewer sees when and what, never who.
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
-import { BOOKING_STATUS_LABEL, deposit, saLocal } from "@core/bookings";
+import { BOOKING_STATUS_LABEL, crewBlocker, deposit, saLocal, shootChecklist, type CrewRecord } from "@core/bookings";
 import type { BookingStatus } from "@core/states";
 import { money } from "@core/property";
 import { saToday } from "@core/week";
 import { Badge, Card, Empty, ErrorNote, Field, Loading, PageHeader } from "../components/ui";
-import { addTimeOff, booking, hours as loadHours, openRequests, schedule, setHours, updateBooking, type Booking, type ScheduleItem } from "../lib/bookingsData";
+import { addTimeOff, assignedTo, booking, crew, hours as loadHours, openRequests, schedule, setHours, updateBooking, type Booking, type ScheduleItem } from "../lib/bookingsData";
 import { useOrg } from "../lib/session";
 import { useQuery } from "../lib/useQuery";
 
@@ -71,6 +71,7 @@ export function BookingsPage() {
       )}
 
       {open && <BookingPanel id={open} onClose={() => setOpen(null)} onChanged={reload} />}
+      {team && <MyShoots onOpen={setOpen} />}
       {team && <TimeOffCard onDone={reload} />}
       {org.role === "org_admin" && <HoursCard />}
     </div>
@@ -138,47 +139,108 @@ function BookingPanel({ id, onClose, onChanged }: { id: string; onClose: () => v
 
 function Actions({ b, onDone }: { b: Booking; onDone: () => void }) {
   const org = useOrg();
-  const [f, setF] = useState({ price: "", ref: "", note: "", delivered: "" });
+  const team = useQuery(() => crew(org.db, org.organisation.id), [org.organisation.id]);
+  const [f, setF] = useState({ price: "", ref: "", note: "", delivered: "", assignee: b.assignee_id ?? "", releases: "", balance: "", gallery: "" });
   const [error, setError] = useState<unknown>(null);
-  async function run(e: FormEvent, patch: Parameters<typeof updateBooking>[2]) {
+  async function run(e: FormEvent | React.MouseEvent, patch: Parameters<typeof updateBooking>[2]) {
     e.preventDefault(); setError(null);
     try { await updateBooking(org.db, b.id, patch); onDone(); } catch (err) { setError(err); }
   }
+  const record = b as Booking & CrewRecord;
+  const status = b.status as BookingStatus;
+  const shotOver = new Date(b.ends_at) <= new Date();
+  const owed = (b.price_cents ?? 0) - (b.deposit_cents ?? 0) > 0;
   const note = <Field label="Why (the customer sees this if it's declined or cancelled)"><input className="input" required minLength={5} value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} /></Field>;
+  const crewName = (id: string | null) => team.data?.find((m) => m.user_id === id)?.display_name ?? "Someone on the team";
   return (
     <div className="stack" style={{ gap: 14 }}>
-      {b.status === "requested" && !b.package_id && (
+      {(status === "requested" || status === "confirmed") && (
+        <form className="form" aria-label="Assign the photographer" onSubmit={(e) => run(e, { assignee_id: f.assignee || null })}>
+          <Field label="Photographer" hint="Anyone on the team can shoot; the owner doesn't have to.">
+            <select className="input" value={f.assignee} onChange={(e) => setF({ ...f, assignee: e.target.value })}>
+              <option value="">Not assigned</option>
+              {(team.data ?? []).map((m) => <option key={m.user_id} value={m.user_id}>{m.display_name}</option>)}
+            </select>
+          </Field>
+          <button className="btn" disabled={f.assignee === (b.assignee_id ?? "")}>Assign</button>
+        </form>
+      )}
+      {status !== "requested" && b.assignee_id && <p className="muted" data-testid="assignee">Shot by {crewName(b.assignee_id)}</p>}
+      {status === "requested" && !b.package_id && (
         <form className="form" aria-label="Quote a price" onSubmit={(e) => run(e, { price_cents: Math.round(Number(f.price) * 100) })}>
           <Field label="Quote (rand)"><input className="input" type="number" min="1" step="1" required value={f.price} onChange={(e) => setF({ ...f, price: e.target.value })} /></Field>
           <button className="btn">Save the quote</button>
         </form>
       )}
-      {b.status === "requested" && (
+      {status === "requested" && (
         <form className="form" aria-label="Confirm" onSubmit={(e) => run(e, { status: "confirmed", deposit_ref: f.ref.trim(), status_note: `Deposit received: ${f.ref.trim()}.` })}>
           <Field label="Deposit received: its reference" hint="From your bank statement or payment app. TEBOS never sees the account."><input className="input" required minLength={4} value={f.ref} onChange={(e) => setF({ ...f, ref: e.target.value })} /></Field>
-          <button className="btn btn-primary" disabled={!b.price_cents}>Confirm the booking</button>
+          {!b.assignee_id && <p className="muted">Assign the photographer first.</p>}
+          <button className="btn btn-primary" disabled={!b.price_cents || !b.assignee_id}>Confirm the booking</button>
         </form>
       )}
-      {(b.status === "requested" || b.status === "confirmed") && (
-        <form className="form" aria-label="Decline or cancel" onSubmit={(e) => run(e, { status: b.status === "requested" ? "declined" : "cancelled", status_note: f.note.trim() })}>
-          {note}
-          <button className="btn btn-danger">{b.status === "requested" ? "Decline" : "Cancel the booking"}</button>
-        </form>
+      {status !== "requested" && status !== "declined" && status !== "cancelled" && status !== "no_show" && (
+        <ul className="bk-check" aria-label="Shoot checklist">
+          {shootChecklist(record).map((x) => <li key={x.key} className={x.done ? "done" : ""}>{x.done ? "✓" : "○"} {x.label}</li>)}
+        </ul>
       )}
-      {b.status === "confirmed" && new Date(b.ends_at) <= new Date() && (
-        <div className="row" style={{ gap: 8 }}>
-          <button className="btn" onClick={(e) => run(e, { status: "completed", status_note: "Shot as booked." })}>Mark as shot</button>
-          <button className="btn" onClick={(e) => run(e, { status: "no_show", status_note: "The customer didn't arrive." })}>No-show</button>
+      {status === "confirmed" && !b.call_sheet_at && (
+        <button className="btn" onClick={(e) => run(e, { call_sheet_at: new Date().toISOString() })}>Call sheet sent</button>
+      )}
+      {status === "confirmed" && shotOver && (
+        <div className="stack" style={{ gap: 10 }}>
+          {!b.releases_note && (
+            <form className="form" aria-label="Record the releases" onSubmit={(e) => run(e, { releases_note: f.releases.trim() })}>
+              <Field label="Releases" hint="Who signed, or why none were needed (e.g. a property shoot)."><input className="input" required minLength={5} maxLength={300} value={f.releases} onChange={(e) => setF({ ...f, releases: e.target.value })} /></Field>
+              <button className="btn">Save</button>
+            </form>
+          )}
+          {!b.backed_up_at && <button className="btn" onClick={(e) => run(e, { backed_up_at: new Date().toISOString() })}>Files backed up</button>}
+          <div className="row" style={{ gap: 8 }}>
+            <button className="btn btn-primary" disabled={Boolean(crewBlocker(record, "completed"))} onClick={(e) => run(e, { status: "completed", status_note: "Shot as booked." })}>Mark as shot</button>
+            <button className="btn" onClick={(e) => run(e, { status: "no_show", status_note: "The customer didn't arrive." })}>No-show</button>
+          </div>
+          {crewBlocker(record, "completed") && <p className="muted">{crewBlocker(record, "completed")}.</p>}
         </div>
       )}
-      {b.status === "completed" && (
+      {status === "completed" && owed && !b.balance_ref && (
+        <form className="form" aria-label="Record the balance" onSubmit={(e) => run(e, { balance_ref: f.balance.trim() })}>
+          <Field label={`Balance received (${money(((b.price_cents ?? 0) - (b.deposit_cents ?? 0)) / 100)}): its reference`}><input className="input" required minLength={4} value={f.balance} onChange={(e) => setF({ ...f, balance: e.target.value })} /></Field>
+          <button className="btn">Record the balance</button>
+        </form>
+      )}
+      {status === "completed" && !b.gallery_url && (
+        <form className="form" aria-label="Add the gallery" onSubmit={(e) => run(e, { gallery_url: f.gallery.trim() })}>
+          <Field label="Gallery link" hint="The customer sees it on their booking page once delivered."><input className="input" type="url" required pattern="https://.+" value={f.gallery} onChange={(e) => setF({ ...f, gallery: e.target.value })} placeholder="https://" /></Field>
+          <button className="btn">Save the link</button>
+        </form>
+      )}
+      {status === "completed" && (
         <form className="form" aria-label="Delivered" onSubmit={(e) => run(e, { status: "delivered", delivered_note: f.delivered.trim(), status_note: "Images delivered." })}>
-          <Field label="How the images were sent"><input className="input" required minLength={5} value={f.delivered} onChange={(e) => setF({ ...f, delivered: e.target.value })} placeholder="e.g. WeTransfer link, 48 images" /></Field>
-          <button className="btn btn-primary">Mark as delivered</button>
+          <Field label="How the images were sent"><input className="input" required minLength={5} value={f.delivered} onChange={(e) => setF({ ...f, delivered: e.target.value })} placeholder="e.g. Gallery link by email, 48 images" /></Field>
+          {crewBlocker(record, "delivered") && <p className="muted">{crewBlocker(record, "delivered")}.</p>}
+          <button className="btn btn-primary" disabled={Boolean(crewBlocker(record, "delivered"))}>Mark as delivered</button>
         </form>
       )}
       <ErrorNote error={error} title="Not saved" />
     </div>
+  );
+}
+
+/** The signed-in team member's own shoots, soonest first, so a photographer sees their week without asking. */
+function MyShoots({ onOpen }: { onOpen: (id: string) => void }) {
+  const org = useOrg();
+  const q = useQuery(() => assignedTo(org.db, org.organisation.id, org.userId), [org.organisation.id, org.userId]);
+  if (!q.data || q.data.length === 0) return null;
+  return (
+    <Card title="My shoots" subtitle="Confirmed and shot bookings assigned to you.">
+      <ul className="bk-list" data-testid="my-shoots">
+        {q.data.map((b) => (
+          <li key={b.id}><button className="btn btn-ghost" onClick={() => onOpen(b.id)}>{when(b.starts_at)} · {b.ref} · {b.customer_name}</button>
+            <span className="muted"> {shootChecklist(b as Booking & CrewRecord).filter((x) => !x.done).length} to do</span></li>
+        ))}
+      </ul>
+    </Card>
   );
 }
 

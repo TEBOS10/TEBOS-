@@ -4895,9 +4895,9 @@ export type Database = {
         Relationships: []
       }
       bookings: {
-        Row: { id: string; ref: string; org_id: string; service_id: string; package_id: string | null; starts_at: string; ends_at: string; status: string; status_note: string; customer_name: string; customer_email: string; customer_phone: string | null; brief: string | null; price_cents: number | null; deposit_cents: number | null; deposit_ref: string | null; delivered_note: string | null; token_hash: string; consent_at: string; created_by: string | null; created_at: string; updated_at: string }
+        Row: { id: string; ref: string; org_id: string; service_id: string; package_id: string | null; starts_at: string; ends_at: string; status: string; status_note: string; customer_name: string; customer_email: string; customer_phone: string | null; brief: string | null; price_cents: number | null; deposit_cents: number | null; deposit_ref: string | null; delivered_note: string | null; token_hash: string; consent_at: string; created_by: string | null; created_at: string; updated_at: string; assignee_id: string | null; call_sheet_at: string | null; releases_note: string | null; backed_up_at: string | null; balance_ref: string | null; gallery_url: string | null }
         Insert: { org_id: string; service_id: string; package_id?: string | null; starts_at: string; ends_at: string; status_note: string; customer_name: string; customer_email: string; customer_phone?: string | null; brief?: string | null; token_hash: string; consent_at: string }
-        Update: { starts_at?: string; ends_at?: string; status?: string; status_note?: string; price_cents?: number | null; deposit_ref?: string | null; delivered_note?: string | null }
+        Update: { starts_at?: string; ends_at?: string; status?: string; status_note?: string; price_cents?: number | null; deposit_ref?: string | null; delivered_note?: string | null; assignee_id?: string | null; call_sheet_at?: string | null; releases_note?: string | null; backed_up_at?: string | null; balance_ref?: string | null; gallery_url?: string | null }
         Relationships: []
       }
       partner_month_closes: {
@@ -4974,6 +4974,10 @@ export type Database = {
       booking_for_token: {
         Args: { p_token: string }
         Returns: Json
+      }
+      booking_crew: {
+        Args: { p_org: string }
+        Returns: { user_id: string; display_name: string; role: string }[]
       }
       equity_audit: {
         Args: { p_org: string; p_months?: number }

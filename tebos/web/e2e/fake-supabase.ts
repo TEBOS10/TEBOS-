@@ -548,6 +548,10 @@ function answerRpc(tables: FakeSupabase["tables"], name: string, args: Record<st
         token_hash: token, consent_at: now, created_at: now, updated_at: now });
       return { ref, token };
     }
+    if (name === "booking_crew") {
+      return (t.memberships ?? []).filter((m) => m.org_id === args.p_org && ["org_admin", "operator"].includes(String(m.role)))
+        .map((m) => ({ user_id: m.user_id, display_name: (t.profiles ?? []).find((p) => p.user_id === m.user_id)?.display_name ?? "Team member", role: m.role }));
+    }
     if (name === "booking_for_token") {
       const b = (t.bookings ?? []).find((x) => x.token_hash === args.p_token); if (!b) return null;
       const v = svc(b.service_id), st = settings(b.org_id), price = b.price_cents as number | null;
@@ -557,6 +561,8 @@ function answerRpc(tables: FakeSupabase["tables"], name: string, args: Record<st
         deposit_paid: Boolean(b.deposit_ref), deposit_instructions: b.status === "requested" && price != null ? st?.deposit_instructions ?? null : null,
         delivery_min: v?.delivery_min ?? 2, delivery_max: v?.delivery_max ?? 4, travel_min: v?.travel_min ?? null, travel_max: v?.travel_max ?? null,
         delivered_note: b.delivered_note ?? null,
+        balance_due: b.status === "completed" && price != null && price > Math.round(price / 2) && !b.balance_ref,
+        gallery_url: b.status === "delivered" ? b.gallery_url ?? null : null,
         week_busy: open(b.org_id).map((x) => ({ starts_at: x.starts_at, ends_at: x.ends_at, yours: x.id === b.id })) };
     }
   }
@@ -664,7 +670,8 @@ const COLUMN_DEFAULTS: Record<string, Record<string, unknown>> = {
   equity_applications: { status: "applied", org_id: null, registration_number: null, trading_since: null, employees: 0, owner_full_time: false,
     revenue_evidence_note: null, reporting_consent: false, package: "starter", screened_by: null, approved_by: null, agreement_ref: null },
   equity_terms: { equity_pct: 5, voting_pct: 5.1, ended_on: null },
-  bookings: { status: "requested", deposit_ref: null, deposit_cents: null, delivered_note: null, customer_phone: null, brief: null },
+  bookings: { status: "requested", deposit_ref: null, deposit_cents: null, delivered_note: null, customer_phone: null, brief: null,
+    assignee_id: null, call_sheet_at: null, releases_note: null, backed_up_at: null, balance_ref: null, gallery_url: null },
   booking_time_off: { reason: null },
   partner_sales: { reference: null, customer_ref: null, note: null, channel: "other" },
   web_intakes: { answers: {}, status: "draft", submitted_by: null, submitted_at: null, reopen_reason: null },

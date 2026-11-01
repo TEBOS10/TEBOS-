@@ -76,3 +76,48 @@ export function deliveryWindow(shootIso: string, minDays: number, maxDays: numbe
   };
   return { from: add(minDays), to: add(maxDays) };
 }
+
+// ---------------------------------------------------------------------------
+// Studio crew (ADR 0018; migration 20261102150000_studio_crew.sql): who does each shoot, the shoot-day checklist
+// and paid delivery, so the business runs without its owner on every booking.
+// ---------------------------------------------------------------------------
+
+/** Team roles that can be assigned to a booking. */
+export const CREW_ROLES = ["org_admin", "operator"] as const;
+export const RELEASES_NOTE = { min: 5, max: 300 } as const;
+export const GALLERY_URL = /^https:\/\/[^\s]+$/;
+
+export interface CrewRecord {
+  status: BookingStatus;
+  assignee_id: string | null;
+  call_sheet_at: string | null;
+  releases_note: string | null;
+  backed_up_at: string | null;
+  balance_ref: string | null;
+  gallery_url: string | null;
+  price_cents: number | null;
+  deposit_cents: number | null;
+}
+
+/** Why a booking can't move to `next` yet, by the crew rules; null when it can. Mirrors tebos_private.guard_booking_crew. */
+export function crewBlocker(b: CrewRecord, next: BookingStatus): string | null {
+  if (next === "confirmed" && !b.assignee_id) return "assign the photographer before confirming";
+  if (next === "completed" && (!b.backed_up_at || !b.releases_note)) return "a shoot is done once its files are backed up and releases are noted";
+  if (next === "delivered") {
+    if (!b.gallery_url) return "add the gallery link before delivering";
+    if ((b.price_cents ?? 0) - (b.deposit_cents ?? 0) > 0 && !b.balance_ref) return "the gallery is released once the balance is paid: record its reference";
+  }
+  return null;
+}
+
+/** The shoot-day checklist, in order, with what is still to do. */
+export function shootChecklist(b: CrewRecord): Array<{ key: string; label: string; done: boolean }> {
+  return [
+    { key: "assignee", label: "Photographer assigned", done: Boolean(b.assignee_id) },
+    { key: "call_sheet", label: "Call sheet sent", done: Boolean(b.call_sheet_at) },
+    { key: "releases", label: "Releases signed or noted", done: Boolean(b.releases_note) },
+    { key: "backup", label: "Files backed up", done: Boolean(b.backed_up_at) },
+    { key: "balance", label: "Balance paid", done: Boolean(b.balance_ref) || (b.price_cents ?? 0) - (b.deposit_cents ?? 0) <= 0 },
+    { key: "gallery", label: "Gallery delivered", done: b.status === "delivered" },
+  ];
+}
