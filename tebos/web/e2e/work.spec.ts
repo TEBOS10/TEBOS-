@@ -24,13 +24,30 @@ test("Grape Studios: booking a shoot books nothing; the editor grades, matches a
   const sent: string[] = [];
   page.on("request", (r) => { if (r.method() !== "GET") sent.push(r.url()); });
   await page.goto("/work/grape-studios");
-  await expect(page.getByText("Concept · sample content")).toBeVisible();
+  await expect(page.getByText("Concept by TEBOS")).toBeVisible();
+  const kinds = page.getByRole("group", { name: "Kind of shoot" });
+  await expect(kinds.getByRole("button")).toHaveCount(6);
 
-  await page.getByRole("group", { name: "Kind of shoot" }).getByRole("button", { name: /Portraits/ }).click();
+  await kinds.getByRole("button", { name: /Studio shoots/ }).click();
+  const card = page.getByTestId("rate-card");
+  await expect(card).toContainText("20 to 25 edited pictures per hour");
+  await expect(card).not.toContainText("travel");
+  await card.getByRole("button", { name: /1 hour/ }).click();
   await page.getByRole("group", { name: "Day" }).getByRole("button").first().click();
-  await page.getByRole("group", { name: "Time" }).getByRole("button", { name: "11:00" }).click();
+  await page.getByRole("group", { name: "Time" }).getByRole("button", { name: "10:00" }).click();
+  await expect(page.getByTestId("deposit")).toContainText("R2 600. A R1 300 deposit (half, non-refundable) holds the date; R1 300 on the day.");
   await page.getByRole("button", { name: "Request this shoot" }).click();
-  await expect(page.getByRole("status")).toContainText("nothing was booked");
+  await expect(page.getByRole("status")).toContainText("nothing was sent");
+
+  // Events is quoted: a custom rate needs a short brief
+  await kinds.getByRole("button", { name: /Events/ }).click();
+  await expect(card.getByRole("button", { name: /Custom rate/ })).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("group", { name: "Day" }).getByRole("button").nth(1).click();
+  await page.getByRole("group", { name: "Time" }).getByRole("button", { name: "14:00" }).click();
+  await expect(page.getByRole("button", { name: "Ask for a quote" })).toBeDisabled();
+  await page.getByLabel("What do you need?").fill("A 30th birthday, about 40 guests, three hours in Sandton.");
+  await expect(page.getByRole("button", { name: "Ask for a quote" })).toBeEnabled();
+  await expect(page.locator("body")).not.toContainText(/FNB|account number/i);
 
   await expect(page.getByText("Your photos appear here.")).toBeVisible();
   await page.getByLabel("Add photos").setInputFiles([

@@ -5,6 +5,8 @@
 import { ArrowUpRight, Download, Film, ImagePlus, Moon, Sparkles, Sun, Sunset, Wand2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { applyLook, channelStats, LOOK_LABEL, matchReference, type ChannelStats, type Look } from "../lib/grade";
+import { CATEGORIES as GRAPE, deposit, type CategoryKey } from "../lib/grapeRates";
+import { money } from "@core/property";
 import { SiteFrame } from "./BlogPage";
 import "../work.css";
 
@@ -55,16 +57,7 @@ export function WorkPage() {
 // ---------------------------------------------------------------------------
 // Grape Studios, a concept
 // ---------------------------------------------------------------------------
-// Sample categories, to be replaced with Grape Studios' own
-const CATEGORIES = [
-  { key: "portrait", name: "Portraits", hours: 1 },
-  { key: "couples", name: "Couples", hours: 1.5 },
-  { key: "family", name: "Family", hours: 1.5 },
-  { key: "graduation", name: "Graduation", hours: 1 },
-  { key: "product", name: "Products", hours: 2 },
-  { key: "events", name: "Events", hours: 4 },
-];
-const SLOTS = ["09:00", "11:00", "14:00", "16:00"];
+const SLOTS = ["08:00", "10:00", "12:00", "14:00", "16:00"];
 
 export function GrapeStudiosPage() {
   useTitle("Grape Studios · a concept by TEBOS");
@@ -72,52 +65,75 @@ export function GrapeStudiosPage() {
     <div className="gr">
       <header className="gr-nav">
         <a href="/work" className="gr-back">← Work</a>
-        <span className="gr-mark">grape<span>studios</span></span>
-        <span className="gr-flag">Concept · sample content</span>
+        <span className="gr-mark"><img src="/work/grape/logo.png" alt="" width={34} height={34} /> GRAPE STUDIOS</span>
+        <span className="gr-flag">Concept by TEBOS</span>
       </header>
       <section className="gr-hero">
-        <h1>Book the shoot you want.<br />Edit like a studio.</h1>
-        <p>Choose a kind of shoot and a time. Then edit your photos in one place: a look, a reference to match, a whole batch at once.</p>
+        <h1>Book the shoot you want.<br /><em>Edit like a studio.</em></h1>
+        <p>Studio, on location, corporate, graduation, property and events, in Johannesburg.</p>
       </section>
       <Booking />
       <Editor />
       <footer className="gr-foot">
-        A concept TEBOS made for Grape Studios. The categories are samples, and booking here books nothing. The editor
-        works on your photos inside your browser; nothing is uploaded.
+        A concept TEBOS made for Grape Studios, with Grape Studios' own photos and rates. Booking here sends nothing. The
+        editor works on your photos inside your browser; nothing is uploaded.
       </footer>
     </div>
   );
 }
 
 function Booking() {
-  const [cat, setCat] = useState<string | null>(null);
+  const [catKey, setCatKey] = useState<CategoryKey | null>(null);
+  const [pkg, setPkg] = useState<number | "custom" | null>(null);
   const [day, setDay] = useState<string | null>(null);
   const [slot, setSlot] = useState<string | null>(null);
+  const [brief, setBrief] = useState("");
   const [done, setDone] = useState(false);
   const days = useMemo(() => {
     const out: Array<{ iso: string; label: string }> = [];
     const d = new Date();
-    for (let i = 1; out.length < 10; i++) {
+    for (let i = 2; out.length < 10; i++) {
       const x = new Date(d.getFullYear(), d.getMonth(), d.getDate() + i);
-      if (x.getDay() === 0) continue;
       out.push({ iso: x.toISOString().slice(0, 10), label: x.toLocaleDateString("en-ZA", { weekday: "short", day: "numeric", month: "short" }) });
     }
     return out;
   }, []);
-  const chosen = CATEGORIES.find((c) => c.key === cat);
+  const cat = GRAPE.find((c) => c.key === catKey);
+  const chosen = cat && typeof pkg === "number" ? cat.packages[pkg] : undefined;
+  const reset = (k: CategoryKey) => { setCatKey(k); setPkg(GRAPE.find((c) => c.key === k)!.packages.length ? null : "custom"); setDay(null); setSlot(null); setDone(false); };
   return (
     <section className="gr-section" aria-labelledby="gr-book">
       <p className="gr-step">01</p>
       <h2 id="gr-book">Book a shoot</h2>
-      <div className="gr-cats" role="group" aria-label="Kind of shoot">
-        {CATEGORIES.map((c) => (
-          <button key={c.key} type="button" className={`gr-cat ${cat === c.key ? "on" : ""}`} aria-pressed={cat === c.key}
-            onClick={() => { setCat(c.key); setDone(false); }}>
-            <span>{c.name}</span><small>{c.hours} h</small>
-          </button>
+      <ul className="gr-cats" role="group" aria-label="Kind of shoot">
+        {GRAPE.map((c) => (
+          <li key={c.key}>
+            <button type="button" className={`gr-cat ${catKey === c.key ? "on" : ""}`} aria-pressed={catKey === c.key} onClick={() => reset(c.key)}>
+              <img src={c.cover} alt={c.coverAlt} loading="lazy" />
+              <span className="gr-cat-name">{c.name}</span>
+            </button>
+          </li>
         ))}
-      </div>
-      {chosen && (
+      </ul>
+      {cat && (
+        <div className="gr-card" data-testid="rate-card">
+          <div className="gr-card-head">
+            <h3>{cat.name}</h3>
+            <p>{cat.pictures} · images in {cat.delivery}{cat.transport ? ` · travel R${cat.transport[0]} to R${cat.transport[1]} around Johannesburg` : " · at the studio"}</p>
+          </div>
+          <div className="gr-pkgs" role="group" aria-label="Rate">
+            {cat.packages.map((p, i) => (
+              <button key={p.label} type="button" className={`gr-pkg ${pkg === i ? "on" : ""}`} aria-pressed={pkg === i} onClick={() => { setPkg(i); setDone(false); }}>
+                <span>{p.label}</span><strong>{money(p.cents / 100)}</strong>{p.note && <small>{p.note}</small>}
+              </button>
+            ))}
+            <button type="button" className={`gr-pkg ${pkg === "custom" ? "on" : ""}`} aria-pressed={pkg === "custom"} onClick={() => { setPkg("custom"); setDone(false); }}>
+              <span>Custom rate</span><strong>Quoted</strong><small>Tailored to what you need</small>
+            </button>
+          </div>
+        </div>
+      )}
+      {cat && pkg !== null && (
         <div className="gr-when">
           <div className="gr-days" role="group" aria-label="Day">
             {days.map((d) => (
@@ -131,14 +147,24 @@ function Booking() {
               ))}
             </div>
           )}
+          {pkg === "custom" && day && (
+            <label className="gr-brief">What do you need?
+              <textarea rows={3} value={brief} onChange={(e) => setBrief(e.target.value)} placeholder="The occasion, how many people, how long, where" />
+            </label>
+          )}
         </div>
       )}
-      {chosen && day && slot && (
+      {cat && pkg !== null && day && slot && (
         <div className="gr-summary">
-          <p><strong>{chosen.name}</strong> · {days.find((d) => d.iso === day)?.label} · {slot} · {chosen.hours} h</p>
+          <div>
+            <p><strong>{cat.name}</strong> · {chosen ? chosen.label : "Custom rate"} · {days.find((d) => d.iso === day)?.label} · {slot}</p>
+            {chosen
+              ? <p className="gr-note" data-testid="deposit">{money(chosen.cents / 100)}. A {money(deposit(chosen.cents).deposit / 100)} deposit (half, non-refundable) holds the date; {money(deposit(chosen.cents).balance / 100)} on the day{cat.transport ? ", plus travel" : ""}.</p>
+              : <p className="gr-note">Grape Studios replies with a quote. The date is held once the deposit is paid.</p>}
+          </div>
           {done
-            ? <p role="status" className="gr-note">This is a concept, so nothing was booked. On Grape Studios' platform this would hold the slot and send a confirmation.</p>
-            : <button type="button" className="gr-btn" onClick={() => setDone(true)}>Request this shoot</button>}
+            ? <p role="status" className="gr-note">This is a concept, so nothing was sent. On Grape Studios' platform this would hold the slot and send the deposit request.</p>
+            : <button type="button" className="gr-btn" disabled={pkg === "custom" && brief.trim().length < 10} onClick={() => setDone(true)}>{chosen ? "Request this shoot" : "Ask for a quote"}</button>}
         </div>
       )}
     </section>
