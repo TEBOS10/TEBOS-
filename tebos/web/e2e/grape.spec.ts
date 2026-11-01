@@ -52,6 +52,12 @@ test("booked online: a free time, a deposit due, and a private page with the sch
   // consent is required
   await expect(page).not.toHaveURL(/\/b\//);
   await form.getByRole("checkbox").check();
+  // the publishing question must be answered either way
+  await form.getByRole("button", { name: "Request this shoot" }).click();
+  await expect(page).not.toHaveURL(/\/b\//);
+  const publishing = form.getByRole("group", { name: "Publishing your photos" });
+  await expect(publishing).toContainText("If you say no, your photos are only ever sent to you.");
+  await publishing.getByLabel("No, keep my photos private.").check();
   await form.getByRole("button", { name: "Request this shoot" }).click();
 
   await expect(page).toHaveURL(/\/b\/tok-/);
@@ -62,7 +68,7 @@ test("booked online: a free time, a deposit due, and a private page with the sch
   await expect(mine.getByRole("region", { name: "The studio's week" })).toContainText("10:00–11:00 · you");
   await expect(mine).not.toContainText("lerato@example.co.za");
   const sent = fake.writes.find((w) => w.table === "booking_request")!.body as Record<string, unknown>;
-  expect(sent).toMatchObject({ p_slug: "grape-studios", p_package: "p-1h", p_name: "Lerato M", p_consent: true });
+  expect(sent).toMatchObject({ p_slug: "grape-studios", p_package: "p-1h", p_name: "Lerato M", p_consent: true, p_publish: false });
 });
 
 test("a wrong link shows nothing", async ({ page }) => {

@@ -290,3 +290,14 @@ button.bk-item { cursor: pointer; }
 .bk-check { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 14px; color: var(--muted); }
 .bk-check li.done { color: var(--ink); }
 .bk-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+/* the AI crew (ADR 0020) */
+.crew-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.crew-team h3 { margin: 0 0 8px; font-size: 15px; font-weight: 500; }
+.crew-shift { padding: 8px 0; border-top: 1px solid var(--line); }
+.crew-shift > p.muted { margin: 0 0 4px; display: flex; align-items: center; gap: 6px; font-size: 12px; }
+.crew-agent { margin: 4px 0; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 14px; }
+.crew-gap { margin: 4px 0; font-size: 13px; color: var(--faint); }
+.crew-work { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.crew-item { padding: 14px; border: 1px solid var(--line); border-radius: 14px; display: grid; gap: 8px; }
+.crew-item p { margin: 0; }
+.crew-draft { margin: 0; padding: 10px 14px; border-left: 3px solid var(--line); white-space: pre-wrap; }

@@ -5,6 +5,7 @@ import { PUBLIC_LIMITS, RULE_CODES, transitionTable } from "../src";
 import { PLAN_TERMS } from "../src/domain/plans";
 import { BOARD_LIMITS } from "../src/domain/editions";
 import { FACTORY_OUTCOMES, VALIDATION_STATES } from "../src/domain/catalogue";
+import { AI_WORK, DAY_STARTS, NIGHT_STARTS } from "../src/domain/aiCrew";
 import { CREW_ROLES, RELEASES_NOTE, DEPOSIT_SHARE as BOOKING_DEPOSIT, MAX_AHEAD_MONTHS, MAX_OPEN_REQUESTS, MIN_NOTICE_HOURS, SLOT_STEP_MINUTES } from "../src/domain/bookings";
 import { ELIGIBLE_SECTORS, EQUITY_PCT, MAX_EQUITY_PARTNERS, MIN_TRADING_MONTHS, QUALIFYING_BANDS, REVENUE_BANDS, VOTING_PCT } from "../src/domain/equity";
 import {
@@ -124,6 +125,11 @@ describe("domain mirrors the database", () => {
     const crew = sql.split("function tebos_private.guard_booking_crew()")[1]!.split("end $$")[0]!;
     expect(crew).toContain(`m.role in (${CREW_ROLES.map((r) => `'${r}'`).join(", ")})`);
     expect(sql).toContain(`length(trim(releases_note)) between ${RELEASES_NOTE.min} and ${RELEASES_NOTE.max}`);
+    // the AI crew: shifts and which team does which work
+    const shift = sql.split("function tebos_private.ai_shift_at")[1]!.split("$$")[1]!;
+    expect(shift).toContain(`between ${DAY_STARTS} and ${NIGHT_STARTS - 1}`);
+    const guard = sql.split("function tebos_private.guard_ai_task()")[1]!.split("end $$")[0]!;
+    for (const [kind, w] of Object.entries(AI_WORK)) expect(guard).toContain(`'${kind}' then '${w.team}'`);
   });
 
   it("the equity programme's terms and lists match the database's", () => {

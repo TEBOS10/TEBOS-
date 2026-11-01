@@ -53,7 +53,7 @@ select t99zzi.expect_error(format($$select * from public.booking_crew(%L)$$, :'o
 -- a requested booking a week out
 set role anon;
 select public.booking_request('studio-99zzi', :'svc', :'hour', ((current_date + 7) + time '10:00') at time zone 'Africa/Johannesburg', 60,
-  'Lerato M', 'lerato@example.co.za', null, null, true) as req \gset
+  'Lerato M', 'lerato@example.co.za', null, null, true, false) as req \gset
 select (:'req'::jsonb ->> 'token') as tok \gset
 set role authenticated;
 select set_config('request.jwt.claim.sub', :'op', false);

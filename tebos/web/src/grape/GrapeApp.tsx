@@ -135,7 +135,7 @@ function BookFlow({ cat, serviceKey }: { cat: Catalogue; serviceKey: string }) {
   const [day, setDay] = useState<string | null>(null);
   const [time, setTime] = useState<string | null>(null);
   const [times, setTimes] = useState<string[] | null>(null);
-  const [f, setF] = useState({ name: "", email: "", phone: "", brief: "", consent: false });
+  const [f, setF] = useState({ name: "", email: "", phone: "", brief: "", consent: false, publish: null as boolean | null });
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const days = useMemo(() => Array.from({ length: 21 }, (_, i) => plusDays(i + 1)), []);
@@ -150,7 +150,8 @@ function BookFlow({ cat, serviceKey }: { cat: Catalogue; serviceKey: string }) {
   async function submit(e: FormEvent) {
     e.preventDefault(); setError(null); setBusy(true);
     try {
-      const r = await requestBooking({ service: s!.id!, package: chosen?.id ?? null, starts: time!, minutes: length, ...f });
+      if (f.publish === null) { setError("Say whether we may publish photos from your shoot."); return; }
+      const r = await requestBooking({ service: s!.id!, package: chosen?.id ?? null, starts: time!, minutes: length, ...f, publish: f.publish });
       navigate(`/b/${r.token}`);
     } catch (err) {
       setError((err as { message?: string }).message ?? "That didn't go through. Try another time.");
@@ -225,6 +226,16 @@ function BookFlow({ cat, serviceKey }: { cat: Catalogue; serviceKey: string }) {
             </label>
             <label className="gs-check"><input type="checkbox" required checked={f.consent} onChange={(e) => setF({ ...f, consent: e.target.checked })} />
               I agree to the 50% non-refundable deposit, and to Grape Studios using my details for this booking only.</label>
+            <fieldset className="gs-consent" aria-label="Publishing your photos">
+              <legend>Publishing your photos</legend>
+              <p>Grape Studios sometimes shares its work on its website, Instagram (@grape.studios_) and Behance. If you say yes,
+                photos from your shoot may appear there, without your contact details. You can change your mind later by emailing
+                us, and we'll take them down. If you say no, your photos are only ever sent to you.</p>
+              <label className="gs-check"><input type="radio" name="publish" required checked={f.publish === true} onChange={() => setF({ ...f, publish: true })} />
+                Yes, Grape Studios may publish photos from my shoot.</label>
+              <label className="gs-check"><input type="radio" name="publish" checked={f.publish === false} onChange={() => setF({ ...f, publish: false })} />
+                No, keep my photos private.</label>
+            </fieldset>
             {error && <p className="gs-error" role="alert">{error}</p>}
             <button className="gs-btn" disabled={busy}>{busy ? "Sending…" : chosen ? "Request this shoot" : "Ask for a quote"}</button>
           </form>

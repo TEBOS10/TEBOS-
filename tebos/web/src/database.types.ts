@@ -4895,9 +4895,21 @@ export type Database = {
         Relationships: []
       }
       bookings: {
-        Row: { id: string; ref: string; org_id: string; service_id: string; package_id: string | null; starts_at: string; ends_at: string; status: string; status_note: string; customer_name: string; customer_email: string; customer_phone: string | null; brief: string | null; price_cents: number | null; deposit_cents: number | null; deposit_ref: string | null; delivered_note: string | null; token_hash: string; consent_at: string; created_by: string | null; created_at: string; updated_at: string; assignee_id: string | null; call_sheet_at: string | null; releases_note: string | null; backed_up_at: string | null; balance_ref: string | null; gallery_url: string | null }
+        Row: { id: string; ref: string; org_id: string; service_id: string; package_id: string | null; starts_at: string; ends_at: string; status: string; status_note: string; customer_name: string; customer_email: string; customer_phone: string | null; brief: string | null; price_cents: number | null; deposit_cents: number | null; deposit_ref: string | null; delivered_note: string | null; token_hash: string; consent_at: string; created_by: string | null; created_at: string; updated_at: string; assignee_id: string | null; call_sheet_at: string | null; releases_note: string | null; backed_up_at: string | null; balance_ref: string | null; gallery_url: string | null; publish_consent: boolean | null; publish_consent_at: string | null }
         Insert: { org_id: string; service_id: string; package_id?: string | null; starts_at: string; ends_at: string; status_note: string; customer_name: string; customer_email: string; customer_phone?: string | null; brief?: string | null; token_hash: string; consent_at: string }
         Update: { starts_at?: string; ends_at?: string; status?: string; status_note?: string; price_cents?: number | null; deposit_ref?: string | null; delivered_note?: string | null; assignee_id?: string | null; call_sheet_at?: string | null; releases_note?: string | null; backed_up_at?: string | null; balance_ref?: string | null; gallery_url?: string | null }
+        Relationships: []
+      }
+      ai_agents: {
+        Row: { id: string; org_id: string; name: string; team: string; shift: string; provider: string; status: string; instructions: string | null; created_by: string | null; created_at: string }
+        Insert: { org_id: string; name: string; team: string; shift: string; provider?: string; instructions?: string | null }
+        Update: { name?: string; shift?: string; status?: string; instructions?: string | null }
+        Relationships: []
+      }
+      ai_tasks: {
+        Row: { id: string; org_id: string; team: string; kind: string; booking_id: string | null; agent_id: string | null; brief: string; status: string; draft: string | null; decided_by: string | null; decided_at: string | null; sent_note: string | null; created_at: string; updated_at: string }
+        Insert: { org_id: string; team: string; kind: string; booking_id?: string | null; brief: string }
+        Update: { status?: string; draft?: string | null; sent_note?: string | null }
         Relationships: []
       }
       partner_month_closes: {
@@ -4968,12 +4980,16 @@ export type Database = {
         Returns: { starts_at: string }[]
       }
       booking_request: {
-        Args: { p_slug: string; p_service: string; p_package: string | null; p_starts: string; p_minutes: number; p_name: string; p_email: string; p_phone: string | null; p_brief: string | null; p_consent: boolean }
+        Args: { p_slug: string; p_service: string; p_package: string | null; p_starts: string; p_minutes: number; p_name: string; p_email: string; p_phone: string | null; p_brief: string | null; p_consent: boolean; p_publish: boolean }
         Returns: Json
       }
       booking_for_token: {
         Args: { p_token: string }
         Returns: Json
+      }
+      ai_on_duty: {
+        Args: { p_org: string }
+        Returns: { id: string; name: string; team: string; shift: string }[]
       }
       booking_crew: {
         Args: { p_org: string }

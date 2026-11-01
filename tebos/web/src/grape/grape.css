@@ -167,3 +167,8 @@ h1, h2, h3, p { margin: 0; }
 .gs-made-label { margin: 0; font-size: 13px; color: var(--g-muted); }
 .gs-reel-canvas { position: absolute; left: -10000px; top: 0; width: 108px; height: 192px; }
 .gs-small { font-size: 13px; margin-top: 18px; }
+
+/* Publishing consent at intake (ADR 0020) */
+.gs-consent { margin: 4px 0 0; padding: 16px 18px; border: 1px solid var(--g-line); border-radius: 16px; display: grid; gap: 8px; }
+.gs-consent legend { padding: 0 6px; font-weight: 500; }
+.gs-consent p { margin: 0; color: var(--g-muted); font-size: 14px; line-height: 1.5; }

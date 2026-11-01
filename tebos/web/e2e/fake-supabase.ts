@@ -566,6 +566,11 @@ function answerRpc(tables: FakeSupabase["tables"], name: string, args: Record<st
         week_busy: open(b.org_id).map((x) => ({ starts_at: x.starts_at, ends_at: x.ends_at, yours: x.id === b.id })) };
     }
   }
+  if (name === "ai_on_duty") {
+    const h = (new Date().getUTCHours() + 2) % 24, shift = h >= 6 && h < 18 ? "day" : "night";
+    return (t.ai_agents ?? []).filter((a) => a.org_id === args.p_org && a.status === "active" && a.shift === shift)
+      .map((a) => ({ id: a.id, name: a.name, team: a.team, shift: a.shift }));
+  }
   if (name === "equity_client_orgs") return (t.organisations ?? []).filter((o) => (o.app ?? "tebos") === "tebos").map((o) => ({ org_id: o.id, org_name: o.name }));
   if (name === "equity_audit") {
     // the last few months' totals from the fixture's sales and closes (simplified from the database's audit: no flags
