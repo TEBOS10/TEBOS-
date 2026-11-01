@@ -53,7 +53,7 @@ export const PLANS: Plan[] = [
     name: PLAN_TERMS.equity.name,
     price: EQUITY_SHARE,
     cadence: "equity, instead of fees",
-    pitch: "For businesses that can't pay upfront: we take a fixed share and grow with you.",
+    pitch: "For businesses that qualify but can't pay upfront: we take a small, fixed share and grow with you.",
     features: PLAN_TERMS.equity.deliverables,
     cta: "Apply",
   },

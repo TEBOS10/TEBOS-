@@ -39,6 +39,8 @@ import { MarketingPlaybookPage, SalesPlaybookPage, StaffInvitePage, StaffTeamPag
 import { SalesCallsPage } from "./pages/SalesCallsPage";
 import { WebDeliveryPage, WebProjectPage } from "./pages/WebDeliveryPage";
 import { WebsitePage } from "./pages/WebsitePage";
+import { EquityPage } from "./pages/EquityPage";
+import { SalesRegisterPage } from "./pages/SalesRegisterPage";
 import { StaffShell } from "./components/StaffShell";
 import { BlogIndex, BlogPost } from "./pages/BlogPage";
 import { AiClientsPage } from "./pages/AiClientsPage";
@@ -78,6 +80,7 @@ const ROUTES: Array<[string, (p: Record<string, string>) => ReactNode]> = [
   ["/reeds", () => <ReedsPage />],
   ["/channel", () => <ChannelPage />],
   ["/website", () => <WebsitePage />],
+  ["/sales-register", () => <SalesRegisterPage />],
   ["/ai-clients", () => <AiClientsPage />],
   ["/reeds/:id", (p) => <ReedsRequestPage id={p.id!} />],
   ...staffRoutes(),
@@ -93,6 +96,7 @@ function staffRoutes(): Array<[string, (p: Record<string, string>) => ReactNode]
     ["/pipeline/billing", () => <BillingPage />],
     ["/pipeline/channel", () => <StaffChannelsPage />],
     ["/pipeline/channel/:org", (p) => <StaffChannelsPage orgId={p.org!} />],
+    ["/pipeline/equity", () => <EquityPage />],
     ["/pipeline/:id", (p) => <OpportunityPage id={p.id!} />],
     ["/sales", () => <SalesPlaybookPage />],
     ["/sales/calls", () => <SalesCallsPage />],

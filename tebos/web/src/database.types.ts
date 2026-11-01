@@ -4750,6 +4750,136 @@ export type Database = {
         }
         Relationships: []
       }
+      equity_applications: {
+        Row: {
+          id: string
+          org_id: string | null
+          business_name: string
+          registration_number: string | null
+          sector: string
+          trading_since: string | null
+          revenue_band: string
+          employees: number
+          owner_full_time: boolean
+          revenue_evidence_note: string | null
+          reporting_consent: boolean
+          package: string
+          status: string
+          status_note: string
+          screened_by: string | null
+          approved_by: string | null
+          agreement_ref: string | null
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          business_name: string
+          sector: string
+          revenue_band: string
+          status_note: string
+          org_id?: string | null
+          registration_number?: string | null
+          trading_since?: string | null
+          employees?: number
+          owner_full_time?: boolean
+          revenue_evidence_note?: string | null
+          reporting_consent?: boolean
+          package?: string
+        }
+        Update: {
+          org_id?: string | null
+          business_name?: string
+          registration_number?: string | null
+          sector?: string
+          trading_since?: string | null
+          revenue_band?: string
+          employees?: number
+          owner_full_time?: boolean
+          revenue_evidence_note?: string | null
+          reporting_consent?: boolean
+          package?: string
+          status?: string
+          status_note?: string
+          agreement_ref?: string | null
+        }
+        Relationships: []
+      }
+      equity_terms: {
+        Row: {
+          org_id: string
+          application_id: string
+          equity_pct: number
+          voting_pct: number
+          package: string
+          agreement_ref: string
+          starts_on: string
+          ended_on: string | null
+          recorded_by: string | null
+          created_at: string
+        }
+        Insert: {
+          org_id: string
+          application_id: string
+          package: string
+          agreement_ref: string
+          starts_on: string
+        }
+        Update: {
+          ended_on?: string | null
+        }
+        Relationships: []
+      }
+      partner_sales: {
+        Row: {
+          id: string
+          org_id: string
+          sold_on: string
+          kind: string
+          amount_cents: number
+          reference: string | null
+          channel: string
+          customer_ref: string | null
+          note: string | null
+          recorded_by: string | null
+          created_at: string
+        }
+        Insert: {
+          org_id: string
+          sold_on: string
+          kind: string
+          amount_cents: number
+          reference?: string | null
+          channel?: string
+          customer_ref?: string | null
+          note?: string | null
+        }
+        Update: {
+        }
+        Relationships: []
+      }
+      partner_month_closes: {
+        Row: {
+          org_id: string
+          period: string
+          sales_cents: number
+          refunds_cents: number
+          corrections_cents: number
+          net_cents: number
+          sale_count: number
+          attested_by: string | null
+          attested_at: string
+          note: string | null
+        }
+        Insert: {
+          org_id: string
+          period: string
+          note?: string | null
+        }
+        Update: {
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -4782,6 +4912,14 @@ export type Database = {
       tepos_open_week: {
         Args: { p_org: string; p_week_start: string }
         Returns: string
+      }
+      equity_audit: {
+        Args: { p_org: string; p_months?: number }
+        Returns: { period: string; closed: boolean; sales_cents: number; refunds_cents: number; corrections_cents: number; net_cents: number; sale_count: number; flags: string[] }[]
+      }
+      equity_client_orgs: {
+        Args: Record<PropertyKey, never>
+        Returns: { org_id: string; org_name: string }[]
       }
       web_work_queue: {
         Args: Record<PropertyKey, never>

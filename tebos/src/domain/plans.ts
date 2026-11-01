@@ -91,7 +91,8 @@ export const PLAN_TERMS: Record<PlanKey, PlanTerms> = {
       "Everything in Architecture & Operations",
       "No monthly fees",
       "Hands-on support from the TEBOS team to put the architecture in place",
-      "A fixed share, agreed upfront",
+      "5% equity and 5.1% of the votes, in a signed agreement",
+      "For registered businesses that qualify; TEBOS never sees bank accounts",
     ],
   },
 };

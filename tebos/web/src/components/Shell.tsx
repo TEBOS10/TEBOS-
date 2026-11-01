@@ -1,9 +1,11 @@
-import { BookOpen, Briefcase, Clapperboard, Eye, Building2, CheckSquare, Download, Gauge, Globe, Home, ListChecks, LogOut, Megaphone, Menu, MessageSquare, MessagesSquare, PhoneCall, Plug, Receipt, ScanSearch, ShieldCheck, Sparkles, Stamp, Users } from "lucide-react";
+import { BookOpen, Briefcase, Clapperboard, Eye, Building2, CheckSquare, Download, Gauge, Globe, Handshake, Home, ListChecks, LogOut, Megaphone, Menu, MessageSquare, MessagesSquare, PhoneCall, Plug, Receipt, ScanSearch, ShieldCheck, Sparkles, Stamp, Users } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { DEMO_BUSINESS } from "../demo/data";
 import { exitDemo, isDemo } from "../demo/mode";
 import { Link, usePath } from "../lib/router";
 import { useOrg } from "../lib/session";
+import { useQuery } from "../lib/useQuery";
+import { myTerms } from "../lib/equityData";
 import { useStaff } from "../lib/staff";
 import { useInstallPrompt } from "../lib/install";
 
@@ -31,6 +33,8 @@ const SEE = [
 export function Shell({ children }: { children: ReactNode }) {
   const path = usePath();
   const { organisation, organisations, switchOrganisation, role, db, session } = useOrg();
+  // an equity partner records its sales; everyone else never sees the page
+  const partner = useQuery(() => myTerms(db, organisation.id), [organisation.id]);
   // on a phone the menu folds away behind a button, and folds again after choosing a page
   const [menuOpen, setMenuOpen] = useState(false);
   const install = useInstallPrompt();
@@ -38,13 +42,14 @@ export function Shell({ children }: { children: ReactNode }) {
   // TEBOS's own staff also see the client pipeline and the sales playbook
   const { access } = useStaff();
   const pipeline = access?.sales || access?.maintainer;
-  const base = NAV;
+  const base = partner.data ? [...NAV.slice(0, 4), { to: "/sales-register", label: "Sales", icon: Receipt }, ...NAV.slice(4)] : NAV;
   const nav = pipeline || access?.marketing
     ? [...base,
        ...(pipeline ? [{ to: "/pipeline", label: "Pipeline", icon: Briefcase, exact: false }, { to: "/sales/calls", label: "Today's calls", icon: PhoneCall, exact: true }, { to: "/sales", label: "Sales playbook", icon: BookOpen, exact: true }] : []),
        { to: "/marketing", label: "Marketing", icon: Megaphone, exact: true },
        { to: "/marketing/playbook", label: "Marketing playbook", icon: BookOpen, exact: true },
        ...(access?.sales ? [{ to: "/meet", label: "Meeting mode", icon: PhoneCall, exact: true }] : []),
+       ...(pipeline ? [{ to: "/pipeline/equity", label: "Equity partners", icon: Handshake, exact: true }] : []),
        ...(access?.maintainer ? [{ to: "/web-delivery", label: "Web delivery", icon: Globe, exact: false }, { to: "/pipeline/queue", label: "Maintainer queue", icon: ListChecks, exact: true }, { to: "/pipeline/channel", label: "Client channels", icon: MessagesSquare, exact: false }] : []),
        ...(access?.admin ? [{ to: "/pipeline/billing", label: "Billing", icon: Receipt, exact: true }] : [])]
     : base;
