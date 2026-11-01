@@ -5,6 +5,7 @@ import { PUBLIC_LIMITS, RULE_CODES, transitionTable } from "../src";
 import { PLAN_TERMS } from "../src/domain/plans";
 import { BOARD_LIMITS } from "../src/domain/editions";
 import { FACTORY_OUTCOMES, VALIDATION_STATES } from "../src/domain/catalogue";
+import { DELIVERY_BUSINESS_DAYS, PRIMARY_OBJECTIVES, READINESS_ITEMS, WAIVABLE, WEBSITE_TYPES } from "../src/domain/web-delivery";
 
 const migrationsDir = join(__dirname, "..", "supabase", "migrations");
 const sql = readdirSync(migrationsDir)
@@ -66,6 +67,22 @@ describe("domain mirrors the database", () => {
     const f = read(flows!), p = read("else" + pieces!);
     expect({ starter: { flows: f.other, pieces: p.other }, growth: { flows: f.growth, pieces: p.growth }, company: { flows: f.company, pieces: p.company } })
       .toEqual(BOARD_LIMITS);
+  });
+
+  it("web delivery's lists match the database's", () => {
+    const body = sql.split("create table public.web_projects")[1]!.split(");")[0]!;
+    const list = (col: string, src = body) =>
+      [...src.split(`check (${col} in (`)[1]!.split(")")[0]!.matchAll(/'([a-z_]+)'/g)].map((m) => m[1]).sort();
+    expect(list("website_type")).toEqual(Object.keys(WEBSITE_TYPES).sort());
+    expect(list("primary_objective")).toEqual(Object.keys(PRIMARY_OBJECTIVES).sort());
+    const readiness = sql.split("create table public.web_readiness_items")[1]!.split(");")[0]!;
+    expect(list("item", readiness)).toEqual(Object.keys(READINESS_ITEMS).sort());
+    expect(readiness).toContain("check (status <> 'waived' or item = 'assets')");
+    expect([...WAIVABLE]).toEqual(["assets"]);
+    const gaps = sql.split("function tebos_private.web_readiness_gaps")[1]!.split("end $$")[0]!;
+    expect([...gaps.split("foreach v_item in array array[")[1]!.split("]")[0]!.matchAll(/'([a-z_]+)'/g)].map((m) => m[1]))
+      .toEqual(Object.keys(READINESS_ITEMS));
+    expect(sql).toContain(`tebos_private.add_business_days(v_today, ${DELIVERY_BUSINESS_DAYS})`);
   });
 
   it("the catalogue's validation states and factory outcomes match the database's", () => {

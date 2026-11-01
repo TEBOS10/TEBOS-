@@ -39,6 +39,32 @@ Update this list every run; strike items when they're done.
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 1 Nov 2026 (day): Web Delivery Division, milestone 1 (founder's operating specification)
+
+- **Inspected first:** TEBOS already has client onboarding steps (`delivery_tasks`), package ceilings (board limits)
+  and the state-machine table. The specification asks for a module, not a new app, so milestone 1 reuses all of these.
+- **Built (migration `web_delivery`, not merged, not applied):**
+  - the project record and its state machine;
+  - insert-only scope revisions held to the package;
+  - approvals by the client's admin only;
+  - the readiness check, with the clock starting at build and pausing while the client blocks it;
+  - QA verdicts, and the client-review and release gates.
+  Mirrored in `src/domain/web-delivery.ts`.
+- **Proved:**
+  - typecheck;
+  - 456 unit tests;
+  - `test:db`, including the new `99zz_web_delivery.sql`, and the 63 integration tests.
+- **Docs:** `docs/web-delivery/` (README, ACCEPTANCE, DESIGN_BRIEF (provisional), TOOLCHAIN, HANDOVER), ADR 0011, and
+  `.env.example` for the worker (names only).
+- **Found:**
+  - Vercel's free Hobby plan forbids commercial use, so client sites need another host or a paid plan before they go
+    live publicly;
+  - the specification lists Company at R7,200, but the recorded price is R7,500, which was not changed.
+- **Waiting on the founder:**
+  - "merge it", for the database change;
+  - the Vercel plan check, and a choice of host for client sites;
+  - which Company price is right.
+
 ## 1 Nov 2026 (morning run): healthy; 5 more businesses on the sales desk
 
 - **Worker:** 900 passes; last beat at 03:47:59 UTC, on `f45e798` (main since has docs only, so no redeploy). The

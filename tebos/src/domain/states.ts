@@ -303,6 +303,27 @@ export const propertyProblemMachine = machine({
   },
 });
 
+export const webProjectMachine = machine({
+  initial: ["lead", "intake"],
+  transitions: {
+    lead: ["intake", "cancelled"],
+    intake: ["scope_review", "blocked_client", "cancelled"],
+    scope_review: ["approval", "intake", "blocked_client", "cancelled"],
+    approval: ["build", "scope_review", "blocked_client", "cancelled"],
+    build: ["qa", "blocked_client", "blocked_technical", "scope_change", "cancelled"],
+    qa: ["client_review", "qa_failed", "cancelled"],
+    qa_failed: ["build", "cancelled"],
+    client_review: ["release", "build", "scope_change", "blocked_client", "cancelled"],
+    release: ["handover", "build"],
+    handover: ["closed"],
+    blocked_client: ["intake", "scope_review", "approval", "build", "client_review", "cancelled"],
+    blocked_technical: ["build", "cancelled"],
+    scope_change: ["scope_review", "cancelled"],
+    closed: [],
+    cancelled: [],
+  },
+});
+
 export const reedsDecisionMachine = machine({
   initial: ["open"],
   transitions: {
@@ -337,6 +358,7 @@ export const MACHINES = {
   reeds_decision: reedsDecisionMachine,
   sales_prospect: salesProspectMachine,
   property_problem: propertyProblemMachine,
+  web_project: webProjectMachine,
 } as const;
 
 export type MachineName = keyof typeof MACHINES;
@@ -354,6 +376,7 @@ export type InterviewStatus = StatesOf<typeof interviewMachine>;
 export type ObjectiveStatus = StatesOf<typeof objectiveMachine>;
 export type SalesProspectStatus = StatesOf<typeof salesProspectMachine>;
 export type PropertyProblemStatus = StatesOf<typeof propertyProblemMachine>;
+export type WebProjectStatus = StatesOf<typeof webProjectMachine>;
 export type OpportunityStatus = StatesOf<typeof opportunityMachine>;
 export type WorkRequestStatus = StatesOf<typeof workRequestMachine>;
 export type WorkTaskStatus = StatesOf<typeof workTaskMachine>;
