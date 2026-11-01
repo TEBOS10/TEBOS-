@@ -91,7 +91,7 @@ export function PricingPage() {
       <p className="pr-small" data-testid="plan-terms">
         Monthly plans run for at least {MIN_TERM_MONTHS} months; or pay yearly, {ANNUAL_MONTHS_CHARGED} months' fee for 12. {RUNNING_COSTS}. Larger organisations get a written quote.
       </p>
-      <p className="pr-small">Prices exclude VAT. The equity partnership is subject to a fit assessment, a valuation and a signed shareholder agreement; nothing on this page is an offer or a commitment by either side.</p>
+      <p className="pr-small">Prices exclude VAT. The equity partnership is only for businesses that qualify, and is subject to the founder's approval and a signed shareholder agreement; nothing on this page is an offer or a commitment by either side.</p>
 
       <section className="pr-form-wrap" id="start">
         {sent ? (

@@ -5,7 +5,7 @@ import { registerServiceWorker } from "./lib/install";
 import "@fontsource-variable/geist";
 import "@fontsource-variable/geist-mono";
 import "./styles.css";
-import "./cinematic.css";
+import "./quiet.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

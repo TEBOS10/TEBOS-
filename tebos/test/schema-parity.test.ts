@@ -5,6 +5,7 @@ import { PUBLIC_LIMITS, RULE_CODES, transitionTable } from "../src";
 import { PLAN_TERMS } from "../src/domain/plans";
 import { BOARD_LIMITS } from "../src/domain/editions";
 import { FACTORY_OUTCOMES, VALIDATION_STATES } from "../src/domain/catalogue";
+import { ELIGIBLE_SECTORS, EQUITY_PCT, MAX_EQUITY_PARTNERS, MIN_TRADING_MONTHS, QUALIFYING_BANDS, REVENUE_BANDS, VOTING_PCT } from "../src/domain/equity";
 import {
   ASSET_KINDS, ASSET_SOURCES, ASSET_STATUSES, COST_KINDS, DELIVERY_BUSINESS_DAYS, INTEGRATION_SERVICES, INTEGRATION_STATUSES, TEBOS_ACCESS,
   WEB_PROJECTS_PER_MAINTAINER, INTAKE_REQUIRED, VISUAL_DIRECTIONS, SA_FIXED_HOLIDAYS, PRIMARY_OBJECTIVES, READINESS_ITEMS, WAIVABLE, WEB_ROLES, WEBSITE_TYPES,
@@ -105,6 +106,19 @@ describe("domain mirrors the database", () => {
     const assignment = sql.split("function tebos_private.guard_web_assignment")[1]!.split("end $$")[0]!;
     expect(assignment).toContain(`web_open_load(new.maintainer_id, new.id) >= ${WEB_PROJECTS_PER_MAINTAINER}`);
     expect(sql.split("function public.web_team_load")[1]!.split("$$")[1]).toContain(`${WEB_PROJECTS_PER_MAINTAINER}\n    from`);
+  });
+
+  it("the equity programme's terms and lists match the database's", () => {
+    expect(sql).toContain(`check (equity_pct = ${EQUITY_PCT.toFixed(2)})`);
+    expect(sql).toContain(`check (voting_pct = ${VOTING_PCT.toFixed(2)})`);
+    const apps = sql.split("create table public.equity_applications")[1]!.split(");")[0]!;
+    const list = (col: string) => [...apps.split(`check (${col} in (`)[1]!.split(")")[0]!.matchAll(/'([a-z0-9_]+)'/g)].map((m) => m[1]).sort();
+    expect(list("sector")).toEqual(Object.keys(ELIGIBLE_SECTORS).sort());
+    expect(list("revenue_band")).toEqual(Object.keys(REVENUE_BANDS).sort());
+    const gaps = sql.split("function tebos_private.equity_qualification_gaps")[1]!.split("$$")[1]!;
+    expect(gaps).toContain(`interval '${MIN_TRADING_MONTHS} months'`);
+    expect([...gaps.split("not in (")[1]!.split(")")[0]!.matchAll(/'([a-z0-9_]+)'/g)].map((m) => m[1]).sort()).toEqual([...QUALIFYING_BANDS].sort());
+    expect(sql.split("function tebos_private.guard_equity_application")[1]!.split("end $$")[0]).toContain(`>= ${MAX_EQUITY_PARTNERS} then`);
   });
 
   it("the catalogue's validation states and factory outcomes match the database's", () => {

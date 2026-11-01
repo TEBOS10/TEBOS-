@@ -952,3 +952,12 @@ table.table { width: 100%; border-collapse: collapse; }
 .web-checks { border: 0; padding: 0; margin: 0; display: grid; gap: 6px; }
 .web-checks legend { font-weight: 700; margin-bottom: 4px; }
 .web-checks label { display: flex; gap: 8px; align-items: flex-start; }
+
+/* Equity partners and the sales register: plain, quiet pages */
+.lead-number { font-size: 17px; color: var(--muted); margin: 0; }
+.lead-number strong { font-size: 34px; font-weight: 300; letter-spacing: -0.02em; color: var(--ink); margin-right: 6px; }
+.row-button { all: unset; box-sizing: border-box; width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; cursor: pointer; }
+.row-button:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; border-radius: 6px; }
+.segmented { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 3px; gap: 2px; flex-wrap: wrap; }
+.segmented button { border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 14px; padding: 7px 14px; border-radius: 999px; cursor: pointer; }
+.segmented button.on { background: var(--ink); color: var(--page, #fff); }

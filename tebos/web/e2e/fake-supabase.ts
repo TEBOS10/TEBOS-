@@ -485,6 +485,24 @@ function answerRpc(tables: FakeSupabase["tables"], name: string, args: Record<st
       return { user_id: s.user_id, open_projects: mine.length, building: mine.filter((p) => ["build", "qa", "qa_failed"].includes(String(p.status))).length, overdue: 0, capacity: 8 };
     });
   }
+  if (name === "equity_client_orgs") return (t.organisations ?? []).filter((o) => (o.app ?? "tebos") === "tebos").map((o) => ({ org_id: o.id, org_name: o.name }));
+  if (name === "equity_audit") {
+    // the last few months' totals from the fixture's sales and closes (simplified from the database's audit: no flags
+    // beyond what a test seeds in equity_audit_flags)
+    const today = new Date();
+    const out: Array<Record<string, unknown>> = [];
+    for (let i = 0; i < Number(args.p_months ?? 6); i++) {
+      const d = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() - i, 1));
+      const period = d.toISOString().slice(0, 10), next = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1)).toISOString().slice(0, 10);
+      const rows = (t.partner_sales ?? []).filter((x) => x.org_id === args.p_org && String(x.sold_on) >= period && String(x.sold_on) < next);
+      const sum = (k: string) => rows.filter((x) => x.kind === k).reduce((n, x) => n + Number(x.amount_cents), 0);
+      const closed = (t.partner_month_closes ?? []).some((c) => c.org_id === args.p_org && c.period === period);
+      out.push({ period, closed, sales_cents: sum("sale"), refunds_cents: sum("refund"), corrections_cents: sum("correction"),
+        net_cents: sum("sale") + sum("refund") + sum("correction"), sale_count: rows.filter((x) => x.kind === "sale").length,
+        flags: ((t.equity_audit_flags ?? []).find((f) => f.period === period)?.flags as string[]) ?? [] });
+    }
+    return out;
+  }
   if (name === "web_work_queue") {
     // every client's open requests, new briefs, due tasks and late projects (simplified from the database's read)
     const today = new Date().toISOString().slice(0, 10);
@@ -568,6 +586,10 @@ const COLUMN_DEFAULTS: Record<string, Record<string, unknown>> = {
   web_tasks: { status: "todo", assigned_to: null, blocked_reason: null, evidence: null, due_on: null },
   web_assets: { source: "unknown", status: "missing", licence_note: null, location: null },
   web_scope_revisions: { revision: 1, features: [], workflows: [] },
+  equity_applications: { status: "applied", org_id: null, registration_number: null, trading_since: null, employees: 0, owner_full_time: false,
+    revenue_evidence_note: null, reporting_consent: false, package: "starter", screened_by: null, approved_by: null, agreement_ref: null },
+  equity_terms: { equity_pct: 5, voting_pct: 5.1, ended_on: null },
+  partner_sales: { reference: null, customer_ref: null, note: null, channel: "other" },
   web_intakes: { answers: {}, status: "draft", submitted_by: null, submitted_at: null, reopen_reason: null },
   web_integrations: { status: "requested", verified_on: null, revocation_plan: null, transfer_plan: null },
   web_project_costs: { currency: "ZAR", incurred_on: new Date().toISOString().slice(0, 10) },

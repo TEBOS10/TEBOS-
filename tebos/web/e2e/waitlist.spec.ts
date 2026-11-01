@@ -4,7 +4,7 @@ import { installFakeSupabase } from "./fake-supabase";
 test("the waiting list asks for the essentials and sends a waitlist enquiry with the kind of business", async ({ page }) => {
   const fake = await installFakeSupabase(page, { signedIn: false });
   await page.goto("/");
-  await page.getByRole("link", { name: /Join the waiting list/ }).click();
+  await page.getByRole("link", { name: "Waiting list" }).click();
   await expect(page.getByRole("heading", { name: "Get your operating system in 3 days" })).toBeVisible();
 
   await page.getByRole("button", { name: "Join the waiting list" }).click();

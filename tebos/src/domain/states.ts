@@ -336,6 +336,21 @@ export const webTaskMachine = machine({
   },
 });
 
+export const equityApplicationMachine = machine({
+  initial: ["applied"],
+  transitions: {
+    applied: ["screening", "declined", "withdrawn"],
+    screening: ["qualified", "declined", "withdrawn"],
+    qualified: ["approved", "declined"],
+    approved: ["agreement_signed", "withdrawn"],
+    agreement_signed: ["active"],
+    active: ["exited"],
+    declined: [],
+    withdrawn: [],
+    exited: [],
+  },
+});
+
 export const reedsDecisionMachine = machine({
   initial: ["open"],
   transitions: {
@@ -372,6 +387,7 @@ export const MACHINES = {
   property_problem: propertyProblemMachine,
   web_project: webProjectMachine,
   web_task: webTaskMachine,
+  equity_application: equityApplicationMachine,
 } as const;
 
 export type MachineName = keyof typeof MACHINES;
@@ -391,6 +407,7 @@ export type SalesProspectStatus = StatesOf<typeof salesProspectMachine>;
 export type PropertyProblemStatus = StatesOf<typeof propertyProblemMachine>;
 export type WebProjectStatus = StatesOf<typeof webProjectMachine>;
 export type WebTaskStatus = StatesOf<typeof webTaskMachine>;
+export type EquityApplicationStatus = StatesOf<typeof equityApplicationMachine>;
 export type OpportunityStatus = StatesOf<typeof opportunityMachine>;
 export type WorkRequestStatus = StatesOf<typeof workRequestMachine>;
 export type WorkTaskStatus = StatesOf<typeof workTaskMachine>;
