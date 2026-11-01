@@ -54,10 +54,46 @@ The founder also asked for quality on the level of GetLayers (cinematic web temp
    - keeps a person's photos only as long as Grape Studios' privacy notice says, never for training without consent;
    - labels AI-edited images as edited.
 
+## Update, 1 Nov: Grape Studios' own material
+
+The founder sent Grape Studios':
+- logo, a black circle with the GP monogram;
+- six photos;
+- five rate cards.
+
+The brand is black, white and a little purple. The concept now uses all of these:
+- **Six categories, each with Grape's photo as its cover:** studio shoots, on location, corporate, graduation,
+  property listing and events.
+- **The rates from the cards** (`web/src/lib/grapeRates.ts`, with tests):
+
+  | Category | Rates | Pictures | Images in | Travel around Johannesburg |
+  |---|---|---|---|---|
+  | Studio shoots | R2 600 for 1 h (2 outfits), R3 400 for 2 h (3 outfits), R6 400 half day, R12 300 full day | 20 to 25 edited an hour | 2 to 4 days | — |
+  | On location | R1 800 for 1 h, R2 300 for 2 h, R5 200 half day | Unlimited | 2 to 4 days | R300 to R400 extra |
+  | Corporate | R1 800 an hour, R6 500 half day, R9 650 full day | Unlimited | 2 to 4 days | R300 to R400 extra |
+  | Graduation | R1 500 for 1 h, R2 300 for 2 h, R5 200 half day | Unlimited | 2 to 4 days | R300 to R400 extra |
+  | Property listing | R800 a unit | No limit | 1 to 2 days | R300 to R450 extra |
+  | Events | Quoted only | — | — | — |
+
+- **A custom rate in every category,** for tailored work.
+- **A 50% non-refundable deposit** holds the date, and the rest is paid on the day.
+
+The banking details printed on the rate cards are deliberately kept off the website. They belong in a booking
+confirmation sent to a client, not on a public page.
+
+To check with Grape Studios:
+- On location and graduation both charge R2 300 for 2 hours and R5 200 for a half day, but different prices for
+  1 hour (R1 800 and R1 500). Is that intended?
+- The cards give two social handles, @grape.studios_ and @grape.the.creator. Which one goes on the site?
+- Which photo goes with which category? This mapping is TEBOS's choice:
+  - the red-carpet photo for corporate;
+  - the balloon arch for events;
+  - the lounge for property.
+- Do the people in the photos agree to them being used on the platform?
+
 ## What is needed before the client build
 
-- Grape Studios' categories, packages and prices; their availability rules; their deposit and cancellation policy.
-- Their photos and brand: logo and colours. The concept's grape and cream are a placeholder.
+- ~~Categories, prices, photos, logo and colours~~ (received 1 Nov). Still needed: availability (days and hours), cancellation and rescheduling rules beyond the deposit, and the answers above.
 - Their plan with TEBOS: a paid package, or the equity programme (ADR 0013), if they qualify.
 - The signed client agreement (`docs/drafts/client-service-agreement.md`, once the attorney approves it).
 - For stage 3: the founder's choice of AI provider and a monthly budget.
