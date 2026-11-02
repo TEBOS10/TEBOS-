@@ -107,7 +107,7 @@ function Shell({ children }: { children: ReactNode }) {
   const [menuOpen, setMenuOpen] = useState(false);
   useEffect(() => setMenuOpen(false), [path]);
   return (
-    <div className="shell pra">
+    <div className="shell pra-app">
       <aside className={`sidebar no-print ${menuOpen ? "open" : ""}`}>
         <div className="brand">
           <span className="pra-mark" aria-hidden>PRA</span>

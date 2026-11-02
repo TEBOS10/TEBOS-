@@ -1,10 +1,86 @@
-/* The Property Revenue Architect Platform: calm and premium. Black, charcoal, grey and white, with deep navy accents. */
-.pra { --pra-navy: #1b2c4a; --pra-navy-soft: #24395e; }
-.pra .sidebar { background: linear-gradient(180deg, #0b1424 0%, #0d0f13 100%); }
-.pra .nav-link.active { background: var(--pra-navy); }
-.pra-mark { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; background: var(--pra-navy, #1b2c4a); color: #fff; font-weight: 800; font-size: 11px; letter-spacing: 0.08em; flex: none; }
-.pra .journey-track li.current { border-top-color: #6f8fc7; }
-.pra .btn-primary { background: #e9eef7; color: #0b1424; border-color: #e9eef7; }
-.pra-eyebrow { text-transform: uppercase; letter-spacing: 0.12em; font-size: 11px; font-weight: 800; color: var(--muted); margin: 0 0 6px; }
-.pra-auth .auth-card { display: flex; flex-direction: column; gap: 14px; }
-.pra-boundary { margin-top: 32px; font-size: 12px; max-width: 760px; }
+/* The Property Revenue Architect Platform, Tidy Enterprise's property app (founder, 2 Nov 2026): light and calm, in
+   Tidy Enterprise's earthy brown and sand on a warm off-white. Built on TEBOS's light base (styles.css + quiet.css);
+   only the palette and the journey's own pieces are set here. Every colour is a token, so the brand changes in one place. */
+.pra-app, .pra-auth {
+  --te-brown: #6b4a32;      /* Tidy Enterprise: the deep earth */
+  --te-brown-ink: #4a321f;
+  --te-sand: #ecd3ab;       /* the light sand accent */
+  --te-sand-soft: #f6eadb;
+  --page: #f6f1ea;          /* warm off-white */
+  --surface: #fffdfa;
+  --surface-alt: #efe7dc;
+  --ink: #241a12;
+  --ink-soft: #4b3b2e;
+  --muted: #7a6a5c;
+  --faint: #a2927f;
+  --line: rgba(74, 50, 31, 0.1);
+  --line-strong: rgba(74, 50, 31, 0.18);
+}
+.pra-auth { background: var(--page); }
+body:has(.pra) { background: #f6f1ea; }
+
+/* Shell: a quiet sand sidebar on desktop, a top bar on the phone */
+.pra-app .sidebar { background: var(--page); border-right: 1px solid var(--line); }
+.pra-app .nav-link { color: var(--muted); }
+.pra-app .nav-link.active { background: var(--te-sand-soft); color: var(--te-brown-ink); }
+.pra-mark { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; background: var(--te-brown, #6b4a32); color: var(--te-sand, #ecd3ab);
+  font-weight: 700; font-size: 11px; letter-spacing: 0.08em; flex: none; }
+.pra-app .brand-name { letter-spacing: 0.02em; font-weight: 600; font-size: 14px; }
+.pra-app .brand-sub { color: var(--muted); font-size: 12px; }
+.pra-app .principle { color: var(--faint); }
+.pra-app .main { background: var(--page); }
+.pra-app .card { background: var(--surface); border: 1px solid var(--line); box-shadow: 0 1px 0 rgba(74, 50, 31, 0.03); }
+
+/* Buttons: brown primary, quiet secondary */
+.pra-app .btn-primary, .pra-auth .btn-primary { background: var(--te-brown); border-color: var(--te-brown); color: #fffaf2; }
+.pra-app .btn-primary:hover, .pra-auth .btn-primary:hover { background: var(--te-brown-ink); }
+.pra-app .btn { border-radius: 999px; }
+.pra-app a { text-decoration-color: rgba(107, 74, 50, 0.35); }
+
+.pra-eyebrow { text-transform: uppercase; letter-spacing: 0.14em; font-size: 11px; font-weight: 600; color: var(--te-brown); margin: 0 0 6px; }
+.pra-auth .auth-card { display: flex; flex-direction: column; gap: 14px; background: var(--surface); }
+.pra-boundary { margin-top: 32px; font-size: 12px; max-width: 760px; color: var(--muted); }
+
+/* The six stages: one track, done / here / ahead */
+.pra-app .journey-track { list-style: none; margin: 18px 0 14px; padding: 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; counter-reset: stage; }
+.pra-app .journey-track li { counter-increment: stage; border: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--muted); }
+.pra-app .journey-track li::before { content: counter(stage); display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%;
+  font-weight: 600; font-size: 13px; background: var(--surface-alt); color: var(--muted); border: 1px solid var(--line); }
+.pra-app .journey-track li.done::before { content: "✓"; background: var(--te-sand); color: var(--te-brown-ink); border-color: transparent; }
+.pra-app .journey-track li.current::before { background: var(--te-brown); color: #fffaf2; border-color: transparent; box-shadow: 0 0 0 5px var(--te-sand-soft); }
+.pra-app .journey-track li strong { color: var(--ink-soft); font-size: 13.5px; font-weight: 600; }
+.pra-app .journey-track li.current strong { color: var(--te-brown-ink); }
+.pra-app .journey-track li span { line-height: 1.45; }
+.pra-app .journey-track li:not(.current) span { opacity: 0.8; }
+.pra-app .stage-here { font-size: 15px; color: var(--ink-soft); }
+
+/* What needs attention: the step first, its reasons folded away */
+.pra-app .journey-next-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+.pra-app .journey-next-item { border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; background: var(--surface); }
+.pra-app .journey-next-item:first-child { border-color: var(--te-sand); background: var(--te-sand-soft); }
+.pra-app .journey-next-item > strong { font-size: 15px; font-weight: 600; color: var(--ink); }
+.pra-app .journey-next-item > p { margin: 4px 0 0; color: var(--ink-soft); font-size: 14px; }
+.pra-app .journey-next-item details { margin-top: 8px; }
+.pra-app .journey-next-item summary { cursor: pointer; color: var(--te-brown); font-size: 13px; font-weight: 500; list-style: none; }
+.pra-app .journey-next-item summary::-webkit-details-marker { display: none; }
+.pra-app .journey-next-item summary::after { content: " ›"; }
+.pra-app .journey-next-item details[open] summary::after { content: " ⌄"; }
+.pra-app .journey-why { margin-top: 8px; }
+
+/* Problems and their detail */
+.pra-app .journey-problem { border-radius: 14px; }
+.pra-app .journey-detail { background: var(--page); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
+.pra-app .journey-sub { font-weight: 600; color: var(--te-brown-ink); }
+.pra-app .journey-timeline { border-left-color: var(--te-sand); }
+
+@media (max-width: 760px) {
+  .pra-app .journey-track { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; }
+  .pra-app .journey-track li { align-items: center; text-align: center; }
+  .pra-app .journey-track li strong { font-size: 10.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+  .pra-app .journey-track li:not(.current) strong { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .pra-app .journey-track li.current strong { overflow: visible; }
+  .pra-app .journey-track li span { display: none; }
+  .pra-app .journey-track li::before { width: 26px; height: 26px; font-size: 12px; }
+  .pra-app .stage-moves { display: block; }
+}
+@media (min-width: 761px) { .pra-app .stage-moves { display: none; } }

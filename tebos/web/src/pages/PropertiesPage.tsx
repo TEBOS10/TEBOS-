@@ -181,14 +181,18 @@ function CommandCentre({ d, reload }: { d: PropertyJourney; reload: () => void }
           <h2 className="card-title">Where it stands</h2>
           <Badge tone={STAGE_TONE[stage.stage]}>{stageLabel(stage.stage)}</Badge>
         </div>
-        <p data-testid="stage-reason">{stage.reason}</p>
+        <p className="stage-here" data-testid="stage-reason">{stage.reason}</p>
         <ol className="journey-track" aria-label="Journey stages">
-          {STAGES.map((s) => (
-            <li key={s.key} className={s.key === stage.stage ? "current" : ""} aria-current={s.key === stage.stage ? "step" : undefined}>
-              <strong>{s.label}</strong><span>{s.moves}</span>
-            </li>
-          ))}
+          {STAGES.map((s, i) => {
+            const here = STAGES.findIndex((x) => x.key === stage.stage);
+            return (
+              <li key={s.key} className={i === here ? "current" : i < here ? "done" : ""} aria-current={i === here ? "step" : undefined}>
+                <strong>{s.label}</strong><span>{s.moves}</span>
+              </li>
+            );
+          })}
         </ol>
+        <p className="stage-moves muted">{STAGES.find((x) => x.key === stage.stage)!.moves}</p>
         <p className="muted">{active.length} open problem{active.length === 1 ? "" : "s"} · {closed.filter((p) => p.status === "resolved").length} resolved · {reached.length} milestones reached</p>
       </section>
 
@@ -247,16 +251,20 @@ function describe(action: string): string {
   return `${what} ${verb === "insert" ? "recorded" : verb === "update" ? "changed" : verb === "delete" ? "removed" : verb ?? ""}`;
 }
 
+/** One step: what to do, then its reasons folded away until asked for. */
 function NextItem({ n }: { n: NextAction }) {
   return (
     <li className="journey-next-item">
       <strong>{n.title}</strong>
-      <dl className="journey-why">
-        <dt>Why</dt><dd>{n.trigger}</dd>
-        <dt>Based on</dt><dd>{n.evidence}</dd>
-        <dt>Not known yet</dt><dd>{n.uncertain}</dd>
-        <dt>Next</dt><dd>{n.next}</dd>
-      </dl>
+      <p>{n.next}</p>
+      <details>
+        <summary>Why this</summary>
+        <dl className="journey-why">
+          <dt>Why</dt><dd>{n.trigger}</dd>
+          <dt>Based on</dt><dd>{n.evidence}</dd>
+          <dt>Not known yet</dt><dd>{n.uncertain}</dd>
+        </dl>
+      </details>
     </li>
   );
 }
