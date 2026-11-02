@@ -3,8 +3,10 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { PraApp } from "../src/pra/PraApp";
+import "@fontsource-variable/geist";
+import "@fontsource-variable/geist-mono";
 import "../src/styles.css";
-import "../src/cinematic.css";
+import "../src/quiet.css";
 import "../src/pra/pra.css";
 
 createRoot(document.getElementById("root")!).render(
