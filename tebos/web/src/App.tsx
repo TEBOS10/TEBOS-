@@ -42,6 +42,7 @@ import { WebsitePage } from "./pages/WebsitePage";
 import { EquityPage } from "./pages/EquityPage";
 import { SalesRegisterPage } from "./pages/SalesRegisterPage";
 import { BookingsPage } from "./pages/BookingsPage";
+import { EnquiriesPage } from "./pages/EnquiriesPage";
 import { CrewPage } from "./pages/CrewPage";
 import { StaffShell } from "./components/StaffShell";
 import { BlogIndex, BlogPost } from "./pages/BlogPage";
@@ -85,6 +86,7 @@ const ROUTES: Array<[string, (p: Record<string, string>) => ReactNode]> = [
   ["/website", () => <WebsitePage />],
   ["/sales-register", () => <SalesRegisterPage />],
   ["/bookings", () => <BookingsPage />],
+  ["/enquiries", () => <EnquiriesPage />],
   ["/crew", () => <CrewPage />],
   ["/ai-clients", () => <AiClientsPage />],
   ["/reeds/:id", (p) => <ReedsRequestPage id={p.id!} />],

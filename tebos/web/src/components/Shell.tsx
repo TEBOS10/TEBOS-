@@ -1,4 +1,4 @@
-import { BookOpen, Bot, Briefcase, CalendarDays, Clapperboard, Eye, Building2, CheckSquare, Download, Gauge, Globe, Handshake, Home, ListChecks, LogOut, Megaphone, Menu, MessageSquare, MessagesSquare, PhoneCall, Plug, Receipt, ScanSearch, ShieldCheck, Sparkles, Stamp, Users } from "lucide-react";
+import { BookOpen, Bot, Briefcase, CalendarDays, Clapperboard, Eye, Building2, CheckSquare, Download, Gauge, Globe, Handshake, Home, Inbox, ListChecks, LogOut, Megaphone, Menu, MessageSquare, MessagesSquare, PhoneCall, Plug, Receipt, ScanSearch, ShieldCheck, Sparkles, Stamp, Users } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { DEMO_BUSINESS } from "../demo/data";
 import { exitDemo, isDemo } from "../demo/mode";
@@ -7,6 +7,7 @@ import { useOrg } from "../lib/session";
 import { useQuery } from "../lib/useQuery";
 import { myTerms } from "../lib/equityData";
 import { takesBookings } from "../lib/bookingsData";
+import { enquirySettings } from "../lib/enquiriesData";
 import { useStaff } from "../lib/staff";
 import { useInstallPrompt } from "../lib/install";
 
@@ -38,6 +39,8 @@ export function Shell({ children }: { children: ReactNode }) {
   const partner = useQuery(() => myTerms(db, organisation.id), [organisation.id]);
   // a business that sells time sees its bookings
   const bookings = useQuery(() => takesBookings(db, organisation.id), [organisation.id]);
+  // a business that takes enquiries from its website sees them
+  const enquiryForm = useQuery(() => enquirySettings(db, organisation.id), [organisation.id]);
   // on a phone the menu folds away behind a button, and folds again after choosing a page
   const [menuOpen, setMenuOpen] = useState(false);
   const install = useInstallPrompt();
@@ -47,6 +50,7 @@ export function Shell({ children }: { children: ReactNode }) {
   const pipeline = access?.sales || access?.maintainer;
   const extra = [
     ...(bookings.data ? [{ to: "/bookings", label: "Bookings", icon: CalendarDays, exact: false }, { to: "/crew", label: "Crew", icon: Bot, exact: false }] : []),
+    ...(enquiryForm.data ? [{ to: "/enquiries", label: "Enquiries", icon: Inbox, exact: false }] : []),
     ...(partner.data ? [{ to: "/sales-register", label: "Sales", icon: Receipt, exact: false }] : []),
   ];
   const base = [...NAV.slice(0, 4), ...extra, ...NAV.slice(4)];

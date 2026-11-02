@@ -362,6 +362,16 @@ export const bookingMachine = machine({
   },
 });
 
+// a public enquiry to a property business (ADR 0022): the team replies, then closes it
+export const propertyEnquiryMachine = machine({
+  initial: ["new"],
+  transitions: {
+    new: ["contacted", "closed"],
+    contacted: ["closed"],
+    closed: [],
+  },
+});
+
 export const equityApplicationMachine = machine({
   initial: ["applied"],
   transitions: {
@@ -415,6 +425,7 @@ export const MACHINES = {
   web_task: webTaskMachine,
   equity_application: equityApplicationMachine,
   booking: bookingMachine,
+  property_enquiry: propertyEnquiryMachine,
   ai_task: aiTaskMachine,
 } as const;
 
@@ -437,6 +448,7 @@ export type WebProjectStatus = StatesOf<typeof webProjectMachine>;
 export type WebTaskStatus = StatesOf<typeof webTaskMachine>;
 export type EquityApplicationStatus = StatesOf<typeof equityApplicationMachine>;
 export type BookingStatus = StatesOf<typeof bookingMachine>;
+export type PropertyEnquiryStatus = StatesOf<typeof propertyEnquiryMachine>;
 export type OpportunityStatus = StatesOf<typeof opportunityMachine>;
 export type WorkRequestStatus = StatesOf<typeof workRequestMachine>;
 export type WorkTaskStatus = StatesOf<typeof workTaskMachine>;

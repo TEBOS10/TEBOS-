@@ -493,6 +493,21 @@ function answerRpc(tables: FakeSupabase["tables"], name: string, args: Record<st
       return { user_id: s.user_id, open_projects: mine.length, building: mine.filter((p) => ["build", "qa", "qa_failed"].includes(String(p.status))).length, overdue: 0, capacity: 8 };
     });
   }
+  // property enquiries (simplified: the rules themselves are tested in 99zzl_property_enquiries.sql)
+  if (name === "property_enquiry_open" || name === "property_enquiry") {
+    const o = (t.organisations ?? []).find((x) => x.slug === args.p_slug);
+    const st = o && (t.property_enquiry_settings ?? []).find((x) => x.org_id === o.id);
+    if (name === "property_enquiry_open") return Boolean(st?.accepting);
+    const refuse = (message: string, hint = "TEBOS_VALIDATION") => { throw Object.assign(new Error(message), { hint }); };
+    if (!o || !st?.accepting) refuse("this business isn't taking enquiries online yet");
+    if (!(args.p_consent as unknown)) refuse("agree to your details being used to reply about this enquiry");
+    const list = (t.property_enquiries ??= []);
+    const ref = `EQ-${String(list.length + 1).padStart(4, "0")}`;
+    list.push({ id: crypto.randomUUID(), org_id: o!.id, ref, situation: args.p_situation, relationship: args.p_relationship, area: args.p_area,
+      message: args.p_message, name: args.p_name, email: String(args.p_email).trim().toLowerCase(), phone: args.p_phone ?? null,
+      consent_at: now, status: "new", status_note: null, created_at: now });
+    return ref;
+  }
   // bookings (simplified from the database's reads: the rules themselves are tested in 99zzh_bookings.sql)
   if (name.startsWith("booking_")) {
     const svc = (id: unknown) => (t.booking_services ?? []).find((x) => x.id === id);

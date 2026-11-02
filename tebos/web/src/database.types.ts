@@ -4267,6 +4267,56 @@ export type Database = {
         }
         Relationships: []
       }
+      property_enquiries: {
+        Row: {
+          id: string
+          org_id: string
+          ref: string
+          situation: string
+          relationship: string
+          area: string
+          message: string
+          name: string
+          email: string
+          phone: string | null
+          consent_at: string
+          status: string
+          status_note: string | null
+          created_at: string
+        }
+        Insert: {
+          org_id: string
+          situation: string
+          relationship: string
+          area: string
+          message: string
+          name: string
+          email: string
+          phone?: string | null
+          consent_at: string
+        }
+        Update: {
+          status?: string
+          status_note?: string | null
+        }
+        Relationships: []
+      }
+      property_enquiry_settings: {
+        Row: {
+          org_id: string
+          accepting: boolean
+          updated_at: string
+        }
+        Insert: {
+          org_id: string
+          accepting?: boolean
+        }
+        Update: {
+          accepting?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       property_underwrites: {
         Row: {
           id: string
@@ -5018,6 +5068,14 @@ export type Database = {
       booking_schedule: {
         Args: { p_org: string; p_from: string; p_days?: number }
         Returns: { id: string; ref: string | null; starts_at: string; ends_at: string; status: string; service: string | null; package: string | null; customer_name: string | null; price_cents: number | null; deposit_paid: boolean | null; kind: string }[]
+      }
+      property_enquiry_open: {
+        Args: { p_slug: string }
+        Returns: boolean
+      }
+      property_enquiry: {
+        Args: { p_slug: string; p_situation: string; p_relationship: string; p_area: string; p_message: string; p_name: string; p_email: string; p_phone: string | null; p_consent: boolean }
+        Returns: string
       }
       booking_catalogue: {
         Args: { p_slug: string }

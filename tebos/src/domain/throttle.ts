@@ -5,5 +5,6 @@ export const PUBLIC_LIMITS = {
   enquiry: { perSource: 3, total: 60 },
   self_check: { perSource: 5, total: 300 },
   booking: { perSource: 3, total: 40 },
+  property_enquiry: { perSource: 3, total: 40 },
 } as const;
 export type PublicSubmission = keyof typeof PUBLIC_LIMITS;
