@@ -1,9 +1,11 @@
 // Tidy Enterprise's public website (ADR 0022), in the founder's own words (2 Nov 2026): what it does, the problems it
 // works on, the six stages of Property Revenue Architecture, what it is not, and an enquiry form that asks for consent.
 // No clients, figures or reviews appear that the founder hasn't given. Its own build (vite.tidy.config.ts).
-import { ArrowRight, Check, Mail } from "lucide-react";
+// Look (founder, 2 Nov: "compared to BAME it's horrible"): cinematic and dark like BAME, in Tidy's brown and sand.
+import { ArrowRight, Banknote, Building2, Hammer, KeyRound, Landmark, Mail, Scale, TrendingDown, X } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 import { checkEnquiry, ENQUIRY_LIMITS, ENQUIRY_RELATIONSHIPS, ENQUIRY_SITUATIONS, type EnquiryDraft } from "@core/propertyEnquiry";
+import { Building } from "./Building";
 import { CONTACT_EMAIL, formOpen, sendEnquiry } from "./data";
 
 const STAGES = [
@@ -16,16 +18,16 @@ const STAGES = [
 ] as const;
 
 const PROBLEMS = [
-  "Properties with bond arrears, municipal debt or levy debt.",
-  "Buildings generating insufficient rental income.",
-  "Underutilised residential and commercial properties.",
-  "Properties with redevelopment or rental-conversion potential.",
-  "Owners facing estate, divorce or financial-distress circumstances.",
-  "Property owners who need to improve their financing position.",
-  "Landlords struggling with rental operations and administration.",
+  { icon: Landmark, text: "Properties with bond arrears, municipal debt or levy debt." },
+  { icon: TrendingDown, text: "Buildings generating insufficient rental income." },
+  { icon: Building2, text: "Underutilised residential and commercial properties." },
+  { icon: Hammer, text: "Properties with redevelopment or rental-conversion potential." },
+  { icon: Scale, text: "Owners facing estate, divorce or financial-distress circumstances." },
+  { icon: Banknote, text: "Property owners who need to improve their financing position." },
+  { icon: KeyRound, text: "Landlords struggling with rental operations and administration." },
 ] as const;
 
-const NOT = ["an estate agency", "a construction company", "a property management company", "a lender", "a law firm"] as const;
+const NOT = ["An estate agency", "A construction company", "A property management company", "A lender", "A law firm"] as const;
 
 export function TidyApp() {
   return (
@@ -40,27 +42,35 @@ export function TidyApp() {
       </header>
 
       <main id="top">
-        <section className="te-hero te-wrap">
-          <p className="te-eyebrow">Property revenue architecture</p>
-          <h1>Turning underperforming property into productive, cash-flowing, financeable assets.</h1>
-          <p className="te-lede">
-            Tidy Enterprise works with underperforming, underutilised and financially distressed properties. We approach property as a
-            business asset rather than simply a building.
-          </p>
-          <p className="te-actions">
-            <a href="#enquire" className="te-btn te-btn-primary">Tell us about a property <ArrowRight size={16} aria-hidden /></a>
-            <a href="#how" className="te-btn">How we work</a>
-          </p>
-          <ol className="te-rail" aria-label="The six stages">
-            {STAGES.map((s, i) => <li key={s.name}><span>{i + 1}</span>{s.name}</li>)}
+        <section className="te-hero">
+          <div className="te-wrap te-hero-grid">
+            <div className="te-hero-copy">
+              <p className="te-eyebrow">Property revenue architecture</p>
+              <h1>Transforming property potential into <em>structured economic opportunity.</em></h1>
+              <p className="te-lede">
+                We turn underperforming, underutilised and financially distressed properties into more productive, cash-flowing and
+                financeable assets. Property, approached as a business asset rather than simply a building.
+              </p>
+              <p className="te-actions">
+                <a href="#enquire" className="te-btn te-btn-primary">Tell us about a property <ArrowRight size={16} aria-hidden /></a>
+                <a href="#how" className="te-btn te-btn-ghost">How we work</a>
+              </p>
+            </div>
+            <div className="te-hero-art"><Building /></div>
+          </div>
+          <ol className="te-rail te-wrap" aria-label="The six stages">
+            {STAGES.map((s, i) => <li key={s.name}><span>{String(i + 1).padStart(2, "0")}</span>{s.name}</li>)}
           </ol>
         </section>
 
-        <section className="te-band">
+        <section className="te-what">
           <div className="te-wrap te-split">
-            <h2>What we do</h2>
             <div>
-              <p>
+              <p className="te-eyebrow">What we do</p>
+              <h2>Find where a property can perform better. Then make it happen.</h2>
+            </div>
+            <div>
+              <p className="te-big">
                 Tidy Enterprise identifies opportunities where a property's financial or operational performance can be improved, then
                 develops and coordinates a strategy to unlock that potential.
               </p>
@@ -74,24 +84,36 @@ export function TidyApp() {
 
         <section id="where" className="te-wrap te-section">
           <p className="te-eyebrow">Where we help</p>
-          <h2>The problems we are designed to address</h2>
+          <h2>The problems we are designed to address.</h2>
           <ul className="te-problems">
-            {PROBLEMS.map((p) => <li key={p}><Check size={18} aria-hidden /> {p}</li>)}
+            {PROBLEMS.map(({ icon: Icon, text }, i) => (
+              <li key={text} className="te-float">
+                <span className="te-problem-n">{String(i + 1).padStart(2, "0")}</span>
+                <Icon size={26} strokeWidth={1.5} aria-hidden />
+                <p>{text}</p>
+              </li>
+            ))}
+            <li className="te-float te-problems-cta">
+              <p>Something else holding a property back?</p>
+              <a href="#enquire">Tell us about it <ArrowRight size={15} aria-hidden /></a>
+            </li>
           </ul>
         </section>
 
-        <section id="how" className="te-wrap te-section">
-          <p className="te-eyebrow">How we work</p>
-          <h2>Six stages, in order</h2>
-          <ol className="te-stages">
-            {STAGES.map((s, i) => (
-              <li key={s.name}>
-                <span className="te-num" aria-hidden>{String(i + 1).padStart(2, "0")}</span>
-                <h3>{s.name}</h3>
-                <p>{s.text}</p>
-              </li>
-            ))}
-          </ol>
+        <section id="how" className="te-how">
+          <div className="te-wrap">
+            <p className="te-eyebrow">How we work</p>
+            <h2>Six stages, in order.</h2>
+            <ol className="te-stages">
+              {STAGES.map((s, i) => (
+                <li key={s.name} className="te-float">
+                  <span className="te-num" aria-hidden>{String(i + 1).padStart(2, "0")}</span>
+                  <h3>{s.name}</h3>
+                  <p>{s.text}</p>
+                </li>
+              ))}
+            </ol>
+          </div>
         </section>
 
         <section className="te-quote">
@@ -104,27 +126,34 @@ export function TidyApp() {
           </blockquote>
         </section>
 
-        <section className="te-wrap te-section te-split">
-          <h2>What we are not</h2>
+        <section className="te-wrap te-section te-split te-not">
           <div>
+            <p className="te-eyebrow">What we are not</p>
+            <h2>We work across the disciplines. We don't replace them.</h2>
+          </div>
+          <div>
+            <ul className="te-not-list" aria-label="Tidy Enterprise is not simply">
+              {NOT.map((n) => <li key={n}><X size={15} aria-hidden /> {n}</li>)}
+            </ul>
             <p>
-              Tidy Enterprise is not simply {NOT.slice(0, -1).join(", ")} or {NOT[NOT.length - 1]}. It works across these disciplines by
-              identifying the economic problem, developing the strategy and coordinating the appropriate specialists.
+              Tidy Enterprise is not simply an estate agency, a construction company, a property management company, a lender or a law firm.
+              It works across these disciplines by identifying the economic problem, developing the strategy and coordinating the appropriate
+              specialists.
             </p>
             <p className="te-muted">Regulated services remain with appropriately qualified professionals.</p>
           </div>
         </section>
 
-        <section id="enquire" className="te-band te-enquire">
+        <section id="enquire" className="te-enquire">
           <div className="te-wrap te-split">
             <div>
               <p className="te-eyebrow">Enquire</p>
-              <h2>Tell us about a property</h2>
+              <h2>Tell us about a property.</h2>
               <p className="te-muted">
                 Describe what is happening and we will reply by email. Owners, co-owners, family members, executors and advisers are welcome
                 to write.
               </p>
-              <p className="te-muted">
+              <p className="te-muted te-mail">
                 <Mail size={15} aria-hidden /> Or email <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
               </p>
             </div>
@@ -134,9 +163,10 @@ export function TidyApp() {
       </main>
 
       <footer className="te-foot te-wrap">
-        <span>© {new Date().getFullYear()} Tidy Enterprise</span>
+        <a href="#top" className="te-brand"><span className="te-mark" aria-hidden>TE</span> Tidy Enterprise</a>
         <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
         <span>Regulated services remain with appropriately qualified professionals.</span>
+        <span>© {new Date().getFullYear()} Tidy Enterprise</span>
       </footer>
     </div>
   );

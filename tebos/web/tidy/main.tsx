@@ -3,6 +3,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { TidyApp } from "../src/tidy/TidyApp";
 import "@fontsource-variable/geist";
+import "@fontsource-variable/fraunces";
 import "../src/tidy/tidy.css";
 
 createRoot(document.getElementById("root")!).render(

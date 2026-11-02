@@ -20,9 +20,9 @@ async function tidyOrg(page: Page, accepting: boolean) {
 test("the site says what Tidy Enterprise does, in the founder's words, and nothing invented", async ({ page }) => {
   await tidyOrg(page, false);
   await page.goto(site);
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("productive, cash-flowing, financeable assets");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("structured economic opportunity");
   await expect(page.locator(".te-stages > li h3")).toHaveText(["Discover", "Assess", "Underwrite", "Strategise", "Execute", "Optimise"]);
-  await expect(page.locator(".te-problems li")).toHaveCount(7);
+  await expect(page.locator(".te-problems li:not(.te-problems-cta)")).toHaveCount(7);
   await expect(page.getByText("Regulated services remain with appropriately qualified professionals.").first()).toBeVisible();
   await expect(page.locator("body")).toContainText("not simply an estate agency, a construction company, a property management company, a lender or a law firm");
   // no testimonials, client logos or invented figures
