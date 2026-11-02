@@ -11,7 +11,9 @@ test("before set-up: the six categories with their rates, and booking by email",
   await installFakeSupabase(page, { signedIn: false });
   await page.goto("/");
   await expect(page.getByRole("heading", { name: /Book the shoot/ })).toBeVisible();
-  await expect(page.getByTestId("hero")).toHaveAttribute("data-scene", "still");
+  // the hero: a camera aperture opening on Grape's own photographs (no 3D, nothing downloaded)
+  await expect(page.getByTestId("hero")).toHaveAttribute("data-theme", "dark");
+  await expect(page.getByRole("img", { name: /camera aperture/ })).toBeVisible();
   const cats = page.locator(".gs-cat");
   await expect(cats).toHaveCount(6);
   await expect(cats.first()).toContainText("Studio shoots");
@@ -26,9 +28,10 @@ test("before set-up: the six categories with their rates, and booking by email",
 
 test("the brands Grape Studios has shot for, named in type, and its portfolio", async ({ page }) => {
   await installFakeSupabase(page, { signedIn: false });
-  await page.goto("/");
-  const brands = page.locator("#brands");
-  await expect(brands.getByText("Brands we've shot for")).toBeVisible();
+  await page.goto("/?theme=light");
+  await expect(page.getByTestId("hero")).toHaveAttribute("data-theme", "light");
+  const brands = page.getByLabel("Trusted by");
+  await expect(brands.getByText("Trusted by")).toBeVisible();
   await expect(brands.getByRole("listitem")).toHaveText(["PUMA", "adidas", "Happyville", "G-Star Raw", "Antony Morato", "Yo Mzansi (YMZ)"]);
   await expect(brands.locator("img")).toHaveCount(0); // never the brands' logos
   await expect(page.getByRole("link", { name: "Portfolio on Behance" })).toHaveAttribute("href", "https://www.behance.net/tebohotefu");

@@ -2,12 +2,12 @@
 // really free, and a private page where the customer follows their booking and its schedule. Its own build
 // (vite.grape.config.ts); it talks to TEBOS only as the public does.
 import { ArrowRight, ArrowUpRight, Camera } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { BOOKING_NEXT, BOOKING_STATUS_LABEL, deliveryWindow, deposit, saLocal } from "@core/bookings";
 import type { BookingStatus } from "@core/states";
 import { money } from "@core/property";
 import { Link, matchPath, navigate, RouterProvider, usePath } from "../lib/router";
-import { use3d } from "../world/support";
+import { Iris } from "./Iris";
 import { Reels } from "./Reels";
 import { BEHANCE, BOOKINGS_EMAIL, BRANDS, freeTimes, INSTAGRAM, loadCatalogue, myBooking, requestBooking, type Catalogue, type CatService, type MyBooking } from "./data";
 
@@ -30,7 +30,7 @@ function Routes() {
   const reels = path === "/reels";
   return (
     <div className="gs">
-      <Nav onDark={!mine && !book && !reels && Boolean(cat)} />
+      <Nav onDark={!mine && !book && !reels && Boolean(cat) && heroTheme() === "dark"} overlay={!mine && !book && !reels && Boolean(cat)} />
       {reels ? <Reels />
         : mine ? <BookingView token={mine.token!} />
         : !cat ? <p className="gs-wrap gs-muted">Loading…</p>
@@ -46,9 +46,9 @@ function Routes() {
   );
 }
 
-function Nav({ onDark }: { onDark: boolean }) {
+function Nav({ onDark, overlay }: { onDark: boolean; overlay: boolean }) {
   return (
-    <header className={`gs-nav gs-wrap ${onDark ? "" : "gs-nav-light"}`}>
+    <header className={`gs-nav gs-wrap ${onDark ? "" : "gs-nav-light"} ${overlay ? "gs-nav-over" : ""}`}>
       <Link to="/" className="gs-brand"><img src="/logo.png" alt="" width={30} height={30} /> GRAPE STUDIOS</Link>
       <nav aria-label="Site">
         <a href="/#work">Work</a>
@@ -70,10 +70,6 @@ function Home({ cat }: { cat: Catalogue }) {
         <h2 id="gs-work">The work</h2>
         <div className="gs-tri">{PHOTOS.slice(0, 3).map((p) => <img key={p} src={p} alt="" loading="lazy" />)}</div>
         <div className="gs-tri">{PHOTOS.slice(3).map((p) => <img key={p} src={p} alt="" loading="lazy" />)}</div>
-      </section>
-      <section id="brands" className="gs-wrap gs-brands" aria-labelledby="gs-brands">
-        <p className="gs-kicker" id="gs-brands">Brands we've shot for</p>
-        <ul className="gs-brand-list">{BRANDS.map((b) => <li key={b}>{b}</li>)}</ul>
       </section>
       <section id="book" className="gs-wrap gs-section" aria-labelledby="gs-book">
         <p className="gs-kicker">Six ways to work together</p>
@@ -97,29 +93,29 @@ function Home({ cat }: { cat: Catalogue }) {
   );
 }
 
+/** Light or dark: Teboho is choosing between them, so either can be previewed with ?theme=light or ?theme=dark. */
+export type GrapeTheme = "light" | "dark";
+export const GRAPE_DEFAULT_THEME: GrapeTheme = "dark";
+function heroTheme(): GrapeTheme {
+  const t = new URLSearchParams(window.location.search).get("theme");
+  return t === "light" || t === "dark" ? t : GRAPE_DEFAULT_THEME;
+}
+
 function Hero() {
-  const host = useRef<HTMLDivElement>(null);
-  const [three] = useState(() => use3d() && window.innerWidth >= 700);
-  const [ready, setReady] = useState(false);
-  const [failed, setFailed] = useState(false);
-  useEffect(() => {
-    if (!three || !host.current) return;
-    let stop: (() => void) | null = null, cancelled = false;
-    void import("./hero3d").then(({ mountHero }) => {
-      if (cancelled || !host.current) return;
-      stop = mountHero(host.current, { onReady: () => setReady(true), onError: () => setFailed(true) });
-    });
-    return () => { cancelled = true; stop?.(); };
-  }, [three]);
+  const [theme] = useState(heroTheme);
   return (
-    <section className="gs-hero" data-testid="hero" data-scene={three && !failed ? (ready ? "3d" : "loading") : "still"}>
-      {/* the modelled object: live in 3D where the device can, otherwise a still render of the same object */}
-      {(!three || failed || !ready) && <img className="gs-hero-still" src="/hero/grape-lens.jpg" alt="" aria-hidden onError={(e) => { e.currentTarget.hidden = true; }} />}
-      {three && !failed && <div ref={host} className={`gs-hero-3d ${ready ? "on" : ""}`} aria-hidden />}
-      <div className="gs-hero-copy gs-wrap">
-        <p className="gs-kicker">Grape Studios · Johannesburg</p>
-        <h1>Book the shoot<br />you <em>want.</em></h1>
-        <a href="#book" className="gs-btn">Book a shoot <ArrowRight size={16} aria-hidden /></a>
+    <section className="gs-hero" data-testid="hero" data-theme={theme}>
+      <div className="gs-hero-grid gs-wrap">
+        <div className="gs-hero-copy">
+          <p className="gs-kicker gs-kicker-rule">Grape Studios · Johannesburg</p>
+          <h1>Book the shoot<br />you want.</h1>
+          <a href="#book" className="gs-btn">Book a shoot <ArrowRight size={16} aria-hidden /></a>
+        </div>
+        <Iris photos={PHOTOS} label="A camera aperture opening on Grape Studios' photographs" />
+      </div>
+      <div className="gs-trusted gs-wrap" role="group" aria-labelledby="gs-trusted">
+        <p id="gs-trusted">Trusted by</p>
+        <ul>{BRANDS.map((b) => <li key={b}>{b}</li>)}</ul>
       </div>
     </section>
   );
