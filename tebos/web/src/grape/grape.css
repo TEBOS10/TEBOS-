@@ -33,20 +33,45 @@ h1, h2, h3, p { margin: 0; }
 .gs-nav nav a { text-decoration: none; opacity: 0.85; }
 .gs-pill { padding: 8px 16px; border-radius: 999px; border: 1px solid currentColor; opacity: 1 !important; }
 
-/* Hero: the 3D scene on black */
-.gs-hero { position: relative; min-height: 100vh; min-height: 100svh; background: radial-gradient(80% 70% at 70% 40%, #1a1022 0%, var(--g-black) 70%); color: var(--g-white); overflow: hidden; display: flex; align-items: flex-end; }
-.gs-hero-3d { position: absolute; inset: 0; opacity: 0; transition: opacity 1.4s ease; }
-.gs-hero-3d.on { opacity: 1; }
-.gs-hero-3d canvas { display: block; }
-.gs-hero-still { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 72% 50%; }
-@media (max-width: 760px) { .gs-hero-still { object-position: 80% 40%; opacity: 0.85; } }
-.gs-hero-copy { position: relative; z-index: 2; width: 100%; padding-bottom: clamp(48px, 10vh, 110px); pointer-events: none; }
-.gs-hero-copy > * { pointer-events: auto; }
-.gs-hero .gs-kicker { color: rgba(255, 255, 255, 0.65); }
-.gs-hero h1 { margin: 14px 0 28px; font-weight: 300; font-size: clamp(46px, 8.5vw, 132px); line-height: 0.92; letter-spacing: -0.055em; }
-.gs-hero h1 em { font-style: normal; color: var(--g-purple-soft); }
-.gs-hero::before { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: linear-gradient(90deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.25) 45%, transparent 65%); }
-.gs-hero::after { content: ""; position: absolute; inset: auto 0 0 0; height: 40%; background: linear-gradient(transparent, rgba(0, 0, 0, 0.75)); pointer-events: none; z-index: 1; }
+/* Hero: a camera aperture opening on Grape's own photographs, in light or dark (Teboho is choosing) */
+.gs-nav-over { position: absolute; }
+.gs-hero { position: relative; min-height: 100vh; min-height: 100svh; overflow: hidden; display: flex; flex-direction: column; justify-content: center;
+  padding-top: 96px; padding-bottom: 28px; --hero-fg: var(--g-white); --hero-muted: rgba(255, 255, 255, 0.62); --hero-line: rgba(255, 255, 255, 0.16);
+  --blade-hi: #2a2530; --blade-lo: #070708; --blade-edge: rgba(167, 150, 178, 0.55); --ring: rgba(255, 255, 255, 0.14);
+  background: radial-gradient(70% 60% at 72% 42%, #1a1220 0%, var(--g-black) 70%); color: var(--hero-fg); }
+.gs-hero[data-theme="light"] { --hero-fg: var(--g-ink); --hero-muted: var(--g-muted); --hero-line: var(--g-line);
+  --blade-hi: #3a3a3e; --blade-lo: #111113; --blade-edge: rgba(255, 255, 255, 0.28); --ring: rgba(11, 11, 12, 0.12);
+  background: radial-gradient(70% 60% at 72% 42%, #ffffff 0%, var(--g-grey) 75%); }
+.gs-hero-grid { position: relative; z-index: 2; width: 100%; display: grid; grid-template-columns: 1fr; gap: 28px; align-items: center; flex: 1; }
+@media (min-width: 900px) { .gs-hero-grid { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 32px; } }
+.gs-hero-copy { order: 2; }
+@media (min-width: 900px) { .gs-hero-copy { order: 0; } }
+.gs-hero .gs-kicker { color: var(--hero-muted); }
+.gs-kicker-rule { display: inline-flex; align-items: center; gap: 14px; }
+.gs-kicker-rule::after { content: ""; width: clamp(40px, 8vw, 110px); height: 1px; background: currentColor; opacity: 0.6; }
+.gs-hero h1 { margin: 14px 0 28px; font-weight: 300; font-size: clamp(44px, 6.4vw, 100px); line-height: 0.95; letter-spacing: -0.055em; }
+.gs-hero[data-theme="light"] .gs-btn { background: var(--g-white); color: var(--g-ink); box-shadow: 0 10px 30px rgba(11, 11, 12, 0.12), 0 0 0 1px var(--g-line); }
+
+/* The aperture */
+.gs-iris { margin: 0; justify-self: center; width: min(78vw, 520px); aspect-ratio: 1; }
+@media (min-width: 900px) { .gs-iris { width: min(36vw, 520px); justify-self: end; } }
+@media (min-width: 900px) { .gs-hero h1 { white-space: nowrap; } }
+.gs-iris svg { width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 30px 50px rgba(0, 0, 0, 0.25)); }
+.gs-iris-photo { opacity: 0; transition: opacity 120ms linear; }
+.gs-iris-photo.on { opacity: 1; animation: gs-iris-drift 6s ease-out both; transform-origin: center; transform-box: fill-box; }
+@keyframes gs-iris-drift { from { transform: scale(1.08); } to { transform: scale(1); } }
+.gs-iris-blade-hi { stop-color: var(--blade-hi); }
+.gs-iris-blade-lo { stop-color: var(--blade-lo); }
+.gs-iris-edge { stroke: var(--blade-edge); stroke-width: 0.6; }
+.gs-iris-ring { fill: none; stroke: var(--ring); stroke-width: 1; }
+@media (prefers-reduced-motion: reduce) { .gs-iris-photo.on { animation: none; } }
+
+/* Trusted by: the brands Grape has shot for, along the foot of the hero */
+.gs-trusted { position: relative; z-index: 2; width: 100%; margin-top: clamp(24px, 4vh, 48px); padding-top: 18px; border-top: 1px solid var(--hero-line); }
+.gs-trusted p { font-size: 13px; color: var(--hero-muted); }
+.gs-trusted ul { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 10px clamp(20px, 3vw, 44px); align-items: baseline; }
+@media (min-width: 900px) { .gs-trusted ul { justify-content: space-between; flex-wrap: nowrap; } }
+.gs-trusted li { font-size: clamp(15px, 1.6vw, 21px); white-space: nowrap; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; opacity: 0.88; }
 
 /* Buttons */
 .gs-btn { display: inline-flex; align-items: center; gap: 10px; padding: 14px 24px; border-radius: 999px; border: 0; background: var(--g-white); color: var(--g-black);
@@ -136,13 +161,9 @@ h1, h2, h3, p { margin: 0; }
   .gs-week-grid { grid-template-columns: repeat(2, 1fr); }
   .gs-nav nav a:not(.gs-pill) { display: none; }
 }
-@media (prefers-reduced-motion: reduce) { .gs-cat img, .gs-hero-3d { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .gs-cat img { transition: none; } }
 
 /* Brands we've shot for: the names in type, one quiet line, never the brands' logos */
-.gs-brands { padding-top: clamp(28px, 4vw, 48px); padding-bottom: clamp(8px, 2vw, 16px); border-top: 1px solid var(--g-line, rgba(11, 11, 12, 0.1)); }
-.gs-brand-list { list-style: none; margin: 18px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 14px clamp(24px, 3vw, 40px); align-items: baseline; }
-@media (min-width: 900px) { .gs-brand-list { justify-content: space-between; flex-wrap: nowrap; } }
-.gs-brand-list li { font-size: clamp(18px, 1.9vw, 24px); white-space: nowrap; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--g-black, #0b0b0c); opacity: 0.85; }
 
 /* Listing reels (ADR 0019) */
 .gs-reels h1 { margin-bottom: 14px; }
