@@ -2,8 +2,9 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
-  checkAction, checkProblem, checkProblemStatus, holdUps, milestones, nextActions, PROBLEM_CATEGORIES, problemEvidence, problemStage,
-  propertyStage, propertySummary, type JourneyAction, type JourneyEvidence, type JourneyInput, type JourneyProblem,
+  checkAction, checkProblem, checkProblemStatus, checkUnderwrite, holdUps, latestUnderwrite, milestones, nextActions, PROBLEM_CATEGORIES,
+  problemEvidence, problemStage, propertyStage, propertySummary, STAGES, type JourneyAction, type JourneyEvidence, type JourneyInput,
+  type JourneyProblem, type JourneyUnderwrite, type UnderwriteDraft,
 } from "../src/domain/journey";
 import { canTransition } from "../src";
 
@@ -18,9 +19,13 @@ const act = (over: Partial<JourneyAction> = {}): JourneyAction => ({
   id: "a1", problemId: "p1", title: "Agree a new debit date", owner: "Owner", dueOn: "2026-11-05", status: "planned",
   completedOn: null, note: null, createdAt: "2026-10-03T08:00:00Z", ...over,
 });
+const uw = (over: Partial<JourneyUnderwrite> = {}): JourneyUnderwrite => ({
+  id: "u1", problemId: "p1", verdict: "proceed", viability: "Moving the debit date costs nothing.", financing: "not_needed",
+  financingNote: null, evidenceId: "e1", createdAt: "2026-10-04T08:00:00Z", ...over,
+});
 const input = (over: Partial<JourneyInput> = {}): JourneyInput => ({
   property: { createdAt: "2026-09-30T10:00:00Z", propertyType: "residential_multi", nextReviewOn: null },
-  problems: [], evidence: [], actions: [], baseline: null, reviews: [], today: TODAY, ...over,
+  problems: [], evidence: [], actions: [], underwrites: [], baseline: null, reviews: [], today: TODAY, ...over,
 });
 
 describe("problem register rules", () => {
@@ -38,11 +43,38 @@ describe("problem register rules", () => {
     expect(checkProblemStatus("resolved", { intervention: "x", resultNote: "short" }, { doneActions: 1, checkedEvidence: 1 }).ok).toBe(false);
     expect(checkProblemStatus("resolved", { intervention: "x", resultNote: "Rent on time in November." }, { doneActions: 1, checkedEvidence: 1 }).ok).toBe(true);
     expect(checkProblemStatus("parked", { intervention: null, resultNote: null }, { doneActions: 0, checkedEvidence: 0 }).ok).toBe(false);
+    // planning waits for an underwrite that says proceed
+    const plan = { intervention: "Move the debit order date to the 1st.", resultNote: null };
+    expect(checkProblemStatus("planned", plan, { doneActions: 0, checkedEvidence: 0, underwrittenToProceed: false }).ok).toBe(false);
+    expect(checkProblemStatus("planned", plan, { doneActions: 0, checkedEvidence: 0, underwrittenToProceed: true }).ok).toBe(true);
+  });
+
+  it("an underwrite rests on checked evidence for its problem, and says why, the risks and the financing", () => {
+    const d: UnderwriteDraft = {
+      verdict: "proceed", viability: "Two empty flats cost R13 000 a month.", risks: "Rents may be above the area's.",
+      effectLow: null, effectHigh: null, effectBasis: null, financing: "not_needed", financingNote: null,
+    };
+    const checked = { status: "checked" as const, sameProblem: true };
+    expect(checkUnderwrite(d, checked).ok).toBe(true);
+    expect(checkUnderwrite(d, null).ok).toBe(false);
+    expect(checkUnderwrite(d, { status: "received", sameProblem: true }).ok).toBe(false);
+    expect(checkUnderwrite(d, { status: "checked", sameProblem: false }).ok).toBe(false);
+    expect(checkUnderwrite({ ...d, risks: "none" }, checked).ok).toBe(false);
+    // a range is both ends, low to high, with how it was reached
+    expect(checkUnderwrite({ ...d, effectLow: 9000, effectHigh: null }, checked).ok).toBe(false);
+    expect(checkUnderwrite({ ...d, effectLow: 13000, effectHigh: 9000, effectBasis: "Rent roll less costs." }, checked).ok).toBe(false);
+    expect(checkUnderwrite({ ...d, effectLow: 9000, effectHigh: 13000 }, checked).ok).toBe(false);
+    expect(checkUnderwrite({ ...d, effectLow: 9000, effectHigh: 13000, effectBasis: "Rent roll less letting costs." }, checked).ok).toBe(true);
+    expect(checkUnderwrite({ ...d, financing: "needs_work" }, checked).ok).toBe(false);
+    expect(checkUnderwrite({ ...d, financing: "needs_work", financingNote: "Painting needs R8 000 first." }, checked).ok).toBe(true);
+    expect(checkUnderwrite({ ...d, viability: "Call the agent on 082 555 1234 first." }, checked).ok).toBe(false);
   });
 
   it("an action on a problem explains itself, and done needs received proof", () => {
     const base = { problemId: "p1", reason: "Rent arrives after the bond is paid.", doneWhen: "Signed addendum", status: "planned" as const, proofStatus: null };
     expect(checkAction(base).ok).toBe(true);
+    expect(checkAction({ ...base, underwrittenToProceed: false }).ok).toBe(false);
+    expect(checkAction({ ...base, underwrittenToProceed: true }).ok).toBe(true);
     expect(checkAction({ ...base, reason: "because" }).ok).toBe(false);
     expect(checkAction({ ...base, doneWhen: "" }).ok).toBe(false);
     expect(checkAction({ ...base, status: "done" }).ok).toBe(false);
@@ -73,15 +105,32 @@ describe("evidence state", () => {
 });
 
 describe("journey stage", () => {
-  it("moves with the records: assess → strategise → execute → optimise", () => {
+  it("has the six stages of Property Revenue Architecture, in order", () => {
+    expect(STAGES.map((s) => s.key)).toEqual(["discover", "assess", "underwrite", "strategise", "execute", "optimise"]);
+  });
+
+  it("moves with the records: assess → underwrite → strategise → execute → optimise", () => {
     const p = problem();
-    expect(problemStage(p, [], [])).toBe("assess");
-    expect(problemStage(p, [ev({ status: "received", receivedOn: TODAY })], [])).toBe("strategise");
-    expect(problemStage(p, [ev({ status: "received", receivedOn: TODAY })], [act()])).toBe("execute");
-    expect(problemStage({ ...p, status: "resolved", closedOn: TODAY }, [], [])).toBe("optimise");
-    expect(problemStage({ ...p, status: "parked" }, [], [])).toBeNull();
+    const checked = [ev({ status: "checked", receivedOn: TODAY })];
+    expect(problemStage(p, [], [], [])).toBe("assess");
+    // received isn't enough: underwriting rests on checked evidence
+    expect(problemStage(p, [ev({ status: "received", receivedOn: TODAY })], [], [])).toBe("assess");
+    expect(problemStage(p, checked, [], [])).toBe("underwrite");
+    expect(problemStage(p, checked, [], [uw({ verdict: "hold_optimise" })])).toBe("underwrite");
+    expect(problemStage(p, checked, [], [uw()])).toBe("strategise");
+    expect(problemStage(p, checked, [act()], [uw()])).toBe("execute");
+    expect(problemStage({ ...p, status: "resolved", closedOn: TODAY }, [], [], [])).toBe("optimise");
+    expect(problemStage({ ...p, status: "parked" }, [], [], [])).toBeNull();
     // a cancelled action doesn't count as work under way
-    expect(problemStage(p, [], [act({ status: "cancelled" })])).toBe("assess");
+    expect(problemStage(p, [], [act({ status: "cancelled" })], [])).toBe("assess");
+  });
+
+  it("the latest underwrite counts", () => {
+    const list = [uw(), uw({ id: "u2", verdict: "not_viable", createdAt: "2026-10-09T08:00:00Z" }), uw({ id: "u3", problemId: "p2", createdAt: "2026-10-10T08:00:00Z" })];
+    expect(latestUnderwrite("p1", list)!.id).toBe("u2");
+    expect(latestUnderwrite("p9", list)).toBeNull();
+    const checked = [ev({ status: "checked", receivedOn: TODAY })];
+    expect(problemStage(problem(), checked, [], list)).toBe("underwrite");
   });
 
   it("the property is at the earliest stage of its open problems; with none open it is in its review cycle", () => {
@@ -124,12 +173,16 @@ describe("next actions", () => {
     for (const n of list) for (const f of [n.trigger, n.evidence, n.uncertain, n.next]) expect(f.length).toBeGreaterThan(3);
   });
 
-  it("ask for evidence, then an action, then the result", () => {
+  it("ask for evidence, its check, an underwrite, then an action, then the result", () => {
     expect(keys(input({ problems: [problem()] }))).toEqual(["evidence:p1"]);
     const received = [ev({ status: "received", receivedOn: TODAY })];
-    const plan = nextActions(input({ problems: [problem()], evidence: received }));
-    expect(plan.map((n) => n.key)).toEqual(["plan:p1"]);
-    expect(plan[0]!.uncertain).toContain("hasn't been checked");
+    expect(keys(input({ problems: [problem()], evidence: received }))).toEqual(["check:p1"]);
+    const checked = [ev({ status: "checked", receivedOn: TODAY })];
+    expect(keys(input({ problems: [problem()], evidence: checked }))).toEqual(["underwrite:p1"]);
+    const held = nextActions(input({ problems: [problem()], evidence: checked, underwrites: [uw({ verdict: "hold_optimise", financing: "needs_work", financingNote: "Paint first: R8 000." })] }));
+    expect(held.map((n) => n.key)).toEqual(["held:p1"]);
+    expect(held[0]!.uncertain).toContain("Paint first");
+    expect(keys(input({ problems: [problem()], evidence: checked, underwrites: [uw()] }))).toEqual(["plan:p1"]);
     expect(keys(input({ problems: [problem()], evidence: received, actions: [act()] }))).toEqual([]);
     const fixed = nextActions(input({
       problems: [problem({ measure: "Bank date of rent, three months" })], evidence: received, actions: [act({ status: "done", completedOn: "2026-10-20" })],

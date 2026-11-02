@@ -89,6 +89,11 @@ export const VARIANTS: Record<string, Variant[]> = {
     { key: "fashion-brand", label: "Fashion and brand work", pieces: [p("Brand usage register", "document", "Studio admin", "Each brand's usage rights, dates and media, so images are never used beyond what was paid for.")] },
     { key: "property", label: "Property and corporate", pieces: [p("Listing shot checklist", "document", "Second photographer", "Rooms, angles and exterior shots each listing needs.")] },
   ],
+  "property-revenue-architecture": [
+    { key: "distressed", label: "Distressed and arrears properties", pieces: [p("Arrears tracker", "document", "Analyst", "Bond, municipal and levy arrears per property, with each creditor's deadlines.")] },
+    { key: "rental", label: "Underperforming rental properties", pieces: [p("Rent roll", "document", "Analyst", "Every unit's rent, tenant status and vacancy, month by month.")] },
+    { key: "redevelopment", label: "Redevelopment and conversion", pieces: [p("Approvals register", "document", "Case lead", "Zoning, building plans and consents each property needs, and their status.")] },
+  ],
   "gym-fitness": [
     { key: "gym", label: "Gym", pieces: [p("Equipment service log", "document", "Manager", "Every service and repair.")] },
     { key: "studio", label: "Studio (yoga, pilates, boxing)", pieces: [p("Class booking app", "software", "Studio manager", "Classes, spaces and waitlists.")] },
