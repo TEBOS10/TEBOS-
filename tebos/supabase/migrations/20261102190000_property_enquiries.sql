@@ -99,7 +99,8 @@ create trigger audit after insert or update or delete on public.property_enquiry
 -- except through public.property_enquiry
 alter table public.property_enquiries enable row level security;
 alter table public.property_enquiry_settings enable row level security;
-revoke all on public.property_enquiries, public.property_enquiry_settings from anon, authenticated;
+revoke all on public.property_enquiries from anon, authenticated;
+revoke all on public.property_enquiry_settings from anon, authenticated;
 create policy team_read on public.property_enquiries for select to authenticated
   using (tebos_private.has_role(org_id, array['org_admin', 'operator']));
 create policy team_update on public.property_enquiries for update to authenticated
