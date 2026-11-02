@@ -22,7 +22,9 @@ test("the crew's roster by team and shift, and an admin approving a draft before
   const roster = page.getByTestId("roster");
   await expect(roster.getByRole("region", { name: "Bookings team" })).toContainText("Bookings · day");
   await expect(roster.getByRole("region", { name: "Bookings team" })).toContainText("Bookings · night");
-  await expect(roster.getByText("On duty")).toHaveCount(1);
+  // on duty: the shift it is now in South Africa (two day agents by day, one night agent by night)
+  const saHour = (new Date().getUTCHours() + 2) % 24;
+  await expect(roster.getByText("On duty")).toHaveCount(saHour >= 6 && saHour < 18 ? 2 : 1);
   await expect(page.getByTestId("gaps")).toContainText("Admin night, Social day, Social night");
 
   const work = page.getByTestId("work").getByRole("listitem", { name: "Reply to a booking request" });
