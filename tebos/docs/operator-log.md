@@ -49,6 +49,26 @@ Update this list every run; strike items when they're done.
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 2 Nov 2026: morning run; Tidy Enterprise stage 1 (Underwrite)
+
+- **Checked:**
+  - main is green after PRs #121 and #122;
+  - the audit chains are intact (12 chains, none broken);
+  - Supabase advisors: nothing new (the listed public functions are the intended booking, contract and invitation RPCs);
+  - the worker last beat at 03:46 UTC. Its only error is intelligence paused: Anthropic credit too low (decision 21's
+    top-up), and Grok isn't active yet because the worker doesn't see `XAI_API_KEY`.
+- **Held, on purpose:** redeploying the worker from main. main's worker now has the AI crew step, whose tables
+  (`ai_crew`) aren't live yet: four attempts to apply it timed out waiting for the founder's approval in the
+  Supabase prompt. Redeploy once `ai_crew` is applied.
+- **Built:** PR #123, Tidy Enterprise stage 1: Underwrite as the sixth stage, plus Tidy Enterprise's operating
+  system blueprint (ADR 0021, decision 39). It has a migration, so it waits for "merge it".
+- **Sales desk:** 5 added, from each business's own page:
+  - The Gentle Touch Co. and Booked & Beautiful (Pretoria salons, WhatsApp bookings);
+  - Entourage Hair & Beauty Studio (Menlo Park, books by phone);
+  - Apex Academic Centre (Midrand tutoring, books by call or WhatsApp);
+  - Pest Control Pros (call-for-quote pest control).
+- **Desk state:** 23 businesses, all new and not yet called; none interested, no meetings yet.
+
 ## 1 Nov 2026 (later still): the starter website template and public holidays
 
 - **Founder:** "go ahead and build the template and holidays".
