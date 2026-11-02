@@ -2,13 +2,14 @@
 // runs under the person's own session: row-level security keeps each owner to their own organisation, and the
 // database enforces the integrity rules. Stage, milestones and next actions are computed from what is read here
 // (@core/journey), never stored or typed in.
-import type { JourneyInput, ProblemCategory, ProblemStatus } from "@core/journey";
+import type { Financing, JourneyInput, ProblemCategory, ProblemStatus, UnderwriteVerdict } from "@core/journey";
 import type { EvidenceStatus, WorkstreamStatus } from "@core/property";
 import type { PropertyBaseline, PropertyCase, PropertyEvidence, PropertyReview, PropertyWorkstream } from "./data";
 import type { Database } from "../database.types";
 import type { Db } from "./supabase";
 
 export type PropertyProblem = Database["public"]["Tables"]["property_problems"]["Row"];
+export type PropertyUnderwrite = Database["public"]["Tables"]["property_underwrites"]["Row"];
 
 function must<R extends { data: unknown; error: unknown }>(res: R): NonNullable<R["data"]> {
   if (res.error) throw res.error;
@@ -24,11 +25,12 @@ export interface PropertyJourney {
   problems: PropertyProblem[];
   evidence: PropertyEvidence[];
   actions: PropertyWorkstream[];
+  underwrites: PropertyUnderwrite[];
   baseline: PropertyBaseline | null;
   reviews: PropertyReview[];
 }
 
-export function journeyInput(d: Pick<PropertyJourney, "case" | "problems" | "evidence" | "actions" | "baseline" | "reviews">, today: string): JourneyInput {
+export function journeyInput(d: Pick<PropertyJourney, "case" | "problems" | "evidence" | "actions" | "underwrites" | "baseline" | "reviews">, today: string): JourneyInput {
   return {
     property: { createdAt: d.case.created_at, propertyType: d.case.property_type, nextReviewOn: d.case.next_review_on },
     problems: d.problems.map((p) => ({
@@ -38,6 +40,10 @@ export function journeyInput(d: Pick<PropertyJourney, "case" | "problems" | "evi
     actions: d.actions.map((a) => ({
       id: a.id, problemId: a.problem_id, title: a.title, owner: a.owner, dueOn: a.due_on, status: a.status as WorkstreamStatus,
       completedOn: a.completed_on, note: a.note, createdAt: a.created_at,
+    })),
+    underwrites: d.underwrites.map((u) => ({
+      id: u.id, problemId: u.problem_id, verdict: u.verdict as UnderwriteVerdict, viability: u.viability, financing: u.financing as Financing,
+      financingNote: u.financing_note, evidenceId: u.evidence_id, createdAt: u.created_at,
     })),
     baseline: d.baseline ? { capturedOn: d.baseline.captured_on } : null,
     reviews: d.reviews.map((r) => ({ reviewOn: r.review_on })),
@@ -50,19 +56,21 @@ export async function listProperties(db: Db, orgId: string) {
   const cases = must(await db.from("property_cases").select("*").eq("org_id", orgId).order("updated_at", { ascending: false }).limit(200));
   const ids = cases.map((c) => c.id);
   if (ids.length === 0) return [];
-  const [problems, evidence, actions, baselines, reviews] = await Promise.all([
+  const [problems, evidence, actions, underwrites, baselines, reviews] = await Promise.all([
     db.from("property_problems").select("*").in("case_id", ids),
     db.from("property_evidence").select("*").in("case_id", ids),
     db.from("property_workstreams").select("*").in("case_id", ids),
+    db.from("property_underwrites").select("*").in("case_id", ids),
     db.from("property_baselines").select("*").in("case_id", ids),
     db.from("property_outcome_reviews").select("*").in("case_id", ids),
   ]);
-  const p = must(problems), e = must(evidence), a = must(actions), b = must(baselines), r = must(reviews);
+  const p = must(problems), e = must(evidence), a = must(actions), u = must(underwrites), b = must(baselines), r = must(reviews);
   return cases.map((c): PropertyJourney => ({
     case: c,
     problems: p.filter((x) => x.case_id === c.id),
     evidence: e.filter((x) => x.case_id === c.id),
     actions: a.filter((x) => x.case_id === c.id),
+    underwrites: u.filter((x) => x.case_id === c.id),
     baseline: b.find((x) => x.case_id === c.id) ?? null,
     reviews: r.filter((x) => x.case_id === c.id),
   }));
@@ -72,15 +80,16 @@ export async function getPropertyJourney(db: Db, id: string): Promise<PropertyJo
   const c = await db.from("property_cases").select("*").eq("id", id).maybeSingle();
   if (c.error) throw c.error;
   if (!c.data) return null;
-  const [problems, evidence, actions, baselines, reviews] = await Promise.all([
+  const [problems, evidence, actions, underwrites, baselines, reviews] = await Promise.all([
     db.from("property_problems").select("*").eq("case_id", id).order("created_at"),
     db.from("property_evidence").select("*").eq("case_id", id).order("created_at"),
     db.from("property_workstreams").select("*").eq("case_id", id).order("due_on"),
+    db.from("property_underwrites").select("*").eq("case_id", id).order("created_at"),
     db.from("property_baselines").select("*").eq("case_id", id),
     db.from("property_outcome_reviews").select("*").eq("case_id", id).order("review_on"),
   ]);
   return {
-    case: c.data, problems: must(problems), evidence: must(evidence), actions: must(actions),
+    case: c.data, problems: must(problems), evidence: must(evidence), actions: must(actions), underwrites: must(underwrites),
     baseline: must(baselines)[0] ?? null, reviews: must(reviews),
   };
 }
@@ -130,6 +139,17 @@ export async function addAction(db: Db, orgId: string, caseId: string, a: NewAct
   return must(await db.from("property_workstreams").insert({ org_id: orgId, case_id: caseId, ...a }).select().single());
 }
 
+export interface NewUnderwrite {
+  problem_id: string; verdict: UnderwriteVerdict; viability: string; risks: string;
+  effect_low_cents: number | null; effect_high_cents: number | null; effect_basis: string | null;
+  financing: Financing; financing_note: string | null; evidence_id: string;
+}
+
+/** A new underwrite: kept as written; a changed view is another one, and the latest counts. */
+export async function addUnderwrite(db: Db, orgId: string, caseId: string, u: NewUnderwrite) {
+  return must(await db.from("property_underwrites").insert({ org_id: orgId, case_id: caseId, ...u }).select().single());
+}
+
 export async function updateAction(
   db: Db, id: string,
   patch: Partial<Pick<PropertyWorkstream, "status" | "note" | "due_on" | "completion_evidence" | "completed_on" | "completion_evidence_id">>,
@@ -147,6 +167,7 @@ export function journeyExport(d: PropertyJourney, computed: unknown, history: un
     problems: d.problems.map(({ created_by: _b, ...p }) => p),
     evidence: d.evidence,
     actions: d.actions,
+    underwrites: d.underwrites.map(({ created_by: _u, ...u }) => u),
     baseline: d.baseline ? (({ captured_by: _x, ...b }) => b)(d.baseline) : null,
     reviews: d.reviews,
     journey: computed,

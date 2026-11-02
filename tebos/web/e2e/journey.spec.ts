@@ -17,7 +17,7 @@ test.use({ baseURL: "http://localhost:5176" });
 
 function empty(fake: FakeSupabase): Tables {
   const t = fake.tables as unknown as Tables;
-  for (const k of ["property_cases", "property_problems", "property_evidence", "property_workstreams", "property_baselines", "property_outcome_reviews", "audit_events"]) t[k] = [];
+  for (const k of ["property_cases", "property_problems", "property_evidence", "property_workstreams", "property_underwrites", "property_baselines", "property_outcome_reviews", "audit_events"]) t[k] = [];
   // the fixture organisation stands in for a landlord's account on the property platform
   for (const o of t.organisations!) if (o.id === ORG) o.app = "pra";
   return t;
@@ -96,13 +96,45 @@ test("a landlord takes a property from its first record to a resolved problem, w
   await ef.getByLabel("Where it came from").fill("Owner's bank app");
   await ef.getByLabel("Where it is kept").fill("Drive / Property / Bank");
   await ef.getByRole("button", { name: "Add" }).click();
-  // 4. what is verified, missing or uncertain
+  // 4. received isn't enough: the evidence is checked before anything is underwritten or agreed
   await expect(problem).toContainText("Received, not yet checked");
-  await stage(page, "Strategise");
-  await expect(next).toContainText('Agree an action for "Unit 2 rent paid late"');
-  await expect(next).toContainText("The evidence hasn't been checked yet");
+  await stage(page, "Assess");
+  await expect(next).toContainText('Check the evidence for "Unit 2 rent paid late"');
+  await problem.getByRole("button", { name: "Agree an action" }).click();
+  const early = problem.getByRole("form", { name: "Agree an action" });
+  await early.getByLabel("What is to be done").fill("Agree a new debit order date");
+  await early.getByLabel("Who is responsible").fill("Owner");
+  await early.getByLabel("Deadline").fill(inDays(7));
+  await early.getByRole("button", { name: "Agree action" }).click();
+  await expect(early.getByRole("alert")).toContainText("underwritten to proceed");
+  await early.getByRole("button", { name: "Cancel" }).click();
+  expect(fake.writes.some((w) => w.table === "property_workstreams")).toBe(false);
+  const stmt = problem.getByRole("listitem", { name: "Bank statements, July to October" });
+  await stmt.getByRole("button", { name: "Check it" }).click();
+  await stmt.getByLabel("What you checked").fill("Rent arrived on the 9th, 11th and 8th");
+  await stmt.getByRole("button", { name: "Mark checked" }).click();
+  await stage(page, "Underwrite");
+  await expect(next).toContainText('Underwrite "Unit 2 rent paid late"');
 
-  // 5–6. agree an action: who, by when, why, and how we'll know it's done
+  // 5. underwrite: a verdict, why, the risks, an estimate only with its basis, and the financing
+  await problem.getByRole("button", { name: "Underwrite it" }).click();
+  const uf = problem.getByRole("form", { name: "Underwrite this problem" });
+  await uf.getByLabel("Does it stack up, and why").fill("Moving the debit date costs nothing and removes the monthly gap.");
+  await uf.getByLabel("What could go wrong").fill("The tenant may not agree to a new date.");
+  await uf.getByLabel("Estimated effect a month, from (R)").fill("0");
+  await uf.getByLabel("to (R)").fill("450");
+  await uf.getByRole("button", { name: "Record underwrite" }).click();
+  await expect(uf.getByRole("alert")).toContainText("how the estimate was reached");
+  await uf.getByLabel("How the estimate was reached").fill("Savings interest lost each late month, from the bank statements.");
+  await uf.getByRole("button", { name: "Record underwrite" }).click();
+  await stage(page, "Strategise");
+  await expect(problem.getByRole("region", { name: "Underwrite for Unit 2 rent paid late" })).toContainText("an estimate, not a promise");
+  expect(fake.writes.find((w) => w.table === "property_underwrites" && w.method === "POST")?.body).toMatchObject({
+    verdict: "proceed", effect_low_cents: 0, effect_high_cents: 45000, financing: "not_needed", evidence_id: expect.any(String),
+  });
+  await expect(next).toContainText('Agree an action for "Unit 2 rent paid late"');
+
+  // 6. agree an action: who, by when, why, and how we'll know it's done
   await problem.getByRole("button", { name: "Agree an action" }).click();
   const af = problem.getByRole("form", { name: "Agree an action" });
   await af.getByLabel("What is to be done").fill("Agree a new debit order date");
@@ -131,7 +163,7 @@ test("a landlord takes a property from its first record to a resolved problem, w
   await expect(action.locator(".badge")).toHaveText("Done");
   await expect(next).toContainText('Check whether "Unit 2 rent paid late" is fixed');
 
-  // 8. resolution rests on checked evidence; the journey reaches Optimise
+  // 8. resolution rests on new checked evidence that it worked (what it was underwritten on shows the problem)
   const move = problem.getByRole("form", { name: "Move Unit 2 rent paid late" });
   await move.getByLabel("Move this problem to").selectOption({ label: "Action planned" });
   await move.getByLabel("The intervention").fill("Move the debit order date to the 1st, agreed in writing.");
@@ -141,11 +173,16 @@ test("a landlord takes a property from its first record to a resolved problem, w
   await move.getByLabel("What happened: the result").fill("November rent arrived on the 2nd, before the bond debit.");
   await move.getByRole("button", { name: "Save" }).click();
   await expect(move.getByRole("alert")).toContainText("checked evidence");
-  const stmt = problem.getByRole("listitem", { name: "Bank statements, July to October" });
-  await stmt.getByRole("button", { name: "Check it" }).click();
-  await stmt.getByLabel("What you checked").fill("November rent received on the 2nd");
-  await stmt.getByRole("button", { name: "Mark checked" }).click();
-  await expect(problem).toContainText("Checked");
+  await problem.getByRole("button", { name: "Add evidence" }).click();
+  const nf = problem.getByRole("form", { name: "Add evidence" });
+  await nf.getByLabel("What it is").fill("November bank statement");
+  await nf.getByLabel("Where it came from").fill("Owner's bank app");
+  await nf.getByRole("button", { name: "Add" }).click();
+  const nov = problem.getByRole("listitem", { name: "November bank statement" });
+  await nov.getByRole("button", { name: "Check it" }).click();
+  await nov.getByLabel("What you checked").fill("November rent received on the 2nd");
+  await nov.getByRole("button", { name: "Mark checked" }).click();
+  await expect(nov.locator(".badge")).toHaveText("Checked");
   await move.getByLabel("Move this problem to").selectOption({ label: "Resolved" });
   await move.getByLabel("What happened: the result").fill("November rent arrived on the 2nd, before the bond debit.");
   await move.getByRole("button", { name: "Save" }).click();
@@ -153,7 +190,7 @@ test("a landlord takes a property from its first record to a resolved problem, w
   await stage(page, "Optimise");
   await expect(next).toContainText("Look for the next constraint");
   const ms = page.getByTestId("milestones");
-  for (const m of ["Property recorded", "First problem recorded", "First evidence received", "First action agreed", "First action completed, with proof", "Problem resolved, with checked evidence"]) {
+  for (const m of ["Property recorded", "First problem recorded", "First evidence received", "First problem underwritten", "First action agreed", "First action completed, with proof", "Problem resolved, with checked evidence"]) {
     await expect(ms).toContainText(m);
   }
   expect(t.property_problems![0]).toMatchObject({ status: "resolved", closed_on: expect.any(String) });

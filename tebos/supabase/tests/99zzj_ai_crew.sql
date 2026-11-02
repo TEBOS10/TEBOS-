@@ -48,7 +48,10 @@ insert into public.ai_agents (org_id, name, team, shift) values
 select t99zzj.expect_error(format($$insert into public.ai_agents (org_id, name, team, shift) values (%L, 'Bookings · day', 'bookings', 'night')$$, :'org'), '23505');
 select t99zzj.expect_error(format($$insert into public.ai_agents (org_id, name, team, shift) values (%L, 'Shooter', 'photography', 'day')$$, :'org'), '23514');
 select t99zzj.expect_error(format($$insert into public.ai_agents (org_id, name, team, shift, instructions) values (%L, 'Leaky', 'admin', 'night', 'api key: x9f8a7b6c5d4e3')$$, :'org'), '23514');
-select t99zzj.ok((select count(*) = 2 from public.ai_on_duty(:'org')) or (select count(*) = 1 from public.ai_on_duty(:'org')), 'the shift on duty now is listed');
+-- on duty: exactly the agents of the shift it is now (three by day, one by night), whatever the time the test runs
+select (case when extract(hour from now() at time zone 'Africa/Johannesburg') between 6 and 17 then 'day' else 'night' end) as shift_now \gset
+select t99zzj.ok((select count(*) from public.ai_on_duty(:'org')) = (case when :'shift_now' = 'day' then 3 else 1 end)
+  and not exists (select 1 from public.ai_on_duty(:'org') d where d.shift <> :'shift_now'), 'the shift on duty now is listed');
 reset role;
 select t99zzj.ok(tebos_private.ai_shift_at('2026-11-02 08:00+02') = 'day' and tebos_private.ai_shift_at('2026-11-02 18:00+02') = 'night'
   and tebos_private.ai_shift_at('2026-11-02 05:59+02') = 'night' and tebos_private.ai_shift_at('2026-11-02 17:59+02') = 'day', 'day is 06:00 to 18:00 SA time');

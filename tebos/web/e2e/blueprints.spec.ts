@@ -37,7 +37,7 @@ test("the public page shows twelve operating systems as blueprints, with outline
   await installFakeSupabase(page);
   await page.goto("/systems");
   await expect(page.getByRole("heading", { name: "An operating system for your kind of business" })).toBeVisible();
-  await expect(page.getByTestId("system")).toHaveCount(12);
+  await expect(page.getByTestId("system")).toHaveCount(13);
   await expect(page.getByText("These are blueprints, not client case studies.")).toBeVisible();
   const sports = page.getByTestId("system").filter({ hasText: "Sports agency" });
   await expect(sports).toContainText("Opportunity to signed deal · Media request to appearance");

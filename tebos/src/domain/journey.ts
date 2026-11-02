@@ -1,7 +1,8 @@
 // The property journey (Property Revenue Architect Platform, Release 1; docs/pra-platform/release-1.md).
 // A landlord's property keeps a register of problems. Each problem moves through the journey (Discover → Assess →
-// Strategise → Execute → Optimise) as its records do: evidence, actions, proof and a written result. Mirrors migration
-// property_journey so the interface can explain a refusal before sending anything; the database is the final authority.
+// Underwrite → Strategise → Execute → Optimise) as its records do: evidence, an underwrite, actions, proof and a
+// written result. Mirrors migrations property_journey and property_underwrite so the interface can explain a refusal
+// before sending anything; the database is the final authority.
 //
 // Integrity rules:
 //   * Nothing is scored. A stage, a milestone or a next action comes from a record, and says which one.
@@ -77,8 +78,11 @@ export function checkProblem(p: ProblemDraft): Check {
 export function checkProblemStatus(
   next: ProblemStatus,
   p: { intervention: string | null; resultNote: string | null },
-  records: { doneActions: number; checkedEvidence: number },
+  records: { doneActions: number; checkedEvidence: number; underwrittenToProceed?: boolean },
 ): Check {
+  if (next === "planned" && records.underwrittenToProceed === false) {
+    return fail("TEBOS_VALIDATION", "Plan the problem once it is underwritten to proceed.");
+  }
   if (next === "planned" && len(p.intervention) < 10) return fail("TEBOS_VALIDATION", "Describe the intervention before planning it.");
   if (next === "resolved" || next === "not_resolved" || next === "parked") {
     if (len(p.resultNote) < RESULT_MIN) {
@@ -95,7 +99,10 @@ export function checkProblemStatus(
 /** Mirrors property_workstreams: an action on a problem says why, and how we'll know it's done; done needs received proof. */
 export function checkAction(a: {
   problemId: string | null; reason: string | null; doneWhen: string | null; status: WorkstreamStatus; proofStatus: EvidenceStatus | null;
+  /** For a new action on a problem: whether its latest underwrite says proceed. */
+  underwrittenToProceed?: boolean;
 }): Check {
+  if (a.problemId && a.underwrittenToProceed === false) return fail("TEBOS_VALIDATION", "Agree an action once the problem is underwritten to proceed.");
   if (a.problemId && len(a.reason) < REASON_MIN) return fail("TEBOS_VALIDATION", `Say why this action is needed (at least ${REASON_MIN} characters).`);
   if (a.problemId && len(a.doneWhen) < DONE_WHEN_MIN) return fail("TEBOS_VALIDATION", "Say how we'll know it's done.");
   if (a.status === "done" && a.problemId && !a.proofStatus) return fail("TEBOS_VALIDATION", "Done needs its proof: choose the evidence that shows it.");
@@ -104,6 +111,81 @@ export function checkAction(a: {
   }
   return OK;
 }
+
+// ---------------------------------------------------------------------------
+// Underwrite: is fixing this problem commercially worth it? (ADR 0021)
+// ---------------------------------------------------------------------------
+
+export const UNDERWRITE_VERDICTS = {
+  proceed: { label: "Proceed", meaning: "Worth doing now: agree an action." },
+  hold_optimise: { label: "Hold: optimise first", meaning: "Stabilise or improve something else before spending on this." },
+  not_viable: { label: "Not viable", meaning: "The cost or risk outweighs what it would return." },
+} as const;
+export type UnderwriteVerdict = keyof typeof UNDERWRITE_VERDICTS;
+
+export const FINANCING = {
+  ready: "Ready: the money for this is in place",
+  needs_work: "Needs work before it can be funded",
+  not_needed: "Not needed: no funding is required",
+} as const;
+export type Financing = keyof typeof FINANCING;
+
+export const UNDERWRITE_TEXT_MIN = 10;
+export const EFFECT_BASIS_MIN = 10;
+
+export interface UnderwriteDraft {
+  verdict: UnderwriteVerdict;
+  viability: string;
+  risks: string;
+  /** The estimated monthly net effect, as a range in rand (an estimate, never a promise). Both or neither. */
+  effectLow: number | null;
+  effectHigh: number | null;
+  effectBasis: string | null;
+  financing: Financing;
+  financingNote: string | null;
+}
+
+/** Mirrors property_underwrites: it rests on checked evidence for the problem, and says why, what could go wrong, and how it's funded. */
+export function checkUnderwrite(u: UnderwriteDraft, evidence: { status: EvidenceStatus; sameProblem: boolean } | null): Check {
+  if (!(u.verdict in UNDERWRITE_VERDICTS)) return fail("TEBOS_VALIDATION", "Choose a verdict.");
+  if (!evidence) return fail("TEBOS_VALIDATION", "Choose the checked evidence this rests on.");
+  if (!evidence.sameProblem) return fail("TEBOS_VALIDATION", "An underwrite rests on evidence for the same problem.");
+  if (evidence.status !== "checked") return fail("TEBOS_VALIDATION", "Underwrite on checked evidence: check the evidence first.");
+  if (len(u.viability) < UNDERWRITE_TEXT_MIN) return fail("TEBOS_VALIDATION", "Say whether it stacks up commercially, and why (at least 10 characters).");
+  if (len(u.risks) < UNDERWRITE_TEXT_MIN) return fail("TEBOS_VALIDATION", "Say what could go wrong (at least 10 characters).");
+  if ((u.effectLow === null) !== (u.effectHigh === null)) return fail("TEBOS_VALIDATION", "Give both ends of the estimated range, or neither.");
+  if (u.effectLow !== null && u.effectHigh !== null) {
+    if (!Number.isFinite(u.effectLow) || !Number.isFinite(u.effectHigh) || u.effectLow > u.effectHigh) {
+      return fail("TEBOS_VALIDATION", "The low end of the range can't be above the high end.");
+    }
+    if (len(u.effectBasis) < EFFECT_BASIS_MIN) return fail("TEBOS_VALIDATION", "Say how the estimate was reached (at least 10 characters).");
+  }
+  if (!(u.financing in FINANCING)) return fail("TEBOS_VALIDATION", "Say whether the financing is ready.");
+  if (u.financing === "needs_work" && len(u.financingNote) < 10) return fail("TEBOS_VALIDATION", "Say what the financing needs (at least 10 characters).");
+  if ([u.viability, u.risks, u.effectBasis, u.financingNote].some(looksPersonal)) {
+    return fail("TEBOS_VALIDATION", "Leave out phone numbers, email addresses and ID numbers.");
+  }
+  return OK;
+}
+
+export interface JourneyUnderwrite {
+  id: string;
+  problemId: string;
+  verdict: UnderwriteVerdict;
+  viability: string;
+  financing: Financing;
+  financingNote: string | null;
+  evidenceId: string;
+  createdAt: string;
+}
+
+/** The underwrite that counts for a problem: the latest one, or null when it hasn't been underwritten. */
+export function latestUnderwrite(problemId: string, underwrites: JourneyUnderwrite[]): JourneyUnderwrite | null {
+  return underwrites.filter((u) => u.problemId === problemId)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id))[0] ?? null;
+}
+export const underwrittenToProceed = (problemId: string, underwrites: JourneyUnderwrite[]) =>
+  latestUnderwrite(problemId, underwrites)?.verdict === "proceed";
 
 // ---------------------------------------------------------------------------
 // Records the journey reads
@@ -142,6 +224,7 @@ export interface JourneyInput {
   problems: JourneyProblem[];
   evidence: JourneyEvidence[];
   actions: JourneyAction[];
+  underwrites: JourneyUnderwrite[];
   baseline: { capturedOn: string } | null;
   reviews: Array<{ reviewOn: string }>;
   today: string;
@@ -177,7 +260,8 @@ export function problemEvidence(problemId: string, evidence: JourneyEvidence[]):
 
 export const STAGES = [
   { key: "discover", label: "Discover", moves: "Record the property and what is holding it back." },
-  { key: "assess", label: "Assess", moves: "Gather the evidence: what the records show, not what is assumed." },
+  { key: "assess", label: "Assess", moves: "Gather and check the evidence: what the records show, not what is assumed." },
+  { key: "underwrite", label: "Underwrite", moves: "Test whether fixing it pays: viability, risks, likely return and financing." },
   { key: "strategise", label: "Strategise", moves: "Agree an action: who does it, by when, and how we'll know it's done." },
   { key: "execute", label: "Execute", moves: "Do the work and keep its proof." },
   { key: "optimise", label: "Optimise", moves: "Check the result against the evidence, and review the property again." },
@@ -188,14 +272,14 @@ const order = (s: StageKey) => STAGES.findIndex((x) => x.key === s);
 const LIVE_ACTION: readonly WorkstreamStatus[] = ["planned", "in_progress", "blocked", "done"];
 
 /** Where one problem stands, from its records. Parked problems are off the journey (null). */
-export function problemStage(p: JourneyProblem, evidence: JourneyEvidence[], actions: JourneyAction[]): StageKey | null {
+export function problemStage(p: JourneyProblem, evidence: JourneyEvidence[], actions: JourneyAction[], underwrites: JourneyUnderwrite[]): StageKey | null {
   if (p.status === "parked") return null;
   if (p.status === "resolved") return "optimise";
   const live = actions.filter((a) => a.problemId === p.id && LIVE_ACTION.includes(a.status));
   if (live.length > 0) return "execute";
-  const ev = problemEvidence(p.id, evidence).state;
-  if (ev === "received" || ev === "verified") return "strategise";
-  return "assess";
+  // underwriting rests on checked evidence; until then the problem is still being assessed
+  if (problemEvidence(p.id, evidence).state !== "verified") return "assess";
+  return underwrittenToProceed(p.id, underwrites) ? "strategise" : "underwrite";
 }
 
 export interface PropertyStage { stage: StageKey; reason: string }
@@ -209,7 +293,7 @@ export function propertyStage(input: JourneyInput): PropertyStage {
   }
   let earliest: { stage: StageKey; problem: JourneyProblem } | null = null;
   for (const p of active) {
-    const s = problemStage(p, input.evidence, input.actions);
+    const s = problemStage(p, input.evidence, input.actions, input.underwrites);
     if (s && (!earliest || order(s) < order(earliest.stage))) earliest = { stage: s, problem: p };
   }
   const e = earliest!;
@@ -236,6 +320,10 @@ export function milestones(input: JourneyInput): Milestone[] {
   const firstChecked = earliestBy(input.evidence.filter((e) => e.status === "checked"), (e) => e.updatedAt);
   if (firstChecked) {
     out.push({ key: "first_checked", label: "First evidence checked", on: day(firstChecked.updatedAt), detail: firstChecked.title, approximate: true });
+  }
+  const firstUnderwrite = earliestBy(input.underwrites, (u) => u.createdAt);
+  if (firstUnderwrite) {
+    out.push({ key: "first_underwrite", label: "First problem underwritten", on: day(firstUnderwrite.createdAt), detail: UNDERWRITE_VERDICTS[firstUnderwrite.verdict].label });
   }
   const firstAction = earliestBy(input.actions.filter((a) => a.status !== "cancelled"), (a) => a.createdAt);
   if (firstAction) out.push({ key: "first_action", label: "First action agreed", on: day(firstAction.createdAt), detail: `${firstAction.title} (${firstAction.owner})` });
@@ -346,16 +434,45 @@ export function nextActions(input: JourneyInput): NextAction[] {
         next: "Record what exists: statements, invoices, messages, photos or reports, with where each one is kept.",
       });
     }
-    // 5. evidence in hand, nothing agreed yet
+    // 5. evidence in hand: check it, underwrite it, then agree an action
     const live = mine.filter((a) => LIVE_ACTION.includes(a.status));
-    if ((ev.state === "received" || ev.state === "verified") && live.length === 0 && held < 2) {
+    const uw = latestUnderwrite(p.id, input.underwrites);
+    if (ev.state === "received" && live.length === 0) {
       out.push({
-        key: `plan:${p.id}`, problemId: p.id, title: `Agree an action for "${p.title}"`,
-        trigger: "There is evidence for this problem, but no action is agreed.",
-        evidence: `${ev.checked} checked, ${ev.received} received but not yet checked.`,
-        uncertain: ev.state === "received" ? "The evidence hasn't been checked yet, so the cause may still be wrong." : "Which intervention fits best.",
-        next: "Agree one action: who does it, by when, why it's needed, and how we'll know it's done.",
+        key: `check:${p.id}`, problemId: p.id, title: `Check the evidence for "${p.title}"`,
+        trigger: `${ev.received} evidence item${ev.received === 1 ? " has" : "s have"} been received but not checked.`,
+        evidence: `${ev.received} received, not yet checked.`,
+        uncertain: "Whether the records show what they appear to, so the cause may still be wrong.",
+        next: "Compare each item against its source, note its confidence, and mark it checked. Underwriting rests on checked evidence.",
       });
+    } else if (ev.state === "verified" && live.length === 0 && held < 2) {
+      if (!uw) {
+        out.push({
+          key: `underwrite:${p.id}`, problemId: p.id, title: `Underwrite "${p.title}"`,
+          trigger: "The evidence is checked, but no one has tested whether fixing it pays.",
+          evidence: `${ev.checked} checked evidence item${ev.checked === 1 ? "" : "s"}.`,
+          uncertain: "Whether the fix is commercially worth it, what could go wrong, and how it would be funded.",
+          next: "Record a verdict (proceed, hold, or not viable), the risks, an estimated range if there is a basis for one, and whether financing is ready.",
+        });
+      } else if (uw.verdict === "proceed") {
+        out.push({
+          key: `plan:${p.id}`, problemId: p.id, title: `Agree an action for "${p.title}"`,
+          trigger: "It is underwritten to proceed, but no action is agreed.",
+          evidence: `The underwrite of ${day(uw.createdAt)}; ${ev.checked} checked evidence item${ev.checked === 1 ? "" : "s"}.`,
+          uncertain: "Which intervention fits best.",
+          next: "Agree one action: who does it, by when, why it's needed, and how we'll know it's done.",
+        });
+      } else {
+        out.push({
+          key: `held:${p.id}`, problemId: p.id, title: uw.verdict === "hold_optimise" ? `Optimise first: "${p.title}"` : `Decide what to do with "${p.title}"`,
+          trigger: `It was underwritten as ${UNDERWRITE_VERDICTS[uw.verdict].label.toLowerCase()} on ${day(uw.createdAt)}.`,
+          evidence: uw.viability,
+          uncertain: uw.financing === "needs_work" && uw.financingNote ? `Financing: ${uw.financingNote}` : "Whether the position has changed since.",
+          next: uw.verdict === "hold_optimise"
+            ? "Do the groundwork the underwrite names, then underwrite again with the new evidence."
+            : "Park the problem with the reason, or underwrite again if something material changes.",
+        });
+      }
     }
     // 6. work done, result not yet recorded
     const done = mine.filter((a) => a.status === "done");

@@ -4267,6 +4267,54 @@ export type Database = {
         }
         Relationships: []
       }
+      property_underwrites: {
+        Row: {
+          id: string
+          org_id: string
+          case_id: string
+          problem_id: string
+          verdict: string
+          viability: string
+          risks: string
+          effect_low_cents: number | null
+          effect_high_cents: number | null
+          effect_basis: string | null
+          financing: string
+          financing_note: string | null
+          evidence_id: string
+          created_by: string | null
+          created_at: string
+        }
+        Insert: {
+          org_id: string
+          case_id: string
+          problem_id: string
+          verdict: string
+          viability: string
+          risks: string
+          effect_low_cents?: number | null
+          effect_high_cents?: number | null
+          effect_basis?: string | null
+          financing: string
+          financing_note?: string | null
+          evidence_id: string
+        }
+        Update: {
+          org_id?: string
+          case_id?: string
+          problem_id?: string
+          verdict?: string
+          viability?: string
+          risks?: string
+          effect_low_cents?: number | null
+          effect_high_cents?: number | null
+          effect_basis?: string | null
+          financing?: string
+          financing_note?: string | null
+          evidence_id?: string
+        }
+        Relationships: []
+      }
       property_baselines: {
         Row: {
           id: string

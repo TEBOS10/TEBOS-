@@ -2,10 +2,10 @@ import { describe, expect, it } from "vitest";
 import { BLUEPRINTS, blueprintByKey, blueprintCoverage, blueprintPayload, checkBlueprint, type Blueprint } from "../src";
 
 describe("operating-system blueprints", () => {
-  it("covers twelve different kinds of business, each with a unique key", () => {
-    expect(BLUEPRINTS).toHaveLength(12);
-    expect(new Set(BLUEPRINTS.map((b) => b.key)).size).toBe(12);
-    expect(new Set(BLUEPRINTS.map((b) => b.industry)).size).toBe(12);
+  it("covers thirteen different kinds of business, each with a unique key", () => {
+    expect(BLUEPRINTS).toHaveLength(13);
+    expect(new Set(BLUEPRINTS.map((b) => b.key)).size).toBe(13);
+    expect(new Set(BLUEPRINTS.map((b) => b.industry)).size).toBe(13);
   });
 
   it.each(BLUEPRINTS.map((b) => [b.key, b] as const))("%s fits the board's rules", (_, b) => {
@@ -30,6 +30,16 @@ describe("operating-system blueprints", () => {
     const shootDay = b.flows.find((f) => f.name === "Shoot day")!;
     expect(shootDay.steps.every((x) => x.performer !== "founder")).toBe(true);
     expect(shootDay.steps.some((x) => x.role === "Second photographer")).toBe(true);
+  });
+
+  it("Tidy Enterprise's property business runs the six stages without the founder in each case", () => {
+    const b = blueprintByKey("property-revenue-architecture")!;
+    const steps = b.flows.flatMap((f) => f.steps);
+    // only fees and mandates need the founder; underwriting and the work are the team's and the specialists'
+    expect(steps.filter((x) => x.performer === "founder").map((x) => x.name)).toEqual(["Sign the mandate and fee agreement"]);
+    for (const stage of ["Discover", "assess", "Underwrite", "Strategise", "execute", "Optimise"]) expect(b.flows.some((f) => f.name.includes(stage))).toBe(true);
+    // regulated work stays with qualified professionals
+    expect(steps.some((x) => x.performer === "provider" && x.piece === "Specialist panel")).toBe(true);
   });
 
   it("catches what the database would refuse", () => {

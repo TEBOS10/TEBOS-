@@ -6,9 +6,10 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { ArrowRight, Download, Plus } from "lucide-react";
 import {
-  ACTIVE_PROBLEM, checkAction, checkProblem, checkProblemStatus, EVIDENCE_STATE_LABEL, milestones, nextActions, PROBLEM_CATEGORIES,
-  PROBLEM_STATUS_LABEL, problemEvidence, problemStage, propertyStage, propertySummary, STAGES,
-  type EvidenceState, type NextAction, type ProblemCategory, type ProblemStatus, type StageKey,
+  ACTIVE_PROBLEM, checkAction, checkProblem, checkProblemStatus, checkUnderwrite, EVIDENCE_STATE_LABEL, FINANCING, latestUnderwrite, milestones,
+  nextActions, PROBLEM_CATEGORIES, PROBLEM_STATUS_LABEL, problemEvidence, problemStage, propertyStage, propertySummary, STAGES,
+  underwrittenToProceed, UNDERWRITE_VERDICTS, type EvidenceState, type Financing, type NextAction, type ProblemCategory, type ProblemStatus,
+  type StageKey, type UnderwriteVerdict,
 } from "@core/journey";
 import { EVIDENCE_CATEGORIES, OBJECTIVES, PROBLEMS, PROPERTY_TYPE_LABEL, PROPERTY_TYPES, type EvidenceStatus, type PropertyType } from "@core/property";
 import { canTransition } from "@core/states";
@@ -17,15 +18,16 @@ import { Badge, Card, Empty, ErrorNote, Field, Loading, PageHeader } from "../co
 import { propertyCaseHistory, type PropertyEvidence, type PropertyWorkstream } from "../lib/data";
 import { day, when, type Tone } from "../lib/format";
 import {
-  addAction, addEvidence, addProblem, createProperty, getPropertyJourney, journeyExport, journeyInput, listProperties, updateAction,
-  updateEvidence, updateProblem, updateProperty, type NewProperty, type PropertyJourney, type PropertyProblem,
+  addAction, addEvidence, addProblem, addUnderwrite, createProperty, getPropertyJourney, journeyExport, journeyInput, listProperties, updateAction,
+  updateEvidence, updateProblem, updateProperty, type NewProperty, type PropertyJourney, type PropertyProblem, type PropertyUnderwrite,
 } from "../lib/journeyData";
 import { Link, navigate } from "../lib/router";
 import { useOrg } from "../lib/session";
 import { useQuery } from "../lib/useQuery";
 import { downloadJson } from "./PropertyPage";
 
-const STAGE_TONE: Record<StageKey, Tone> = { discover: "neutral", assess: "warn", strategise: "info", execute: "info", optimise: "good" };
+const STAGE_TONE: Record<StageKey, Tone> = { discover: "neutral", assess: "warn", underwrite: "warn", strategise: "info", execute: "info", optimise: "good" };
+const VERDICT_TONE: Record<UnderwriteVerdict, Tone> = { proceed: "good", hold_optimise: "warn", not_viable: "bad" };
 const EVIDENCE_TONE: Record<EvidenceState, Tone> = { none: "warn", missing: "warn", received: "info", verified: "good", conflicting: "bad" };
 const STATUS_TONE: Record<ProblemStatus, Tone> = { open: "warn", investigating: "info", planned: "info", resolved: "good", not_resolved: "bad", parked: "neutral" };
 const stageLabel = (s: StageKey) => STAGES.find((x) => x.key === s)!.label;
@@ -305,7 +307,12 @@ function ProblemItem({ p, d, canWork, reload }: { p: PropertyProblem; d: Propert
   const actions = d.actions.filter((a) => a.problem_id === p.id);
   const input = journeyInput(d, saToday());
   const ev = problemEvidence(p.id, input.evidence);
-  const stage = problemStage(input.problems.find((x) => x.id === p.id)!, input.evidence, input.actions);
+  const stage = problemStage(input.problems.find((x) => x.id === p.id)!, input.evidence, input.actions, input.underwrites);
+  const underwrites = d.underwrites.filter((u) => u.problem_id === p.id);
+  const proceed = underwrittenToProceed(p.id, input.underwrites);
+  const latest = latestUnderwrite(p.id, input.underwrites);
+  // the evidence a problem was underwritten on shows the problem, not the result, so it doesn't prove a fix
+  const proofChecked = evidence.filter((e) => e.status === "checked" && !underwrites.some((u) => u.evidence_id === e.id)).length;
   const [open, setOpen] = useState(ACTIVE_PROBLEM.includes(p.status as ProblemStatus));
   return (
     <li className="journey-problem" aria-label={p.title}>
@@ -332,14 +339,21 @@ function ProblemItem({ p, d, canWork, reload }: { p: PropertyProblem; d: Propert
               )}
               {canWork && <EvidenceForm caseId={d.case.id} problemId={p.id} onDone={reload} />}
             </section>
+            <section aria-label={`Underwrite for ${p.title}`}>
+              <h3 className="journey-sub">Underwrite</h3>
+              {underwrites.length === 0 ? <p className="muted">Not underwritten yet. It rests on checked evidence.</p> : (
+                <ul className="list">{[...underwrites].reverse().map((u) => <UnderwriteItem key={u.id} u={u} latest={u.id === latest?.id} evidence={evidence} />)}</ul>
+              )}
+              {canWork && ACTIVE_PROBLEM.includes(p.status as ProblemStatus) && <UnderwriteForm caseId={d.case.id} problemId={p.id} evidence={evidence} onDone={reload} />}
+            </section>
             <section aria-label={`Actions for ${p.title}`}>
               <h3 className="journey-sub">Actions</h3>
               {actions.length === 0 ? <p className="muted">No action agreed yet.</p> : (
                 <ul className="list">{actions.map((a) => <ActionItem key={a.id} a={a} evidence={evidence} canWork={canWork} reload={reload} />)}</ul>
               )}
-              {canWork && ACTIVE_PROBLEM.includes(p.status as ProblemStatus) && <ActionForm caseId={d.case.id} problemId={p.id} onDone={reload} />}
+              {canWork && ACTIVE_PROBLEM.includes(p.status as ProblemStatus) && <ActionForm caseId={d.case.id} problemId={p.id} proceed={proceed} onDone={reload} />}
             </section>
-            {canWork && <ProblemStatusForm p={p} doneActions={actions.filter((a) => a.status === "done").length} checkedEvidence={ev.checked} onDone={reload} />}
+            {canWork && <ProblemStatusForm p={p} doneActions={actions.filter((a) => a.status === "done").length} checkedEvidence={proofChecked} proceed={proceed} onDone={reload} />}
           </div>
         )}
       </div>
@@ -362,7 +376,9 @@ const NEXT_STATUS: Record<ProblemStatus, ProblemStatus[]> = {
   not_resolved: ["investigating", "planned"], parked: ["open"], resolved: ["open"],
 };
 
-function ProblemStatusForm({ p, doneActions, checkedEvidence, onDone }: { p: PropertyProblem; doneActions: number; checkedEvidence: number; onDone: () => void }) {
+function ProblemStatusForm({ p, doneActions, checkedEvidence, proceed, onDone }: {
+  p: PropertyProblem; doneActions: number; checkedEvidence: number; proceed: boolean; onDone: () => void;
+}) {
   const org = useOrg();
   const save = useSave();
   const current = p.status as ProblemStatus;
@@ -374,7 +390,7 @@ function ProblemStatusForm({ p, doneActions, checkedEvidence, onDone }: { p: Pro
   function submit(e: FormEvent) {
     e.preventDefault();
     const fields = { intervention: blank(intervention), resultNote: closing ? blank(note) : null };
-    const check = checkProblemStatus(next, fields, { doneActions, checkedEvidence });
+    const check = checkProblemStatus(next, fields, { doneActions, checkedEvidence, underwrittenToProceed: proceed });
     void save.run(check, () => updateProblem(org.db, p.id, {
       status: next,
       ...(next === "planned" ? { intervention: fields.intervention } : {}),
@@ -492,10 +508,91 @@ function EvidenceItem({ e, canWork, reload }: { e: PropertyEvidence; canWork: bo
 }
 
 // ---------------------------------------------------------------------------
+// Underwrite
+// ---------------------------------------------------------------------------
+
+const rand = (cents: number) => `R${Math.round(cents / 100).toLocaleString("en-ZA").replace(/,/g, " ")}`;
+
+function UnderwriteItem({ u, latest, evidence }: { u: PropertyUnderwrite; latest: boolean; evidence: PropertyEvidence[] }) {
+  const verdict = u.verdict as UnderwriteVerdict;
+  const on = evidence.find((e) => e.id === u.evidence_id)?.title ?? "checked evidence";
+  return (
+    <li aria-label={`Underwrite of ${day(u.created_at)}`} className={latest ? "" : "muted"}>
+      <span className="list-main">
+        <span className="list-title">{UNDERWRITE_VERDICTS[verdict].label}{latest ? "" : " (earlier view)"}</span>
+        <Facts rows={[
+          ["Why", u.viability], ["Risks", u.risks],
+          ["Estimated effect", u.effect_low_cents !== null && u.effect_high_cents !== null
+            ? `${rand(u.effect_low_cents)} to ${rand(u.effect_high_cents)} a month, an estimate, not a promise. ${u.effect_basis ?? ""}` : null],
+          ["Financing", `${FINANCING[u.financing as Financing]}${u.financing_note ? `: ${u.financing_note}` : ""}`],
+          ["Rests on", `${on}, ${day(u.created_at)}`],
+        ]} />
+      </span>
+      <Badge tone={VERDICT_TONE[verdict]}>{UNDERWRITE_VERDICTS[verdict].label}</Badge>
+    </li>
+  );
+}
+
+function UnderwriteForm({ caseId, problemId, evidence, onDone }: { caseId: string; problemId: string; evidence: PropertyEvidence[]; onDone: () => void }) {
+  const org = useOrg();
+  const save = useSave();
+  const checked = evidence.filter((e) => e.status === "checked");
+  const [show, setShow] = useState(false);
+  const [f, setF] = useState({ verdict: "proceed", viability: "", risks: "", low: "", high: "", basis: "", financing: "not_needed", note: "", evidence: "" });
+  const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
+  if (!show) return <button className="btn btn-sm" onClick={() => setShow(true)}>Underwrite it</button>;
+  const num = (v: string) => (v.trim() === "" ? null : Number(v.replace(/[\s,]/g, "")));
+  function submit(e: FormEvent) {
+    e.preventDefault();
+    const evidenceId = f.evidence || checked[0]?.id || "";
+    const chosen = evidence.find((x) => x.id === evidenceId);
+    const draft = {
+      verdict: f.verdict as UnderwriteVerdict, viability: f.viability, risks: f.risks, effectLow: num(f.low), effectHigh: num(f.high),
+      effectBasis: blank(f.basis), financing: f.financing as Financing, financingNote: blank(f.note),
+    };
+    const check = checkUnderwrite(draft, chosen ? { status: chosen.status as EvidenceStatus, sameProblem: chosen.problem_id === problemId } : null);
+    void save.run(check, () => addUnderwrite(org.db, org.organisation.id, caseId, {
+      problem_id: problemId, verdict: draft.verdict, viability: f.viability.trim(), risks: f.risks.trim(),
+      effect_low_cents: draft.effectLow === null ? null : Math.round(draft.effectLow * 100),
+      effect_high_cents: draft.effectHigh === null ? null : Math.round(draft.effectHigh * 100),
+      effect_basis: draft.effectBasis, financing: draft.financing, financing_note: draft.financingNote, evidence_id: evidenceId,
+    }), () => { setShow(false); onDone(); });
+  }
+  return (
+    <form className="form journey-form" onSubmit={submit} aria-label="Underwrite this problem">
+      <Field label="Verdict">
+        <select className="input" value={f.verdict} onChange={set("verdict")}>
+          {Object.entries(UNDERWRITE_VERDICTS).map(([k, v]) => <option key={k} value={k}>{v.label}: {v.meaning}</option>)}
+        </select>
+      </Field>
+      <Field label="Does it stack up, and why"><textarea className="input" rows={2} value={f.viability} onChange={set("viability")} /></Field>
+      <Field label="What could go wrong"><textarea className="input" rows={2} value={f.risks} onChange={set("risks")} /></Field>
+      <div className="row">
+        <Field label="Estimated effect a month, from (R)" hint="Optional. Leave both empty if there's no basis yet."><input className="input" inputMode="numeric" value={f.low} onChange={set("low")} /></Field>
+        <Field label="to (R)"><input className="input" inputMode="numeric" value={f.high} onChange={set("high")} /></Field>
+      </div>
+      {(f.low.trim() || f.high.trim()) && <Field label="How the estimate was reached"><input className="input" value={f.basis} onChange={set("basis")} /></Field>}
+      <Field label="Financing">
+        <select className="input" value={f.financing} onChange={set("financing")}>{Object.entries(FINANCING).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
+      </Field>
+      {f.financing === "needs_work" && <Field label="What the financing needs"><input className="input" value={f.note} onChange={set("note")} /></Field>}
+      <Field label="Rests on" hint="Underwriting rests on checked evidence for this problem.">
+        <select className="input" value={f.evidence || checked[0]?.id || ""} onChange={set("evidence")}>
+          {checked.length === 0 && <option value="">No checked evidence yet</option>}
+          {checked.map((x) => <option key={x.id} value={x.id}>{x.title}</option>)}
+        </select>
+      </Field>
+      <ErrorNote error={save.error} title="Not recorded" />
+      <div className="row"><button className="btn btn-primary" disabled={save.busy}>Record underwrite</button><button type="button" className="btn" onClick={() => setShow(false)}>Cancel</button></div>
+    </form>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Actions
 // ---------------------------------------------------------------------------
 
-function ActionForm({ caseId, problemId, onDone }: { caseId: string; problemId: string; onDone: () => void }) {
+function ActionForm({ caseId, problemId, proceed, onDone }: { caseId: string; problemId: string; proceed: boolean; onDone: () => void }) {
   const org = useOrg();
   const save = useSave();
   const [show, setShow] = useState(false);
@@ -505,7 +602,7 @@ function ActionForm({ caseId, problemId, onDone }: { caseId: string; problemId: 
   function submit(e: FormEvent) {
     e.preventDefault();
     const basic = !f.title.trim() || !f.owner.trim() || !f.due_on ? { ok: false as const, reason: "An action needs what is to be done, who is responsible and a deadline." } : OK;
-    const check = basic.ok ? checkAction({ problemId, reason: f.reason, doneWhen: f.done_when, status: "planned", proofStatus: null }) : basic;
+    const check = basic.ok ? checkAction({ problemId, reason: f.reason, doneWhen: f.done_when, status: "planned", proofStatus: null, underwrittenToProceed: proceed }) : basic;
     void save.run(check, () => addAction(org.db, org.organisation.id, caseId, {
       problem_id: problemId, title: f.title.trim(), owner: f.owner.trim(), due_on: f.due_on, reason: f.reason.trim(), done_when: f.done_when.trim(),
     }), () => { setShow(false); onDone(); });

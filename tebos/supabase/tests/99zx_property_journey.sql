@@ -62,6 +62,13 @@ select t99zx.expect_error(format($$insert into public.property_problems (org_id,
 -- an unknown category is refused
 select t99zx.expect_error(format($$insert into public.property_problems (org_id, case_id, category, title, experienced) values (%L, %L, 'rezoning', 'Rezone', 'The owner wants to rezone the property.')$$, :'org', :'prop'), '23514');
 
+-- planning waits for an underwrite that says proceed (migration property_underwrite; tested in full in 99zzk)
+insert into public.property_evidence (org_id, case_id, problem_id, category, kind, title, source, status, received_on, confidence)
+  values (:'org', :'prop', :'late', 'income', 'payment_history', 'Rent arrival dates, last four months', 'Owner''s bank app', 'checked', current_date, 'high')
+  returning id as dates \gset
+insert into public.property_underwrites (org_id, case_id, problem_id, verdict, viability, risks, financing, evidence_id)
+  values (:'org', :'prop', :'late', 'proceed', 'Moving the debit date costs nothing and removes the monthly gap.',
+          'The tenant may not agree to a new date.', 'not_needed', :'dates');
 -- planned needs a stated intervention
 select t99zx.expect_error(format($$update public.property_problems set status = 'planned' where id = %L$$, :'late'), '23514');
 update public.property_problems set status = 'investigating' where id = :'late';

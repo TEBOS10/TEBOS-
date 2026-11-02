@@ -17,6 +17,7 @@ Update this list every run; strike items when they're done.
 | 35 | **Grape Studios' booking site live** (ADR 0016, built 1 Nov): once Grape signs, create its organisation (slug `grape-studios`) and invite its owner as admin; run `scripts/seed-grape-bookings.sql`; lay down the **photography-studio blueprint** on Grape's board (TEBOS → Systems), so bookings, shoot days, edits and brand work run on written rules and the team can run them without Teboho; Grape sets its working hours and deposit instructions in TEBOS → Bookings and switches on online booking; deploy `dist-grape` on Grape's own hosting account and domain (needs decision 31's host) | Grape's customers booking and following their shoots online |
 | 36 | **Grok (xAI) for TEBOS** (ADR 0017, built 1 Nov, off until you act): create an xAI API key in console.x.ai on a paid team, set a monthly spending limit there (your amount; it is the only cap on cost), and confirm in xAI's data settings that API data is not used for training. Then Railway → the worker service → Variables → add `XAI_API_KEY` (never in chat). Optional: `TEBOS_XAI_MODEL` (default `grok-4.7`). Grok then answers when Claude is unavailable; tell TEBOS, which checks the worker's start-up line names `xai` without reading the key. Needs decision 21 (the worker running) | A second reasoning provider, so analysis keeps going when one fails |
 | 37 | **Studio crew for Grape Studios** (ADR 0018, built 1 Nov): say "merge it" to apply migration `20261102150000_studio_crew.sql`. A booking then needs a photographer before it is confirmed; a shoot needs its backup and releases noted before it is marked done; the gallery reaches the customer only once the balance is paid. Additive: it changes no existing data | Grape's team running shoots without Teboho on each one |
+| 39 | **Tidy Enterprise, stage 1: Underwrite** (ADR 0021, built 2 Nov): say "merge it" to apply migration `20261102180000_property_underwrite.sql`. Then, in TEBOS as Tidy Enterprise's admin, open Systems and lay down "Property revenue operating system" (one click; every piece starts as proposed for you to confirm) | The property journey has your six stages, and Tidy Enterprise's TEBOS organisation has its operating system instead of an empty page |
 | 38 | **Grape's AI crew and publishing consent** (ADR 0020, built 1 Nov): say "merge it" to apply migration `20261102170000_ai_crew.sql`. Then, in TEBOS → Crew (as Grape's admin), add the agents: for example Bookings · day, Bookings · night, Admin · day, Admin · night, Social · day, Social · night. Drafts start once the worker has a reasoning key (decision 36, Grok). Teboho approves each draft; nothing is sent by TEBOS. Grape's booking form now asks every customer whether their photos may be published | Grape's roles run by agents in day and night shifts, overseen by Teboho |
 | 21 | **Railway: switch to the Free plan (USD 0).** *(27 Oct: the connector is signed in, but Railway still answers "Your trial has expired. Please select a plan" for the tebos10 account. Choose Free while signed in as tebos10, then TEBOS starts the worker itself.)* The trial expired and stopped the worker. The worker now runs every 15 minutes, does its work and stops (batch mode), which fits inside the Free plan's USD 1 monthly credit. Steps: railway.com → sign in → the yellow "trial expired" banner (or Account → Plans) → choose **Free**. Then tell TEBOS, which reconnects the worker to `main` | Everything TEBOS does on its own: BAME monitoring, REEDS, analysis, reminders |
 | 22 | **Switch on the weekly signal brief:** TEBOS → Ask TEBOS → Weekly signal brief → "Switch on every week". One click; the worker then files it weekly for you (after decision 21) | REEDS reporting demand, cash, delivery, reliability and security each week |
@@ -47,6 +48,26 @@ Update this list every run; strike items when they're done.
 | 18 | Each client's web app address (where TEBOS's people sign in to their department), starting with BAME's | Client tiles that open the client's web app |
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
+
+## 2 Nov 2026: morning run; Tidy Enterprise stage 1 (Underwrite)
+
+- **Checked:**
+  - main is green after PRs #121 and #122;
+  - the audit chains are intact (12 chains, none broken);
+  - Supabase advisors: nothing new (the listed public functions are the intended booking, contract and invitation RPCs);
+  - the worker last beat at 03:46 UTC. Its only error is intelligence paused: Anthropic credit too low (decision 21's
+    top-up), and Grok isn't active yet because the worker doesn't see `XAI_API_KEY`.
+- **Held, on purpose:** redeploying the worker from main. main's worker now has the AI crew step, whose tables
+  (`ai_crew`) aren't live yet: four attempts to apply it timed out waiting for the founder's approval in the
+  Supabase prompt. Redeploy once `ai_crew` is applied.
+- **Built:** PR #123, Tidy Enterprise stage 1: Underwrite as the sixth stage, plus Tidy Enterprise's operating
+  system blueprint (ADR 0021, decision 39). It has a migration, so it waits for "merge it".
+- **Sales desk:** 5 added, from each business's own page:
+  - The Gentle Touch Co. and Booked & Beautiful (Pretoria salons, WhatsApp bookings);
+  - Entourage Hair & Beauty Studio (Menlo Park, books by phone);
+  - Apex Academic Centre (Midrand tutoring, books by call or WhatsApp);
+  - Pest Control Pros (call-for-quote pest control).
+- **Desk state:** 23 businesses, all new and not yet called; none interested, no meetings yet.
 
 ## 1 Nov 2026 (later still): the starter website template and public holidays
 

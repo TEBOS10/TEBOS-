@@ -660,6 +660,8 @@ const COLUMN_DEFAULTS: Record<string, Record<string, unknown>> = {
   property_workstreams: { approval: "not_needed", status: "planned", problem_id: null, reason: null, done_when: null, completion_evidence_id: null, completion_evidence: null, completed_on: null, note: null, depends_on: null, budget: null },
   // the property journey: a problem starts open, and its creator is whoever is signed in (the trigger's job)
   property_problems: { status: "open", consequence: null, workaround: null, intervention: null, specialist: null, expected_result: null, measure: null, result_note: null, closed_on: null, created_by: "00000000-0000-4000-8000-000000000001" },
+  // an underwrite: optional range and notes stay empty; its author is whoever is signed in (the trigger's job)
+  property_underwrites: { effect_low_cents: null, effect_high_cents: null, effect_basis: null, financing_note: null, created_by: "00000000-0000-4000-8000-000000000001" },
   property_evidence: { problem_id: null, confidence: null, notes: null, follow_up: null, period_start: null, period_end: null, responsible: null },
   interview_sessions: { transcript: null, extraction_status: "pending", extraction_detail: null, failure_detail: null, duration_seconds: null, provider: null, provider_reference: null, started_at: null, ended_at: null },
   // the client channel: the database sizes a new request at 1, with no outcome yet

@@ -401,6 +401,52 @@ export const BLUEPRINTS: Blueprint[] = [
     ],
   },
   {
+    // Tidy Enterprise's own business (founder, 2 Nov 2026): turning underperforming, underutilised and distressed
+    // properties into cash-flowing, financeable assets, through the six stages of Property Revenue Architecture.
+    key: "property-revenue-architecture", version: 1, industry: "Property revenue architecture", name: "Property revenue operating system",
+    promise: "Every property moves through Discover, Assess, Underwrite, Strategise, Execute and Optimise on written rules, so the business can work across many properties without the founder running each one.",
+    pieces: [
+      { name: "Property app", kind: "software", ownerRole: "Case lead", description: "Each property's problems, checked evidence, underwrites, actions and proof, and where it stands on the six stages." },
+      { name: "Enquiry form", kind: "channel", ownerRole: "Case lead", description: "Where owners, agents and referrers describe a property and its problem, with their consent." },
+      { name: "Evidence register", kind: "data_store", ownerRole: "Analyst", description: "Statements, municipal and levy accounts, leases, valuations and photos: where each came from, where it is kept, and whether it has been checked." },
+      { name: "Underwriting model", kind: "document", ownerRole: "Analyst", description: "How viability, risks, an estimated range of returns and financing readiness are tested, the same way for every property." },
+      { name: "Specialist panel", kind: "provider", ownerRole: "Case lead", description: "Attorneys, conveyancers, valuers, contractors, property managers and lenders who do the regulated and technical work." },
+      { name: "Mandate and fee agreements", kind: "document", ownerRole: "Founder", description: "The owner's written authority and the agreed fee for each property, before any work for them starts." },
+      { name: "Performance review log", kind: "document", ownerRole: "Case lead", description: "Each property's figures after the work, measured against its baseline, and the next constraint found." },
+    ],
+    flows: [
+      { name: "Discover and assess: enquiry to checked facts", startsWhen: "An owner, agent or referrer asks about a property", doneWhen: "The property, its authority and its problem are recorded and the evidence is checked, or the enquiry is declined with a reason", ownerRole: "Case lead", steps: [
+        s("client", "Owner", "Describe the property and its problem on the enquiry form", undefined, "Enquiry form"),
+        s("staff", "Case lead", "Answer every enquiry within one working day", "Reply with the next step and the documents needed; never promise an outcome or a figure.", "Enquiry form"),
+        s("staff", "Case lead", "Confirm who may decide about the property", "Record who owns it and who has authority (owner, executor, trustee, curator); without authority, the case stays at Discover.", "Property app"),
+        s("staff", "Case lead", "Record the property and the problem", "Record what is happening and what it costs in the owner's words; unknowns stay empty, never assumed.", "Property app"),
+        s("staff", "Analyst", "Request the documents the problem needs", "Income, expenses, debts (bond, municipal, levy), leases and condition; each request says why it is needed.", "Evidence register"),
+        s("staff", "Analyst", "Log each document as it arrives", "Record where it came from and where it is kept the day it lands.", "Evidence register"),
+        s("staff", "Analyst", "Check each document against its source", "Compare against the bank, municipality or lease; mark confidence; a conflict is resolved before anything rests on it.", "Evidence register"),
+      ] },
+      { name: "Underwrite: checked facts to a verdict", startsWhen: "The problem's evidence is checked", doneWhen: "A verdict is recorded: proceed, hold and optimise first, or not viable", ownerRole: "Analyst", steps: [
+        s("staff", "Analyst", "Test viability, risks, likely return and financing", "Use the underwriting model; an estimated return is a range with its basis, never a promise.", "Underwriting model"),
+        s("staff", "Case lead", "Record the verdict on the property", "The verdict rests on checked evidence; a changed view is a new underwrite, never an edit.", "Property app"),
+        s("staff", "Case lead", "Tell the owner what the underwrite found", "Share the verdict, the risks and what isn't known; regulated advice comes from the specialist panel, not from us.", "Specialist panel"),
+      ] },
+      { name: "Strategise and execute: verdict to finished work", startsWhen: "A problem is underwritten to proceed", doneWhen: "The agreed actions are done, each with its proof", ownerRole: "Case lead", steps: [
+        s("founder", "Founder", "Sign the mandate and fee agreement", "Only the founder agrees fees and signs mandates; no work for an owner starts before both are on file.", "Mandate and fee agreements"),
+        s("staff", "Case lead", "Agree each action: who, by when, why, and how we'll know it's done", "One owner per action; anything regulated goes to the right specialist on the panel.", "Property app"),
+        s("provider", "Specialist", "Do the regulated or technical work", "Attorneys, valuers, lenders and contractors work under their own professional rules.", "Specialist panel"),
+        s("staff", "Case lead", "Mark actions done only with their proof", "Done needs received evidence: a signed document, an invoice, a statement.", "Property app"),
+      ] },
+      { name: "Optimise: finished work to the next constraint", startsWhen: "A problem's actions are done", doneWhen: "The result is measured, and the next constraint is recorded or the review date set", ownerRole: "Case lead", steps: [
+        s("staff", "Analyst", "Measure the result against the baseline", "Use new checked evidence of the result; the evidence it was underwritten on shows the problem, not the fix.", "Performance review log"),
+        s("staff", "Case lead", "Close the problem as resolved or not resolved", "Write what happened; resolved needs checked evidence that it worked.", "Property app"),
+        s("staff", "Case lead", "Find the next constraint and set the review date", "Every property is reviewed again; the journey has no artificial end.", "Performance review log"),
+      ] },
+    ],
+    objectives: [
+      { title: "Founder hours in case work below 5 a week", metric: "founder_hours", target: 5, why: "The business works across many properties because the stages run on rules, not on the founder." },
+      { title: "Every enquiry answered within one working day", metric: "lead_response_time", target: 24, why: "Distressed owners are on deadlines: arrears, sales in execution, estates." },
+    ],
+  },
+  {
     key: "gym-fitness", version: 1, industry: "Gym or fitness studio", name: "Gym operating system",
     promise: "The door knows who is a paid-up member, messages answer themselves, and the owner stops walking the floor to check.",
     pieces: [
