@@ -50,6 +50,25 @@ Update this list every run; strike items when they're done.
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 3 Nov 2026: morning run
+
+- **Checked:**
+  - main is green (last merge #125); the only open PR is #126 (Tidy Enterprise stage 3), green and waiting for
+    "merge it" because it has a migration and an outward-facing consent line;
+  - the audit chains are intact (12 chains, none broken);
+  - Supabase advisors: nothing new (the listed public functions are the intended booking, contract, invitation and
+    self-check RPCs; the RLS-without-policy notes are service-only tables);
+  - the worker last beat at 03:47 UTC. Its only error is still intelligence paused: Anthropic credit too low.
+- **Held, on purpose:** redeploying the worker from main. It is still on PR #115's commit; `ai_crew` (and
+  `studio_crew`, `property_underwrite`) aren't live yet, and main's worker needs the crew tables.
+- **Built:** nothing new. The open work is PR #126, which waits on the founder; adding to it would muddle the review.
+- **Sales desk:** 9 added, from each business's own page (landline switchboards only; mobile numbers left out):
+  - swim schools: Splashmates (Randpark Ridge), Joburg Swim School, Swimsational (Johannesburg and Centurion);
+  - call-outs: Locksmith Pretoria; SAAFIKCOOL and KFRCOOL (aircon, Centurion);
+  - optometrists: Eyeland and Dynamic Vision East Rand Mall (Boksburg), Visual Eyes (Benoni).
+  - The desk: 32 prospects, all new and due for a first call; 0 interested, 0 meetings, 0 enquiries in the last week.
+- **Register:** live counts refreshed (unchanged apart from the desk: 32).
+
 ## 2 Nov 2026: morning run; Tidy Enterprise stage 1 (Underwrite)
 
 - **Checked:**
