@@ -103,7 +103,7 @@ select set_config('request.jwt.claim.sub', :'clerk', false);
 insert into public.partner_sales (org_id, sold_on, kind, amount_cents, reference, channel)
   select :'org', (date_trunc('month', current_date) - interval '1 month')::date + (i % 20), 'sale', 150000, 'INV-' || i, 'walk_in' from generate_series(1, 10) i;
 insert into public.partner_sales (org_id, sold_on, kind, amount_cents, reference) values (:'org', current_date, 'sale', 90000, 'INV-NOW');
-select t99zzf.expect_error(format($$insert into public.partner_sales (org_id, sold_on, kind, amount_cents) values (%L, current_date + 1, 'sale', 1000)$$, :'org'), 'TEBOS_VALIDATION');
+select t99zzf.expect_error(format($$insert into public.partner_sales (org_id, sold_on, kind, amount_cents) values (%L, tebos_private.sa_today() + 1, 'sale', 1000)$$, :'org'), 'TEBOS_VALIDATION');
 select t99zzf.expect_error(format($$insert into public.partner_sales (org_id, sold_on, kind, amount_cents) values (%L, current_date, 'sale', -1000)$$, :'org'), '23514');
 select t99zzf.expect_error(format($$insert into public.partner_sales (org_id, sold_on, kind, amount_cents, note) values (%L, current_date, 'correction', -1000, 'oops')$$, :'org'), '23514');
 select t99zzf.expect_error(format($$insert into public.partner_sales (org_id, sold_on, kind, amount_cents, customer_ref) values (%L, current_date, 'sale', 1000, 'thandi@example.com')$$, :'org'), '23514');

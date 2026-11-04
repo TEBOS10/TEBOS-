@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run typecheck && vite build && vite build --config vite.tepos.config.ts && vite build --config vite.pra.config.ts && vite build --config vite.grape.config.ts && vite build --config vite.tidy.config.ts && node scripts/check-bundles.mjs",
+    "build": "npm run typecheck && vite build && vite build --config vite.tepos.config.ts && vite build --config vite.pra.config.ts && vite build --config vite.grape.config.ts && vite build --config vite.tidy.config.ts && vite build --config vite.ops.config.ts && node scripts/check-bundles.mjs",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json",
     "test": "vitest run",
@@ -19,7 +19,9 @@
     "build:grape": "npm run typecheck && vite build --config vite.grape.config.ts",
     "dev:grape": "vite --config vite.grape.config.ts",
     "build:tidy": "npm run typecheck && vite build --config vite.tidy.config.ts",
-    "dev:tidy": "vite --config vite.tidy.config.ts"
+    "dev:tidy": "vite --config vite.tidy.config.ts",
+    "build:ops": "npm run typecheck && vite build --config vite.ops.config.ts",
+    "dev:ops": "vite --config vite.ops.config.ts"
   },
   "dependencies": {
     "@fontsource-variable/fraunces": "^5.3.0",

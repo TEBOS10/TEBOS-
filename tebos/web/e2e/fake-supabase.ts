@@ -7,6 +7,7 @@
 // handling of refusals can be checked.
 import type { Page, Route } from "@playwright/test";
 import { fixtureTables, ORG, USER_ID } from "./fixtures";
+import { liveEntries, monthStart, nextMonth, position, proRata, saToday, type Entry } from "../../src/domain/opsLedger";
 
 export const FAKE_URL = "https://fixture.supabase.test";
 
@@ -220,6 +221,11 @@ export async function installFakeSupabase(
           incoming = incoming.filter((r) => !table.some((x) => keys.every((k) => x[k] === r[k])));
         }
         result = incoming.map((r: Record<string, unknown>) => ({ id: crypto.randomUUID(), created_at: now, updated_at: now, status: r.status ?? defaultStatus(name!), ...COLUMN_DEFAULTS[name!], ...r }));
+        // the references the database numbers itself (Property Operations)
+        if (name === "ops_leases" || name === "ops_maintenance") {
+          const prefix = name === "ops_leases" ? "L" : "M";
+          for (const r of result) r.ref = `${prefix}-${String(table.length + 1 + result.indexOf(r)).padStart(4, "0")}`;
+        }
         table.push(...result);
       } else {
         result = table.filter((r) => matches(r, url.searchParams));
@@ -251,6 +257,67 @@ const hhmm = (m: number) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${St
 
 function answerRpc(tables: FakeSupabase["tables"], name: string, args: Record<string, string>, storedFiles = new Set<string>()): unknown {
   const now = new Date().toISOString();
+  // Tidy Property Operations (simplified from the database; its rules are tested in 99zzm_property_operations.sql, and the
+  // arithmetic here is the same domain code the app uses)
+  if (name === "create_ops_account") {
+    const id = crypto.randomUUID();
+    tables.organisations!.push({ id, name: args.p_name, slug: `ops-${id.slice(0, 12)}`, private: false, app: "ops", created_at: now });
+    tables.memberships!.push({ org_id: id, user_id: USER_ID, role: "org_admin", created_at: now });
+    ((tables as Record<string, unknown[]>).ops_subscriptions ??= []).push({ org_id: id, plan: "pilot", status: "trial", unit_limit: 60, user_limit: 5, trial_ends_on: null, note: null, updated_at: now });
+    return id;
+  }
+  if (name.startsWith("ops_")) {
+    const t = tables as Record<string, Array<Record<string, unknown>>>;
+    const leases = (t.ops_leases ?? []).filter((l) => l.org_id === args.p_org);
+    const ledger = (t.ops_ledger ?? []) as unknown as Array<Entry & { lease_id: string; period?: string | null }>;
+    const span = (l: Record<string, unknown>, first: string, next: string) => String(l.starts_on) < next && (!l.ended_on || String(l.ended_on) >= first);
+    if (name === "ops_generate_rent") {
+      const first = monthStart(String(args.p_month)), next = nextMonth(first);
+      let n = 0;
+      for (const l of leases.filter((x) => span(x, first, next))) {
+        const live = liveEntries(ledger.filter((e) => e.lease_id === l.id));
+        if (live.some((e) => e.kind === "charge" && e.category === "rent" && e.period === first)) continue;
+        const amount = proRata(Number(l.rent_cents), first, String(l.starts_on), (l.ended_on as string | null) ?? null);
+        if (amount <= 0) continue;
+        const due = `${first.slice(0, 8)}${String(l.due_day ?? 1).padStart(2, "0")}`;
+        (t.ops_ledger ??= []).push({ id: crypto.randomUUID(), org_id: args.p_org, lease_id: l.id, kind: "charge", account: "rent", category: "rent", method: null,
+          amount_cents: amount, effective_on: due > String(l.starts_on) ? due : l.starts_on, period: first, reference: l.ref, note: amount !== Number(l.rent_cents) ? "Pro-rated for part of the month" : null,
+          reverses_id: null, created_by: USER_ID, created_at: new Date(Date.now() + n).toISOString() });
+        n++;
+      }
+      return n;
+    }
+    const asOf = String(args.p_as_of ?? saToday());
+    const positionOf = (l: Record<string, unknown>, day: string) => ({ lease_id: l.id, ...position(ledger.filter((e) => e.lease_id === l.id), day) });
+    if (name === "ops_lease_positions") return leases.map((l) => positionOf(l, asOf));
+    if (name === "ops_month_summary") {
+      const first = monthStart(String(args.p_month)), next = nextMonth(first);
+      const monthEnd = new Date(Date.parse(`${next}T00:00:00Z`) - 86_400_000).toISOString().slice(0, 10);
+      const day = saToday() < monthEnd ? saToday() : monthEnd;
+      const props = (t.ops_properties ?? []).filter((p) => p.org_id === args.p_org && !p.archived_at && (!args.p_property || p.id === args.p_property));
+      const units = (t.ops_units ?? []).filter((u) => props.some((p) => p.id === u.property_id));
+      const inUnits = leases.filter((l) => units.some((u) => u.id === l.unit_id));
+      const let_ = (u: Record<string, unknown>) => inUnits.some((l) => l.unit_id === u.id && String(l.starts_on) <= day && (!l.ended_on || String(l.ended_on) >= day));
+      const live = liveEntries(ledger.filter((e) => inUnits.some((l) => l.id === e.lease_id)));
+      const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
+      const inMonth = (e: Entry) => e.effective_on >= first && e.effective_on < next;
+      const pos = inUnits.map((l) => positionOf(l, day));
+      const maint = (t.ops_maintenance ?? []).filter((m) => m.org_id === args.p_org && (!args.p_property || m.property_id === args.p_property));
+      return {
+        month: first, as_of: day, properties: props.length, units: units.length,
+        occupied: units.filter(let_).length, held_back: units.filter((u) => !let_(u) && u.held_back).length, vacant: units.filter((u) => !let_(u) && !u.held_back).length,
+        expected_cents: sum(inUnits.map((l) => proRata(Number(l.rent_cents), first, String(l.starts_on), (l.ended_on as string | null) ?? null))),
+        billed_cents: sum(live.filter((e) => e.kind === "charge" && e.account === "rent" && inMonth(e)).map((e) => e.amount_cents)),
+        received_cents: sum(live.filter((e) => e.kind === "payment" && e.account === "rent" && inMonth(e)).map((e) => e.amount_cents)),
+        outstanding_cents: sum(pos.map((p) => Math.max(p.balance_cents, 0))), overdue_cents: sum(pos.map((p) => p.overdue_cents)),
+        deposits_held_cents: sum(pos.map((p) => p.deposit_held_cents)),
+        maintenance_spend_cents: sum(maint.filter((m) => m.status === "done" && String(m.completed_on) >= first && String(m.completed_on) < next).map((m) => Number(m.cost_cents))),
+        maintenance_open: maint.filter((m) => !["done", "cancelled", "declined"].includes(String(m.status))).length,
+        vacancy_estimate_cents: sum(units.filter((u) => !let_(u) && !u.held_back).map((u) => Number(u.market_rent_cents ?? 0))),
+        vacant_without_market_rent: units.filter((u) => !let_(u) && !u.held_back && u.market_rent_cents == null).length,
+      };
+    }
+  }
   if (name === "create_pra_account") {
     // the property platform's own account: the database makes the slug and the owner's membership
     const id = crypto.randomUUID();
@@ -676,6 +743,15 @@ const COLUMN_DEFAULTS: Record<string, Record<string, unknown>> = {
   // the property journey: a problem starts open, and its creator is whoever is signed in (the trigger's job)
   property_problems: { status: "open", consequence: null, workaround: null, intervention: null, specialist: null, expected_result: null, measure: null, result_note: null, closed_on: null, created_by: "00000000-0000-4000-8000-000000000001" },
   // an underwrite: optional range and notes stay empty; its author is whoever is signed in (the trigger's job)
+  // Tidy Property Operations: the database's defaults
+  ops_properties: { street: null, suburb: null, province: null, postal_code: null, kind: "residential", archived_at: null, created_by: "00000000-0000-4000-8000-000000000001" },
+  ops_units: { unit_type: "other", market_rent_cents: null, held_back: false, held_back_reason: null },
+  ops_tenants: { email: null, phone: null, notes: null },
+  ops_leases: { ends_on: null, due_day: 1, deposit_cents: 0, deposit_held_at: null, status: "active", ended_on: null, end_reason: null, created_by: "00000000-0000-4000-8000-000000000001" },
+  ops_ledger: { category: null, method: null, period: null, reference: null, note: null, reverses_id: null, created_by: "00000000-0000-4000-8000-000000000001" },
+  ops_suppliers: { trade: null, phone: null, email: null, active: true },
+  ops_maintenance: { unit_id: null, description: null, priority: "normal", status: "reported", supplier_id: null, quote_cents: null, quote_ref: null, decided_by: null, decided_at: null,
+    cost_cents: null, completed_on: null, status_note: null, reported_on: new Date(Date.now() + 2 * 3600_000).toISOString().slice(0, 10), reported_by: "00000000-0000-4000-8000-000000000001" },
   property_underwrites: { effect_low_cents: null, effect_high_cents: null, effect_basis: null, financing_note: null, created_by: "00000000-0000-4000-8000-000000000001" },
   property_evidence: { problem_id: null, confidence: null, notes: null, follow_up: null, period_start: null, period_end: null, responsible: null },
   interview_sessions: { transcript: null, extraction_status: "pending", extraction_detail: null, failure_detail: null, duration_seconds: null, provider: null, provider_reference: null, started_at: null, ended_at: null },
