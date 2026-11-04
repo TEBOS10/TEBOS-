@@ -191,7 +191,7 @@ function NextStep({ r, suppliers: sups, roles, onDone }: { r: OpsMaintenance; su
   }
   return (
     <Card title="Next step">
-      <div className="stack" style={{ gap: 14 }}>
+      <div className="ops-stack">
         {canQuote && (
           <form className="ops-inline-form" aria-label="Record the quote" onSubmit={(e) => { e.preventDefault(); const q = money(f.quote); if (q === null || q <= 0) { setErr(new Error("Write the quote as an amount.")); return; } void run({ status: "quoted", supplier_id: f.supplier_id || null, quote_cents: q, quote_ref: f.quote_ref.trim() || null }); }}>
             <Field label="Supplier">

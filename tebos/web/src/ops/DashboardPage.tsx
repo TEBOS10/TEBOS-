@@ -1,13 +1,15 @@
 // The month at a glance. Every figure comes from ops_month_summary / ops_lease_positions in the database and says what
 // it is: expected (leases), billed (charges), received (payments), owed, estimated (vacant units' market rent).
+import { attention, type AttentionItem, type Severity } from "@core/opsAttention";
+import { saToday } from "@core/opsLedger";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { Card, Empty, ErrorNote, Loading, PageHeader } from "../components/ui";
-import { generateRent, monthSummary, positions } from "../lib/opsData";
+import { generateRent, maintenance, monthSummary, positions } from "../lib/opsData";
 import { Link } from "../lib/router";
 import { useOrg } from "../lib/session";
 import { useQuery } from "../lib/useQuery";
-import { BASIS_LABEL, Money, monthLabel, nextMonth, prevMonth, thisMonth, usePortfolio, useRoles } from "./util";
+import { BASIS_LABEL, Money, dayLabel, monthLabel, nextMonth, prevMonth, thisMonth, usePortfolio, useRoles } from "./util";
 
 export function DashboardPage() {
   const { db, organisation } = useOrg();
@@ -16,6 +18,7 @@ export function DashboardPage() {
   const [month, setMonth] = useState(thisMonth());
   const s = useQuery(() => monthSummary(db, organisation.id, month), [organisation.id, month]);
   const pos = useQuery(() => positions(db, organisation.id), [organisation.id]);
+  const maint = useQuery(() => maintenance(db, organisation.id), [organisation.id]);
   const [charging, setCharging] = useState(false);
   const [charged, setCharged] = useState<string | null>(null);
   const [err, setErr] = useState<unknown>(null);
@@ -59,6 +62,15 @@ export function DashboardPage() {
             <Kpi label="Outstanding" basis="owed" cents={d.outstanding_cents} sub={`of which overdue ${fmt(d.overdue_cents)}`} tone={d.overdue_cents > 0 ? "warn" : undefined} />
           </section>
 
+          <NeedsAttention
+            loading={!p.data || !pos.data || !maint.data}
+            error={pos.error ?? maint.error}
+            items={p.data && pos.data && maint.data ? attention({
+              today: saToday(), properties: p.data.properties, units: p.data.units, tenants: p.data.tenants, leases: p.data.leases,
+              positions: pos.data, maintenance: maint.data,
+              month: month === thisMonth() ? { label: monthLabel(month), expected_cents: d.expected_cents, billed_cents: d.billed_cents } : undefined,
+            }) : []} />
+
           <div className="ops-grid">
             <Card title="Collection" subtitle={`${monthLabel(month)} · rent account only; deposits are held, never income`}>
               <Bars rows={[
@@ -72,7 +84,7 @@ export function DashboardPage() {
                 </p>
               )}
               {roles.manage && (
-                <div className="row" style={{ gap: 8, flexWrap: "wrap", marginTop: 12 }}>
+                <div className="ops-cluster ops-mt">
                   <button className="btn btn-primary btn-sm" disabled={charging} onClick={() => void charge()} data-testid="charge-rent">
                     Charge rent for {monthLabel(month)}
                   </button>
@@ -83,7 +95,7 @@ export function DashboardPage() {
               <ErrorNote error={err} title="Rent not charged" />
             </Card>
 
-            <Card title="Occupancy" subtitle={`As at ${d.as_of}: from leases, never typed`}>
+            <Card title="Occupancy" subtitle={`As at ${dayLabel(d.as_of)}: from leases, never typed`}>
               <div className="ops-occupancy" data-testid="occupancy">
                 <div className="ops-occ-bar" aria-hidden>
                   <span className="occ" style={{ flex: d.occupied }} />
@@ -145,6 +157,41 @@ export function DashboardPage() {
         </>
       )}
     </div>
+  );
+}
+
+const SEVERITY_WORD: Record<Severity, string> = { bad: "Serious", warn: "Needs action", info: "To complete" };
+const SHOWN = 6;
+
+/** What to act on today, ranked. Computed from this account's records only; it suggests, it never acts. */
+function NeedsAttention({ items, loading, error }: { items: AttentionItem[]; loading: boolean; error: unknown }) {
+  const [all, setAll] = useState(false);
+  const shown = all ? items : items.slice(0, SHOWN);
+  return (
+    <Card title="Needs attention" subtitle="From your records today; most serious first">
+      {error ? <ErrorNote error={error} /> : loading ? <Loading /> : items.length === 0 ? <Empty>Nothing needs attention: rent is up to date, units are let and repairs are moving.</Empty> : (
+        <>
+          <ul className="ops-attention" data-testid="attention">
+            {shown.map((i) => (
+              <li key={i.key}>
+                <span className={`ops-dot ${i.severity}`} aria-hidden />
+                <span className="ops-attention-text">
+                  <span className="sr-only">{SEVERITY_WORD[i.severity]}: </span>
+                  <Link to={i.link}>{i.title}</Link>
+                  <small>{[i.detail, i.basis].filter(Boolean).join(" · ")}</small>
+                </span>
+                <span className={`badge badge-${i.severity === "info" ? "neutral" : i.severity}`} aria-hidden>{SEVERITY_WORD[i.severity]}</span>
+              </li>
+            ))}
+          </ul>
+          {items.length > SHOWN && (
+            <button type="button" className="btn btn-sm ops-mt" aria-expanded={all} onClick={() => setAll(!all)}>
+              {all ? "Show fewer" : `Show all ${items.length}`}
+            </button>
+          )}
+        </>
+      )}
+    </Card>
   );
 }
 

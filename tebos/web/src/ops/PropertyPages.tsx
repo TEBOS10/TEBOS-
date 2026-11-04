@@ -223,7 +223,7 @@ export function PropertyReportPage({ id, month }: { id: string; month: string })
   ];
   return (
     <div className="stack ops-report" data-testid="report">
-      <div className="no-print row" style={{ justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+      <div className="no-print ops-cluster ops-spread">
         <Link to={`/properties/${id}`}>← {prop.name}</Link>
         <button className="btn" onClick={() => window.print()}><Printer size={15} aria-hidden /> Print or save as PDF</button>
       </div>

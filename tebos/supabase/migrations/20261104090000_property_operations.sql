@@ -249,6 +249,7 @@ create table public.ops_maintenance_photos (
   foreign key (request_id, org_id) references public.ops_maintenance (id, org_id) on delete cascade,
   check (path = org_id::text || '/maintenance/' || request_id::text || '/' || id::text)
 );
+create index ops_photos_request_idx on public.ops_maintenance_photos (request_id, created_at);
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values ('ops-files', 'ops-files', false, 10485760, array['image/jpeg', 'image/png', 'image/webp'])

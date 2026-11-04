@@ -3,7 +3,7 @@
 // (organisations.app = 'ops'); records are isolated by the same row-level security as everything else. It records and
 // reconciles rent; it never holds or moves money.
 import { Building2, ClipboardList, Gauge, LogOut, ReceiptText, UserRound, Users, Wrench } from "lucide-react";
-import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
 import { TwoStepChallenge } from "../components/TwoStep";
 import { ErrorNote, Field, Loading } from "../components/ui";
 import { PeopleProvider } from "../lib/people";
@@ -20,6 +20,7 @@ import { MaintenancePage, RequestPage } from "./MaintenancePages";
 import { PropertiesPage, PropertyPage, PropertyReportPage } from "./PropertyPages";
 import { RentPage } from "./RentPage";
 import { TenantPage, TenantsPage } from "./TenantPages";
+import { readTheme, saveTheme, type ThemeChoice } from "./theme";
 import { OPS_NAME, PortfolioProvider, usePortfolio } from "./util";
 
 const NAV = [
@@ -128,6 +129,7 @@ function Shell({ children }: { children: ReactNode }) {
   const sub = p.data?.subscription;
   return (
     <div className="shell ops-app">
+      <a className="ops-skip" href="#main" onClick={(e) => { e.preventDefault(); document.getElementById("main")?.focus(); }}>Skip to content</a>
       <aside className={`sidebar no-print ${menuOpen ? "open" : ""}`}>
         <div className="brand">
           <span className="ops-mark" aria-hidden>TPO</span>
@@ -158,12 +160,13 @@ function Shell({ children }: { children: ReactNode }) {
             </div>
           )}
           <div className="who mono">{session.user.email}</div>
+          <ThemePicker />
           <button className="btn btn-ghost-dark" onClick={() => void db.auth.signOut()}>
             <LogOut size={15} aria-hidden /> Sign out
           </button>
         </div>
       </aside>
-      <main className="main">
+      <main className="main" id="main" tabIndex={-1}>
         {sub?.status === "suspended" && (
           <div className="note note-warn" role="status" data-testid="suspended">This account is paused: you can read everything, but nothing can be changed until Tidy reactivates it.</div>
         )}
@@ -172,6 +175,30 @@ function Shell({ children }: { children: ReactNode }) {
           {OPS_NAME} records and reconciles rent; it never holds or moves money. It is not legal, tax or accounting advice.
         </p>
       </main>
+    </div>
+  );
+}
+
+/** Dark (the default), light, or follow the device. A per-device choice; it changes nothing for anyone else. */
+function ThemePicker() {
+  const [choice, setChoice] = useState<ThemeChoice>(readTheme);
+  const options: Array<[ThemeChoice, string]> = [["dark", "Dark"], ["light", "Light"], ["system", "System"]];
+  const pick = (value: ThemeChoice) => { saveTheme(value); setChoice(value); };
+  // a radio group: one tab stop, arrow keys move the choice (WAI-ARIA radio pattern)
+  function onKey(e: KeyboardEvent<HTMLDivElement>) {
+    const step = e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : e.key === "ArrowLeft" || e.key === "ArrowUp" ? -1 : 0;
+    if (!step) return;
+    e.preventDefault();
+    const i = (options.findIndex(([v]) => v === choice) + step + options.length) % options.length;
+    pick(options[i]![0]);
+    (e.currentTarget.children[i] as HTMLElement | undefined)?.focus();
+  }
+  return (
+    <div className="ops-theme" role="radiogroup" aria-label="Theme" onKeyDown={onKey}>
+      {options.map(([value, label]) => (
+        <button key={value} type="button" role="radio" aria-checked={choice === value} tabIndex={choice === value ? 0 : -1}
+          onClick={() => pick(value)}>{label}</button>
+      ))}
     </div>
   );
 }

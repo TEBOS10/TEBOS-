@@ -1,5 +1,18 @@
 # Tidy Property Operations: implementation roadmap
 
+## Directive v2 (5 Nov 2026): the release order now in force
+
+| v2 release | Content | State |
+|---|---|---|
+| R0 Audit | AUDIT-V2.md | done |
+| R1 Design foundation | tokens, themes, accessibility, interaction rules (DESIGN-SYSTEM.md) | done |
+| R2 Operational MVP | property, unit, tenant, lease, rent and payment workflows | built in the first Release 1 below; **remaining:** edit tenant details, apply a credit balance, buildings within a property, partial-payment view on statements |
+| R3 Property operations | maintenance (built), documents, communications drafts, reporting with expenses and NOI | partly built |
+| R4 Intelligence | Needs attention (**started**), configurable thresholds, notifications with human approval | started |
+| R5 Commercialisation | subscription administration, onboarding, support | data model only |
+
+The sections below are the original plan; their content maps onto v2 as shown.
+
 Each release has to pass its gate before the next starts. "Done" means persistence, guarded state changes,
 permissions, failure states, audit events and tests, not only a working screen (ADR 0001). Nothing reaches
 customers until the founder approves it.

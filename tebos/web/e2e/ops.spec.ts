@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { installFakeSupabase, type FakeSupabase } from "./fake-supabase";
 import { APPROVER_ID, ORG, USER_ID } from "./fixtures";
-import { monthStart, saToday } from "../../src/domain/opsLedger";
+import { addDays, monthStart, saToday } from "../../src/domain/opsLedger";
 
 // Tidy Property Operations: a landlord runs a portfolio from the first property to arrears and a finished repair.
 // The database's own rules (no overlap, append-only ledger, reversal rules, approver-only approval, unit limit,
@@ -233,6 +233,145 @@ test("a suspended account says so", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByTestId("suspended")).toContainText("paused");
 });
+
+// stress data: long names, a large balance, an unpaid deposit, a vacant unit, a stale urgent repair
+function seedStress(t: Tables) {
+  seedLet(t);
+  const long = "Nomvuyiso Thandeka Mahlangu-Van der Westhuizen (test, a deliberately long name)";
+  t.ops_tenants![0]!.full_name = long;
+  t.ops_tenants![0]!.email = null; // no way to contact them: flagged
+  t.ops_leases![0]!.starts_on = monthStart(addDays(saToday(), -60)); // past the deposit's grace week
+  t.ops_properties![0]!.name = "The Residences at Hatfield Gardens, Block C (test property with a long name)";
+  t.ops_ledger!.push(
+    { id: crypto.randomUUID(), org_id: ORG, lease_id: LEASE, kind: "charge", account: "rent", category: "other", method: null, period: null, amount_cents: 987654321,
+      effective_on: addDays(saToday(), -45), reference: null, note: "Large historical balance (test)", reverses_id: null, created_by: USER_ID, created_at: now() },
+  );
+  t.ops_maintenance!.push({ id: "a3000000-0000-4000-8000-000000000052", org_id: ORG, ref: "M-0002", property_id: PROP, unit_id: UNIT, title: "No water to the whole block", description: null,
+    priority: "urgent", status: "reported", supplier_id: null, quote_cents: null, quote_ref: null, decided_by: null, decided_at: null, cost_cents: null, completed_on: null,
+    status_note: null, reported_on: addDays(saToday(), -20), created_by: USER_ID, created_at: now(), updated_at: now() });
+  return long;
+}
+
+test("needs attention lists what to act on, most serious first, each linked and explained", async ({ page }) => {
+  const fake = await installFakeSupabase(page);
+  const t = opsAccount(fake);
+  seedStress(t);
+  await page.goto("/");
+  const list = page.getByTestId("attention");
+  const items = list.getByRole("listitem");
+  // serious first: the large overdue balance and the urgent repair; then this month's uncharged rent and the vacant unit
+  await expect(items.first()).toContainText("overdue");
+  await expect(items.first()).toContainText("Serious");
+  await expect(list).toContainText("No water to the whole block open for 20 days");
+  await expect(list).toContainText("isn't charged yet");
+  await expect(list).toContainText("1B is vacant");
+  // six at a time; the rest one press away
+  await expect(items).toHaveCount(6);
+  const more = page.getByRole("button", { name: "Show all 7" });
+  await expect(more).toHaveAttribute("aria-expanded", "false");
+  await more.click();
+  await expect(items).toHaveCount(7);
+  await expect(list).toContainText("deposit not received");
+  await expect(list).toContainText("No contact details for");
+  // every line says what it was computed from
+  await expect(list).toContainText("Charges past their due date, less payments");
+  // and goes where the work is
+  await list.getByRole("link", { name: /No water/ }).click();
+  await expect(page.getByRole("heading", { name: /No water to the whole block/ })).toBeVisible();
+});
+
+test("with nothing outstanding, the panel says so instead of showing an empty box", async ({ page }) => {
+  const fake = await installFakeSupabase(page);
+  const t = opsAccount(fake);
+  seedLet(t);
+  t.ops_units = t.ops_units!.filter((u) => u.id === UNIT);
+  t.ops_leases![0]!.deposit_cents = 0;
+  t.ops_ledger!.push({ id: crypto.randomUUID(), org_id: ORG, lease_id: LEASE, kind: "charge", account: "rent", category: "rent", method: null, period: monthStart(saToday()),
+    amount_cents: 650000, effective_on: monthStart(saToday()), reference: null, note: null, reverses_id: null, created_by: USER_ID, created_at: now() },
+  { id: crypto.randomUUID(), org_id: ORG, lease_id: LEASE, kind: "payment", account: "rent", category: null, method: "eft", period: null,
+    amount_cents: 650000, effective_on: monthStart(saToday()), reference: null, note: null, reverses_id: null, created_by: USER_ID, created_at: now() });
+  await page.goto("/");
+  await expect(page.getByText("Nothing needs attention")).toBeVisible();
+});
+
+test("the theme: dark by default, light on request, remembered, and System follows the device", async ({ page }) => {
+  const fake = await installFakeSupabase(page);
+  seedLet(opsAccount(fake));
+  await page.goto("/");
+  const html = page.locator("html");
+  await expect(html).toHaveAttribute("data-theme", "dark");
+  const theme = page.getByRole("radiogroup", { name: "Theme" });
+  await expect(theme.getByRole("radio", { name: "Dark" })).toHaveAttribute("aria-checked", "true");
+  await theme.getByRole("radio", { name: "Light" }).click();
+  await expect(html).toHaveAttribute("data-theme", "light");
+  const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+  expect(bg).toBe("rgb(244, 245, 247)");
+  await page.reload();
+  await expect(html).toHaveAttribute("data-theme", "light");
+  // keyboard: arrow keys move the choice within the group
+  await page.getByRole("radio", { name: "Light" }).focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(page.getByRole("radio", { name: "System" })).toHaveAttribute("aria-checked", "true");
+  await page.emulateMedia({ colorScheme: "dark" });
+  await expect(html).toHaveAttribute("data-theme", "dark");
+  await page.emulateMedia({ colorScheme: "light" });
+  await expect(html).toHaveAttribute("data-theme", "light");
+});
+
+test("keyboard: the first Tab reaches 'Skip to content', which moves focus to the page", async ({ page }) => {
+  const fake = await installFakeSupabase(page);
+  seedLet(opsAccount(fake));
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+  await page.keyboard.press("Tab");
+  const skip = page.getByRole("link", { name: "Skip to content" });
+  await expect(skip).toBeFocused();
+  await expect(skip).toBeInViewport();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("main#main")).toBeFocused();
+});
+
+test("the reader's settings: less motion stops the bars growing; more contrast strengthens text and edges", async ({ page }) => {
+  const fake = await installFakeSupabase(page);
+  seedLet(opsAccount(fake));
+  await page.emulateMedia({ reducedMotion: "reduce", contrast: "more" });
+  await page.goto("/");
+  await expect(page.getByTestId("kpis")).toBeVisible();
+  const bar = page.locator(".ops-bar > span").first();
+  await expect(bar).toBeAttached();
+  expect(await bar.evaluate((el) => getComputedStyle(el).animationName)).toBe("none");
+  const faint = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--ops-text-4").trim());
+  const strong = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--ops-text-2").trim());
+  expect(faint).toBe(strong);
+});
+
+test.describe("on a touch screen", () => {
+  test.use({ hasTouch: true, isMobile: true, viewport: { width: 390, height: 844 } });
+  test("every button and field is at least 44px tall", async ({ page }) => {
+    const fake = await installFakeSupabase(page);
+    seedLet(opsAccount(fake));
+    await page.goto(`/leases/${LEASE}`);
+    await expect(page.getByTestId("lease-position")).toBeVisible();
+    const small = await page.evaluate(() => Array.from(document.querySelectorAll<HTMLElement>(".ops-app .btn, .ops-app .input, .ops-app .menu-toggle"))
+      .filter((el) => el.offsetParent !== null && el.getBoundingClientRect().height < 44).map((el) => el.outerHTML.slice(0, 80)));
+    expect(small).toEqual([]);
+  });
+});
+
+for (const [width, height] of [[390, 844], [768, 1024], [1440, 900]] as const) {
+  test(`at ${width}px, every main page fits the screen, even with long names and large balances`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    const fake = await installFakeSupabase(page);
+    seedStress(opsAccount(fake));
+    for (const path of ["/", "/properties", `/properties/${PROP}`, "/tenants", `/tenants/${TENANT}`, `/leases/${LEASE}`, "/rent", "/maintenance"]) {
+      await page.goto(path);
+      await expect(page.locator("main h1").first()).toBeVisible();
+      await expect(page.getByRole("status").filter({ hasText: "Loading" })).toHaveCount(0);
+      const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+      expect(overflow, path).toBeLessThanOrEqual(0);
+    }
+  });
+}
 
 test("on a phone, every main page fits the screen", async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 800 });

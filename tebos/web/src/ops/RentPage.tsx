@@ -86,7 +86,7 @@ export function RentPage() {
 
       <Card title={`Payments: ${monthLabel(month)}`} subtitle="For reconciliation against your bank statement"
         actions={
-          <span className="row" style={{ gap: 6 }}>
+          <span className="ops-cluster">
             <button className="btn btn-sm" aria-label="Previous month" onClick={() => setMonth(prevMonth(month))}><ChevronLeft size={14} aria-hidden /></button>
             <button className="btn btn-sm" aria-label="Next month" onClick={() => setMonth(nextMonth(month))}><ChevronRight size={14} aria-hidden /></button>
             <button className="btn btn-sm" onClick={exportPayments} disabled={!pays.data}><Download size={14} aria-hidden /> CSV</button>
@@ -169,7 +169,7 @@ function ImportPayments({ leases, onDone }: { leases: Array<{ id: string; ref: s
       {result && <p className="note note-good" role="status" data-testid="import-result">{result}</p>}
       <ErrorNote error={err} />
       {rows && (
-        <div className="stack" style={{ gap: 10, marginTop: 12 }}>
+        <div className="ops-stack ops-mt">
           {rows.length === 0 ? <Empty>No money-in lines found.</Empty> : (
             <div className="ops-table-wrap">
               <table className="ops-table" data-testid="import-preview">
@@ -189,7 +189,7 @@ function ImportPayments({ leases, onDone }: { leases: Array<{ id: string; ref: s
             </div>
           )}
           {problems.length > 0 && <p className="muted ops-small">Skipped: {problems.map((p) => `line ${p.line} (${p.problem})`).join("; ")}</p>}
-          <div className="row" style={{ gap: 8 }}>
+          <div className="ops-cluster">
             <button className="btn btn-primary" disabled={busy || chosen.length === 0} onClick={() => void importChosen()}>Import {chosen.length} payment{chosen.length === 1 ? "" : "s"}</button>
             <button className="btn" onClick={() => setRows(null)}>Cancel</button>
           </div>

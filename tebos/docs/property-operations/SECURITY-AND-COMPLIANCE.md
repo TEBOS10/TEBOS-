@@ -15,7 +15,7 @@ law places a duty on the landlord or agent, the product can help them keep recor
 | No privileged key in the browser | The app uses the user's own session and the publishable key; the build is scanned for service keys and vendor names | `scripts/check-bundles.mjs` |
 | Append-only money record | No update or delete on `ops_ledger`; corrections are reversals with a reason | `99zzm` |
 | Audit trail | Every insert and update is written to the hash-chained `audit_events`. For tenants, leases and suppliers only the **names of changed fields** are recorded, not their values, so personal details aren't copied into the audit log | `99zzm` (audit privacy) |
-| Data minimisation | Tenants: name, email, phone, short notes. No ID numbers, bank account numbers or dates of birth: fields refuse runs of 6+ digits where those could slip in (`deposit_held_at`, notes) | `99zzm` |
+| Data minimisation | Tenants: name, email, phone, short notes. No fields for ID numbers, bank account numbers or dates of birth. `deposit_held_at` refuses runs of 6+ digits (no account numbers); tenant notes refuse email addresses, SA phone numbers and 13-digit numbers such as ID numbers | `99zzm` |
 | Private files | Photos in the private `ops-files` bucket; a file may be uploaded only after its record exists, under `{org}/maintenance/{request}/`; reading uses short-lived signed links (5 minutes) | `99zzm`, `ops.spec.ts` |
 | Plan limits and suspension | Unit limit enforced in the database; a suspended account is read-only; only platform staff change a subscription | `99zzm` |
 | Two-step sign-in | Available from the account page (shared with TEBOS) | existing tests |

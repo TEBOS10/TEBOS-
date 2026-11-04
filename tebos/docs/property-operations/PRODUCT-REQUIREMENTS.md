@@ -89,3 +89,25 @@ is a calendar month.
 - Dark interface: black, charcoal, white, subtle navy.
 - Every button does what it says; no placeholder features.
 - Errors explain what to do next in plain words.
+
+## R7. Needs attention (directive v2, part 7)
+
+The overview lists what a manager should act on, ranked, from the account's own records only. It suggests; it never
+acts, sends or decides.
+
+| Rule | Severity | Threshold |
+|---|---|---|
+| Overdue rent | serious if any of it is over 30 days, otherwise needs action | any overdue amount |
+| This month's rent not charged | needs action | expected > billed (current month only) |
+| Fixed term ending | needs action within 30 days; to complete within 60 | `ends_on` |
+| Vacant unit (not held back) | needs action | no lease covers today |
+| Quote waiting for approval | needs action | status quoted |
+| Repair open too long | serious if urgent; needs action if open more than 14 days | `reported_on` |
+| Deposit not fully received | to complete | more than 7 days after the lease starts |
+| Where the deposit is held not recorded | to complete | deposit agreed |
+| No contact details for a tenant on an active lease | to complete | no email and no phone |
+
+- Acceptance: each line links to the record and states what it was computed from; most serious first, then the
+  largest amount; six shown, the rest one press away; a clear message when nothing needs attention.
+- Proved by `test/opsAttention.test.ts` and `web/e2e/ops.spec.ts`.
+

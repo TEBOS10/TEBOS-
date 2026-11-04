@@ -51,6 +51,16 @@ Update this list every run; strike items when they're done.
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 5 Nov 2026: Property Operations, directive v2 (audit, design foundation, Needs attention)
+
+- Audit (`property-operations/AUDIT-V2.md`): nothing duplicated; nine defects found, eight of them accessibility or
+  layout (caption contrast 3.3:1, chart contrast, no skip link, small touch targets, fixed px type, a broken tablet
+  layout, a short sidebar background) plus a missing index on photos. All fixed and tested.
+- apple-design skill installed and read; design tokens, dark/light/system themes, reader settings (motion,
+  transparency, contrast). No animation library added: nothing in the product is dragged.
+- First intelligence feature: "Needs attention" on the overview, computed from the account's own records.
+- Nothing applied live, nothing deployed. Decision 41 is unchanged (the migration gained one index; still additive).
+
 ## 4 Nov 2026 (later): Tidy Property Operations, Releases 0 and 1
 
 - The founder's master build directive. Release 0: six documents in `docs/property-operations/`, sourced competitor

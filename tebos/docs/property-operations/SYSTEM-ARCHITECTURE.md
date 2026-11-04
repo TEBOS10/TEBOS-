@@ -102,7 +102,9 @@ today; declined and cancelled need a note; a finished request is frozen.
 ## 4. Interface
 
 `web/src/ops/`: `OpsApp.tsx` (sign-in gate, account opening, shell, routes), `DashboardPage`, `PropertyPages`,
-`TenantPages`, `LeasePages`, `RentPage`, `MaintenancePages`, `util.tsx`, `ops.css`. Data access is in
+`TenantPages`, `LeasePages`, `RentPage`, `MaintenancePages`, `util.tsx`; styling from `tokens.css` (the single source of
+truth, DESIGN-SYSTEM.md) and `ops.css`; theme choice in `theme.ts`. The overview's "Needs attention" list is computed in
+the browser by `src/domain/opsAttention.ts` from records the page already loads (no extra database access). Data access is in
 `web/src/lib/opsData.ts`. The interface pre-checks inputs for helpful messages, but **the database is the authority**:
 hiding a button is not security, and every rule above holds against a direct API call.
 
