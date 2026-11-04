@@ -50,6 +50,20 @@ Update this list every run; strike items when they're done.
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 4 Nov 2026: morning run
+
+- **Checked:** main green (unchanged since #125); the audit chains intact (12, none broken); Supabase advisors
+  unchanged (intended public RPCs, service-only tables); the worker beat at 03:46 UTC, its only error still the
+  paused analysis (Anthropic credit). The worker stays on PR #115's commit until `ai_crew` is live.
+- **Open work:** PR #126 (Tidy Enterprise website and enquiries) is green and waits for "merge it" and the
+  consent line's approval. Nothing new built: adding to it would muddle the review.
+- **Sales desk:** 6 added, from each business's own page: The Pet Barber (Bryanston), Mera Parlour (Centurion),
+  Paws Gone Wild (mobile grooming), Kip McGrath Pretoria East, Gate and Garage Door Repairs JHB, Garage Door Repairs
+  Fourways. One more (a Midrand gate-motor firm) was left out: its site is http only, and the desk needs an https
+  source.
+  - The desk: 38 prospects, all new and due; nobody has been called yet, so 0 interested, 0 meetings, 0 enquiries.
+    The desk is now waiting on a person to make calls, not on research.
+
 ## 3 Nov 2026: morning run
 
 - **Checked:**
