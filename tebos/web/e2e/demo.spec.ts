@@ -140,3 +140,13 @@ test("the demo never takes over the front door: opening the main address shows t
   await page.getByRole("link", { name: "Try the demo" }).click();
   await expect(page.getByRole("note", { name: "Demo" })).toBeVisible();
 });
+
+test("a scan started in the demo says plainly that nothing will be read, instead of promising a worker", async ({ page }) => {
+  await page.goto("/demo");
+  await expect(page.getByTestId("demo-home-note")).toContainText("never read");
+  await page.getByLabel("Business website URL").fill("example.co.za");
+  await page.getByRole("button", { name: "Scan business" }).click();
+  const note = page.getByTestId("demo-scan-note");
+  await expect(note).toContainText("This is the demo: no website is read here.");
+  await expect(page.getByText("The acquisition worker will pick this scan up")).toHaveCount(0);
+});
