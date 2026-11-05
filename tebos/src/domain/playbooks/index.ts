@@ -1,11 +1,11 @@
 import { marketingAgencyPlaybook } from "./marketing-agency";
-import { smallBusinessPlaybook } from "./small-business";
+import { smallBusinessPlaybook, smallBusinessPlaybookV1 } from "./small-business";
 import type { Playbook } from "./types";
 
 export * from "./types";
-export { marketingAgencyPlaybook, smallBusinessPlaybook };
+export { marketingAgencyPlaybook, smallBusinessPlaybook, smallBusinessPlaybookV1 };
 
-export const PLAYBOOKS: readonly Playbook[] = [marketingAgencyPlaybook, smallBusinessPlaybook];
+export const PLAYBOOKS: readonly Playbook[] = [marketingAgencyPlaybook, smallBusinessPlaybook, smallBusinessPlaybookV1];
 
 export function playbook(key: string, version?: number): Playbook | null {
   return PLAYBOOKS.find((p) => p.key === key && (version === undefined || p.version === version)) ?? null;

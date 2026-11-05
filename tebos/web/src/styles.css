@@ -962,3 +962,8 @@ table.table { width: 100%; border-collapse: collapse; }
 .segmented { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 3px; gap: 2px; flex-wrap: wrap; }
 .segmented button { border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 14px; padding: 7px 14px; border-radius: 999px; cursor: pointer; }
 .segmented button.on { background: var(--ink); color: var(--page, #fff); }
+/* operating picture */
+.op-part { padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+.op-part:last-of-type { border-bottom: 0; }
+.op-list { margin: 6px 0 0; padding-left: 18px; font-size: 13px; display: grid; gap: 4px; }
+.op-open summary { cursor: pointer; font-size: 13px; color: var(--ink-soft); margin-top: 6px; }
