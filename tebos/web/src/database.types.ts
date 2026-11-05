@@ -4267,6 +4267,342 @@ export type Database = {
         }
         Relationships: []
       }
+      ops_subscriptions: {
+        Row: {
+          org_id: string
+          plan: string
+          status: string
+          unit_limit: number
+          user_limit: number
+          trial_ends_on: string | null
+          note: string | null
+          updated_at: string
+        }
+        Insert: {
+          org_id: string
+        }
+        Update: {
+
+        }
+        Relationships: []
+      }
+      ops_properties: {
+        Row: {
+          id: string
+          org_id: string
+          name: string
+          street: string | null
+          suburb: string | null
+          city: string
+          province: string | null
+          postal_code: string | null
+          kind: string
+          archived_at: string | null
+          created_by: string | null
+          created_at: string
+        }
+        Insert: {
+          org_id: string
+          name: string
+          street?: string | null
+          suburb?: string | null
+          city: string
+          province?: string | null
+          postal_code?: string | null
+          kind?: string
+        }
+        Update: {
+          name?: string
+          street?: string | null
+          suburb?: string | null
+          city?: string
+          province?: string | null
+          postal_code?: string | null
+          kind?: string
+          archived_at?: string | null
+        }
+        Relationships: []
+      }
+      ops_units: {
+        Row: {
+          id: string
+          org_id: string
+          property_id: string
+          label: string
+          unit_type: string
+          market_rent_cents: number | null
+          held_back: boolean
+          held_back_reason: string | null
+          created_at: string
+        }
+        Insert: {
+          org_id: string
+          property_id: string
+          label: string
+          unit_type?: string
+          market_rent_cents?: number | null
+          held_back?: boolean
+          held_back_reason?: string | null
+        }
+        Update: {
+          label?: string
+          unit_type?: string
+          market_rent_cents?: number | null
+          held_back?: boolean
+          held_back_reason?: string | null
+        }
+        Relationships: []
+      }
+      ops_tenants: {
+        Row: {
+          id: string
+          org_id: string
+          full_name: string
+          email: string | null
+          phone: string | null
+          notes: string | null
+          created_at: string
+        }
+        Insert: {
+          org_id: string
+          full_name: string
+          email?: string | null
+          phone?: string | null
+          notes?: string | null
+        }
+        Update: {
+          full_name?: string
+          email?: string | null
+          phone?: string | null
+          notes?: string | null
+        }
+        Relationships: []
+      }
+      ops_leases: {
+        Row: {
+          id: string
+          org_id: string
+          unit_id: string
+          tenant_id: string
+          ref: string
+          starts_on: string
+          ends_on: string | null
+          rent_cents: number
+          due_day: number
+          deposit_cents: number
+          deposit_held_at: string | null
+          status: string
+          ended_on: string | null
+          end_reason: string | null
+          created_by: string | null
+          created_at: string
+        }
+        Insert: {
+          org_id: string
+          unit_id: string
+          tenant_id: string
+          starts_on: string
+          ends_on?: string | null
+          rent_cents: number
+          due_day?: number
+          deposit_cents?: number
+          deposit_held_at?: string | null
+        }
+        Update: {
+          ends_on?: string | null
+          rent_cents?: number
+          due_day?: number
+          deposit_cents?: number
+          deposit_held_at?: string | null
+          status?: string
+          ended_on?: string | null
+          end_reason?: string | null
+        }
+        Relationships: []
+      }
+      ops_ledger: {
+        Row: {
+          id: string
+          org_id: string
+          lease_id: string
+          kind: string
+          account: string
+          category: string | null
+          method: string | null
+          amount_cents: number
+          effective_on: string
+          period: string | null
+          reference: string | null
+          note: string | null
+          reverses_id: string | null
+          created_by: string | null
+          created_at: string
+        }
+        Insert: {
+          org_id: string
+          lease_id: string
+          kind: string
+          account: string
+          category?: string | null
+          method?: string | null
+          amount_cents: number
+          effective_on: string
+          period?: string | null
+          reference?: string | null
+          note?: string | null
+          reverses_id?: string | null
+        }
+        Update: {
+
+        }
+        Relationships: []
+      }
+      ops_suppliers: {
+        Row: {
+          id: string
+          org_id: string
+          name: string
+          trade: string | null
+          phone: string | null
+          email: string | null
+          active: boolean
+          created_at: string
+        }
+        Insert: {
+          org_id: string
+          name: string
+          trade?: string | null
+          phone?: string | null
+          email?: string | null
+        }
+        Update: {
+          name?: string
+          trade?: string | null
+          phone?: string | null
+          email?: string | null
+          active?: boolean
+        }
+        Relationships: []
+      }
+      ops_maintenance: {
+        Row: {
+          id: string
+          org_id: string
+          ref: string
+          property_id: string
+          unit_id: string | null
+          title: string
+          description: string | null
+          priority: string
+          status: string
+          supplier_id: string | null
+          quote_cents: number | null
+          quote_ref: string | null
+          decided_by: string | null
+          decided_at: string | null
+          cost_cents: number | null
+          completed_on: string | null
+          status_note: string | null
+          reported_on: string
+          reported_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          org_id: string
+          property_id: string
+          unit_id?: string | null
+          title: string
+          description?: string | null
+          priority?: string
+        }
+        Update: {
+          unit_id?: string | null
+          title?: string
+          description?: string | null
+          priority?: string
+          status?: string
+          supplier_id?: string | null
+          quote_cents?: number | null
+          quote_ref?: string | null
+          cost_cents?: number | null
+          completed_on?: string | null
+          status_note?: string | null
+        }
+        Relationships: []
+      }
+      ops_maintenance_photos: {
+        Row: {
+          id: string
+          org_id: string
+          request_id: string
+          path: string
+          file_name: string
+          created_by: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          request_id: string
+          path: string
+          file_name: string
+        }
+        Update: {
+
+        }
+        Relationships: []
+      }
+      property_enquiries: {
+        Row: {
+          id: string
+          org_id: string
+          ref: string
+          situation: string
+          relationship: string
+          area: string
+          message: string
+          name: string
+          email: string
+          phone: string | null
+          consent_at: string
+          status: string
+          status_note: string | null
+          created_at: string
+        }
+        Insert: {
+          org_id: string
+          situation: string
+          relationship: string
+          area: string
+          message: string
+          name: string
+          email: string
+          phone?: string | null
+          consent_at: string
+        }
+        Update: {
+          status?: string
+          status_note?: string | null
+        }
+        Relationships: []
+      }
+      property_enquiry_settings: {
+        Row: {
+          org_id: string
+          accepting: boolean
+          updated_at: string
+        }
+        Insert: {
+          org_id: string
+          accepting?: boolean
+        }
+        Update: {
+          accepting?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       property_underwrites: {
         Row: {
           id: string
@@ -5018,6 +5354,30 @@ export type Database = {
       booking_schedule: {
         Args: { p_org: string; p_from: string; p_days?: number }
         Returns: { id: string; ref: string | null; starts_at: string; ends_at: string; status: string; service: string | null; package: string | null; customer_name: string | null; price_cents: number | null; deposit_paid: boolean | null; kind: string }[]
+      }
+      create_ops_account: {
+        Args: { p_name: string }
+        Returns: string
+      }
+      ops_generate_rent: {
+        Args: { p_org: string; p_month: string }
+        Returns: number
+      }
+      ops_lease_positions: {
+        Args: { p_org: string; p_as_of?: string | null }
+        Returns: { lease_id: string; balance_cents: number; overdue_cents: number; current_cents: number; d1_30: number; d31_60: number; d61_90: number; d90_plus: number; deposit_held_cents: number; last_payment_on: string | null }[]
+      }
+      ops_month_summary: {
+        Args: { p_org: string; p_month: string; p_property?: string | null }
+        Returns: Json
+      }
+      property_enquiry_open: {
+        Args: { p_slug: string }
+        Returns: boolean
+      }
+      property_enquiry: {
+        Args: { p_slug: string; p_situation: string; p_relationship: string; p_area: string; p_message: string; p_name: string; p_email: string; p_phone: string | null; p_consent: boolean }
+        Returns: string
       }
       booking_catalogue: {
         Args: { p_slug: string }

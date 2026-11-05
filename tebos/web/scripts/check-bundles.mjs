@@ -22,7 +22,10 @@ forbid("dist-pra", /TEPOS|Tidy Capital|IREKUN|tepos-mark|agent_listings|agent_co
 forbid("dist", /TEPOS|Tidy Capital|IREKUN|tepos-mark|agent_listings|agent_contacts|vault_documents|tepos-vault/, "TEBOS must not contain TEPOS");
 forbid("dist-grape", /TEPOS|Tidy Capital|IREKUN|vault_documents|Property Revenue Architect|equity_audit|web_work_queue/, "Grape Studios' site must carry nothing of TEBOS's other apps");
 forbid("dist-grape", /63175867846|ACCOUNT NUMBER/i, "Grape Studios' site must not show bank details");
-for (const d of ["dist", "dist-tepos", "dist-pra", "dist-grape"]) {
+forbid("dist-tidy", /TEPOS|Tidy Capital|IREKUN|vault_documents|Property Revenue Architect\b|equity_audit|web_work_queue|booking_|Grape Studios|grape-studios/, "Tidy Enterprise's site must carry nothing of TEBOS's other apps");
+forbid("dist-ops", /TEPOS|Tidy Capital|IREKUN|vault_documents|create_pra_account|equity_audit|web_work_queue|booking_request|grape-studios/, "Property Operations must carry nothing of TEBOS's other apps");
+forbid("dist", /create_ops_account|ops_generate_rent/, "TEBOS must not contain Property Operations");
+for (const d of ["dist", "dist-tepos", "dist-pra", "dist-grape", "dist-tidy", "dist-ops"]) {
   forbid(d, /anthropic|elevenlabs|claude|\bgrok\b|api\.x\.ai/i, "names a provider");
   forbid(d, /service_role|c2VydmljZV9yb2xl|sb_secret_[A-Za-z0-9_-]{16,}/, "carries a privileged database key");
 }

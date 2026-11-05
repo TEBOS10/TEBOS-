@@ -23,7 +23,7 @@ any change to a capability.
 - **"In use" needs real records** from an actual workflow in the live database.
 - A count of 0 means *not yet used*, never *broken*. Tests show it works as written; only use shows it helps.
 
-**Live counts, 1 Nov 2026** (read-only; unchanged since 21 Oct, apart from the sales desk):
+**Live counts, 4 Nov 2026** (read-only; unchanged since 21 Oct, apart from the sales desk):
 
 | | Count |
 |---|---|
@@ -38,7 +38,7 @@ any change to a capability.
 | Scans | 1 |
 | Objectives | 15 (3 active) |
 | Businesses | 9 |
-| Sales-desk prospects (researched, not yet called) | 18 |
+| Sales-desk prospects (researched, not yet called) | 38 |
 | Property platform accounts / problems | 0 / 0 |
 | Connections | 2 |
 

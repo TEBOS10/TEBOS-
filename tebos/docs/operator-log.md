@@ -18,6 +18,8 @@ Update this list every run; strike items when they're done.
 | 36 | **Grok (xAI) for TEBOS** (ADR 0017, built 1 Nov, off until you act): create an xAI API key in console.x.ai on a paid team, set a monthly spending limit there (your amount; it is the only cap on cost), and confirm in xAI's data settings that API data is not used for training. Then Railway → the worker service → Variables → add `XAI_API_KEY` (never in chat). Optional: `TEBOS_XAI_MODEL` (default `grok-4.7`). Grok then answers when Claude is unavailable; tell TEBOS, which checks the worker's start-up line names `xai` without reading the key. Needs decision 21 (the worker running) | A second reasoning provider, so analysis keeps going when one fails |
 | 37 | **Studio crew for Grape Studios** (ADR 0018, built 1 Nov): say "merge it" to apply migration `20261102150000_studio_crew.sql`. A booking then needs a photographer before it is confirmed; a shoot needs its backup and releases noted before it is marked done; the gallery reaches the customer only once the balance is paid. Additive: it changes no existing data | Grape's team running shoots without Teboho on each one |
 | 39 | **Tidy Enterprise, stage 1: Underwrite** (ADR 0021, built 2 Nov): say "merge it" to apply migration `20261102180000_property_underwrite.sql`. Then, in TEBOS as Tidy Enterprise's admin, open Systems and lay down "Property revenue operating system" (one click; every piece starts as proposed for you to confirm) | The property journey has your six stages, and Tidy Enterprise's TEBOS organisation has its operating system instead of an empty page |
+| 40 | **Tidy Enterprise, stage 3: the public website and its enquiry form** (ADR 0022, built 2 Nov): say "merge it" to apply migration `20261102190000_property_enquiries.sql`. Before switching the form on, read the consent line on the form ("I agree that Tidy Enterprise may use these details to reply to me about this enquiry. I can ask for them to be deleted at any time.") and approve or change it. Then choose where the site lives (decision 31's host, and a domain if you want one); TEBOS deploys `dist-tidy` there. Switch the form on in TEBOS → Enquiries as Tidy Enterprise's admin | Property owners finding Tidy Enterprise and telling you about their property, with consent, straight into TEBOS |
+| 41 | **Tidy Property Operations, Release 1** (ADR 0023, built 4 Nov, not live): say "merge it" to apply migration `20261104090000_property_operations.sql` (additive: new `ops_*` tables, a private `ops-files` bucket, and `'ops'` added to the allowed apps). Then: choose where `dist-ops` is hosted (decision 31's host); pick the first pilot landlord and open their account as a manual pilot; set prices when you're ready (none are set, only a hypothesis in COMPETITOR-ANALYSIS); have a lawyer review the operator agreement and tenant privacy notice (SECURITY-AND-COMPLIANCE §C) | Landlords running units, leases, rent, arrears and repairs on one record |
 | 38 | **Grape's AI crew and publishing consent** (ADR 0020, built 1 Nov): say "merge it" to apply migration `20261102170000_ai_crew.sql`. Then, in TEBOS → Crew (as Grape's admin), add the agents: for example Bookings · day, Bookings · night, Admin · day, Admin · night, Social · day, Social · night. Drafts start once the worker has a reasoning key (decision 36, Grok). Teboho approves each draft; nothing is sent by TEBOS. Grape's booking form now asks every customer whether their photos may be published | Grape's roles run by agents in day and night shifts, overseen by Teboho |
 | 21 | **Railway: switch to the Free plan (USD 0).** *(27 Oct: the connector is signed in, but Railway still answers "Your trial has expired. Please select a plan" for the tebos10 account. Choose Free while signed in as tebos10, then TEBOS starts the worker itself.)* The trial expired and stopped the worker. The worker now runs every 15 minutes, does its work and stops (batch mode), which fits inside the Free plan's USD 1 monthly credit. Steps: railway.com → sign in → the yellow "trial expired" banner (or Account → Plans) → choose **Free**. Then tell TEBOS, which reconnects the worker to `main` | Everything TEBOS does on its own: BAME monitoring, REEDS, analysis, reminders |
 | 22 | **Switch on the weekly signal brief:** TEBOS → Ask TEBOS → Weekly signal brief → "Switch on every week". One click; the worker then files it weekly for you (after decision 21) | REEDS reporting demand, cash, delivery, reliability and security each week |
@@ -48,6 +50,59 @@ Update this list every run; strike items when they're done.
 | 18 | Each client's web app address (where TEBOS's people sign in to their department), starting with BAME's | Client tiles that open the client's web app |
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
+
+## 5 Nov 2026: Property Operations, directive v2 (audit, design foundation, Needs attention)
+
+- Audit (`property-operations/AUDIT-V2.md`): nothing duplicated; nine defects found, eight of them accessibility or
+  layout (caption contrast 3.3:1, chart contrast, no skip link, small touch targets, fixed px type, a broken tablet
+  layout, a short sidebar background) plus a missing index on photos. All fixed and tested.
+- apple-design skill installed and read; design tokens, dark/light/system themes, reader settings (motion,
+  transparency, contrast). No animation library added: nothing in the product is dragged.
+- First intelligence feature: "Needs attention" on the overview, computed from the account's own records.
+- Nothing applied live, nothing deployed. Decision 41 is unchanged (the migration gained one index; still additive).
+
+## 4 Nov 2026 (later): Tidy Property Operations, Releases 0 and 1
+
+- The founder's master build directive. Release 0: six documents in `docs/property-operations/`, sourced competitor
+  research (no invented weaknesses), and a separate venture-studio feasibility note. Release 1: a working slice
+  (portfolio, tenants and leases, the rent ledger with reversals, arrears ageing, statements, CSV import and export,
+  maintenance with approval and photos, dashboard and monthly report), dark interface, its own app on port 5179.
+- Tested locally: database test 99zzm, unit and parity tests, e2e `ops.spec.ts` (8 tests). Nothing applied live,
+  nothing deployed. Decision 41 added.
+- Fixed a time-of-day failure in the equity test (it compared against the UTC date; the rule uses the SA date).
+
+## 4 Nov 2026: morning run
+
+- **Checked:** main green (unchanged since #125); the audit chains intact (12, none broken); Supabase advisors
+  unchanged (intended public RPCs, service-only tables); the worker beat at 03:46 UTC, its only error still the
+  paused analysis (Anthropic credit). The worker stays on PR #115's commit until `ai_crew` is live.
+- **Open work:** PR #126 (Tidy Enterprise website and enquiries) is green and waits for "merge it" and the
+  consent line's approval. Nothing new built: adding to it would muddle the review.
+- **Sales desk:** 6 added, from each business's own page: The Pet Barber (Bryanston), Mera Parlour (Centurion),
+  Paws Gone Wild (mobile grooming), Kip McGrath Pretoria East, Gate and Garage Door Repairs JHB, Garage Door Repairs
+  Fourways. One more (a Midrand gate-motor firm) was left out: its site is http only, and the desk needs an https
+  source.
+  - The desk: 38 prospects, all new and due; nobody has been called yet, so 0 interested, 0 meetings, 0 enquiries.
+    The desk is now waiting on a person to make calls, not on research.
+
+## 3 Nov 2026: morning run
+
+- **Checked:**
+  - main is green (last merge #125); the only open PR is #126 (Tidy Enterprise stage 3), green and waiting for
+    "merge it" because it has a migration and an outward-facing consent line;
+  - the audit chains are intact (12 chains, none broken);
+  - Supabase advisors: nothing new (the listed public functions are the intended booking, contract, invitation and
+    self-check RPCs; the RLS-without-policy notes are service-only tables);
+  - the worker last beat at 03:47 UTC. Its only error is still intelligence paused: Anthropic credit too low.
+- **Held, on purpose:** redeploying the worker from main. It is still on PR #115's commit; `ai_crew` (and
+  `studio_crew`, `property_underwrite`) aren't live yet, and main's worker needs the crew tables.
+- **Built:** nothing new. The open work is PR #126, which waits on the founder; adding to it would muddle the review.
+- **Sales desk:** 9 added, from each business's own page (landline switchboards only; mobile numbers left out):
+  - swim schools: Splashmates (Randpark Ridge), Joburg Swim School, Swimsational (Johannesburg and Centurion);
+  - call-outs: Locksmith Pretoria; SAAFIKCOOL and KFRCOOL (aircon, Centurion);
+  - optometrists: Eyeland and Dynamic Vision East Rand Mall (Boksburg), Visual Eyes (Benoni).
+  - The desk: 32 prospects, all new and due for a first call; 0 interested, 0 meetings, 0 enquiries in the last week.
+- **Register:** live counts refreshed (unchanged apart from the desk: 32).
 
 ## 2 Nov 2026: morning run; Tidy Enterprise stage 1 (Underwrite)
 

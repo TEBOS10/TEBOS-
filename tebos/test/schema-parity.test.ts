@@ -7,6 +7,8 @@ import { BOARD_LIMITS } from "../src/domain/editions";
 import { FACTORY_OUTCOMES, VALIDATION_STATES } from "../src/domain/catalogue";
 import { AI_WORK, DAY_STARTS, NIGHT_STARTS } from "../src/domain/aiCrew";
 import { CREW_ROLES, RELEASES_NOTE, DEPOSIT_SHARE as BOOKING_DEPOSIT, MAX_AHEAD_MONTHS, MAX_OPEN_REQUESTS, MIN_NOTICE_HOURS, SLOT_STEP_MINUTES } from "../src/domain/bookings";
+import { CHARGE_CATEGORIES, MAINTENANCE_PRIORITIES, PAYMENT_METHODS, PROVINCES, UNIT_TYPES, ENTRY_KINDS } from "../src/domain/opsLedger";
+import { ENQUIRY_LIMITS, ENQUIRY_RELATIONSHIPS, ENQUIRY_SITUATIONS } from "../src/domain/propertyEnquiry";
 import { ELIGIBLE_SECTORS, EQUITY_PCT, MAX_EQUITY_PARTNERS, MIN_TRADING_MONTHS, QUALIFYING_BANDS, REVENUE_BANDS, VOTING_PCT } from "../src/domain/equity";
 import {
   ASSET_KINDS, ASSET_SOURCES, ASSET_STATUSES, COST_KINDS, DELIVERY_BUSINESS_DAYS, INTEGRATION_SERVICES, INTEGRATION_STATUSES, TEBOS_ACCESS,
@@ -113,6 +115,33 @@ describe("domain mirrors the database", () => {
     const assignment = sql.split("function tebos_private.guard_web_assignment")[1]!.split("end $$")[0]!;
     expect(assignment).toContain(`web_open_load(new.maintainer_id, new.id) >= ${WEB_PROJECTS_PER_MAINTAINER}`);
     expect(sql.split("function public.web_team_load")[1]!.split("$$")[1]).toContain(`${WEB_PROJECTS_PER_MAINTAINER}\n    from`);
+  });
+
+  it("Property Operations' lists match the database's", () => {
+    const inList = (table: string, col: string) => {
+      const body = sql.split(`create table public.${table} (`)[1]!.split(");\n")[0]!;
+      return [...body.split(new RegExp(`[ (]${col} in \\(`))[1]!.split(")")[0]!.matchAll(/'([^']+)'/g)].map((m) => m[1]);
+    };
+    expect(inList("ops_units", "unit_type")).toEqual(UNIT_TYPES.map((u) => u.key));
+    expect(inList("ops_properties", "province")).toEqual([...PROVINCES]);
+    expect(inList("ops_ledger", "kind")).toEqual([...ENTRY_KINDS]);
+    expect(inList("ops_ledger", "category")).toEqual(CHARGE_CATEGORIES.map((c) => c.key));
+    expect(inList("ops_ledger", "method")).toEqual(PAYMENT_METHODS.map((m) => m.key));
+    expect(inList("ops_maintenance", "priority")).toEqual([...MAINTENANCE_PRIORITIES]);
+    // pro-rating rounds half up to the cent, the same formula on both sides
+    expect(sql.split("function tebos_private.ops_pro_rata")[1]!.split("$$")[1]).toContain("(p_rent * (d.b - d.a) * 2 + d.dim) / (2 * d.dim)");
+  });
+
+  it("property enquiries' lists and limits match the database's", () => {
+    const table = sql.split("create table public.property_enquiries")[1]!.split(");\n")[0]!;
+    const list = (col: string) => [...table.split(`(${col} in (`)[1]!.split(")")[0]!.matchAll(/'([a-z_]+)'/g)].map((m) => m[1]);
+    expect(list("situation")).toEqual(ENQUIRY_SITUATIONS.map((s) => s.key));
+    expect(list("relationship")).toEqual(ENQUIRY_RELATIONSHIPS.map((r) => r.key));
+    expect(table).toContain(`length(trim(message)) between ${ENQUIRY_LIMITS.messageMin} and ${ENQUIRY_LIMITS.messageMax}`);
+    expect(table).toContain(`length(trim(area)) between ${ENQUIRY_LIMITS.areaMin} and ${ENQUIRY_LIMITS.areaMax}`);
+    const rpc = sql.split("function public.property_enquiry(")[1]!.split("end $$")[0]!;
+    expect(rpc).toContain(`>= ${ENQUIRY_LIMITS.maxNewPerEmail} then`);
+    expect(rpc).toContain(`< ${ENQUIRY_LIMITS.messageMin} then`);
   });
 
   it("bookings' rules match the database's", () => {

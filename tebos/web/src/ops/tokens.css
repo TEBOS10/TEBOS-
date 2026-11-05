@@ -1,0 +1,197 @@
+/* Tidy Property Operations: design tokens. THE single source of truth for the visual language (docs/property-operations/
+   DESIGN-SYSTEM.md). Raw colour values live only in this file; ops.css and components use the semantic names below.
+   test/opsTokens.test.ts checks that, and checks every text/background pair against WCAG 2.2 AA in both themes.
+
+   Themes: dark is the default (the product's direction); light is offered; "system" follows the device. The chosen
+   theme is resolved to "dark" or "light" and set on <html data-theme> before the first paint (src/ops/theme.ts), so
+   the light values are written once, here. */
+
+/* ---------------------------------------------------------------------------------------------------------------
+   Scales that don't change with theme
+   --------------------------------------------------------------------------------------------------------------- */
+:root {
+  /* spacing: a 4px grid, in rem so it grows with the reader's text size */
+  --ops-s-1: 0.25rem;  /* 4 */
+  --ops-s-2: 0.5rem;   /* 8 */
+  --ops-s-3: 0.75rem;  /* 12 */
+  --ops-s-4: 1rem;     /* 16 */
+  --ops-s-5: 1.25rem;  /* 20 */
+  --ops-s-6: 1.5rem;   /* 24 */
+  --ops-s-8: 2rem;     /* 32 */
+  --ops-s-10: 2.5rem;  /* 40 */
+
+  /* radius: small controls are tighter than the surfaces that hold them */
+  --ops-r-xs: 6px;
+  --ops-r-sm: 8px;
+  --ops-r-md: 12px;
+  --ops-r-lg: 16px;
+  --ops-r-pill: 999px;
+
+  /* type: each step is a set of size, leading and tracking. Large text tracks tighter; small text slightly looser */
+  --ops-font: "Geist Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --ops-font-mono: "Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --ops-t-display: clamp(1.5rem, 1.1rem + 1.4vw, 2rem);   --ops-lh-display: 1.12; --ops-tr-display: -0.022em;
+  --ops-t-metric: clamp(1.25rem, 1rem + 0.9vw, 1.625rem);  --ops-lh-metric: 1.15;  --ops-tr-metric: -0.02em;
+  --ops-t-title: 1.0625rem;                                --ops-lh-title: 1.35;   --ops-tr-title: -0.012em;
+  --ops-t-heading: 0.9375rem;                              --ops-lh-heading: 1.4;  --ops-tr-heading: -0.006em;
+  --ops-t-body: 0.90625rem;                                --ops-lh-body: 1.55;    --ops-tr-body: -0.003em;
+  --ops-t-small: 0.8125rem;                                --ops-lh-small: 1.5;    --ops-tr-small: 0;
+  --ops-t-caption: 0.75rem;                                --ops-lh-caption: 1.45; --ops-tr-caption: 0.01em;
+  --ops-t-label: 0.71875rem;                               --ops-lh-label: 1.4;    --ops-tr-label: 0.08em;  /* uppercase labels */
+  --ops-w-regular: 400; --ops-w-medium: 500; --ops-w-semibold: 600;
+
+  /* controls */
+  --ops-control-h: 2.25rem;     /* 36px at default text size */
+  --ops-control-h-sm: 1.875rem; /* 30px */
+  --ops-target: 44px;           /* minimum touch target on coarse pointers */
+  --ops-sidebar-w: 236px;
+  --ops-content-max: 1280px;
+
+  /* motion: short, critically damped (no overshoot). Nothing in this product is thrown or dragged, so nothing bounces */
+  --ops-dur-press: 90ms;
+  --ops-dur-fast: 140ms;
+  --ops-dur-base: 220ms;
+  --ops-ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ops-ease-in: cubic-bezier(0.8, 0.2, 0.8, 0.2);  /* the mirror of ease-out, for the return path */
+  --ops-press-scale: 0.97;
+
+  /* layers */
+  --ops-z-bar: 20;
+  --ops-z-overlay: 40;
+}
+
+/* ---------------------------------------------------------------------------------------------------------------
+   Dark (default)
+   --------------------------------------------------------------------------------------------------------------- */
+:root, :root[data-theme="dark"] {
+  color-scheme: dark;
+  --ops-bg: #0a0c10;
+  --ops-sidebar: #07090c;
+  --ops-surface: #12151b;
+  --ops-surface-2: #181c24;
+  --ops-surface-hover: #1f242e;
+  --ops-field: #0d1015;
+  --ops-text: #eef1f6;
+  --ops-text-2: #c9cfda;
+  --ops-text-3: #949dad;   /* secondary text: 6.3:1 on surface */
+  --ops-text-4: #848d9d;   /* captions and labels: 5.0:1 on surface (was #626b7b, 3.3:1) */
+  --ops-line: rgba(255, 255, 255, 0.075);
+  --ops-line-strong: rgba(255, 255, 255, 0.15);
+  --ops-accent: #2c4a86;          /* the navy: primary actions */
+  --ops-accent-hover: #35579c;
+  --ops-on-accent: #ffffff;
+  --ops-accent-text: #9dbbff;     /* links on hover, active navigation, focus */
+  --ops-accent-soft: rgba(143, 178, 255, 0.1);
+  --ops-focus: #9dbbff;
+  --ops-focus-ring: rgba(143, 178, 255, 0.22);
+  --ops-good-bg: rgba(52, 168, 98, 0.15);  --ops-good: #86dca8;
+  --ops-warn-bg: rgba(224, 165, 60, 0.15); --ops-warn: #f0c27a;
+  --ops-bad-bg: rgba(229, 83, 75, 0.16);   --ops-bad: #ffa29a;
+  --ops-info-bg: rgba(110, 150, 240, 0.16); --ops-info: #afc6ff;
+  --ops-neutral-bg: rgba(255, 255, 255, 0.075); --ops-neutral: #c3c9d4;
+  --ops-track: rgba(255, 255, 255, 0.06);
+  --ops-chart-expected: #4d6fb8;
+  --ops-chart-billed: #86a3e6;
+  --ops-chart-received: #8fd0a8;
+  --ops-chart-overdue: #d9a85a;
+  --ops-chart-vacant: #d9a85a;
+  --ops-chart-held: #4b5263;
+  --ops-mark-bg: #172a52;
+  --ops-mark-line: rgba(143, 178, 255, 0.3);
+  --ops-mark-text: #dfe8ff;
+  --ops-row-hover: rgba(255, 255, 255, 0.025);
+  --ops-selection: rgba(143, 178, 255, 0.28);
+  /* materials: the phone's top bar floats over content */
+  --ops-material-bar: rgba(7, 9, 12, 0.78);
+  --ops-material-blur: blur(18px) saturate(160%);
+  --ops-material-edge: rgba(255, 255, 255, 0.06);
+  /* elevation: dark surfaces separate by tone, so shadows are only for things that float */
+  --ops-elev-1: none;
+  --ops-elev-2: 0 12px 32px -16px rgba(0, 0, 0, 0.7);
+  --ops-elev-3: 0 30px 80px -40px rgba(0, 0, 0, 0.9);
+}
+
+/* ---------------------------------------------------------------------------------------------------------------
+   Light
+   --------------------------------------------------------------------------------------------------------------- */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --ops-bg: #f4f5f7;
+  --ops-sidebar: #0e1219;  /* the sidebar stays dark in both themes: one anchor for wayfinding */
+  --ops-surface: #ffffff;
+  --ops-surface-2: #f0f2f5;
+  --ops-surface-hover: #e7eaef;
+  --ops-field: #ffffff;
+  --ops-text: #0f1218;
+  --ops-text-2: #2e3542;
+  --ops-text-3: #525b6a;
+  --ops-text-4: #5f6878;
+  --ops-line: rgba(15, 18, 24, 0.09);
+  --ops-line-strong: rgba(15, 18, 24, 0.18);
+  --ops-accent: #24427e;
+  --ops-accent-hover: #1c3667;
+  --ops-on-accent: #ffffff;
+  --ops-accent-text: #234fa8;
+  --ops-accent-soft: rgba(36, 66, 126, 0.08);
+  --ops-focus: #234fa8;
+  --ops-focus-ring: rgba(35, 79, 168, 0.2);
+  --ops-good-bg: #e3f4ea; --ops-good: #12643a;
+  --ops-warn-bg: #fbf0d9; --ops-warn: #7f5200;
+  --ops-bad-bg: #fbe5e2;  --ops-bad: #9c2419;
+  --ops-info-bg: #e5edfb; --ops-info: #22488f;
+  --ops-neutral-bg: #eceef2; --ops-neutral: #464d58;
+  --ops-track: rgba(15, 18, 24, 0.07);
+  --ops-chart-expected: #24427e;
+  --ops-chart-billed: #5b7cc4;
+  --ops-chart-received: #2f9a63;
+  --ops-chart-overdue: #a87420;
+  --ops-chart-vacant: #a87420;
+  --ops-chart-held: #7d8696;
+  --ops-mark-bg: #172a52;
+  --ops-mark-line: rgba(143, 178, 255, 0.3);
+  --ops-mark-text: #dfe8ff;
+  --ops-row-hover: rgba(15, 18, 24, 0.025);
+  --ops-selection: rgba(35, 79, 168, 0.18);
+  --ops-material-bar: rgba(14, 18, 25, 0.82);
+  --ops-material-blur: blur(18px) saturate(160%);
+  --ops-material-edge: rgba(255, 255, 255, 0.08);
+  --ops-elev-1: 0 1px 2px rgba(15, 18, 24, 0.05);
+  --ops-elev-2: 0 12px 32px -18px rgba(15, 18, 24, 0.28);
+  --ops-elev-3: 0 30px 80px -40px rgba(15, 18, 24, 0.45);
+}
+
+/* the dark sidebar keeps its own readable text in the light theme */
+:root[data-theme="light"] .ops-app .sidebar {
+  --ops-text: #eef1f6; --ops-text-2: #c9cfda; --ops-text-3: #9aa3b3; --ops-text-4: #8c95a5;
+  --ops-line: rgba(255, 255, 255, 0.08); --ops-line-strong: rgba(255, 255, 255, 0.15);
+  --ops-surface: #161b24; --ops-surface-2: #1b212c; --ops-surface-hover: #222936;
+  --ops-accent-text: #9dbbff; --ops-accent-soft: rgba(143, 178, 255, 0.12); --ops-focus: #9dbbff;
+}
+
+/* ---------------------------------------------------------------------------------------------------------------
+   The reader's settings
+   --------------------------------------------------------------------------------------------------------------- */
+/* these follow the theme blocks and match their specificity, so they win in both themes */
+@media (prefers-contrast: more) {
+  :root, :root[data-theme] {
+    --ops-text-3: var(--ops-text-2);
+    --ops-text-4: var(--ops-text-2);
+    --ops-line: var(--ops-line-strong);
+    --ops-material-bar: var(--ops-sidebar);
+    --ops-material-blur: none;
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  :root, :root[data-theme] { --ops-material-bar: var(--ops-sidebar); --ops-material-blur: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  :root { --ops-dur-press: 0ms; --ops-press-scale: 1; --ops-dur-base: 120ms; }
+}
+/* paper: black on white whatever the screen theme */
+@media print {
+  :root, :root[data-theme] {
+    color-scheme: light;
+    --ops-bg: #ffffff; --ops-surface: #ffffff; --ops-surface-2: #ffffff; --ops-text: #111111; --ops-text-2: #222222;
+    --ops-text-3: #555555; --ops-text-4: #595959; --ops-line: #dddddd; --ops-line-strong: #bbbbbb; --ops-elev-1: none;
+  }
+}

@@ -3,6 +3,8 @@ dist/
 dist-tepos/
 dist-pra/
 dist-grape/
+dist-tidy/
+dist-ops/
 .env
 .env.local
 test-results/
