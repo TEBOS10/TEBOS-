@@ -6,7 +6,7 @@ import type { Playbook } from "./types";
 // playbooks (like the agency one) go deeper; this one is the floor every
 // client gets. Answers are the owner's statements; `confirmWith` says what
 // would verify them.
-export const smallBusinessPlaybook: Playbook = {
+export const smallBusinessPlaybookV1: Playbook = {
   key: "small-business",
   version: 1,
   industry: "any",
@@ -110,6 +110,36 @@ export const smallBusinessPlaybook: Playbook = {
           followUps: ["How would you know it had happened?"],
           diagnoses: "The objective the operating system should serve first.",
           confirmWith: ["Budget or plan for the year"],
+        },
+      ],
+    },
+  ],
+};
+
+// Version 2 (5 Nov 2026) adds how long things take: the one part of how a business runs that neither its website nor
+// version 1 asked about. Interviews already taken stay readable against version 1.
+export const smallBusinessPlaybook: Playbook = {
+  ...smallBusinessPlaybookV1,
+  version: 2,
+  sections: [
+    ...smallBusinessPlaybookV1.sections,
+    {
+      key: "time",
+      title: "How long things take",
+      questions: [
+        {
+          key: "time.response",
+          text: "When a new customer gets in touch, how long does it usually take before someone replies, and before the work starts?",
+          followUps: ["What happens to an enquiry that arrives after hours or while you're busy?"],
+          diagnoses: "Slow or uneven response: enquiries lost before anyone answers.",
+          confirmWith: ["Enquiry inbox or booking log with timestamps"],
+        },
+        {
+          key: "time.delivery",
+          text: "From the moment a job starts, how long until it is done and paid, and where does it usually wait?",
+          followUps: ["Which step takes longest, and who is it waiting on?"],
+          diagnoses: "Work or payment stuck between steps; cash tied up in finished work.",
+          confirmWith: ["Job or project list with start, finish and paid dates"],
         },
       ],
     },

@@ -1697,3 +1697,9 @@ export async function clientMap(db: Db) {
     connected: connections.some((c) => c.org_id === b.org_id && (c.status === "connected" || c.status === "degraded")),
   }));
 }
+
+/** Every live evidence row for one business, for the operating picture (public facts and the owner's statements). */
+export async function businessEvidence(db: Db, businessId: string) {
+  return must(await db.from("evidence").select("id, state, fact, structured_value, retrieved_at, created_at")
+    .eq("business_id", businessId).order("created_at", { ascending: false }).limit(500));
+}

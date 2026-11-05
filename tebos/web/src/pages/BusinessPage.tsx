@@ -5,6 +5,7 @@ import { addContext, CONTEXT_KINDS, getBusiness, requestScan, updateBusiness, ty
 import { ago, pct, RISK_LABEL, statusLabel } from "../lib/format";
 import { InterviewCard } from "../components/InterviewCard";
 import { OperationsCard } from "../components/OperationsCard";
+import { OperatingPictureCard } from "../components/OperatingPicture";
 import { usePeople } from "../lib/people";
 import { Link, navigate } from "../lib/router";
 import { useOrg } from "../lib/session";
@@ -132,6 +133,7 @@ export function BusinessPage({ id }: { id: string }) {
         <div className="stack">
           <Profile business={business} onSaved={q.reload} />
           <ContextCard businessId={business.id} contexts={contexts} onAdded={q.reload} />
+          <OperatingPictureCard business={business} />
           <InterviewCard business={business} />
           <OperationsCard businessId={business.id} />
         </div>
