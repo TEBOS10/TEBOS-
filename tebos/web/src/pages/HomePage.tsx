@@ -5,6 +5,7 @@ import { ClientMap } from "../components/ClientMap";
 import { ScanRow } from "../components/ScanRow";
 import { Card, Empty, ErrorNote, Loading } from "../components/ui";
 import { DeliveryStep } from "../components/DeliveryPlan";
+import { isDemo } from "../demo/mode";
 import { deliveryFor, homeSummary, orgInvoices, requestScan } from "../lib/data";
 import { formatRand } from "@core/plans";
 import { ago, day, normaliseWebsite } from "../lib/format";
@@ -131,6 +132,7 @@ function ScanBox() {
           </button>
         </div>
       )}
+      {isDemo && <p className="hero-demo-note" data-testid="demo-home-note">Demo: a scan you start here is recorded but never read, because the demo has no worker. Real scans run in a real account.</p>}
       <ErrorNote error={error} title="The scan wasn't queued" />
       <div className="hero-rules">
         <span>

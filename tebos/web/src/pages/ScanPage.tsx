@@ -2,6 +2,7 @@ import { summariseScan } from "@core/scan";
 import type { ScanTargetStatus } from "@core/states";
 import { ExternalLink } from "lucide-react";
 import { Badge, Card, ConfidencePanel, Empty, ErrorNote, Loading, PageHeader, StatusBadge } from "../components/ui";
+import { isDemo } from "../demo/mode";
 import { getScan, type Evidence } from "../lib/data";
 import { ago, pct, statusLabel, when } from "../lib/format";
 import { Link } from "../lib/router";
@@ -15,7 +16,8 @@ export function ScanPage({ id }: { id: string }) {
   const q = useQuery(() => getScan(db, id), [id], {
     pollMs: 5000,
     // keep refreshing while pages are being read or findings are still to come
-    keepPolling: (d) => !!d && (WAITING.has(d.scan.status) || (d.scan.status !== "failed" && d.scan.status !== "cancelled" && !d.runs.some((r) => r.agent_role === "business_intelligence" && r.status !== "running"))),
+    // (the demo has no worker, so nothing will change there: don't poll)
+    keepPolling: (d) => !isDemo && !!d && (WAITING.has(d.scan.status) || (d.scan.status !== "failed" && d.scan.status !== "cancelled" && !d.runs.some((r) => r.agent_role === "business_intelligence" && r.status !== "running"))),
   });
   if (q.loading && !q.data) return <Loading />;
   if (q.error) return <ErrorNote error={q.error} title="Couldn't load this scan" />;
@@ -43,7 +45,16 @@ export function ScanPage({ id }: { id: string }) {
         {scan.objective && <span>· Objective: {scan.objective}</span>}
       </PageHeader>
 
-      {waiting && (
+      {waiting && isDemo && (
+        <div className="note note-info" role="status" data-testid="demo-scan-note">
+          <div>
+            <strong>This is the demo: no website is read here.</strong> The demo runs in your browser on a fictional business,
+            with no worker behind it, so this scan will stay queued. In a real account TEBOS reads the site within minutes.
+            {" "}<Link to="/scans">See a finished scan in the demo</Link>.
+          </div>
+        </div>
+      )}
+      {waiting && !isDemo && (
         <div className="note note-info" role="status">
           {scan.status === "queued"
             ? "Queued. The acquisition worker will pick this scan up; this page refreshes on its own."
