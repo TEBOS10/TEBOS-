@@ -51,6 +51,20 @@ Update this list every run; strike items when they're done.
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 6 Nov 2026: morning run
+
+- Healthy: main green (#128); worker beating, its one error still the Anthropic credit balance; all 12 audit chains
+  intact; no new advisor findings.
+- Merged yesterday: #127 (the demo no longer promises a worker that doesn't exist; found in the founder's QC) and
+  #128 (the operating picture on every business page; ADR 0024 part 1).
+- Not applied: the four migrations (ai_crew, property_underwrite, property_enquiries, property_operations). The
+  Supabase connector's write approvals time out, and CI's own migration step can't log in (SUPABASE_DB_URL refused,
+  28P01). A false history row from a test on 5 Nov (20261105034954 ai_crew, no-op) also blocks CI's runner until it
+  is removed. The founder has `apply-2026-11-05.sql`, which removes it and applies all four in one transaction.
+- Worker kept on PR #115's commit: main's worker expects the ai_crew tables.
+- Sales desk: 38 prospects, all new and due, 0 interested, 0 meetings, 0 enquiries. No new research today: rows
+  can't be written while the connector's write approvals time out.
+
 ## 5 Nov 2026: Property Operations, directive v2 (audit, design foundation, Needs attention)
 
 - Audit (`property-operations/AUDIT-V2.md`): nothing duplicated; nine defects found, eight of them accessibility or
