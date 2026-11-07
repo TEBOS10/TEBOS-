@@ -72,6 +72,81 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_referrals: {
+        Row: {
+          id: string
+          org_id: string
+          ref: string
+          contact_id: string | null
+          destination: string
+          via_agency: boolean
+          problem: string
+          status: string
+          consent_on: string | null
+          consent_how: string | null
+          agency_permission_ref: string | null
+          partner_terms_ref: string | null
+          fee_terms: string
+          fee_terms_ref: string | null
+          next_step: string | null
+          next_step_on: string | null
+          outcome: string | null
+          note: string | null
+          status_at: string
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          ref?: string
+          contact_id?: string | null
+          destination: string
+          via_agency?: boolean
+          problem: string
+          status?: string
+          consent_on?: string | null
+          consent_how?: string | null
+          agency_permission_ref?: string | null
+          partner_terms_ref?: string | null
+          fee_terms?: string
+          fee_terms_ref?: string | null
+          next_step?: string | null
+          next_step_on?: string | null
+          outcome?: string | null
+          note?: string | null
+          status_at?: string
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          org_id?: string
+          ref?: string
+          contact_id?: string | null
+          destination?: string
+          via_agency?: boolean
+          problem?: string
+          status?: string
+          consent_on?: string | null
+          consent_how?: string | null
+          agency_permission_ref?: string | null
+          partner_terms_ref?: string | null
+          fee_terms?: string
+          fee_terms_ref?: string | null
+          next_step?: string | null
+          next_step_on?: string | null
+          outcome?: string | null
+          note?: string | null
+          status_at?: string
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       agent_deal_items: {
         Row: {
           id: string

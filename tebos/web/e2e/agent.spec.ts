@@ -236,3 +236,42 @@ test("TEPOS: the Listing studio draws the advert, shot list and caption from the
   // nothing was posted anywhere
   expect(fake.writes.filter((w) => !["agent_listings"].includes(w.table) && w.method !== "GET").map((w) => w.table)).not.toContain("storage");
 });
+
+test("TEPOS: a referral is recorded, and nobody is introduced without consent and the written basis for it", async ({ page }) => {
+  const fake = await founder(page);
+  (fake.tables as unknown as Record<string, unknown[]>).agent_referrals = [];
+  await page.goto(`${TEPOS}/agent`);
+  const panel = page.getByTestId("referrals");
+  await expect(panel).toBeVisible();
+  await expect(page.getByTestId("referrals-real_estate_assist")).toContainText("0");
+
+  await panel.getByRole("button", { name: "Add a referral" }).click();
+  const form = page.getByRole("form", { name: "Add a referral" });
+  await form.getByLabel("To").selectOption("tidy_enterprise");
+  await form.getByLabel("From").selectOption("a1000000-0000-4000-8000-0000000000b1");
+  await form.getByLabel("What they need").fill("Wants to refinance two rental flats");
+  // the agency's book isn't Tidy Enterprise's pipeline: the permission field is asked for up front
+  await expect(form.getByLabel("The agency's written permission (where it is)")).toBeVisible();
+  await form.getByLabel("Next step").fill("Ask the principal for written permission");
+  await form.getByRole("button", { name: "Save" }).click();
+  await expect(form).toBeHidden();
+  const insert = fake.writes.find((w) => w.table === "agent_referrals" && w.method === "POST")!;
+  expect(insert.body).toMatchObject({ destination: "tidy_enterprise", via_agency: true, status: "identified", contact_id: "a1000000-0000-4000-8000-0000000000b1" });
+  await expect(page.getByTestId("referral-list")).toContainText("From B-001");
+
+  // moving on without consent, or introducing without the permission, is stopped before anything is sent
+  await page.getByTestId("referral-list").getByRole("button", { name: "Update" }).click();
+  const upd = page.getByRole("form", { name: /Update R-001/ });
+  await upd.getByLabel("Status").selectOption("consent_given");
+  await expect(page.getByTestId("referral-gaps")).toContainText("Record when and how the person agreed to be introduced.");
+  await upd.getByRole("button", { name: "Save" }).click();
+  await expect(upd.getByText("Not saved")).toBeVisible();
+  expect(fake.writes.filter((w) => w.table === "agent_referrals" && w.method === "PATCH")).toHaveLength(0);
+
+  // with consent recorded, it moves on
+  await upd.getByLabel("They agreed on").fill(day(0));
+  await upd.getByLabel("How").selectOption("email");
+  await upd.getByRole("button", { name: "Save" }).click();
+  await expect(upd).toBeHidden();
+  expect(fake.writes.find((w) => w.table === "agent_referrals" && w.method === "PATCH")!.body).toMatchObject({ status: "consent_given", consent_how: "email" });
+});

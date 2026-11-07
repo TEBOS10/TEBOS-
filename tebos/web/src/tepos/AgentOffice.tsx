@@ -15,6 +15,7 @@ import { useOrg } from "../lib/session";
 import { useQuery } from "../lib/useQuery";
 import { checklistSummary, DealDocuments, FfcPath } from "./AgentCompliance";
 import { ListingStudio } from "./ListingStudio";
+import { Referrals } from "./Referrals";
 import { Vault } from "./Vault";
 import {
   deleteContact, deleteListing, listContacts, listDealItems, listListings, saveContact, saveListing, type ContactRow, type ListingRow,
@@ -193,6 +194,8 @@ function Office() {
           </div>
         )}
       </section>
+
+      <Referrals contacts={cq.data ?? []} />
 
       <FfcPath />
       <Vault />

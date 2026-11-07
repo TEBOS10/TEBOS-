@@ -83,3 +83,16 @@ export async function deleteFfcStep(db: Db, id: string) {
   const { error } = await db.from("agent_ffc_steps").delete().eq("id", id);
   if (error) throw error;
 }
+
+// Channel referrals (ADR 0025): to Real Estate Assist or Tidy Enterprise, with consent and the written basis recorded.
+export type ReferralRow = Tables["agent_referrals"]["Row"];
+export type ReferralInput = Omit<ReferralRow, "id" | "ref" | "status_at" | "created_by" | "created_at" | "updated_at">;
+
+export async function listReferrals(db: Db, orgId: string) {
+  return must(await db.from("agent_referrals").select("*").eq("org_id", orgId).order("ref"));
+}
+
+export async function saveReferral(db: Db, id: string | null, row: ReferralInput) {
+  if (id) return must(await db.from("agent_referrals").update(row).eq("id", id).select().single());
+  return must(await db.from("agent_referrals").insert(row).select().single());
+}
