@@ -291,6 +291,22 @@ export const salesProspectMachine = machine({
   },
 });
 
+/** A referral from the agent's office to Real Estate Assist or Tidy Enterprise (ADR 0025). */
+export const channelReferralMachine = machine({
+  initial: ["identified"],
+  transitions: {
+    identified: ["consent_given", "withdrawn"],
+    consent_given: ["introduced", "withdrawn"],
+    introduced: ["accepted", "declined", "withdrawn"],
+    accepted: ["served", "withdrawn"],
+    served: ["resolved", "not_resolved"],
+    declined: [],
+    resolved: [],
+    not_resolved: [],
+    withdrawn: [],
+  },
+});
+
 export const propertyProblemMachine = machine({
   initial: ["open"],
   transitions: {
@@ -434,6 +450,7 @@ export const MACHINES = {
   reeds_commitment: reedsCommitmentMachine,
   reeds_decision: reedsDecisionMachine,
   sales_prospect: salesProspectMachine,
+  channel_referral: channelReferralMachine,
   property_problem: propertyProblemMachine,
   web_project: webProjectMachine,
   web_task: webTaskMachine,
@@ -458,6 +475,7 @@ export type InvitationStatus = StatesOf<typeof invitationMachine>;
 export type InterviewStatus = StatesOf<typeof interviewMachine>;
 export type ObjectiveStatus = StatesOf<typeof objectiveMachine>;
 export type SalesProspectStatus = StatesOf<typeof salesProspectMachine>;
+export type ChannelReferralStatus = StatesOf<typeof channelReferralMachine>;
 export type PropertyProblemStatus = StatesOf<typeof propertyProblemMachine>;
 export type WebProjectStatus = StatesOf<typeof webProjectMachine>;
 export type WebTaskStatus = StatesOf<typeof webTaskMachine>;

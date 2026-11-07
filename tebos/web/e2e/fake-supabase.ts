@@ -736,6 +736,7 @@ const COLUMN_DEFAULTS: Record<string, Record<string, unknown>> = {
   // the references stand in for the trigger that numbers listings and contacts
   agent_listings: { ref: "L-001", stage_at: new Date().toISOString() },
   agent_contacts: { ref: "B-001", stage_at: new Date().toISOString() },
+  agent_referrals: { ref: "R-001", status_at: new Date().toISOString() },
   vault_documents: { stored_at: null, archived_at: null, note: null, pack_item: null },
   // the database copies the case's figures into a baseline; the fake leaves it empty, as a case with no figures would be refused
   property_baselines: { figures: [], captured_on: new Date().toISOString().slice(0, 10), target_note: null },

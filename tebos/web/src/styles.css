@@ -791,6 +791,7 @@ table.table { width: 100%; border-collapse: collapse; }
 .pra-field legend { font-size: 11px; color: #b9c6d3; margin-bottom: 6px; }
 .pra-field input, .pra-field select, .pra-field textarea { width: 100%; min-width: 0; background: #0c131c; border: 1px solid #2b3b4c; color: var(--ptext); padding: 9px 10px; border-radius: 9px; font: inherit; font-size: 13px; }
 .pra-field input:disabled, .pra-field select:disabled, .pra-field textarea:disabled { opacity: .7; }
+.pra-field input[type="checkbox"] { width: auto; padding: 0; margin: 0 6px 0 0; vertical-align: middle; accent-color: var(--pblue); }
 .pra :focus-visible { outline: 2px solid var(--pblue); outline-offset: 2px; }
 .pra-full { grid-column: 1 / -1; }
 .pra-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
