@@ -51,6 +51,18 @@ Update this list every run; strike items when they're done.
 | 15 | Each client's exact colours and logo (the client map uses colours from your description) | Tiles that look exactly like each client |
 | 9 | Confirm the `capital` schema (18 tables, applied 3 Oct from outside this repo) should live in TEBOS's database, or move it to its own project | Keeping TEBOS's system of record clean, and its migrations in one place |
 
+## 7 Nov 2026: morning run
+
+- Healthy: main green (#129); worker beating every 15 minutes, its one error still the Anthropic credit balance; all
+  12 audit chains intact; no new advisor findings. No open PRs.
+- Still not applied: the four migrations (ai_crew, property_underwrite, property_enquiries, property_operations). The
+  live history still has the false `20261105034954 ai_crew` row, so `apply-2026-11-05.sql` has not been run yet.
+- Worker kept on PR #115's commit until ai_crew is live.
+- Sales desk: 38 prospects, all new and due, 0 interested, 0 meetings, 0 enquiries. No new research: no calls have
+  been made yet, and the connector's write approvals time out unattended.
+- Built: nothing. Scan upgrade part 2 (ADR 0024) needs a migration, and it waits until the database route works.
+- Live counts refreshed in product-register.md (unchanged).
+
 ## 6 Nov 2026: morning run
 
 - Healthy: main green (#128); worker beating, its one error still the Anthropic credit balance; all 12 audit chains
